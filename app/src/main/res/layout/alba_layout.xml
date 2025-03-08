@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FFFACD"
+    android:gravity="center"
+    android:padding="16dp">
+
+    <!-- 알바 이미지 -->
+    <ImageView
+        android:id="@+id/albaImage"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:src="@drawable/alba"
+        android:contentDescription="알바 이미지"
+        android:layout_marginBottom="20dp" />
+
+    <!-- 알바 화면 설명 텍스트 -->
+    <TextView
+        android:id="@+id/earnText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="터치!! 터치!!"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:gravity="center"
+        android:padding="16dp" />
+</LinearLayout>

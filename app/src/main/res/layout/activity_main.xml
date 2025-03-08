@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- 상단: 자산 정보와 시간 -->
+    <LinearLayout
+        android:id="@+id/topLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#8FA382"
+        android:padding="10dp">
+
+        <!-- 자산 정보 -->
+        <TextView
+            android:id="@+id/assetInfo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="자산: 0원"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:gravity="start"
+            android:textColor="@android:color/white"/>
+
+
+        <!-- 시간 정보 -->
+        <TextView
+            android:id="@+id/timeInfo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="시간: 00:00:00"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:gravity="end"
+            android:textColor="@android:color/white"/>
+    </LinearLayout>
+
+
+
+
+
+
+
+    <!-- 중간: 내용이 동적으로 변경될 공간 (프래그먼트 또는 다른 레이아웃으로 변경될 예정) -->
+    <FrameLayout
+        android:id="@+id/contentFrame"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+
+
+
+
+
+
+
+    <!-- 하단: 버튼 5개 -->
+    <LinearLayout
+        android:id="@+id/bottomLayout"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:orientation="horizontal"
+        android:padding="5dp"
+        android:background="#8FA382">
+
+        <Button
+            android:id="@+id/button1"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="내정보"
+            android:textStyle="bold"
+            android:layout_margin="5dp"
+            android:background="#E5E6E4"/>
+
+        <Button
+            android:id="@+id/button2"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="알바"
+            android:textStyle="bold"
+            android:layout_margin="5dp"
+            android:background="#E5E6E4"/>
+
+        <Button
+            android:id="@+id/button3"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="주식"
+            android:textStyle="bold"
+            android:layout_margin="5dp"
+            android:background="#E5E6E4"/>
+
+        <Button
+            android:id="@+id/button4"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="부동산"
+            android:textStyle="bold"
+            android:layout_margin="5dp"
+            android:background="#E5E6E4"/>
+
+        <Button
+            android:id="@+id/button5"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="종료"
+            android:textStyle="bold"
+            android:layout_margin="5dp"
+            android:background="#E5E6E4"/>
+    </LinearLayout>
+
+</LinearLayout>
