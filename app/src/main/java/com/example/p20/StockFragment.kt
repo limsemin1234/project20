@@ -26,6 +26,12 @@ class StockFragment : Fragment() {
     private var selectedStock: Stock? = null // 선택된 주식 저장
     private lateinit var assetManager: AssetManager // 자산 관리 객체
 
+    // 주식 상세 정보를 미리 저장할 TextView 변수들 (nullable로 변경)
+    private var avgPurchasePriceData: TextView? = null
+    private var profitLossData: TextView? = null
+    private var profitRateData: TextView? = null
+    private var stockQuantityData: TextView? = null
+
     // 주식 데이터 리스트 (가격, 변동값, 변동률)
     private val stockItems = listOf(
         Stock("주식 1", 10000, 0, 0.0, 0),
@@ -60,6 +66,17 @@ class StockFragment : Fragment() {
         stockDetailsTextView = view.findViewById(R.id.stockDetailsTextView) // 추가된 텍스트뷰
         val buyButton: Button = view.findViewById(R.id.buyButton)
         val sellButton: Button = view.findViewById(R.id.sellButton)
+
+
+
+        // 주식 상세 정보를 미리 한 번만 findViewById로 초기화
+        avgPurchasePriceData = view.findViewById(R.id.avgPurchasePriceData)
+        profitLossData = view.findViewById(R.id.profitLossData)
+        profitRateData = view.findViewById(R.id.profitRateData)
+        stockQuantityData = view.findViewById(R.id.stockQuantityData)
+
+
+
 
         assetManager = AssetManager()  // 자산 관리 객체 초기화
 
@@ -121,34 +138,24 @@ class StockFragment : Fragment() {
     }
 
 
-
     // 주식 상세 정보 업데이트
-
     private fun updateStockDetails(stock: Stock) {
-        //val avgPurchasePriceText = view?.findViewById<TextView>(R.id.avgPurchasePriceText)
-       // val profitLossText = view?.findViewById<TextView>(R.id.profitLossText)
-        //val profitRateText = view?.findViewById<TextView>(R.id.profitRateText)
-       // val stockQuantityText = view?.findViewById<TextView>(R.id.stockQuantityText)
+        if (avgPurchasePriceData != null && profitLossData != null && profitRateData != null && stockQuantityData != null) {
+            if (stock.holding > 0) {
+                val avgPurchasePrice = stock.getAvgPurchasePrice()
+                val profitLoss = stock.getProfitLoss()
+                val profitRate = stock.getProfitRate()
 
-        val avgPurchasePriceData = view?.findViewById<TextView>(R.id.avgPurchasePriceData)
-        val profitLossData = view?.findViewById<TextView>(R.id.profitLossData)
-        val profitRateData = view?.findViewById<TextView>(R.id.profitRateData)
-        val stockQuantityData = view?.findViewById<TextView>(R.id.stockQuantityData)
-
-        if (stock.holding > 0) {
-            val avgPurchasePrice = stock.getAvgPurchasePrice()
-            val profitLoss = stock.getProfitLoss()
-            val profitRate = stock.getProfitRate()
-
-            avgPurchasePriceData?.text = "${avgPurchasePrice}원"
-            profitLossData?.text = "${profitLoss}원"
-            profitRateData?.text = "${"%.2f".format(profitRate)}%"
-            stockQuantityData?.text = "${stock.holding}주"
-        } else {
-            avgPurchasePriceData?.text = "0원"
-            profitLossData?.text = "0원"
-            profitRateData?.text = "0%"
-            stockQuantityData?.text = "0주"
+                avgPurchasePriceData?.text = "${avgPurchasePrice}원"
+                profitLossData?.text = "${profitLoss}원"
+                profitRateData?.text = "${"%.2f".format(profitRate)}%"
+                stockQuantityData?.text = "${stock.holding}주"
+            } else {
+                avgPurchasePriceData?.text = "0원"
+                profitLossData?.text = "0원"
+                profitRateData?.text = "0%"
+                stockQuantityData?.text = "0주"
+            }
         }
     }
 
