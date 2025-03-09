@@ -34,10 +34,10 @@ class StockFragment : Fragment() {
 
     // 주식 데이터 리스트 (가격, 변동값, 변동률)
     private val stockItems = listOf(
-        Stock("주식 1", 10000, 0, 0.0, 0),
-        Stock("주식 2", 10000, 0, 0.0, 0),
-        Stock("주식 3", 10000, 0, 0.0, 0),
-        Stock("주식 4", 10000, 0, 0.0, 0)
+        Stock("테슬라", 10000, 0, 0.0, 0),
+        Stock("애플", 10000, 0, 0.0, 0),
+        Stock("아마존", 10000, 0, 0.0, 0),
+        Stock("MS", 10000, 0, 0.0, 0)
     )
 
     // Handler 설정
@@ -104,7 +104,7 @@ class StockFragment : Fragment() {
                     it.buyStock(it.price) // 주식 매수
                     updateStockStatus("${it.name}을(를) 매수했습니다! 보유량: ${it.holding}주")
                     (activity as? MainActivity)?.increaseAsset(-it.price) // MainActivity 자산 갱신
-                   // updateAssetText() // 자산 상태 갱신
+                    stockAdapter.notifyDataSetChanged()  // RecyclerView 갱신
                 } else {
                     // 자산 부족 시 주식 상태창에 메시지 표시
                     updateStockStatus("자산이 부족합니다!")
@@ -121,7 +121,7 @@ class StockFragment : Fragment() {
                     assetManager.increaseAsset(it.price) // 자산 증가
                     (activity as? MainActivity)?.increaseAsset(it.price) // MainActivity 자산 갱신
                     updateStockStatus("${it.name} 매도! 손익: ${profitLoss}원")
-                //    updateAssetText() // 자산 상태 갱신
+                    stockAdapter.notifyDataSetChanged()  // RecyclerView 갱신
                 } else {
                     // 보유한 주식이 없을 경우 메시지 표시
                     updateStockStatus("보유한 주식이 없습니다!")
