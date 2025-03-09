@@ -25,7 +25,7 @@
         android:id="@+id/stockStatusText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="주식 상태: 선택된 주식이 없습니다."
+        android:text="선택된 주식이 없습니다."
         android:textSize="16sp"
         android:textStyle="bold"
         android:gravity="center"
@@ -34,6 +34,117 @@
         android:layout_marginBottom="10dp"
         android:background="#50000000"
         android:layout_marginTop="10dp"/>
+
+
+
+    <!-- 매입 단가 평가손익 수익률 -->
+    <LinearLayout
+        android:id="@+id/stockDetailsTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_vertical"
+        android:padding="10dp">
+
+        <!-- 첫 번째 행: 각 항목의 제목 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="5dp">
+
+            <TextView
+                android:id="@+id/avgPurchasePriceText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="매입단가"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/profitLossText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="평가손익"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/profitRateText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="수익률"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/stockQuantityText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="수량"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+        <!-- 두 번째 행: 실제 데이터 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="5dp">
+
+            <TextView
+                android:id="@+id/avgPurchasePriceData"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="0원"
+                android:gravity="center"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/profitLossData"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="0원"
+                android:gravity="center"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/profitRateData"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="0%"
+                android:gravity="center"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/stockQuantityData"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="0주"
+                android:gravity="center"
+                android:textSize="15sp" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+
+
+
 
 
     <!-- 매수 및 매도 버튼 -->
