@@ -48,8 +48,12 @@ class StockFragment : Fragment() {
     // 주식 변동을 주기적으로 업데이트하는 Runnable
     private val updateRunnable = object : Runnable {
         override fun run() {
-            stockItems.forEach { it.updateChangeValue() } // 변동값 업데이트
+            stockItems.forEach { it.updateChangeValue() } // 주식 가격 변동
             stockAdapter.notifyDataSetChanged() // RecyclerView 갱신
+
+            // 주식 상세 정보 업데이트
+            selectedStock?.let { updateStockDetails(it) }
+
             handler.postDelayed(this, updateInterval) // 3초마다 반복
         }
     }
@@ -142,6 +146,8 @@ class StockFragment : Fragment() {
         stockStatusText.text = "$message"
         selectedStock?.let { updateStockDetails(it) } // 선택된 주식이 있으면 상세 정보 갱신
     }
+
+
 
 
     // 주식 상세 정보 업데이트
