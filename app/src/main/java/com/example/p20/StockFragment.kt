@@ -54,6 +54,12 @@ class StockFragment : Fragment() {
         }
     }
 
+    //HANDLER 사용 시 메모리 누수방지 (Fragment나 Activity가 종료될 때 Handler의 콜백을 제거)
+    override fun onDestroyView() {
+        super.onDestroyView()
+        handler.removeCallbacks(updateRunnable)  // Handler의 콜백 제거
+    }
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
