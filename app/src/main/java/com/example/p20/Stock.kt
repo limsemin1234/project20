@@ -40,9 +40,10 @@ data class Stock(
     fun sellStock(): Int {
         if (holding > 0) {
             holding -= 1
-            val boughtPrice = purchasePrices.removeAt(0) // 가장 먼저 산 가격을 기준으로 매도
-            return price - boughtPrice // 이익(+) or 손실(-) 반환
+            val avgPurchasePrice = getAvgPurchasePrice() // 평균 매입단가 가져오기
+            return price - avgPurchasePrice // 이익(+) or 손실(-) 계산
         }
         return 0
     }
+
 }
