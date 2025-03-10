@@ -39,11 +39,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         button2.setOnClickListener {
-            showFragment(AlbaFragment()) // 알바 화면 표시
+            showFragment(AlbaFragment(), "AlbaFragment") // 알바 화면 표시
         }
 
         button3.setOnClickListener {
-            showFragment(StockFragment()) // 주식 화면 표시
+            showFragment(StockFragment(), "StockFragment") // 주식 화면 표시
         }
 
         button4.setOnClickListener {
@@ -62,11 +62,13 @@ class MainActivity : AppCompatActivity() {
         assetTextView.text = assetManager.getAssetText() // 자산 텍스트 업데이트
     }
 
-    // 프래그먼트를 교체하는 함수
-    private fun showFragment(fragment: Fragment) {
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.contentFrame, fragment)
-            .commit()
+    private fun showFragment(fragment: Fragment, tag: String) {
+        val existingFragment = supportFragmentManager.findFragmentByTag(tag)
+        if (existingFragment == null) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.contentFrame, fragment, tag)
+                .commit()
+        }
     }
 
     // 현재 프래그먼트 제거 함수

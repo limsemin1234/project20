@@ -13,7 +13,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import android.os.Looper
 import android.widget.LinearLayout
-import com.example.p20.Stock
 
 
 
