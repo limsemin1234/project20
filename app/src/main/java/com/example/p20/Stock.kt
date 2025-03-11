@@ -19,24 +19,31 @@ data class Stock(
         changeRate = ((changeValue.toDouble() / oldPrice) * 100)  // 변동률 계산
     }
 
+    // 평균 매입가 계산
     fun getAvgPurchasePrice(): Int {
         return if (purchasePrices.isNotEmpty()) purchasePrices.average().toInt() else 0
     }
 
+    // 손익 계산 (보유 주식 수를 고려)
     fun getProfitLoss(): Int {
         val avgPurchasePrice = getAvgPurchasePrice()
         return if (holding > 0) (price - avgPurchasePrice) * holding else 0
     }
 
+    // 수익률 계산
     fun getProfitRate(): Double {
-        return if (purchasePrices.isNotEmpty()) (getProfitLoss().toDouble() / (getAvgPurchasePrice() * holding)) * 100 else 0.0
+        return if (purchasePrices.isNotEmpty()) {
+            (getProfitLoss().toDouble() / (getAvgPurchasePrice() * holding)) * 100
+        } else 0.0
     }
 
+    // 주식 매수 (매입 가격을 추가하고 보유량 증가)
     fun buyStock(purchasePrice: Int) {
         holding += 1
         purchasePrices.add(purchasePrice)
     }
 
+    // 주식 매도 (이익/손실을 계산하고 보유량 감소)
     fun sellStock(): Int {
         if (holding > 0) {
             holding -= 1
