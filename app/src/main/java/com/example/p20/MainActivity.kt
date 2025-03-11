@@ -14,7 +14,7 @@ import androidx.lifecycle.Observer
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var assetManager: AssetManager // 자산 관리 객체
+    private lateinit var assetViewModel: AssetViewModel // 자산 관리 뷰모델
     private lateinit var assetTextView: TextView // 최상단 자산 표시
 
     private lateinit var timeViewModel: TimeViewModel // 뷰모델 선언
@@ -24,7 +24,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         val contentFrame = findViewById<FrameLayout>(R.id.contentFrame)
-
         val timeInfo: TextView = findViewById(R.id.timeInfo)
 
         // ViewModel 초기화 (기존 viewModels() 대신 ViewModelProvider 사용)
@@ -39,12 +38,14 @@ class MainActivity : AppCompatActivity() {
         timeViewModel.startTimer()
 
 
-        // 자산 관리 객체 초기화
-        assetManager = AssetManager()
+        // AssetViewModel 초기화
+        assetViewModel = ViewModelProvider(this).get(AssetViewModel::class.java)
         assetTextView = findViewById(R.id.assetInfo) // 자산 TextView
 
-        // 자산 초기 표시
-        assetTextView.text = assetManager.getAssetText()
+        // 자산 초기 표시 (LiveData를 통해 자산 값을 가져옴)
+        assetViewModel.asset.observe(this, Observer { newAsset ->
+            assetTextView.text = assetViewModel.getAssetText() // 자산 텍스트 업데이트
+        })
 
         val button1 = findViewById<Button>(R.id.button1)
         val button2 = findViewById<Button>(R.id.button2)
@@ -82,8 +83,7 @@ class MainActivity : AppCompatActivity() {
 
     // 자산 증가 함수
     fun increaseAsset(amount: Int) {
-        assetManager.increaseAsset(amount) // AssetManager를 통해 자산 증가
-        assetTextView.text = assetManager.getAssetText() // 자산 텍스트 업데이트
+        assetViewModel.increaseAsset(amount) // AssetViewModel을 통해 자산 증가
     }
 
     private fun showFragment(fragment: Fragment, tag: String) {

@@ -25,7 +25,7 @@ class StockFragment : Fragment() {
     private lateinit var stockAdapter: StockAdapter
     private lateinit var stockStatusText: TextView // 주식 상태를 표시할 TextView
     private lateinit var stockDetailsTextView: LinearLayout // 추가한 LinearLayout (가로로 나열된 텍스트뷰)
-    private lateinit var assetManager: AssetManager // 자산 관리 객체
+    private lateinit var assetViewModel: AssetViewModel
 
     private var selectedStock: Stock? = null // 선택된 주식 저장
 
@@ -109,7 +109,17 @@ class StockFragment : Fragment() {
 
 
 
-        assetManager = AssetManager()  // 자산 관리 객체 초기화
+        // ViewModel 초기화
+        assetViewModel = ViewModelProvider(requireActivity()).get(AssetViewModel::class.java)
+
+
+
+// 자산 값 변경 시 UI 업데이트
+        assetViewModel.asset.observe(viewLifecycleOwner, Observer { newAsset ->
+            // 자산 값을 TextView에 표시하는 로직 추가
+            // 예시로 자산을 화면에 표시할 수 있습니다
+            stockStatusText.text = "현재 자산: ${newAsset}원"
+        })
 
 
 
@@ -125,13 +135,17 @@ class StockFragment : Fragment() {
 
 
 
+// ViewModel에서 자산을 관찰하기 위해 LiveData로 자산을 가져옵니다.
         buyButton.setOnClickListener {
             selectedStock?.let {
-                if (assetManager.getAsset() >= it.price) {
-                    assetManager.decreaseAsset(it.price) // 자산 차감
+                // ViewModel을 통해 자산 가져오기
+                val currentAsset = assetViewModel.asset.value ?: 0
+
+
+                if (currentAsset >= it.price) {
+                    assetViewModel.decreaseAsset(it.price) // 자산 차감
                     it.buyStock(it.price) // 주식 매수
                     updateStockStatus("${it.name}을(를) 매수했습니다! 보유량: ${it.holding}주")
-                    (activity as? MainActivity)?.increaseAsset(-it.price) // MainActivity 자산 갱신
                     stockAdapter.notifyDataSetChanged()  // RecyclerView 갱신
                 } else {
                     // 자산 부족 시 주식 상태창에 메시지 표시
@@ -142,12 +156,12 @@ class StockFragment : Fragment() {
 
 
 
+        // 매도 버튼 클릭 리스너
         sellButton.setOnClickListener {
             selectedStock?.let {
                 if (it.holding > 0) {
                     val profitLoss = it.sellStock() // 주식 매도
-                    assetManager.increaseAsset(it.price) // 자산 증가
-                    (activity as? MainActivity)?.increaseAsset(it.price) // MainActivity 자산 갱신
+                    assetViewModel.increaseAsset(it.price) // 자산 증가
                     updateStockStatus("${it.name} 매도! 손익: ${profitLoss}원")
                     stockAdapter.notifyDataSetChanged()  // RecyclerView 갱신
                 } else {
