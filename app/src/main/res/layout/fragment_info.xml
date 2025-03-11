@@ -1,0 +1,15 @@
+<!-- fragment_info.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center">
+
+    <!-- 여기에 '내정보' 프래그먼트 UI 추가 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="내정보"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+</LinearLayout>

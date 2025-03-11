@@ -10,6 +10,8 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.Observer
+import android.animation.ObjectAnimator
+import android.view.View
 
 
 class MainActivity : AppCompatActivity() {
@@ -23,8 +25,16 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        val titleText = findViewById<TextView>(R.id.titleText)
+
+        // 텍스트가 서서히 나타나는 애니메이션
+        val fadeIn = ObjectAnimator.ofFloat(titleText, "alpha", 0f, 1f)
+        fadeIn.duration = 5000 // 5초 동안 애니메이션 진행
+        fadeIn.start()
+
         val contentFrame = findViewById<FrameLayout>(R.id.contentFrame)
         val timeInfo: TextView = findViewById(R.id.timeInfo)
+
 
         // ViewModel 초기화 (기존 viewModels() 대신 ViewModelProvider 사용)
         timeViewModel = ViewModelProvider(this).get(TimeViewModel::class.java)
@@ -53,22 +63,26 @@ class MainActivity : AppCompatActivity() {
         val button4 = findViewById<Button>(R.id.button4)
         val button5 = findViewById<Button>(R.id.button5)
 
+        // 각 버튼 클릭 시 동작 설정
         button1.setOnClickListener {
-            contentFrame.setBackgroundColor(Color.parseColor("#FFC1C1")) // 연한 빨강
-            removeCurrentFragment() // 현재 프래그먼트 제거
+            // 제목 숨기고 '내정보' 프래그먼트로 변경
+            titleText.visibility = View.GONE  // 제목 숨기기
+            showFragment(InfoFragment(),"InfoFragment") // 예시: '내정보' 프래그먼트
         }
 
         button2.setOnClickListener {
+            titleText.visibility = View.GONE  // 제목 숨기기
             showFragment(AlbaFragment(), "AlbaFragment") // 알바 화면 표시
         }
 
         button3.setOnClickListener {
+            titleText.visibility = View.GONE  // 제목 숨기기
             showFragment(StockFragment(), "StockFragment") // 주식 화면 표시
         }
 
         button4.setOnClickListener {
-            contentFrame.setBackgroundColor(Color.parseColor("#FFFACD")) // 연한 노랑
-            removeCurrentFragment() // 현재 프래그먼트 제거
+            titleText.visibility = View.GONE  // 제목 숨기기
+            showFragment(BodongsanFragment(), "BodongsanFragment") // 주식 화면 표시
         }
 
         button5.setOnClickListener {
