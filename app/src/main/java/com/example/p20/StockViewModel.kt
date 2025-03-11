@@ -1,21 +1,28 @@
 package com.example.p20
 
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
 class StockViewModel : ViewModel() {
-    val stockItems: MutableList<Stock> = mutableListOf()
+
+    // LiveData로 변경하여 외부에서 관찰할 수 있도록 합니다.
+    private val _stockItems = MutableLiveData<MutableList<Stock>>()
+    val stockItems: LiveData<MutableList<Stock>> get() = _stockItems
 
     init {
-        // 초기 주식 데이터 설정
-        stockItems.add(Stock("테슬라", 10000, 0, 0.0, 0))
-        stockItems.add(Stock("애플", 10000, 0, 0.0, 0))
-        stockItems.add(Stock("아마존", 10000, 0, 0.0, 0))
-        stockItems.add(Stock("MS", 10000, 0, 0.0, 0))
+        // 초기 데이터 설정
+        _stockItems.value = mutableListOf(
+            Stock("테슬라", 10000, 0, 0.0, 0),
+            Stock("애플", 10000, 0, 0.0, 0),
+            Stock("아마존", 10000, 0, 0.0, 0),
+            Stock("MS", 10000, 0, 0.0, 0)
+        )
     }
 
-    // 주식 목록을 갱신하는 메서드
-    fun updateStockList() {
-        // 예를 들어, 주식 데이터를 외부에서 가져오는 로직이 있다면 여기서 처리
-        // 현재는 이미 초기화 되어 있으므로 특별히 할 일이 없다면 비워두거나 다른 갱신 로직을 작성할 수 있음
+    // 주식 가격을 3초마다 업데이트하는 함수
+    fun updateStockPrices() {
+        _stockItems.value?.forEach { it.updateChangeValue() }
+        _stockItems.postValue(_stockItems.value) // postValue로 변경 트리거
     }
 }

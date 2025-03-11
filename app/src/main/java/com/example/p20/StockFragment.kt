@@ -9,10 +9,13 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import android.os.Looper
 import android.widget.LinearLayout
+import androidx.lifecycle.Observer
+
 
 
 
@@ -22,8 +25,16 @@ class StockFragment : Fragment() {
     private lateinit var stockAdapter: StockAdapter
     private lateinit var stockStatusText: TextView // 주식 상태를 표시할 TextView
     private lateinit var stockDetailsTextView: LinearLayout // 추가한 LinearLayout (가로로 나열된 텍스트뷰)
-    private var selectedStock: Stock? = null // 선택된 주식 저장
     private lateinit var assetManager: AssetManager // 자산 관리 객체
+
+    private var selectedStock: Stock? = null // 선택된 주식 저장
+
+
+    private lateinit var stockViewModel: StockViewModel
+
+    // 주식 데이터 리스트를 ViewModel에서 가져옴
+    private var stockItems: List<Stock> = listOf()
+
 
     // 주식 상세 정보를 미리 저장할 TextView 변수들 (nullable로 변경)
     private var avgPurchasePriceData: TextView? = null
@@ -31,23 +42,18 @@ class StockFragment : Fragment() {
     private var profitRateData: TextView? = null
     private var stockQuantityData: TextView? = null
 
-    // 주식 데이터 리스트 (가격, 변동값, 변동률)
-    private val stockItems = listOf(
-        Stock("테슬라", 10000, 0, 0.0, 0),
-        Stock("애플", 10000, 0, 0.0, 0),
-        Stock("아마존", 10000, 0, 0.0, 0),
-        Stock("MS", 10000, 0, 0.0, 0)
-    )
 
     // Handler 설정
     private val handler = Handler(Looper.getMainLooper())
-
     private val updateInterval = 3000L // 5초 간격으로 주식 업데이트
+
+
+
 
     // 주식 변동을 주기적으로 업데이트하는 Runnable
     private val updateRunnable = object : Runnable {
         override fun run() {
-            stockItems.forEach { it.updateChangeValue() } // 주식 가격 변동
+            stockViewModel.updateStockPrices() // 주식 가격 업데이트
             stockAdapter.notifyDataSetChanged() // RecyclerView 갱신
 
             // 주식 상세 정보 업데이트
@@ -70,6 +76,22 @@ class StockFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.stock_layout, container, false)
 
+        stockViewModel = ViewModelProvider(requireActivity()).get(StockViewModel::class.java)
+
+
+        // LiveData 구독 (주식 목록 업데이트)
+        stockViewModel.stockItems.observe(viewLifecycleOwner, Observer { stockItems ->
+            // stockItems는 LiveData에서 가져온 MutableList<Stock>입니다
+            updateStockList(stockItems)
+        })
+
+        // 예시: 3초마다 주식 가격 업데이트
+        Handler(Looper.getMainLooper()).postDelayed({
+            stockViewModel.updateStockPrices()
+        }, 3000)
+
+
+
         stockRecyclerView = view.findViewById(R.id.stockRecyclerView)
         stockStatusText = view.findViewById(R.id.stockStatusText) // TextView 연결
         stockDetailsTextView = view.findViewById(R.id.stockDetailsTextView) // 추가된 텍스트뷰
@@ -88,6 +110,9 @@ class StockFragment : Fragment() {
 
 
         assetManager = AssetManager()  // 자산 관리 객체 초기화
+
+
+
 
         // RecyclerView 설정 (세로로 주식 항목을 나열)
         stockRecyclerView.layoutManager = LinearLayoutManager(requireContext())
@@ -137,6 +162,18 @@ class StockFragment : Fragment() {
         handler.post(updateRunnable)
 
         return view
+    }
+
+
+    private fun updateStockList(stockItems: MutableList<Stock>) {
+        // stockItems를 기반으로 UI 업데이트
+        // 예: RecyclerView에 데이터 표시
+        stockAdapter = StockAdapter(stockItems) { stock ->
+            selectedStock = stock
+            updateStockStatus("${stock.name}이(가) 선택되었습니다.")
+        }
+        stockRecyclerView.adapter = stockAdapter
+        stockAdapter.notifyDataSetChanged()  // 어댑터 갱신
     }
 
 
