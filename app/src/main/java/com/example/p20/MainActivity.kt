@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.widget.FrameLayout
 import androidx.fragment.app.Fragment
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.Observer
 
@@ -70,7 +71,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         button5.setOnClickListener {
-            finish() // 앱 종료
+            AlertDialog.Builder(this)
+                .setTitle("게임 종료")
+                .setMessage("정말 종료하시겠습니까?")
+                .setPositiveButton("예") { _, _ -> finish() }
+                .setNegativeButton("아니오", null)
+                .show()
         }
     }
 
