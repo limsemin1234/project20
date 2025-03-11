@@ -29,14 +29,19 @@ class AlbaFragment : Fragment() {
         earnText = view.findViewById(R.id.earnText)
 
 
+        // 초기 화면은 "터치!! 터치!!"로 설정
+        earnText.text = "터치!! 터치!!"
+
         // 터치 이벤트 추가
         albaImage.setOnClickListener {
             if (albaViewModel.isCooldown.value == false) {
                 albaViewModel.increaseTouchCount()
                 (activity as? MainActivity)?.increaseAsset(100)
             } else {
-                // 쿨다운 중일 때는 UI에서 알리도록 수정
-                earnText.text = "30초 후 다시 가능합니다."
+                // 쿨다운 상태일 때만 문구 업데이트
+                if (albaViewModel.cooldownTime.value ?: 0 > 0) {
+                    earnText.text = "${albaViewModel.cooldownTime.value} 초 후 다시 가능합니다."
+                }
             }
         }
 

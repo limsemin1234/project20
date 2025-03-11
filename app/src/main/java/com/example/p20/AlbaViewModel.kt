@@ -13,7 +13,7 @@ class AlbaViewModel : ViewModel() {
     private val _isCooldown = MutableLiveData(false) // 30초 쿨다운 상태 확인
     val isCooldown: LiveData<Boolean> get() = _isCooldown
 
-    private val _cooldownTime = MutableLiveData(30) // 남은 시간
+    private val _cooldownTime = MutableLiveData(0) // 남은 시간, 앱 실행 시 초기값을 0으로 설정
     val cooldownTime: LiveData<Int> get() = _cooldownTime
 
     private val handler = Handler(Looper.getMainLooper())
