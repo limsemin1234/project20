@@ -7,6 +7,8 @@ import androidx.appcompat.app.AppCompatActivity
 import android.widget.FrameLayout
 import androidx.fragment.app.Fragment
 import android.widget.TextView
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.Observer
 
 
 class MainActivity : AppCompatActivity() {
@@ -14,11 +16,27 @@ class MainActivity : AppCompatActivity() {
     private lateinit var assetManager: AssetManager // 자산 관리 객체
     private lateinit var assetTextView: TextView // 최상단 자산 표시
 
+    private lateinit var timeViewModel: TimeViewModel // 뷰모델 선언
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         val contentFrame = findViewById<FrameLayout>(R.id.contentFrame)
+
+        val timeInfo: TextView = findViewById(R.id.timeInfo)
+
+        // ViewModel 초기화 (기존 viewModels() 대신 ViewModelProvider 사용)
+        timeViewModel = ViewModelProvider(this).get(TimeViewModel::class.java)
+
+        // LiveData 감시하여 UI 업데이트
+        timeViewModel.time.observe(this, Observer { newTime ->
+            timeInfo.text = "시간: $newTime"
+        })
+
+        // 타이머 시작
+        timeViewModel.startTimer()
+
 
         // 자산 관리 객체 초기화
         assetManager = AssetManager()
