@@ -13,6 +13,7 @@ import androidx.lifecycle.Observer
 class AlbaFragment : Fragment() {
 
     private lateinit var albaViewModel: AlbaViewModel
+    private lateinit var assetViewModel: AssetViewModel // AssetViewModel 추가
     private lateinit var earnText: TextView
 
     override fun onCreateView(
@@ -23,6 +24,8 @@ class AlbaFragment : Fragment() {
 
         // ViewModel 초기화
         albaViewModel = ViewModelProvider(requireActivity()).get(AlbaViewModel::class.java)
+        // AssetViewModel 초기화
+        assetViewModel = ViewModelProvider(requireActivity()).get(AssetViewModel::class.java)
 
         // TextView와 ImageView 객체 가져오기
         val albaImage: ImageView = view.findViewById(R.id.albaImage)
@@ -36,7 +39,8 @@ class AlbaFragment : Fragment() {
         albaImage.setOnClickListener {
             if (albaViewModel.isCooldown.value == false) {
                 albaViewModel.increaseTouchCount()
-                (activity as? MainActivity)?.increaseAsset(100)
+                // AssetViewModel을 통해 자산 증가 처리
+                assetViewModel.increaseAsset(100)  // 100원 증가
             } else {
                 // 쿨다운 상태일 때만 문구 업데이트
                 if (albaViewModel.cooldownTime.value ?: 0 > 0) {

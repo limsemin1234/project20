@@ -81,10 +81,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // 자산 증가 함수
-    fun increaseAsset(amount: Int) {
-        assetViewModel.increaseAsset(amount) // AssetViewModel을 통해 자산 증가
-    }
 
     private fun showFragment(fragment: Fragment, tag: String) {
         val existingFragment = supportFragmentManager.findFragmentByTag(tag)
