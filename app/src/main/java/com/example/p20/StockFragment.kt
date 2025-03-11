@@ -114,7 +114,7 @@ class StockFragment : Fragment() {
 
 
 
-// 자산 값 변경 시 UI 업데이트
+        // 자산 값 변경 시 UI 업데이트
         assetViewModel.asset.observe(viewLifecycleOwner, Observer { newAsset ->
             // 자산 값을 TextView에 표시하는 로직 추가
             // 예시로 자산을 화면에 표시할 수 있습니다
