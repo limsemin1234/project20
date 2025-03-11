@@ -49,6 +49,7 @@
     <FrameLayout
         android:id="@+id/contentFrame"
         android:layout_width="match_parent"
+        android:background="@drawable/main1"
         android:layout_height="0dp"
         android:layout_weight="1">
 

@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="@drawable/bo2"
     android:padding="16dp">
 
     <!-- 예시로 부동산 화면에 필요한 UI를 추가합니다 -->
