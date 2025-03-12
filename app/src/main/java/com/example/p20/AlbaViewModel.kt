@@ -10,6 +10,9 @@ class AlbaViewModel : ViewModel() {
     private val _touchCount = MutableLiveData(0)
     val touchCount: LiveData<Int> get() = _touchCount
 
+    private val _albaLevel = MutableLiveData(1) // 알바 레벨
+    val albaLevel: LiveData<Int> get() = _albaLevel
+
     private val _isCooldown = MutableLiveData(false) // 30초 쿨다운 상태 확인
     val isCooldown: LiveData<Boolean> get() = _isCooldown
 
@@ -17,6 +20,8 @@ class AlbaViewModel : ViewModel() {
     val cooldownTime: LiveData<Int> get() = _cooldownTime
 
     private val handler = Handler(Looper.getMainLooper())
+
+
 
     // 터치 횟수 증가 함수
     fun increaseTouchCount() {
@@ -27,8 +32,20 @@ class AlbaViewModel : ViewModel() {
 
         // 터치 횟수가 10번에 도달하면 쿨다운 시작
         if (_touchCount.value == 10) {
-            startCooldown() // 10번 터치 후 쿨다운 시작
+            increaseLevel()  // 레벨업 처리
+            startCooldown()  // 10번 터치 후 쿨다운 시작
         }
+    }
+
+
+    // 알바 레벨업 함수
+    private fun increaseLevel() {
+        val currentLevel = _albaLevel.value ?: 1
+        val newLevel = currentLevel + 1
+        _albaLevel.value = newLevel
+
+        // 터치 횟수 초기화
+        _touchCount.value = 0
     }
 
     private fun startCooldown() {
@@ -43,11 +60,15 @@ class AlbaViewModel : ViewModel() {
                     _cooldownTime.value = currentTime - 1
                     handler.postDelayed(this, 1000)
                 } else {
-                    _touchCount.value = 0 // 터치 횟수 초기화
                     _isCooldown.value = false // 쿨다운 종료
                     _cooldownTime.value = 0 // 남은 시간 초기화
                 }
             }
         }, 1000)
+    }
+    // 레벨에 따른 보상 금액 계산
+    fun getRewardAmount(): Int {
+        val level = _albaLevel.value ?: 1
+        return level * 100 // 레벨마다 100원씩 증가
     }
 }

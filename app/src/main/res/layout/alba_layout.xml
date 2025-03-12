@@ -7,6 +7,16 @@
     android:gravity="center"
     android:padding="16dp">
 
+    <!-- 새로운 레벨 표시 텍스트 추가 -->
+    <TextView
+        android:id="@+id/levelText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="레벨: 1"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_margin="16dp"/>
+
     <!-- 알바 이미지 -->
     <ImageView
         android:id="@+id/albaImage"
@@ -26,4 +36,6 @@
         android:textSize="18sp"
         android:gravity="center"
         android:padding="16dp" />
+
+
 </LinearLayout>

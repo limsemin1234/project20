@@ -15,6 +15,7 @@ class AlbaFragment : Fragment() {
     private lateinit var albaViewModel: AlbaViewModel
     private lateinit var assetViewModel: AssetViewModel // AssetViewModel 추가
     private lateinit var earnText: TextView
+    private lateinit var levelText: TextView  // 레벨 텍스트 추가
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -30,17 +31,22 @@ class AlbaFragment : Fragment() {
         // TextView와 ImageView 객체 가져오기
         val albaImage: ImageView = view.findViewById(R.id.albaImage)
         earnText = view.findViewById(R.id.earnText)
+        levelText = view.findViewById(R.id.levelText)  // 레벨 텍스트 가져오기
 
 
         // 초기 화면은 "터치!! 터치!!"로 설정
         earnText.text = "터치!! 터치!!"
 
+
         // 터치 이벤트 추가
         albaImage.setOnClickListener {
             if (albaViewModel.isCooldown.value == false) {
                 albaViewModel.increaseTouchCount()
-                // AssetViewModel을 통해 자산 증가 처리
-                assetViewModel.increaseAsset(100)  // 100원 증가
+
+                // 알바 레벨에 따른 보상 금액을 증가시킴
+                val rewardAmount = albaViewModel.getRewardAmount()
+                assetViewModel.increaseAsset(rewardAmount)  // 보상 금액 증가
+
             } else {
                 // 쿨다운 상태일 때만 문구 업데이트
                 if (albaViewModel.cooldownTime.value ?: 0 > 0) {
@@ -48,6 +54,7 @@ class AlbaFragment : Fragment() {
                 }
             }
         }
+
 
         // 쿨다운 상태 및 남은 시간 감시하여 UI 변경
         albaViewModel.isCooldown.observe(viewLifecycleOwner, Observer { isCooling ->
@@ -65,6 +72,13 @@ class AlbaFragment : Fragment() {
             } else {
                 earnText.text = "터치!! 터치!!"
             }
+        })
+
+        // 알바 레벨 및 보상 금액 업데이트 (UI 변경)
+        albaViewModel.albaLevel.observe(viewLifecycleOwner, Observer { level ->
+            // 레벨을 레벨 텍스트에만 표시
+            val rewardAmount = albaViewModel.getRewardAmount()  // 레벨에 따른 보상 금액 계산
+            levelText.text = "레벨: $level\n보상: $rewardAmount 원"  // 레벨과 보상 금액을 함께 표시
         })
 
         return view
