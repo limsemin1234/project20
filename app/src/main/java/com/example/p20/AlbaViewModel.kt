@@ -20,8 +20,8 @@ class AlbaViewModel : ViewModel() {
 
     // 터치 횟수 증가 함수
     fun increaseTouchCount() {
-        // 쿨다운 중에는 터치 횟수 증가를 막음
-        if (_touchCount.value ?: 0 < 10 && _isCooldown.value == false) {
+        // 쿨다운 중이거나 터치 횟수가 10번 이상이면 터치 횟수 증가를 막음
+        if (_isCooldown.value == false && _touchCount.value ?: 0 < 10) {
             _touchCount.value = (_touchCount.value ?: 0) + 1
         }
 
