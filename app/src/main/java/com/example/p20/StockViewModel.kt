@@ -24,7 +24,12 @@ class StockViewModel : ViewModel() {
 
     // 주식 가격을 3초마다 업데이트하는 함수
     fun updateStockPrices() {
-        _stockItems.value?.forEach { it.updateChangeValue() }
-        _stockItems.value = _stockItems.value // LiveData 변경을 트리거
+        _stockItems.value?.let {
+            it.forEach { stock ->
+                stock.updateChangeValue()  // 주식 가격 변동 업데이트
+            }
+            // 변경된 데이터를 LiveData에 업데이트
+            _stockItems.postValue(it)  // LiveData의 값을 갱신합니다.
+        }
     }
 }
