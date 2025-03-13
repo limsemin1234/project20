@@ -40,12 +40,9 @@ data class Stock(
     // 주식 매수 (매입 가격을 추가하고 보유량 증가)
     fun buyStock(purchasePrice: Int) {
         holding += 1
-        // 평균 단가 계산 후, 매수 리스트의 모든 가격을 그 평균 값으로 설정
         purchasePrices.add(purchasePrice)
-        val avgPurchasePrice = getAvgPurchasePrice()  // 새로운 평균 매입 단가 계산
-        for (i in purchasePrices.indices) {
-            purchasePrices[i] = avgPurchasePrice  // 리스트의 모든 가격을 평균으로 변경
-        }
+        // 매수 후, 매수 가격을 기반으로 새로운 평균 매입가로 갱신
+        updateAveragePurchasePrice()
     }
 
     // 주식 매도 (이익/손실을 계산하고 보유량 감소)
@@ -53,9 +50,23 @@ data class Stock(
         if (holding > 0) {
             holding -= 1
             val avgPurchasePrice = getAvgPurchasePrice() // 평균 매입단가 가져오기
+            if (holding == 0) {
+                // 보유량이 0이 되면 매수 리스트 초기화
+                purchasePrices.clear()
+            }
             return price - avgPurchasePrice // 이익(+) or 손실(-) 계산
         }
         return 0
+    }
+
+    // 매수 후 평균 매입 단가 갱신
+    private fun updateAveragePurchasePrice() {
+        if (purchasePrices.isNotEmpty()) {
+            val avgPrice = purchasePrices.average().toInt()
+            // 매수 가격이 갱신되었으므로 평균 매입 가격을 다시 갱신
+            purchasePrices.clear()  // 이전 매수 리스트를 초기화
+            purchasePrices.add(avgPrice)  // 새로운 평균 매입 단가만 추가
+        }
     }
 
 }
