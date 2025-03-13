@@ -95,20 +95,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
+//이미 같은 프래그먼트가 있다면 새로 추가하지 않도록 체크
     private fun showFragment(fragment: Fragment, tag: String) {
         val existingFragment = supportFragmentManager.findFragmentByTag(tag)
+
         if (existingFragment == null) {
             supportFragmentManager.beginTransaction()
                 .replace(R.id.contentFrame, fragment, tag)
                 .commit()
+        } else {
+            // 기존 프래그먼트가 있으면 굳이 다시 추가하지 않음
+            supportFragmentManager.beginTransaction()
+                .show(existingFragment)
+                .commit()
         }
     }
 
-    // 현재 프래그먼트 제거 함수
-    private fun removeCurrentFragment() {
-        supportFragmentManager.findFragmentById(R.id.contentFrame)?.let {
-            supportFragmentManager.beginTransaction().remove(it).commit()
-        }
-    }
 }
