@@ -95,20 +95,30 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-//이미 같은 프래그먼트가 있다면 새로 추가하지 않도록 체크
+    //이미 같은 프래그먼트가 있다면 새로 추가하지 않도록 체크
     private fun showFragment(fragment: Fragment, tag: String) {
         val existingFragment = supportFragmentManager.findFragmentByTag(tag)
 
+        val transaction = supportFragmentManager.beginTransaction()
+
         if (existingFragment == null) {
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.contentFrame, fragment, tag)
-                .commit()
+            transaction.setCustomAnimations(
+                R.anim.fragment_slide_in,   // 진입 애니메이션
+                R.anim.fragment_slide_out,  // 퇴장 애니메이션
+                R.anim.fragment_pop_in,     // 백스택에서 돌아올 때 진입 애니메이션
+                R.anim.fragment_pop_out     // 백스택에서 나갈 때 퇴장 애니메이션
+            )
+            transaction.replace(R.id.contentFrame, fragment, tag)
         } else {
-            // 기존 프래그먼트가 있으면 굳이 다시 추가하지 않음
-            supportFragmentManager.beginTransaction()
-                .show(existingFragment)
-                .commit()
+            // 기존 프래그먼트가 있으면 보여주는 방식으로 처리
+            transaction.setCustomAnimations(
+                R.anim.fragment_pop_in,
+                R.anim.fragment_pop_out
+            )
+            transaction.show(existingFragment)
         }
+
+        transaction.commit()
     }
 
 }
