@@ -56,13 +56,13 @@
             android:gravity="center" />
     </LinearLayout>
 
+    <!-- 부동산 목록 RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewBodongsan"
         android:layout_width="match_parent"
-        android:layout_height="400dp"
-        android:layout_marginTop="5dp" />
-
-
+        android:layout_height="0dp"
+        android:layout_marginTop="5dp"
+        android:layout_weight="1" />
 
     <!-- 선택한 부동산의 상세 정보를 표시할 영역 -->
     <LinearLayout
@@ -73,30 +73,29 @@
         android:visibility="visible"
         android:layout_marginTop="20dp">
 
-    <TextView
-        android:id="@+id/priceText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="가격: 0원"
-        android:textSize="16sp"
-        android:layout_marginTop="10dp" />
+        <TextView
+            android:id="@+id/priceText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="가격: 0원"
+            android:textSize="16sp"
+            android:layout_marginTop="10dp" />
 
-    <TextView
-        android:id="@+id/earningsText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="예상 수익률: 0%"
-        android:textSize="16sp"
-        android:layout_marginTop="10dp" />
+        <TextView
+            android:id="@+id/earningsText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="예상 수익률: 0%"
+            android:textSize="16sp"
+            android:layout_marginTop="10dp" />
 
-    <Button
-        android:id="@+id/purchaseButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="구매하기"
-        android:layout_marginTop="20dp"
-        android:textColor="@android:color/white"
-        android:background="@drawable/button_selector" />
-</LinearLayout>
-
+        <Button
+            android:id="@+id/purchaseButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="구매하기"
+            android:layout_marginTop="20dp"
+            android:textColor="@android:color/white"
+            android:background="@drawable/button_selector" />
     </LinearLayout>
+</LinearLayout>
