@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#212C64"
     android:orientation="vertical">
 
     <!-- 상단: 자산 정보와 시간 -->
@@ -10,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:background="#212C64"
+        android:background="@drawable/top_layout_border"
         android:padding="10dp">
 
         <!-- 자산 정보 -->
@@ -57,10 +58,10 @@
             android:id="@+id/titleText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="주식 게임??"
+            android:text="주식 게임"
             android:textSize="50sp"
             android:textStyle="bold"
-            android:textColor="#34BC39"
+            android:textColor="#212C64"
             android:gravity="center"
             android:layout_gravity="center"
             android:padding="20dp"
@@ -82,7 +83,7 @@
         android:layout_height="60dp"
         android:orientation="horizontal"
         android:padding="5dp"
-        android:background="#090909">
+        android:background="#070707">
 
         <Button
             android:id="@+id/button1"
