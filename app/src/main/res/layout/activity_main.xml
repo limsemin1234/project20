@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:background="#8FA382"
+        android:background="#212C64"
         android:padding="10dp">
 
         <!-- 자산 정보 -->
@@ -81,7 +81,7 @@
         android:layout_height="60dp"
         android:orientation="horizontal"
         android:padding="5dp"
-        android:background="#8FA382">
+        android:background="#090909">
 
         <Button
             android:id="@+id/button1"
@@ -91,7 +91,8 @@
             android:text="내정보"
             android:textStyle="bold"
             android:layout_margin="5dp"
-            android:background="#E5E6E4"/>
+            android:textColor="@android:color/white"
+            android:background="#531DB1"/>
 
         <Button
             android:id="@+id/button2"
@@ -101,7 +102,8 @@
             android:text="알바"
             android:textStyle="bold"
             android:layout_margin="5dp"
-            android:background="#E5E6E4"/>
+            android:textColor="@android:color/white"
+            android:background="#531DB1"/>
 
         <Button
             android:id="@+id/button3"
@@ -111,7 +113,8 @@
             android:text="주식"
             android:textStyle="bold"
             android:layout_margin="5dp"
-            android:background="#E5E6E4"/>
+            android:textColor="@android:color/white"
+            android:background="#531DB1"/>
 
         <Button
             android:id="@+id/button4"
@@ -121,7 +124,8 @@
             android:text="부동산"
             android:textStyle="bold"
             android:layout_margin="5dp"
-            android:background="#E5E6E4"/>
+            android:textColor="@android:color/white"
+            android:background="#531DB1"/>
 
         <Button
             android:id="@+id/button5"
@@ -131,7 +135,8 @@
             android:text="종료"
             android:textStyle="bold"
             android:layout_margin="5dp"
-            android:background="#E5E6E4"/>
+            android:textColor="@android:color/white"
+            android:background="#531DB1"/>
     </LinearLayout>
 
 </LinearLayout>
