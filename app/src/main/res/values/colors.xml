@@ -4,5 +4,6 @@
     <color name="white">#FFFFFFFF</color>
     <color name="red">#FF5733</color> <!-- 예: 오를 때 (빨간색) -->
     <color name="blue">#3385FF</color> <!-- 예: 내릴 때 (파란색) -->
-
+    <color name="button_color">#402080</color>
+    <color name="button_pressed">#00BCD4</color>
 </resources>
