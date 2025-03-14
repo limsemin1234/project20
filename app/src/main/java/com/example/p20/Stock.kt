@@ -63,9 +63,7 @@ data class Stock(
     private fun updateAveragePurchasePrice() {
         if (purchasePrices.isNotEmpty()) {
             val avgPrice = purchasePrices.average().toInt()
-            // 매수 가격이 갱신되었으므로 평균 매입 가격을 다시 갱신
-            purchasePrices.clear()  // 이전 매수 리스트를 초기화
-            purchasePrices.add(avgPrice)  // 새로운 평균 매입 단가만 추가
+
         }
     }
 
