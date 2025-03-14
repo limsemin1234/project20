@@ -9,7 +9,9 @@ data class Stock(
     val purchasePrices: MutableList<Int> = mutableListOf() // 매입 가격 리스트
 ) {
     fun updateChangeValue() {
-        changeValue = ((Math.random() * 1001 - 500) / 100).toInt() * 100  // -500 ~ +500 범위
+        // -5% ~ +5% 사이의 랜덤한 값 생성
+        val randomPercent = (Math.random() * 10 - 5)  // -5에서 +5까지의 랜덤한 값 생성
+        changeValue = (price * randomPercent / 100).toInt() / 100 * 100  // 백 단위로 반영
         updatePriceAndChangeValue()
     }
 

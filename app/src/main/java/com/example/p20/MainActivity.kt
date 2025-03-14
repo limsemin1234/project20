@@ -11,6 +11,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.Observer
 import android.animation.ObjectAnimator
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 
 
@@ -18,7 +20,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var assetViewModel: AssetViewModel // 자산 관리 뷰모델
     private lateinit var assetTextView: TextView // 최상단 자산 표시
-
+    private lateinit var stockViewModel: StockViewModel
     private lateinit var timeViewModel: TimeViewModel // 뷰모델 선언
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,6 +36,11 @@ class MainActivity : AppCompatActivity() {
 
         val contentFrame = findViewById<FrameLayout>(R.id.contentFrame)
         val timeInfo: TextView = findViewById(R.id.timeInfo)
+
+        // StockViewModel 초기화
+        stockViewModel = ViewModelProvider(this).get(StockViewModel::class.java)
+        // 앱 시작 시부터 주식 가격 변동 시작
+        startStockPriceUpdates()
 
 
         // ViewModel 초기화 (기존 viewModels() 대신 ViewModelProvider 사용)
@@ -93,6 +100,21 @@ class MainActivity : AppCompatActivity() {
                 .setNegativeButton("아니오", null)
                 .show()
         }
+    }
+
+    // 주식 가격 변동을 주기적으로 업데이트하는 함수
+    private fun startStockPriceUpdates() {
+        val handler = Handler(Looper.getMainLooper())
+        val updateInterval = 3000L // 3초마다 업데이트
+
+        val updateRunnable = object : Runnable {
+            override fun run() {
+                stockViewModel.updateStockPrices() // 주식 가격 업데이트
+                handler.postDelayed(this, updateInterval) // 반복 실행
+            }
+        }
+
+        handler.post(updateRunnable) // 최초 실행
     }
 
     //이미 같은 프래그먼트가 있다면 새로 추가하지 않도록 체크
