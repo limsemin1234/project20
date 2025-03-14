@@ -2,7 +2,6 @@ package com.example.p20
 
 import android.graphics.Color
 import android.os.Bundle
-import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,7 +11,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import android.os.Looper
 import android.widget.LinearLayout
 import androidx.lifecycle.Observer
 
@@ -43,33 +41,6 @@ class StockFragment : Fragment() {
     private var stockQuantityData: TextView? = null
 
 
-    // Handler 설정
-    private val handler = Handler(Looper.getMainLooper())
-    private val updateInterval = 3000L // 5초 간격으로 주식 업데이트
-
-
-
-
-    // 주식 변동을 주기적으로 업데이트하는 Runnable
-    private val updateRunnable = object : Runnable {
-        override fun run() {
-            stockViewModel.updateStockPrices() // 주식 가격 업데이트
-            stockAdapter.notifyDataSetChanged() // RecyclerView 갱신
-
-            // 주식 상세 정보 업데이트
-            selectedStock?.let { updateStockDetails(it) }
-
-            handler.postDelayed(this, updateInterval) // 3초마다 반복
-        }
-    }
-
-    //HANDLER 사용 시 메모리 누수방지 (Fragment나 Activity가 종료될 때 Handler의 콜백을 제거)
-    override fun onDestroyView() {
-        super.onDestroyView()
-        handler.removeCallbacks(updateRunnable)  // Handler의 콜백 제거
-    }
-
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -79,16 +50,12 @@ class StockFragment : Fragment() {
         stockViewModel = ViewModelProvider(requireActivity()).get(StockViewModel::class.java)
 
 
-        // LiveData 구독 (주식 목록 업데이트)
-        stockViewModel.stockItems.observe(viewLifecycleOwner, Observer { stockItems ->
-            // stockItems는 LiveData에서 가져온 MutableList<Stock>입니다
-            updateStockList(stockItems)
+        // LiveData 구독 (주식 가격 변동 시 UI 업데이트)
+        stockViewModel.stockItems.observe(viewLifecycleOwner, Observer { updatedStockList ->
+            updateStockList(updatedStockList)  // RecyclerView 업데이트
+            selectedStock?.let { updateStockDetails(it) }  // 선택된 주식의 상세 정보 업데이트
         })
 
-        // 예시: 3초마다 주식 가격 업데이트
-        Handler(Looper.getMainLooper()).postDelayed({
-            stockViewModel.updateStockPrices()
-        }, 3000)
 
 
 
@@ -134,8 +101,6 @@ class StockFragment : Fragment() {
 
 
 
-
-// ViewModel에서 자산을 관찰하기 위해 LiveData로 자산을 가져옵니다.
         buyButton.setOnClickListener {
             selectedStock?.let {
                 // ViewModel을 통해 자산 가져오기
@@ -170,10 +135,6 @@ class StockFragment : Fragment() {
                 }
             } ?: updateStockStatus("주식을 선택하세요.")
         }
-
-
-        // 주식 변동을 주기적으로 업데이트 시작
-        handler.post(updateRunnable)
 
         return view
     }
