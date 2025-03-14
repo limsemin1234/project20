@@ -118,7 +118,7 @@ class StockFragment : Fragment() {
         assetViewModel.asset.observe(viewLifecycleOwner, Observer { newAsset ->
             // 자산 값을 TextView에 표시하는 로직 추가
             // 예시로 자산을 화면에 표시할 수 있습니다
-            stockStatusText.text = "현재 자산: ${newAsset}원"
+            stockStatusText.text = "현재 자산: ${String.format("%,d", newAsset)}원"
         })
 
 
@@ -203,6 +203,10 @@ class StockFragment : Fragment() {
     // 주식 상세 정보 업데이트
     private fun updateStockDetails(stock: Stock) {
         if (avgPurchasePriceData != null && profitLossData != null && profitRateData != null && stockQuantityData != null) {
+            // 주식명 업데이트
+            val stockNameTextView: TextView = view?.findViewById(R.id.selectedStockName) ?: return
+            stockNameTextView.text = stock.name // 선택된 주식의 이름 표시
+
             if (stock.holding > 0) {
                 val avgPurchasePrice = stock.getAvgPurchasePrice()
                 val profitLoss = stock.getProfitLoss()
