@@ -43,8 +43,11 @@ class MainActivity : AppCompatActivity() {
         startStockPriceUpdates()
 
 
+
+/////////////////////////////////시간관리//////////////////////////
         // ViewModel 초기화 (기존 viewModels() 대신 ViewModelProvider 사용)
-        timeViewModel = ViewModelProvider(this).get(TimeViewModel::class.java)
+        timeViewModel = ViewModelProvider(this, TimeViewModelFactory(applicationContext))
+            .get(TimeViewModel::class.java)
 
         // LiveData 감시하여 UI 업데이트
         timeViewModel.time.observe(this, Observer { newTime ->
@@ -55,8 +58,11 @@ class MainActivity : AppCompatActivity() {
         timeViewModel.startTimer()
 
 
+ //////////////////////////자산관리/////////////////////////////////////
+
         // AssetViewModel 초기화
-        assetViewModel = ViewModelProvider(this).get(AssetViewModel::class.java)
+        assetViewModel = ViewModelProvider(this, AssetViewModelFactory(applicationContext))
+            .get(AssetViewModel::class.java)
         assetTextView = findViewById(R.id.assetInfo) // 자산 TextView
 
         // 자산 초기 표시 (LiveData를 통해 자산 값을 가져옴)
@@ -64,6 +70,11 @@ class MainActivity : AppCompatActivity() {
             assetTextView.text = assetViewModel.getAssetText() // 자산 텍스트 업데이트
         })
 
+
+
+
+
+        /////////////////////////////버튼///////////////////////////////
         val button1 = findViewById<Button>(R.id.button1)
         val button2 = findViewById<Button>(R.id.button2)
         val button3 = findViewById<Button>(R.id.button3)
