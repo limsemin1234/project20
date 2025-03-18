@@ -22,6 +22,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var assetTextView: TextView // 최상단 자산 표시
     private lateinit var stockViewModel: StockViewModel
     private lateinit var timeViewModel: TimeViewModel // 뷰모델 선언
+    private lateinit var handler: Handler // Handler 객체
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -111,6 +112,7 @@ class MainActivity : AppCompatActivity() {
                 .setNegativeButton("아니오", null)
                 .show()
         }
+
     }
 
     // 주식 가격 변동을 주기적으로 업데이트하는 함수
@@ -152,6 +154,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         transaction.commit()
+    }
+
+    // 메모리 릭 방지를 위한 정리 작업
+    override fun onDestroy() {
+        super.onDestroy()
+        // Handler가 초기화되어 있을 경우에만 정리
+        handler?.removeCallbacksAndMessages(null)
     }
 
 }

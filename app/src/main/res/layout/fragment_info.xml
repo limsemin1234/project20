@@ -15,4 +15,20 @@
         android:textColor="@android:color/white"
         android:gravity="center"
         android:textStyle="bold" />
+
+    <!-- 자산 정보를 표시하는 TextView -->
+    <TextView
+        android:id="@+id/assetInfoTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/white"
+        android:text="자산 정보"
+        android:textSize="18sp" />
+
+    <Button
+        android:id="@+id/resetAssetButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="자산 초기화" />
+
 </LinearLayout>

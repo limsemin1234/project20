@@ -48,5 +48,11 @@ class AssetViewModel(private val context: Context) : ViewModel() {
     fun getAssetText(): String {
         return "자산: ${(_asset.value ?: 0).toString().replace(Regex("(?<=\\d)(?=(\\d{3})+\\b)"), ",")}원"
     }
+
+    // 자산 초기화 메서드
+    fun resetAsset() {
+        _asset.value = 100000 // 초기 자산 값으로 리셋
+        saveAssetToPreferences() // 자산 초기화 후 저장
+    }
 }
 

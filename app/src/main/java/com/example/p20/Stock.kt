@@ -9,16 +9,24 @@ data class Stock(
     val purchasePrices: MutableList<Int> = mutableListOf() // 매입 가격 리스트
 ) {
     fun updateChangeValue() {
-        // -5% ~ +5% 사이의 랜덤한 값 생성
-        val randomPercent = (Math.random() * 10 - 5)  // -5에서 +5까지의 랜덤한 값 생성
-        changeValue = (price * randomPercent / 100).toInt() / 100 * 100  // 백 단위로 반영
+        // -500에서 +500 사이의 랜덤한 값 생성
+        val randomChangeValue = (Math.random() * 1001 - 500).toInt()  // -500 ~ 500 사이의 값 생성
+
+        // 변동값을 100의 배수로 정리하여 일의 자리가 0이 되도록
+        changeValue = (randomChangeValue / 100) * 100  // 일의 자리가 0인 값으로 변환
+
+        // 변동값을 반영한 가격 업데이트
         updatePriceAndChangeValue()
     }
 
     private fun updatePriceAndChangeValue() {
         val oldPrice = price
-        price = maxOf(price + changeValue, 10)  // 가격이 10원 이하로 내려가지 않도록 설정
-        changeRate = ((changeValue.toDouble() / oldPrice) * 100)  // 변동률 계산
+        // 가격을 changeValue만큼 증가시키거나 감소시킴
+        price = price + changeValue
+        // 가격이 10원 이하로 내려가지 않도록 제한
+        price = maxOf(price, 10)
+        // 변동률 계산
+        changeRate = ((changeValue.toDouble() / oldPrice) * 100)
     }
 
     // 평균 매입가 계산 (매수 시에만 호출)
