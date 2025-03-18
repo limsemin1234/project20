@@ -9,8 +9,12 @@ data class Stock(
     val purchasePrices: MutableList<Int> = mutableListOf() // 매입 가격 리스트
 ) {
     fun updateChangeValue() {
-        // -500에서 +500 사이의 랜덤한 값 생성
-        val randomChangeValue = (Math.random() * 1001 - 500).toInt()  // -500 ~ 500 사이의 값 생성
+        // 변동 범위 설정
+        val minChange = -100     // 최소 변동값
+        val maxChange = 1000     // 최대 변동값
+
+        // minChange와 maxChange 사이의 랜덤한 값 생성
+        val randomChangeValue = (minChange..maxChange).random()
 
         // 변동값을 100의 배수로 정리하여 일의 자리가 0이 되도록
         changeValue = (randomChangeValue / 100) * 100  // 일의 자리가 0인 값으로 변환

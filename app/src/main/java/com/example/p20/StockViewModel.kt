@@ -39,8 +39,8 @@ class StockViewModel : ViewModel() {
     // 주식 가격 업데이트 함수
     fun updateStockPrices() {
         _stockItems.value?.let { stocks ->
-            stocks.forEach { it.updateChangeValue() }
-            _stockItems.postValue(stocks) // 변경 사항 반영
+            stocks.forEach { it.updateChangeValue() } // 주식의 변동값을 업데이트
+            _stockItems.value = stocks // 변경된 주식 리스트를 LiveData에 반영
         }
     }
 

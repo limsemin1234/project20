@@ -22,7 +22,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var assetTextView: TextView // 최상단 자산 표시
     private lateinit var stockViewModel: StockViewModel
     private lateinit var timeViewModel: TimeViewModel // 뷰모델 선언
-    private lateinit var handler: Handler // Handler 객체
+    private val handler: Handler by lazy { Handler(Looper.getMainLooper()) }
+    private var isUpdating = false  // 중복 업데이트를 방지할 플래그
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,7 +42,7 @@ class MainActivity : AppCompatActivity() {
         // StockViewModel 초기화
         stockViewModel = ViewModelProvider(this).get(StockViewModel::class.java)
         // 앱 시작 시부터 주식 가격 변동 시작
-        startStockPriceUpdates()
+        //startStockPriceUpdates()
 
 
 
@@ -115,20 +116,6 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    // 주식 가격 변동을 주기적으로 업데이트하는 함수
-    private fun startStockPriceUpdates() {
-        val handler = Handler(Looper.getMainLooper())
-        val updateInterval = 3000L // 3초마다 업데이트
-
-        val updateRunnable = object : Runnable {
-            override fun run() {
-                stockViewModel.updateStockPrices() // 주식 가격 업데이트
-                handler.postDelayed(this, updateInterval) // 반복 실행
-            }
-        }
-
-        handler.post(updateRunnable) // 최초 실행
-    }
 
     //이미 같은 프래그먼트가 있다면 새로 추가하지 않도록 체크
     private fun showFragment(fragment: Fragment, tag: String) {
@@ -159,8 +146,7 @@ class MainActivity : AppCompatActivity() {
     // 메모리 릭 방지를 위한 정리 작업
     override fun onDestroy() {
         super.onDestroy()
-        // Handler가 초기화되어 있을 경우에만 정리
-        handler?.removeCallbacksAndMessages(null)
+        handler.removeCallbacksAndMessages(null) // activity 종료 시 handler의 모든 콜백과 메시지 제거
     }
 
 }
