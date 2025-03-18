@@ -23,7 +23,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var stockViewModel: StockViewModel
     private lateinit var timeViewModel: TimeViewModel // 뷰모델 선언
     private val handler: Handler by lazy { Handler(Looper.getMainLooper()) }
-    private var isUpdating = false  // 중복 업데이트를 방지할 플래그
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

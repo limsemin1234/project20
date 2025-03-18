@@ -10,8 +10,8 @@ data class Stock(
 ) {
     fun updateChangeValue() {
         // 변동 범위 설정
-        val minChange = -100     // 최소 변동값
-        val maxChange = 1000     // 최대 변동값
+        val minChange = -400     // 최소 변동값
+        val maxChange = 600     // 최대 변동값
 
         // minChange와 maxChange 사이의 랜덤한 값 생성
         val randomChangeValue = (minChange..maxChange).random()
