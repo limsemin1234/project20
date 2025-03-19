@@ -70,6 +70,16 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         _stockItems.value = _stockItems.value
     }
 
+    fun resetStockPrices() {
+        _stockItems.value?.forEach { stock ->
+            stock.price = 10000 // 초기 가격으로 리셋
+            stock.holding = 0
+            stock.purchasePrices.clear()
+        }
+        saveStockData()
+        _stockItems.value = _stockItems.value
+    }
+
     override fun onCleared() {
         super.onCleared()
         handler.removeCallbacksAndMessages(null)
