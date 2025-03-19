@@ -75,7 +75,7 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/stockRecyclerView"
         android:layout_width="match_parent"
-        android:layout_height="220dp"/>
+        android:layout_height="wrap_content"/>
 
     <TextView
         android:id="@+id/stockStatusText"
