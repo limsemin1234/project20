@@ -3,8 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@drawable/back3"
-    android:padding="16dp">
+    android:background="@drawable/stock5"
+    android:padding="9dp">
 
     <!-- 주식 목록 텍스트 -->
     <TextView
@@ -14,12 +14,68 @@
         android:text="주식 목록"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="6dp"/>
+
+    <!-- 첫 번째 행: 각 항목의 제목 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="1dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.1"
+            android:text="종목명"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.1"
+            android:text="현재가"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.8"
+            android:text="대비"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="등락률"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textSize="14sp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="보유수량"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/stockRecyclerView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="220dp"/>
 
     <TextView
         android:id="@+id/stockStatusText"
@@ -62,7 +118,7 @@
                 android:text="주식명"
                 android:textStyle="bold"
                 android:gravity="center"
-                android:textSize="16sp" />
+                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/avgPurchasePriceText"
@@ -72,7 +128,7 @@
                 android:text="매입단가"
                 android:textStyle="bold"
                 android:gravity="center"
-                android:textSize="16sp" />
+                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/profitLossText"
@@ -82,7 +138,7 @@
                 android:text="평가손익"
                 android:textStyle="bold"
                 android:gravity="center"
-                android:textSize="16sp" />
+                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/profitRateText"
@@ -92,7 +148,7 @@
                 android:text="수익률"
                 android:textStyle="bold"
                 android:gravity="center"
-                android:textSize="16sp" />
+                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/stockQuantityText"
@@ -102,7 +158,7 @@
                 android:text="수량"
                 android:textStyle="bold"
                 android:gravity="center"
-                android:textSize="16sp" />
+                android:textSize="14sp" />
         </LinearLayout>
 
         <!-- 두 번째 행: 실제 데이터 -->
@@ -163,28 +219,28 @@
 
 
 
-
-
-
     <!-- 매수 및 매도 버튼 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:layout_marginTop="20dp"
         android:gravity="center"
-        android:layout_marginTop="20dp">
+        android:orientation="horizontal">
 
         <Button
             android:id="@+id/buyButton"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="매수"
-            android:layout_marginEnd="10dp"/>
+            android:layout_weight="1"
+            android:layout_margin="10dp"
+            android:text="매수" />
 
         <Button
             android:id="@+id/sellButton"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_margin="10dp"
             android:text="매도"/>
     </LinearLayout>
 </LinearLayout>

@@ -15,8 +15,6 @@ import android.widget.LinearLayout
 import androidx.lifecycle.Observer
 
 
-
-
 class StockFragment : Fragment() {
 
     private lateinit var stockRecyclerView: RecyclerView
@@ -57,8 +55,6 @@ class StockFragment : Fragment() {
         })
 
 
-
-
         stockRecyclerView = view.findViewById(R.id.stockRecyclerView)
         stockStatusText = view.findViewById(R.id.stockStatusText) // TextView 연결
         stockDetailsTextView = view.findViewById(R.id.stockDetailsTextView) // 추가된 텍스트뷰
@@ -66,14 +62,11 @@ class StockFragment : Fragment() {
         val sellButton: Button = view.findViewById(R.id.sellButton)
 
 
-
         // 주식 상세 정보를 미리 한 번만 findViewById로 초기화
         avgPurchasePriceData = view.findViewById(R.id.avgPurchasePriceData)
         profitLossData = view.findViewById(R.id.profitLossData)
         profitRateData = view.findViewById(R.id.profitRateData)
         stockQuantityData = view.findViewById(R.id.stockQuantityData)
-
-
 
 
         // ViewModel 초기화
@@ -87,8 +80,6 @@ class StockFragment : Fragment() {
             // 예시로 자산을 화면에 표시할 수 있습니다
             stockStatusText.text = "현재 자산: ${String.format("%,d", newAsset)}원"
         })
-
-
 
 
         // RecyclerView 설정 (세로로 주식 항목을 나열)
@@ -160,7 +151,6 @@ class StockFragment : Fragment() {
 
 
 
-
     // 주식 상세 정보 업데이트
     private fun updateStockDetails(stock: Stock) {
         if (avgPurchasePriceData != null && profitLossData != null && profitRateData != null && stockQuantityData != null) {
@@ -187,10 +177,6 @@ class StockFragment : Fragment() {
     }
 
 
-
-
-
-
     class StockViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val stockName: TextView = itemView.findViewById(R.id.stockName)
         val stockPrice: TextView = itemView.findViewById(R.id.stockPrice)
@@ -198,8 +184,6 @@ class StockFragment : Fragment() {
         val stockChangeRate: TextView = itemView.findViewById(R.id.stockChangeRate)
         val stockHolding: TextView = itemView.findViewById(R.id.stockHolding)
     }
-
-
 
 
     class StockAdapter(

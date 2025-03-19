@@ -29,8 +29,8 @@
         <!-- 알바 이미지 -->
         <ImageView
             android:id="@+id/albaImage"
-            android:layout_width="300dp"
-            android:layout_height="300dp"
+            android:layout_width="350dp"
+            android:layout_height="350dp"
             android:src="@drawable/alba1"
             android:contentDescription="알바 이미지"
             android:layout_gravity="center" />

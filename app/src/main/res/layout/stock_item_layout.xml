@@ -18,7 +18,7 @@
         android:textSize="14sp"
         android:layout_marginEnd="8dp"
         android:textColor="@android:color/black"
-        android:gravity="center"/>
+        android:gravity="start"/>
 
     <!-- 주식 가격 -->
     <TextView
@@ -30,7 +30,7 @@
         android:textSize="14sp"
         android:layout_marginEnd="8dp"
         android:textColor="@android:color/black"
-        android:gravity="center"/>
+        android:gravity="end"/>
 
     <!-- 주식 변동값 -->
     <TextView
@@ -42,7 +42,7 @@
         android:textSize="14sp"
         android:layout_marginEnd="8dp"
         android:textColor="@android:color/black"
-        android:gravity="center"/>
+        android:gravity="end"/>
 
     <!-- 주식 변동률 -->
     <TextView
@@ -53,7 +53,7 @@
         android:text="변동률"
         android:textSize="14sp"
         android:textColor="@android:color/black"
-        android:gravity="center"/>
+        android:gravity="end"/>
 
     <!-- 주식 보유량 -->
     <TextView
@@ -64,7 +64,7 @@
         android:text="보유량"
         android:textSize="14sp"
         android:textColor="@android:color/black"
-        android:gravity="center"/>
+        android:gravity="end"/>
 
 
 
