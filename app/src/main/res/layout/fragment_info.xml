@@ -37,4 +37,14 @@
         android:background="@drawable/button_selector"
         android:textColor="@android:color/white" />
 
+    <!-- 🔥 추가된 "주식 가격 초기화" 버튼 -->
+    <Button
+        android:id="@+id/resetAlba"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="알바 초기화"
+        android:layout_margin="10dp"
+        android:background="@drawable/button_selector"
+        android:textColor="@android:color/white" />
+
 </LinearLayout>
