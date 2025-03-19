@@ -7,7 +7,7 @@
     android:gravity="center"
     android:padding="16dp">
 
-    <!-- 새로운 레벨 표시 텍스트 추가 -->
+    <!-- 새로운 레벨 표시 텍스트 -->
     <TextView
         android:id="@+id/levelText"
         android:layout_width="wrap_content"
@@ -15,7 +15,9 @@
         android:text="레벨: 1"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:layout_margin="16dp"/>
+        android:layout_marginBottom="8dp"
+        android:textColor="@android:color/black" />
+
 
     <!-- 알바 이미지 -->
     <ImageView
@@ -26,6 +28,7 @@
         android:contentDescription="알바 이미지"
         android:layout_marginBottom="20dp" />
 
+
     <!-- 알바 화면 설명 텍스트 -->
     <TextView
         android:id="@+id/earnText"
@@ -35,7 +38,20 @@
         android:textStyle="bold"
         android:textSize="18sp"
         android:gravity="center"
-        android:padding="16dp" />
+        android:padding="16dp"
+        android:textColor="@android:color/black" />
+
+    <!-- 🔥 기본 텍스트 추가: "알바 가능!" -->
+    <TextView
+        android:id="@+id/cooldownText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="알바 가능!"
+        android:textSize="16sp"
+        android:layout_marginBottom="8dp"
+        android:textColor="@android:color/holo_red_dark" />
+
+
 
 
 </LinearLayout>

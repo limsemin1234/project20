@@ -1,12 +1,17 @@
 package com.example.p20
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.LiveData
+import android.app.Application
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 
-class AlbaViewModel : ViewModel() {
+class AlbaViewModel(application: Application) : AndroidViewModel(application) {
+    private val sharedPreferences = application.getSharedPreferences("alba_data", Context.MODE_PRIVATE)
+    private val handler = Handler(Looper.getMainLooper())
+
     private val _touchCount = MutableLiveData(0)
     val touchCount: LiveData<Int> get() = _touchCount
 
@@ -16,66 +21,71 @@ class AlbaViewModel : ViewModel() {
     private val _isCooldown = MutableLiveData(false) // 30초 쿨다운 상태 확인
     val isCooldown: LiveData<Boolean> get() = _isCooldown
 
-    private val _cooldownTime = MutableLiveData(0) // 남은 시간, 앱 실행 시 초기값을 0으로 설정
+    private val _cooldownTime = MutableLiveData(0) // 남은 시간
     val cooldownTime: LiveData<Int> get() = _cooldownTime
 
-    private val handler = Handler(Looper.getMainLooper())
+    init {
+        loadAlbaData()
+        if (_isCooldown.value == true) {
+            startCooldown() // 앱 실행 시 쿨다운이 있으면 타이머 실행
+        }
+    }
 
-
-
-    // 터치 횟수 증가 함수
     fun increaseTouchCount() {
-        // 쿨다운 중이거나 터치 횟수가 10번 이상이면 터치 횟수 증가를 막음
         if (_isCooldown.value == false && _touchCount.value ?: 0 < 10) {
             _touchCount.value = (_touchCount.value ?: 0) + 1
         }
 
-        // 터치 횟수가 10번에 도달하면 쿨다운 시작
         if (_touchCount.value == 10) {
-            //increaseLevel()  // 레벨업 처리
-            startCooldown()  // 10번 터치 후 쿨다운 시작
+            startCooldown()
         }
     }
 
-
-    // 알바 레벨업 함수
     private fun increaseLevel() {
         val currentLevel = _albaLevel.value ?: 1
-        val newLevel = currentLevel + 1
-        _albaLevel.value = newLevel
-
-        // 터치 횟수 초기화
+        _albaLevel.value = currentLevel + 1
         _touchCount.value = 0
+        saveAlbaData()
     }
 
     fun startCooldown() {
-        // 쿨다운 상태로 전환하고, 쿨다운 타이머를 시작
         _isCooldown.value = true
-        // 쿨다운 시간 설정 (예: 30초)
         _cooldownTime.value = 30
+        saveAlbaData()
 
-        // 쿨다운 타이머가 끝나면 쿨다운 종료 후 레벨업을 처리
         val cooldownRunnable = object : Runnable {
             override fun run() {
                 if (_cooldownTime.value ?: 0 > 0) {
                     _cooldownTime.value = (_cooldownTime.value ?: 0) - 1
-                    Handler(Looper.getMainLooper()).postDelayed(this, 1000)
+                    handler.postDelayed(this, 1000)
                 } else {
-                    // 쿨다운 종료 후 레벨업 가능 상태로 설정
                     _isCooldown.value = false
-                    _touchCount.value = 0  // 쿨다운 후에는 다시 터치 횟수 초기화
-                    increaseLevel()  // 쿨다운 후에 레벨업
+                    _touchCount.value = 0
+                    increaseLevel()
+                    saveAlbaData()
                 }
             }
         }
-
-        Handler(Looper.getMainLooper()).post(cooldownRunnable)
+        handler.post(cooldownRunnable)
     }
 
-
-    // 레벨에 따른 보상 금액 계산
     fun getRewardAmount(): Int {
-        val level = _albaLevel.value ?: 1
-        return level * 100 // 레벨마다 100원씩 증가
+        return (_albaLevel.value ?: 1) * 100
+    }
+
+    private fun saveAlbaData() {
+        val editor = sharedPreferences.edit()
+        editor.putInt("alba_level", _albaLevel.value ?: 1)
+        editor.putInt("touch_count", _touchCount.value ?: 0)
+        editor.putBoolean("is_cooldown", _isCooldown.value ?: false)
+        editor.putInt("cooldown_time", _cooldownTime.value ?: 0)
+        editor.apply()
+    }
+
+    private fun loadAlbaData() {
+        _albaLevel.value = sharedPreferences.getInt("alba_level", 1)
+        _touchCount.value = sharedPreferences.getInt("touch_count", 0)
+        _isCooldown.value = sharedPreferences.getBoolean("is_cooldown", false)
+        _cooldownTime.value = sharedPreferences.getInt("cooldown_time", 0)
     }
 }
