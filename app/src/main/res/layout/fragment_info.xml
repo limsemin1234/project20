@@ -39,7 +39,7 @@
 
     <!-- 🔥 추가된 "주식 가격 초기화" 버튼 -->
     <Button
-        android:id="@+id/resetAlba"
+        android:id="@+id/resetAlbaButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="알바 초기화"

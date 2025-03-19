@@ -88,4 +88,13 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
         _isCooldown.value = sharedPreferences.getBoolean("is_cooldown", false)
         _cooldownTime.value = sharedPreferences.getInt("cooldown_time", 0)
     }
+
+    fun resetAlba() {
+        _albaLevel.value = 1 // 레벨 초기화
+        _touchCount.value = 0 // 터치 횟수 초기화
+        _isCooldown.value = false // 쿨다운 상태 해제
+        _cooldownTime.value = 0 // 쿨다운 시간 초기화
+        saveAlbaData() // 변경 사항 저장
+    }
+
 }
