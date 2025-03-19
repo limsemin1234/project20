@@ -40,9 +40,6 @@ class MainActivity : AppCompatActivity() {
 
         // StockViewModel 초기화
         stockViewModel = ViewModelProvider(this).get(StockViewModel::class.java)
-        // 앱 시작 시부터 주식 가격 변동 시작
-        //startStockPriceUpdates()
-
 
 
 /////////////////////////////////시간관리//////////////////////////

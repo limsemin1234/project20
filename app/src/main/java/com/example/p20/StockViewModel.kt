@@ -1,21 +1,23 @@
 package com.example.p20
 
+import android.app.Application
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 
-class StockViewModel : ViewModel() {
+class StockViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _stockItems = MutableLiveData<MutableList<Stock>>()
     val stockItems: LiveData<MutableList<Stock>> get() = _stockItems
 
     private val handler = Handler(Looper.getMainLooper())
     private val updateInterval = 3000L // 3초마다 업데이트
+    private val sharedPreferences = application.getSharedPreferences("stock_data", Context.MODE_PRIVATE)
 
     init {
-        // 초기 주식 데이터 설정
         _stockItems.value = mutableListOf(
             Stock("테슬라", 10000, 0, 0.0, 0),
             Stock("애플", 10000, 0, 0.0, 0),
@@ -23,7 +25,7 @@ class StockViewModel : ViewModel() {
             Stock("MS", 10000, 0, 0.0, 0)
         )
 
-        // 앱 실행과 동시에 주식 변동 시작
+        loadStockData() // 앱 실행 시 데이터 로드
         startStockPriceUpdates()
     }
 
@@ -31,22 +33,46 @@ class StockViewModel : ViewModel() {
         handler.post(object : Runnable {
             override fun run() {
                 updateStockPrices()
-                handler.postDelayed(this, updateInterval) // 3초마다 반복 실행
+                handler.postDelayed(this, updateInterval)
             }
         })
     }
 
-    // 주식 가격 업데이트 함수
     fun updateStockPrices() {
         _stockItems.value?.let { stocks ->
-            stocks.forEach { it.updateChangeValue() } // 주식의 변동값을 업데이트
-            _stockItems.value = stocks // 변경된 주식 리스트를 LiveData에 반영
+            stocks.forEach { it.updateChangeValue() }
+            _stockItems.value = stocks
         }
+    }
+
+    private fun saveStockData() {
+        val editor = sharedPreferences.edit()
+        _stockItems.value?.forEachIndexed { index, stock ->
+            editor.putInt("price_$index", stock.price)
+            editor.putInt("holding_$index", stock.holding)
+            editor.putInt("purchasePrice_$index", stock.getAvgPurchasePrice())
+            editor.putInt("profitLoss_$index", stock.getProfitLoss())
+            editor.putFloat("profitRate_$index", stock.getProfitRate().toFloat())
+        }
+        editor.apply()
+    }
+
+    private fun loadStockData() {
+        _stockItems.value?.forEachIndexed { index, stock ->
+            stock.price = sharedPreferences.getInt("price_$index", stock.price)
+            stock.holding = sharedPreferences.getInt("holding_$index", stock.holding)
+            stock.purchasePrices.clear()
+            val savedPurchasePrice = sharedPreferences.getInt("purchasePrice_$index", 0)
+            if (savedPurchasePrice > 0) {
+                stock.purchasePrices.add(savedPurchasePrice)
+            }
+        }
+        _stockItems.value = _stockItems.value
     }
 
     override fun onCleared() {
         super.onCleared()
-        handler.removeCallbacksAndMessages(null) // 메모리 누수 방지
+        handler.removeCallbacksAndMessages(null)
+        saveStockData()
     }
 }
-
