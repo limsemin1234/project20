@@ -30,7 +30,7 @@ class AlbaFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val view = inflater.inflate(R.layout.alba_layout, container, false)
+        val view = inflater.inflate(R.layout.fragment_alba, container, false)
 
         albaViewModel = ViewModelProvider(requireActivity()).get(AlbaViewModel::class.java)
         assetViewModel = ViewModelProvider(requireActivity()).get(AssetViewModel::class.java)
