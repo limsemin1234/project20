@@ -100,7 +100,8 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center_vertical"
-        android:padding="10dp">
+        android:padding="10dp"
+        android:layout_marginBottom="130dp">
 
         <!-- 첫 번째 행: 각 항목의 제목 -->
         <LinearLayout
@@ -223,7 +224,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_margin="1dp"
         android:gravity="center"
         android:orientation="horizontal">
 
@@ -233,7 +234,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_margin="10dp"
-            android:text="매수" />
+            android:text="매수"
+            android:textSize="16sp"/>
 
         <Button
             android:id="@+id/sellButton"
@@ -241,16 +243,17 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_margin="10dp"
-            android:text="매도"/>
+            android:text="매도"
+            android:textSize="16sp"/>
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/allButtonContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:layout_margin="1dp"
         android:gravity="center"
-        android:layout_marginTop="16dp">
+        android:orientation="horizontal">
 
         <Button
             android:id="@+id/buyAllButton"
@@ -259,7 +262,7 @@
             android:layout_weight="1"
             android:layout_margin="10dp"
             android:text="전체 매수"
-            android:layout_marginEnd="8dp"/>
+            android:textSize="16sp"/>
 
         <Button
             android:id="@+id/sellAllButton"
@@ -268,7 +271,7 @@
             android:layout_weight="1"
             android:layout_margin="10dp"
             android:text="전체 매도"
-            android:layout_marginStart="8dp"/>
+            android:textSize="16sp"/>
     </LinearLayout>
 
 </LinearLayout>

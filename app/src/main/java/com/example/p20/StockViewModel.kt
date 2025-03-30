@@ -22,7 +22,8 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
             Stock("테슬라", 10000, 0, 0.0, 0),
             Stock("애플", 10000, 0, 0.0, 0),
             Stock("아마존", 10000, 0, 0.0, 0),
-            Stock("MS", 10000, 0, 0.0, 0)
+            Stock("MS", 10000, 0, 0.0, 0),
+            Stock("구글", 10000, 0, 0.0, 0)
         )
 
         loadStockData() // 앱 실행 시 데이터 로드
