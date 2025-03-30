@@ -91,16 +91,15 @@ class StockFragment : Fragment() {
         stockRecyclerView.adapter = stockAdapter
 
 
-
+        // 매수 버튼 클릭
         buyButton.setOnClickListener {
             selectedStock?.let {
                 // ViewModel을 통해 자산 가져오기
                 val currentAsset = assetViewModel.asset.value ?: 0
 
-
                 if (currentAsset >= it.price) {
                     assetViewModel.decreaseAsset(it.price) // 자산 차감
-                    it.buyStock(it.price) // 주식 매수
+                    stockViewModel.buyStock(it) //stockViewModel 매수 경유
                     updateStockStatus("${it.name}을(를) 매수했습니다! 보유량: ${it.holding}주")
                     stockAdapter.notifyDataSetChanged()  // RecyclerView 갱신
                 } else {
@@ -116,8 +115,10 @@ class StockFragment : Fragment() {
         sellButton.setOnClickListener {
             selectedStock?.let {
                 if (it.holding > 0) {
-                    val profitLoss = it.sellStock() // 주식 매도
+                    stockViewModel.sellStock(it)           // 주식매도 stockViewModel 경유
                     assetViewModel.increaseAsset(it.price) // 자산 증가
+
+                    val profitLoss = it.getProfitLoss() // 여기서 손익 계산
                     updateStockStatus("${it.name} 매도! 손익: ${profitLoss}원")
                     stockAdapter.notifyDataSetChanged()  // RecyclerView 갱신
                 } else {

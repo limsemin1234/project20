@@ -58,7 +58,7 @@
             android:id="@+id/titleText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="주식 게임"
+            android:text="부자되는 게임"
             android:textSize="50sp"
             android:textStyle="bold"
             android:textColor="#212C64"

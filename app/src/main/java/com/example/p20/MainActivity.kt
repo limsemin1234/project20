@@ -105,7 +105,10 @@ class MainActivity : AppCompatActivity() {
             AlertDialog.Builder(this)
                 .setTitle("게임 종료")
                 .setMessage("정말 종료하시겠습니까?")
-                .setPositiveButton("예") { _, _ -> finish() }
+                .setPositiveButton("예") { _, _ ->
+                    stockViewModel.saveStockData() // 데이터 저장
+                    finishAffinity()               // 앱 전체 종료
+                }
                 .setNegativeButton("아니오", null)
                 .show()
         }
@@ -143,6 +146,11 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         handler.removeCallbacksAndMessages(null) // activity 종료 시 handler의 모든 콜백과 메시지 제거
+    }
+
+    override fun onStop() {
+        super.onStop()
+        stockViewModel.saveStockData() // 앱 종료 시 주식 데이터 저장
     }
 
 }

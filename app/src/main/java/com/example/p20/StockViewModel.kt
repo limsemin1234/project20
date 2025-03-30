@@ -45,7 +45,17 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun saveStockData() {
+    fun buyStock(stock: Stock) {
+        stock.buyStock(stock.price)
+        saveStockData() // 매수 후 저장
+    }
+
+    fun sellStock(stock: Stock) {
+        stock.sellStock()
+        saveStockData() // 매도 후 저장
+    }
+
+    fun saveStockData() {
         val editor = sharedPreferences.edit()
         _stockItems.value?.forEachIndexed { index, stock ->
             editor.putInt("price_$index", stock.price)
@@ -83,6 +93,7 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     override fun onCleared() {
         super.onCleared()
         handler.removeCallbacksAndMessages(null)
-        saveStockData()
     }
+
+
 }
