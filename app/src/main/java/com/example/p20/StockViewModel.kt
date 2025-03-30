@@ -46,7 +46,7 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun buyStock(stock: Stock) {
-        stock.buyStock(stock.price)
+        stock.buyStock()
         saveStockData() // 매수 후 저장
     }
 
@@ -54,6 +54,22 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         stock.sellStock()
         saveStockData() // 매도 후 저장
     }
+
+    fun buyAllStock(stock: Stock, currentAsset: Int): Int {
+        val buyCount = stock.buyAllStock(currentAsset)
+        saveStockData()
+        _stockItems.value = _stockItems.value
+        return buyCount
+    }
+
+    fun sellAllStock(stock: Stock): Int {
+        val sellCount = stock.sellAllStock()
+        saveStockData()
+        _stockItems.value = _stockItems.value
+        return sellCount
+    }
+
+
 
     fun saveStockData() {
         val editor = sharedPreferences.edit()

@@ -51,10 +51,18 @@ data class Stock(
         } else 0.0
     }
 
+    // 매수 후 평균 매입 단가 갱신
+    private fun updateAveragePurchasePrice() {
+        if (purchasePrices.isNotEmpty()) {
+            val avgPrice = purchasePrices.average().toInt()
+
+        }
+    }
+
     // 주식 매수 (매입 가격을 추가하고 보유량 증가)
-    fun buyStock(purchasePrice: Int) {
+    fun buyStock() {
         holding += 1
-        purchasePrices.add(purchasePrice)
+        purchasePrices.add(price)
         // 매수 후, 매수 가격을 기반으로 새로운 평균 매입가로 갱신
         updateAveragePurchasePrice()
     }
@@ -73,12 +81,22 @@ data class Stock(
         return 0
     }
 
-    // 매수 후 평균 매입 단가 갱신
-    private fun updateAveragePurchasePrice() {
-        if (purchasePrices.isNotEmpty()) {
-            val avgPrice = purchasePrices.average().toInt()
 
+    fun buyAllStock(currentAsset: Int): Int {
+        val maxBuyCount = currentAsset / price
+        repeat(maxBuyCount) {
+            buyStock()
         }
+        return maxBuyCount
     }
+
+    fun sellAllStock(): Int {
+        val sellCount = holding
+        repeat(sellCount) {
+            sellStock()
+        }
+        return sellCount
+    }
+
 
 }

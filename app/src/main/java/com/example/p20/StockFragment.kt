@@ -58,8 +58,12 @@ class StockFragment : Fragment() {
         stockRecyclerView = view.findViewById(R.id.stockRecyclerView)
         stockStatusText = view.findViewById(R.id.stockStatusText) // TextView 연결
         stockDetailsTextView = view.findViewById(R.id.stockDetailsTextView) // 추가된 텍스트뷰
+
+        //매수,매도,전체매수,전체매도 버튼 선업
         val buyButton: Button = view.findViewById(R.id.buyButton)
         val sellButton: Button = view.findViewById(R.id.sellButton)
+        val buyAllButton: Button = view.findViewById(R.id.buyAllButton)
+        val sellAllButton: Button = view.findViewById(R.id.sellAllButton)
 
 
         // 주식 상세 정보를 미리 한 번만 findViewById로 초기화
@@ -127,6 +131,38 @@ class StockFragment : Fragment() {
                 }
             } ?: updateStockStatus("주식을 선택하세요.")
         }
+
+        // 전체 매수
+        buyAllButton.setOnClickListener {
+            selectedStock?.let { stock ->
+                val currentAsset = assetViewModel.asset.value ?: 0
+                if (currentAsset >= stock.price) {
+                    val buyCount = stockViewModel.buyAllStock(stock, currentAsset)
+                    val usedAsset = stock.price * buyCount
+                    assetViewModel.decreaseAsset(usedAsset)
+                    updateStockStatus("${stock.name}을(를) ${buyCount}주 전체 매수했습니다!")
+                    stockAdapter.notifyDataSetChanged()
+                } else {
+                    updateStockStatus("자산이 부족합니다!")
+                }
+            } ?: updateStockStatus("주식을 선택하세요.")
+        }
+
+        //전체 매도
+        sellAllButton.setOnClickListener {
+            selectedStock?.let { stock ->
+                if (stock.holding > 0) {
+                    val sellCount = stockViewModel.sellAllStock(stock)
+                    val gain = stock.price * sellCount
+                    assetViewModel.increaseAsset(gain)
+                    updateStockStatus("${stock.name} ${sellCount}주 전체 매도 완료!")
+                    stockAdapter.notifyDataSetChanged()
+                } else {
+                    updateStockStatus("보유한 주식이 없습니다!")
+                }
+            } ?: updateStockStatus("주식을 선택하세요.")
+        }
+
 
         return view
     }
