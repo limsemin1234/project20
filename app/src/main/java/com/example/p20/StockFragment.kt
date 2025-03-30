@@ -43,7 +43,7 @@ class StockFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.stock_layout, container, false)
+        val view = inflater.inflate(R.layout.fragment_stock, container, false)
 
         stockViewModel = ViewModelProvider(requireActivity()).get(StockViewModel::class.java)
 
