@@ -53,11 +53,6 @@ class InfoFragment : Fragment() {
             Toast.makeText(requireContext(), "부동산 가격이 초기화되었습니다.", Toast.LENGTH_SHORT).show()
         }
 
-        binding.clearRealEstateDataButton.setOnClickListener {
-            val prefs = requireContext().getSharedPreferences("real_estate_data", Context.MODE_PRIVATE)
-            prefs.edit().clear().apply()
-            Toast.makeText(requireContext(), "부동산 데이터 초기화 완료", Toast.LENGTH_SHORT).show()
-        }
 
         return binding.root
     }

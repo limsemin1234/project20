@@ -45,7 +45,7 @@ class AssetViewModel(private val context: Context) : ViewModel() {
     }
 
     fun resetAsset() {
-        _asset.value = 1_000_000L // 초기 자산
+        _asset.value = 1_000_000_000L // 초기 자산
         saveAssetToPreferences()
     }
 }

@@ -8,7 +8,7 @@ data class RealEstate(
     val purchasePrices: MutableList<Long> = mutableListOf()
 ) {
     fun updatePrice() {
-        val changeRates = listOf(-40, -30, -20, -10, 10, 20, 30, 40)
+        val changeRates = listOf( -30, -20, -10, 0, 10, 20, 30,)
         val rate = changeRates.random()
         price = (initialPrice * (1 + rate / 100.0)).toLong()
     }

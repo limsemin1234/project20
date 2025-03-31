@@ -23,7 +23,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="16sp"
-        android:text="자산 초기화 (10만)"
+        android:text="자산 초기화"
         android:layout_margin="15dp"
         android:background="@drawable/button_selector"
         android:textColor="@android:color/white" />
@@ -61,11 +61,5 @@
         android:background="@drawable/button_selector"
         android:textColor="@android:color/white" />
 
-    <Button
-        android:id="@+id/clearRealEstateDataButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="부동산 데이터 초기화"
-        />
 
 </LinearLayout>

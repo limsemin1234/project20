@@ -25,9 +25,9 @@ class RealEstateViewModel(application: Application) : AndroidViewModel(applicati
 
     init {
         _realEstateList.value = mutableListOf(
-            RealEstate("서울 아파트", 150_000_000L),
-            RealEstate("부산 오피스텔", 100_000_000L),
-            RealEstate("제주 타운하우스", 200_000_000L)
+            RealEstate("서울 아파트", 300_000_000L),
+            RealEstate("부산 오피스텔", 200_000_000L),
+            RealEstate("제주 타운하우스", 100_000_000L)
         )
         loadRealEstateData()
         startPriceUpdates()
