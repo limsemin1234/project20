@@ -101,7 +101,7 @@
         android:orientation="vertical"
         android:gravity="center_vertical"
         android:padding="10dp"
-        android:layout_marginBottom="130dp">
+        android:layout_marginBottom="40dp">
 
         <!-- 첫 번째 행: 각 항목의 제목 -->
         <LinearLayout
