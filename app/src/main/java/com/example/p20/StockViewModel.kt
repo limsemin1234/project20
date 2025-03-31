@@ -14,7 +14,7 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     val stockItems: LiveData<MutableList<Stock>> get() = _stockItems
 
     private val handler = Handler(Looper.getMainLooper())
-    private val updateInterval = 3000L // 3초마다 업데이트
+    private val updateInterval = 3000L
     private val sharedPreferences = application.getSharedPreferences("stock_data", Context.MODE_PRIVATE)
 
     init {
@@ -26,7 +26,7 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
             Stock("구글", 10000, 0, 0.0, 0)
         )
 
-        loadStockData() // 앱 실행 시 데이터 로드
+        loadStockData()
         startStockPriceUpdates()
     }
 
@@ -48,15 +48,15 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
 
     fun buyStock(stock: Stock) {
         stock.buyStock()
-        saveStockData() // 매수 후 저장
+        saveStockData()
     }
 
     fun sellStock(stock: Stock) {
         stock.sellStock()
-        saveStockData() // 매도 후 저장
+        saveStockData()
     }
 
-    fun buyAllStock(stock: Stock, currentAsset: Int): Int {
+    fun buyAllStock(stock: Stock, currentAsset: Long): Int {
         val buyCount = stock.buyAllStock(currentAsset)
         saveStockData()
         _stockItems.value = _stockItems.value
@@ -69,8 +69,6 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         _stockItems.value = _stockItems.value
         return sellCount
     }
-
-
 
     fun saveStockData() {
         val editor = sharedPreferences.edit()
@@ -99,7 +97,7 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
 
     fun resetStockPrices() {
         _stockItems.value?.forEach { stock ->
-            stock.price = 10000 // 초기 가격으로 리셋
+            stock.price = 10000
             stock.holding = 0
             stock.purchasePrices.clear()
         }
@@ -111,6 +109,4 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         super.onCleared()
         handler.removeCallbacksAndMessages(null)
     }
-
-
 }

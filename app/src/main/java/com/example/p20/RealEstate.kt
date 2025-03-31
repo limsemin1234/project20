@@ -2,15 +2,15 @@ package com.example.p20
 
 data class RealEstate(
     val name: String,
-    var price: Int,
+    val initialPrice: Long, // 최초 가격
+    var price: Long = initialPrice,
     var owned: Boolean = false,
-    val purchasePrices: MutableList<Int> = mutableListOf(), // 구매가 기록
-    val initialPrice: Int = price // 최초 가격 저장
+    val purchasePrices: MutableList<Long> = mutableListOf()
 ) {
     fun updatePrice() {
-        val changeRates = listOf(-20, -10, 0, 10, 20)
+        val changeRates = listOf(-40, -30, -20, -10, 10, 20, 30, 40)
         val rate = changeRates.random()
-        price = initialPrice + (initialPrice * rate / 100)
+        price = (initialPrice * (1 + rate / 100.0)).toLong()
     }
 
     fun buy() {
@@ -23,16 +23,16 @@ data class RealEstate(
         purchasePrices.clear()
     }
 
-    fun getAvgPurchasePrice(): Int {
+    fun getAvgPurchasePrice(): Long {
         return if (purchasePrices.isNotEmpty()) {
             purchasePrices.sum() / purchasePrices.size
-        } else 0
+        } else 0L
     }
 
-    fun getProfitLoss(): Int {
+    fun getProfitLoss(): Long {
         return if (owned) {
             price - getAvgPurchasePrice()
-        } else 0
+        } else 0L
     }
 
     fun getProfitRate(): Double {

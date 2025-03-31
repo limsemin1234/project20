@@ -12,7 +12,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.text.DecimalFormat
 
-
 class RealEstateFragment : Fragment() {
 
     private lateinit var realEstateRecyclerView: RecyclerView
@@ -49,22 +48,20 @@ class RealEstateFragment : Fragment() {
         }
 
         assetViewModel.asset.observe(viewLifecycleOwner) { newAsset ->
-            // 자산 변동 시 필요하면 추가 처리 가능
+            // 자산 변동 시 필요하면 처리 가능
         }
 
-        // 임대 수익 콜백 연결
         realEstateViewModel.incomeCallback = { income ->
-            if (income > 0) {
+            if (income > 0L) {
                 assetViewModel.increaseAsset(income)
                 val formatter = DecimalFormat("#,###")
                 realEstateStatusText.text = "임대 수익 +${formatter.format(income)}원 발생!"
             }
         }
 
-
         buyButton.setOnClickListener {
             selectedEstate?.let {
-                val currentAsset = assetViewModel.asset.value ?: 0
+                val currentAsset = assetViewModel.asset.value ?: 0L
                 if (currentAsset >= it.price && !it.owned) {
                     assetViewModel.decreaseAsset(it.price)
                     realEstateViewModel.buy(it)
@@ -113,5 +110,4 @@ class RealEstateFragment : Fragment() {
         수익률: ${"%.2f".format(profitRate)}%
     """.trimIndent()
     }
-
 }

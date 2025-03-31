@@ -43,12 +43,11 @@ class AlbaFragment : Fragment() {
 
         earnText.text = "터치!! 터치!!"
 
-        // 터치 이벤트 추가 (클릭한 위치에 보상 표시)
-        albaImage.setOnTouchListener { v, event ->
+        albaImage.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
                 if (albaViewModel.isCooldown.value == false) {
                     albaViewModel.increaseTouchCount()
-                    val rewardAmount = albaViewModel.getRewardAmount()
+                    val rewardAmount = albaViewModel.getRewardAmount().toLong() // Long으로 변경
                     assetViewModel.increaseAsset(rewardAmount)
 
                     // 클릭한 위치에 보상 표시
@@ -73,32 +72,28 @@ class AlbaFragment : Fragment() {
 
         albaViewModel.albaLevel.observe(viewLifecycleOwner, Observer { level ->
             val rewardAmount = albaViewModel.getRewardAmount()
-            levelText.text = "레벨: $level\n보상: $rewardAmount 원"
+            levelText.text = "레벨: $level\n보상: ${"%,d".format(rewardAmount)}원"
         })
 
         return view
     }
 
-    // 클릭한 위치에 보상을 표시하는 함수
-    private fun showRewardAnimation(x: Int, y: Int, reward: Int) {
+    private fun showRewardAnimation(x: Int, y: Int, reward: Long) {
         val rewardTextView = TextView(requireContext()).apply {
-            text = "+${reward}원"
+            text = "+${"%,d".format(reward)}원"
             textSize = 18f
-            setTypeface(null, Typeface.BOLD) // 🔥 글씨 진하게 설정
+            setTypeface(null, Typeface.BOLD)
             setTextColor(resources.getColor(R.color.reward_text, null))
-            setShadowLayer(5f, 2f, 2f, android.graphics.Color.BLACK) // 🔥 그림자 효과
-
+            setShadowLayer(5f, 2f, 2f, android.graphics.Color.BLACK)
             setPadding(10, 10, 10, 10)
             layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         }
 
         animationContainer.addView(rewardTextView)
 
-        // 위치 조정 (터치한 곳에서 애니메이션 시작)
         rewardTextView.x = albaImage.x + x
         rewardTextView.y = albaImage.y + y
 
-        // 애니메이션 효과: 위로 떠오르면서 점점 사라지게
         val moveUp = ObjectAnimator.ofFloat(rewardTextView, "translationY", rewardTextView.y, rewardTextView.y - 100f)
         val fadeOut = ObjectAnimator.ofFloat(rewardTextView, "alpha", 1f, 0f)
 
@@ -108,7 +103,6 @@ class AlbaFragment : Fragment() {
         moveUp.start()
         fadeOut.start()
 
-        // 1초 후 TextView 제거
         Handler(Looper.getMainLooper()).postDelayed({
             animationContainer.removeView(rewardTextView)
         }, 1000)

@@ -14,30 +14,23 @@ import androidx.recyclerview.widget.RecyclerView
 import android.widget.LinearLayout
 import androidx.lifecycle.Observer
 
-
 class StockFragment : Fragment() {
 
     private lateinit var stockRecyclerView: RecyclerView
     private lateinit var stockAdapter: StockAdapter
-    private lateinit var stockStatusText: TextView // 주식 상태를 표시할 TextView
-    private lateinit var stockDetailsTextView: LinearLayout // 추가한 LinearLayout (가로로 나열된 텍스트뷰)
+    private lateinit var stockStatusText: TextView
+    private lateinit var stockDetailsTextView: LinearLayout
     private lateinit var assetViewModel: AssetViewModel
 
-    private var selectedStock: Stock? = null // 선택된 주식 저장
-
+    private var selectedStock: Stock? = null
 
     private lateinit var stockViewModel: StockViewModel
-
-    // 주식 데이터 리스트를 ViewModel에서 가져옴
     private var stockItems: List<Stock> = listOf()
 
-
-    // 주식 상세 정보를 미리 저장할 TextView 변수들 (nullable로 변경)
     private var avgPurchasePriceData: TextView? = null
     private var profitLossData: TextView? = null
     private var profitRateData: TextView? = null
     private var stockQuantityData: TextView? = null
-
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -47,46 +40,31 @@ class StockFragment : Fragment() {
 
         stockViewModel = ViewModelProvider(requireActivity()).get(StockViewModel::class.java)
 
-
-        // LiveData 구독 (주식 가격 변동 시 UI 업데이트)
         stockViewModel.stockItems.observe(viewLifecycleOwner, Observer { updatedStockList ->
-            updateStockList(updatedStockList)  // RecyclerView 업데이트
-            selectedStock?.let { updateStockDetails(it) }  // 선택된 주식의 상세 정보 업데이트
+            updateStockList(updatedStockList)
+            selectedStock?.let { updateStockDetails(it) }
         })
 
-
         stockRecyclerView = view.findViewById(R.id.stockRecyclerView)
-        stockStatusText = view.findViewById(R.id.stockStatusText) // TextView 연결
-        stockDetailsTextView = view.findViewById(R.id.stockDetailsTextView) // 추가된 텍스트뷰
+        stockStatusText = view.findViewById(R.id.stockStatusText)
+        stockDetailsTextView = view.findViewById(R.id.stockDetailsTextView)
 
-        //매수,매도,전체매수,전체매도 버튼 선업
         val buyButton: Button = view.findViewById(R.id.buyButton)
         val sellButton: Button = view.findViewById(R.id.sellButton)
         val buyAllButton: Button = view.findViewById(R.id.buyAllButton)
         val sellAllButton: Button = view.findViewById(R.id.sellAllButton)
 
-
-        // 주식 상세 정보를 미리 한 번만 findViewById로 초기화
         avgPurchasePriceData = view.findViewById(R.id.avgPurchasePriceData)
         profitLossData = view.findViewById(R.id.profitLossData)
         profitRateData = view.findViewById(R.id.profitRateData)
         stockQuantityData = view.findViewById(R.id.stockQuantityData)
 
-
-        // ViewModel 초기화
         assetViewModel = ViewModelProvider(requireActivity()).get(AssetViewModel::class.java)
 
-
-
-        // 자산 값 변경 시 UI 업데이트
         assetViewModel.asset.observe(viewLifecycleOwner, Observer { newAsset ->
-            // 자산 값을 TextView에 표시하는 로직 추가
-            // 예시로 자산을 화면에 표시할 수 있습니다
             stockStatusText.text = "현재 자산: ${String.format("%,d", newAsset)}원"
         })
 
-
-        // RecyclerView 설정 (세로로 주식 항목을 나열)
         stockRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         stockAdapter = StockAdapter(stockItems) { stock ->
             selectedStock = stock
@@ -94,51 +72,40 @@ class StockFragment : Fragment() {
         }
         stockRecyclerView.adapter = stockAdapter
 
-
-        // 매수 버튼 클릭
         buyButton.setOnClickListener {
             selectedStock?.let {
-                // ViewModel을 통해 자산 가져오기
-                val currentAsset = assetViewModel.asset.value ?: 0
-
-                if (currentAsset >= it.price) {
-                    assetViewModel.decreaseAsset(it.price) // 자산 차감
-                    stockViewModel.buyStock(it) //stockViewModel 매수 경유
+                val currentAsset = assetViewModel.asset.value ?: 0L
+                if (currentAsset >= it.price.toLong()) {
+                    assetViewModel.decreaseAsset(it.price.toLong())
+                    stockViewModel.buyStock(it)
                     updateStockStatus("${it.name}을(를) 매수했습니다! 보유량: ${it.holding}주")
-                    stockAdapter.notifyDataSetChanged()  // RecyclerView 갱신
+                    stockAdapter.notifyDataSetChanged()
                 } else {
-                    // 자산 부족 시 주식 상태창에 메시지 표시
                     updateStockStatus("자산이 부족합니다!")
                 }
             } ?: updateStockStatus("주식을 선택하세요.")
         }
 
-
-
-        // 매도 버튼 클릭 리스너
         sellButton.setOnClickListener {
             selectedStock?.let {
                 if (it.holding > 0) {
-                    stockViewModel.sellStock(it)           // 주식매도 stockViewModel 경유
-                    assetViewModel.increaseAsset(it.price) // 자산 증가
-
-                    val profitLoss = it.getProfitLoss() // 여기서 손익 계산
+                    stockViewModel.sellStock(it)
+                    assetViewModel.increaseAsset(it.price.toLong())
+                    val profitLoss = it.getProfitLoss()
                     updateStockStatus("${it.name} 매도! 손익: ${profitLoss}원")
-                    stockAdapter.notifyDataSetChanged()  // RecyclerView 갱신
+                    stockAdapter.notifyDataSetChanged()
                 } else {
-                    // 보유한 주식이 없을 경우 메시지 표시
                     updateStockStatus("보유한 주식이 없습니다!")
                 }
             } ?: updateStockStatus("주식을 선택하세요.")
         }
 
-        // 전체 매수
         buyAllButton.setOnClickListener {
             selectedStock?.let { stock ->
-                val currentAsset = assetViewModel.asset.value ?: 0
-                if (currentAsset >= stock.price) {
+                val currentAsset = assetViewModel.asset.value ?: 0L
+                if (currentAsset >= stock.price.toLong()) {
                     val buyCount = stockViewModel.buyAllStock(stock, currentAsset)
-                    val usedAsset = stock.price * buyCount
+                    val usedAsset = stock.price.toLong() * buyCount
                     assetViewModel.decreaseAsset(usedAsset)
                     updateStockStatus("${stock.name}을(를) ${buyCount}주 전체 매수했습니다!")
                     stockAdapter.notifyDataSetChanged()
@@ -148,12 +115,11 @@ class StockFragment : Fragment() {
             } ?: updateStockStatus("주식을 선택하세요.")
         }
 
-        //전체 매도
         sellAllButton.setOnClickListener {
             selectedStock?.let { stock ->
                 if (stock.holding > 0) {
                     val sellCount = stockViewModel.sellAllStock(stock)
-                    val gain = stock.price * sellCount
+                    val gain = stock.price.toLong() * sellCount
                     assetViewModel.increaseAsset(gain)
                     updateStockStatus("${stock.name} ${sellCount}주 전체 매도 완료!")
                     stockAdapter.notifyDataSetChanged()
@@ -163,37 +129,27 @@ class StockFragment : Fragment() {
             } ?: updateStockStatus("주식을 선택하세요.")
         }
 
-
         return view
     }
 
-
     private fun updateStockList(stockItems: MutableList<Stock>) {
-        // stockItems를 기반으로 UI 업데이트
-        // 예: RecyclerView에 데이터 표시
         stockAdapter = StockAdapter(stockItems) { stock ->
             selectedStock = stock
             updateStockStatus("${stock.name}이(가) 선택되었습니다.")
         }
         stockRecyclerView.adapter = stockAdapter
-        stockAdapter.notifyDataSetChanged()  // 어댑터 갱신
+        stockAdapter.notifyDataSetChanged()
     }
 
-
-    // 주식 상태 업데이트 및 선택된 주식 상세 정보 갱신
     private fun updateStockStatus(message: String) {
         stockStatusText.text = "$message"
-        selectedStock?.let { updateStockDetails(it) } // 선택된 주식이 있으면 상세 정보 갱신
+        selectedStock?.let { updateStockDetails(it) }
     }
 
-
-
-    // 주식 상세 정보 업데이트
     private fun updateStockDetails(stock: Stock) {
         if (avgPurchasePriceData != null && profitLossData != null && profitRateData != null && stockQuantityData != null) {
-            // 주식명 업데이트
             val stockNameTextView: TextView = view?.findViewById(R.id.selectedStockName) ?: return
-            stockNameTextView.text = stock.name // 선택된 주식의 이름 표시
+            stockNameTextView.text = stock.name
 
             if (stock.holding > 0) {
                 val avgPurchasePrice = stock.getAvgPurchasePrice()
@@ -213,7 +169,6 @@ class StockFragment : Fragment() {
         }
     }
 
-
     class StockViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val stockName: TextView = itemView.findViewById(R.id.stockName)
         val stockPrice: TextView = itemView.findViewById(R.id.stockPrice)
@@ -221,7 +176,6 @@ class StockFragment : Fragment() {
         val stockChangeRate: TextView = itemView.findViewById(R.id.stockChangeRate)
         val stockHolding: TextView = itemView.findViewById(R.id.stockHolding)
     }
-
 
     class StockAdapter(
         private val stockList: List<Stock>,
@@ -243,7 +197,6 @@ class StockFragment : Fragment() {
             holder.stockChangeRate.text = "${"%.2f".format(stock.changeRate)}%"
             holder.stockHolding.text = "${stock.holding}주"
 
-            // 색상 설정: 상승, 하락, 보합
             val riseColor = Color.parseColor("#FF5733")
             val fallColor = Color.parseColor("#3385FF")
             val neutralColor = Color.parseColor("#333333")
@@ -258,12 +211,9 @@ class StockFragment : Fragment() {
             holder.stockChangeRate.setTextColor(color)
             holder.stockPrice.setTextColor(color)
 
-            // 클릭 시 선택된 주식 처리
             holder.itemView.setOnClickListener { onItemClick(stock) }
         }
 
         override fun getItemCount(): Int = stockList.size
     }
-
 }
-
