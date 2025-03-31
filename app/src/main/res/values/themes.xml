@@ -1,9 +1,8 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.P20" parent="Theme.AppCompat.Light.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+    <!-- Base application theme -->
+    <style name="Theme.P20" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- 원하는 색상, 스타일 여기에 추가 -->
+        <item name="colorPrimary">@color/purple_500</item>
+        <item name="colorSecondary">@color/teal_200</item>
     </style>
-
-    <style name="Theme.P20" parent="Base.Theme.P20" />
 </resources>
