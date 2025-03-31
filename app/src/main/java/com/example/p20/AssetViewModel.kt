@@ -51,7 +51,7 @@ class AssetViewModel(private val context: Context) : ViewModel() {
 
     // 자산 초기화 메서드
     fun resetAsset() {
-        _asset.value = 100000 // 초기 자산 값으로 리셋
+        _asset.value = 1000000000 // 초기 자산 값으로 리셋
         saveAssetToPreferences() // 자산 초기화 후 저장
     }
 }

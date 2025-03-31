@@ -98,7 +98,7 @@ class MainActivity : AppCompatActivity() {
 
         button4.setOnClickListener {
             titleText.visibility = View.GONE  // 제목 숨기기
-            showFragment(BodongsanFragment(), "BodongsanFragment") // 주식 화면 표시
+            showFragment(RealEstateFragment(), "RealEstateFragment") // 주식 화면 표시
         }
 
         button5.setOnClickListener {

@@ -15,7 +15,7 @@ class InfoFragment : Fragment() {
     private lateinit var assetViewModel: AssetViewModel
     private lateinit var stockViewModel: StockViewModel
     private lateinit var albaViewModel: AlbaViewModel
-    //private lateinit var resetAlbaButton: Button
+    private lateinit var realEstateViewModel: RealEstateViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -26,6 +26,7 @@ class InfoFragment : Fragment() {
         assetViewModel = ViewModelProvider(requireActivity()).get(AssetViewModel::class.java)
         stockViewModel = ViewModelProvider(requireActivity()).get(StockViewModel::class.java)
         albaViewModel = ViewModelProvider(requireActivity()).get(AlbaViewModel::class.java)
+        realEstateViewModel = ViewModelProvider(requireActivity()).get(RealEstateViewModel::class.java)
 
         // 자산 초기화 버튼 클릭 시 자산을 초기화
         binding.resetAssetButton.setOnClickListener {
@@ -43,6 +44,12 @@ class InfoFragment : Fragment() {
         binding.resetAlbaButton.setOnClickListener {
             albaViewModel.resetAlba()
             Toast.makeText(requireContext(), "알바가 초기화되었습니다.", Toast.LENGTH_SHORT).show()
+        }
+
+        // 부동산 가격 초기화
+        binding.resetRealEstateButton.setOnClickListener {
+            realEstateViewModel.resetRealEstatePrices()
+            Toast.makeText(requireContext(), "부동산 가격이 초기화되었습니다.", Toast.LENGTH_SHORT).show()
         }
 
         return binding.root
