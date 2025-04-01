@@ -73,23 +73,23 @@ class RealEstateFragment : Fragment() {
         }
 
         // 통합형 임대 수익 메시지 처리
-        realEstateViewModel.incomeCallback = { estate, income ->
-            if (income > 0) {
-                assetViewModel.increaseAsset(income)
+        realEstateViewModel.incomeCallback = { totalIncome ->
+            assetViewModel.increaseAsset(totalIncome)
 
-                val formatter = DecimalFormat("#,###")
-                incomeMessageText.text = "${estate.name} 임대 수익 +${formatter.format(income)}원"
-                incomeMessageText.alpha = 1f
-                incomeMessageText.animate()
-                    .alpha(0f)
-                    .setDuration(4000)
+            val formatter = DecimalFormat("#,###")
+            incomeMessageText.text = "총 임대 수익 +${formatter.format(totalIncome)}원 발생!"
+            incomeMessageText.visibility = View.VISIBLE
+            incomeMessageText.alpha = 1f
+            incomeMessageText.animate()
+                .alpha(0f)
+                .setDuration(4000)
                     .withEndAction {
                         // 다시 기본 문구로 복원
                         incomeMessageText.text = "임대 수익 발생 시 표시됩니다."
                         incomeMessageText.alpha = 1f
                         incomeMessageText.visibility = View.VISIBLE
                     }.start()
-            }
+
         }
 
 

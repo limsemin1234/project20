@@ -19,9 +19,9 @@ class RealEstateViewModel(application: Application) : AndroidViewModel(applicati
     private val updateInterval = 5000L
 
     private val incomeHandler = Handler(Looper.getMainLooper())
-    private val incomeInterval = 10000L
+    private val incomeInterval = 15000L // 15초
 
-    var incomeCallback: ((RealEstate, Long) -> Unit)? = null
+    var incomeCallback: ((Long) -> Unit)? = null
 
     init {
         _realEstateList.value = mutableListOf(
@@ -91,18 +91,22 @@ class RealEstateViewModel(application: Application) : AndroidViewModel(applicati
     private fun startIncomeGeneration() {
         incomeHandler.post(object : Runnable {
             override fun run() {
-                generateIncome()
+                generateTotalIncome()
                 incomeHandler.postDelayed(this, incomeInterval)
             }
         })
     }
 
-    private fun generateIncome() {
+    private fun generateTotalIncome() {
+        var totalIncome = 0L
         _realEstateList.value?.forEach { estate ->
             if (estate.owned) {
                 val income = (estate.price * 0.01).toLong()
-                incomeCallback?.invoke(estate, income)
+                totalIncome += income
             }
+        }
+        if (totalIncome > 0) {
+            incomeCallback?.invoke(totalIncome)
         }
     }
 
