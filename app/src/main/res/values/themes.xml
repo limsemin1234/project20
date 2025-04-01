@@ -1,8 +1,17 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Theme.P20" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/main_bottom_button</item>
+        <item name="colorPrimary">@color/button_color</item>
         <item name="colorOnPrimary">@color/white</item>
         <item name="materialButtonStyle">@style/MyButton</item>
+
+        <!-- 둥글기 제거 -->
+        <item name="shapeAppearanceSmallComponent">@style/NoRoundShape</item>
+        <item name="shapeAppearanceMediumComponent">@style/NoRoundShape</item>
+        <item name="shapeAppearanceLargeComponent">@style/NoRoundShape</item>
+    </style>
+
+    <style name="NoRoundShape" parent="ShapeAppearance.Material3.SmallComponent">
+        <item name="cornerSize">8dp</item>
     </style>
 
     <style name="MyButton" parent="Widget.Material3.Button">
@@ -11,6 +20,8 @@
         <item name="android:includeFontPadding">false</item>
         <item name="android:letterSpacing">0</item>
         <item name="android:lineSpacingExtra">0dp</item>
+        <item name="shapeAppearance">@style/NoRoundShape</item>
+
     </style>
 
 </resources>

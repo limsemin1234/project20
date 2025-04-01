@@ -102,6 +102,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:background="#50000000"
         android:gravity="center_vertical"
         android:padding="10dp"
         android:layout_marginBottom="40dp">
@@ -120,6 +121,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="주식명"
+                android:textColor="@android:color/white"
                 android:textStyle="bold"
                 android:gravity="center"
                 android:textSize="14sp" />
@@ -130,6 +132,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="매입단가"
+                android:textColor="@android:color/white"
                 android:textStyle="bold"
                 android:gravity="center"
                 android:textSize="14sp" />
@@ -140,6 +143,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="평가손익"
+                android:textColor="@android:color/white"
                 android:textStyle="bold"
                 android:gravity="center"
                 android:textSize="14sp" />
@@ -150,6 +154,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="수익률"
+                android:textColor="@android:color/white"
                 android:textStyle="bold"
                 android:gravity="center"
                 android:textSize="14sp" />
@@ -160,6 +165,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="수량"
+                android:textColor="@android:color/white"
                 android:textStyle="bold"
                 android:gravity="center"
                 android:textSize="14sp" />
@@ -179,6 +185,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="이름"
+                android:textColor="@android:color/white"
                 android:gravity="center"
                 android:textSize="15sp" />
 
@@ -188,6 +195,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="0원"
+                android:textColor="@android:color/white"
                 android:gravity="center"
                 android:textSize="15sp" />
 
@@ -197,6 +205,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="0원"
+                android:textColor="@android:color/white"
                 android:gravity="center"
                 android:textSize="15sp" />
 
@@ -206,6 +215,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="0%"
+                android:textColor="@android:color/white"
                 android:gravity="center"
                 android:textSize="15sp" />
 
@@ -215,6 +225,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="0주"
+                android:textColor="@android:color/white"
                 android:gravity="center"
                 android:textSize="15sp" />
         </LinearLayout>
