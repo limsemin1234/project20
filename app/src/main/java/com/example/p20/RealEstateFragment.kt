@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.constraintlayout.motion.widget.MotionLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -35,10 +36,12 @@ class RealEstateFragment : Fragment() {
     private lateinit var estateDetailInfo: TextView
     private lateinit var detailBuyButton: Button
     private lateinit var detailSellButton: Button
+    private lateinit var detailCloseButton: Button
 
     private val handler = Handler(Looper.getMainLooper())
     private var clearMessageRunnable: Runnable? = null
-    private var hideDetailRunnable: Runnable? = null
+
+    private var backPressedCallback: OnBackPressedCallback? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -51,15 +54,13 @@ class RealEstateFragment : Fragment() {
         incomeMessageText = view.findViewById(R.id.incomeMessageText)
         estateActionResultText = view.findViewById(R.id.estateActionResultText)
 
-        val buyButton: Button = view.findViewById(R.id.buyRealEstateButton)
-        val sellButton: Button = view.findViewById(R.id.sellRealEstateButton)
-
         motionLayout = view.findViewById(R.id.motionLayout)
         estateDetailLayout = view.findViewById(R.id.estateDetailLayout)
         estateDetailName = view.findViewById(R.id.estateDetailName)
         estateDetailInfo = view.findViewById(R.id.estateDetailInfo)
         detailBuyButton = view.findViewById(R.id.detailBuyButton)
         detailSellButton = view.findViewById(R.id.detailSellButton)
+        detailCloseButton = view.findViewById(R.id.detailCloseButton)
 
         realEstateViewModel = ViewModelProvider(requireActivity()).get(RealEstateViewModel::class.java)
         assetViewModel = ViewModelProvider(requireActivity()).get(AssetViewModel::class.java)
@@ -88,22 +89,6 @@ class RealEstateFragment : Fragment() {
             }
         }
 
-        buyButton.setOnClickListener {
-            selectedEstate?.let {
-                attemptToBuyEstate(it)
-            } ?: run {
-                showEstateActionMessage("부동산을 선택하세요.")
-            }
-        }
-
-        sellButton.setOnClickListener {
-            selectedEstate?.let {
-                attemptToSellEstate(it)
-            } ?: run {
-                showEstateActionMessage("부동산을 선택하세요.")
-            }
-        }
-
         detailBuyButton.setOnClickListener {
             selectedEstate?.let {
                 attemptToBuyEstate(it)
@@ -116,10 +101,13 @@ class RealEstateFragment : Fragment() {
             }
         }
 
+        detailCloseButton.setOnClickListener {
+            closeEstateDetailSlide()
+        }
+
         return view
     }
 
-    // 상세 정보 슬라이드 표시
     private fun showEstateDetailSlide(estate: RealEstate) {
         val formatter = DecimalFormat("#,###")
         val currentPrice = estate.price
@@ -131,11 +119,11 @@ class RealEstateFragment : Fragment() {
         val profitColor = if (profitLoss >= 0) "#00FF66" else "#FF5555"
 
         val infoText = """
-        현재가: ${formatter.format(currentPrice)}원
-        구매가: ${formatter.format(avgPrice)}원
-        차익금: $profitSign${formatter.format(kotlin.math.abs(profitLoss))}원
-        수익률: $profitSign${"%.2f".format(kotlin.math.abs(profitRate))}%
-    """.trimIndent()
+            현재가: ${formatter.format(currentPrice)}원
+            구매가: ${formatter.format(avgPrice)}원
+            차익금: $profitSign${formatter.format(kotlin.math.abs(profitLoss))}원
+            수익률: $profitSign${"%.2f".format(kotlin.math.abs(profitRate))}%
+        """.trimIndent()
 
         estateDetailName.text = estate.name
         estateDetailInfo.text = infoText
@@ -146,14 +134,20 @@ class RealEstateFragment : Fragment() {
 
         selectedEstateText.text = "${estate.name} 선택됨"
 
-        hideDetailRunnable?.let { handler.removeCallbacks(it) }
-        hideDetailRunnable = Runnable {
-            motionLayout.transitionToStart()
+        // 뒤로가기 콜백 등록
+        backPressedCallback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                closeEstateDetailSlide()
+            }
         }
-        handler.postDelayed(hideDetailRunnable!!, 5000)
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, backPressedCallback!!)
     }
 
-
+    private fun closeEstateDetailSlide() {
+        motionLayout.transitionToStart()
+        estateDetailLayout.visibility = View.GONE
+        backPressedCallback?.remove()
+    }
 
     private fun attemptToBuyEstate(estate: RealEstate) {
         val currentAsset = assetViewModel.asset.value ?: 0L
@@ -163,6 +157,7 @@ class RealEstateFragment : Fragment() {
                 assetViewModel.decreaseAsset(estate.price.toLong())
                 realEstateViewModel.buy(estate)
                 showEstateActionMessage("${estate.name} 매수 완료!")
+                closeEstateDetailSlide()
             }
             else -> showEstateActionMessage("자산이 부족합니다!")
         }
@@ -173,6 +168,7 @@ class RealEstateFragment : Fragment() {
             realEstateViewModel.sell(estate)
             assetViewModel.increaseAsset(estate.price.toLong())
             showEstateActionMessage("${estate.name} 매도 완료!")
+            closeEstateDetailSlide()
         } else {
             showEstateActionMessage("보유하지 않은 부동산입니다.")
         }

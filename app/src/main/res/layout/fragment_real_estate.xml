@@ -24,6 +24,13 @@
             android:layout_margin="15dp"
             android:textColor="@color/fragment_lavel" />
 
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/realEstateRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:padding="10dp"/>
+
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/estateStatusCard"
             android:layout_width="match_parent"
@@ -68,35 +75,6 @@
                     android:paddingTop="4dp"/>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/realEstateRecyclerView"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:padding="10dp"/>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:paddingTop="8dp">
-
-            <Button
-                android:id="@+id/buyRealEstateButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="구매"
-                android:layout_marginEnd="8dp"/>
-
-            <Button
-                android:id="@+id/sellRealEstateButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="판매"
-                android:layout_marginStart="8dp"/>
-        </LinearLayout>
     </LinearLayout>
 
     <!-- 상세 정보 슬라이드 -->
@@ -153,8 +131,14 @@
                 android:layout_height="wrap_content"
                 android:text="판매"
                 android:layout_marginStart="8dp"/>
+
+            <Button
+                android:id="@+id/detailCloseButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="닫기"
+                android:layout_marginStart="8dp"/>
         </LinearLayout>
     </LinearLayout>
-
 
 </androidx.constraintlayout.motion.widget.MotionLayout>
