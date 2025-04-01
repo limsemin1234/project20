@@ -79,16 +79,19 @@ class RealEstateFragment : Fragment() {
 
                 val formatter = DecimalFormat("#,###")
                 incomeMessageText.text = "${estate.name} 임대 수익 +${formatter.format(income)}원"
-                incomeMessageText.visibility = View.VISIBLE
                 incomeMessageText.alpha = 1f
                 incomeMessageText.animate()
                     .alpha(0f)
                     .setDuration(4000)
                     .withEndAction {
-                        incomeMessageText.visibility = View.GONE
+                        // 다시 기본 문구로 복원
+                        incomeMessageText.text = "임대 수익 발생 시 표시됩니다."
+                        incomeMessageText.alpha = 1f
+                        incomeMessageText.visibility = View.VISIBLE
                     }.start()
             }
         }
+
 
         detailBuyButton.setOnClickListener {
             selectedEstate?.let {

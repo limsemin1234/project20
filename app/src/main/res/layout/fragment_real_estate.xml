@@ -14,6 +14,7 @@
         android:background="@drawable/bo2"
         android:padding="15dp">
 
+
         <TextView
             android:id="@+id/stockListTitle"
             android:layout_width="wrap_content"
@@ -25,7 +26,16 @@
             android:textColor="@color/fragment_lavel" />
 
 
-
+        <TextView
+            android:id="@+id/incomeMessageText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="임대 수익 발생 시 표시됩니다."
+            android:textSize="15sp"
+            android:textColor="@android:color/holo_red_light"
+            android:gravity="center"
+            android:padding="8dp"
+            android:visibility="visible"/>
 
 
         <androidx.recyclerview.widget.RecyclerView
@@ -35,34 +45,6 @@
             android:layout_weight="1"
             android:padding="10dp"/>
 
-
-
-        <!-- 임대 수익 발생 텍스트창 (현재 전역 텍스트, 필요 시 삭제 가능) -->
-        <TextView
-            android:id="@+id/incomeMessageText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="임대 수익 발생 시 여기에 텍스트가 보입니다."
-            android:textSize="18sp"
-            android:textColor="@android:color/holo_green_light"
-            android:background="@android:color/white"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:paddingTop="10dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="20dp"
-            android:visibility="gone"/>
-
-        <!-- 부동산 거래 상태 메시지 -->
-        <TextView
-            android:id="@+id/estateActionResultText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text=""
-            android:textSize="14sp"
-            android:textColor="@android:color/holo_green_dark"
-            android:paddingTop="8dp"
-            android:gravity="center"/>
 
     </LinearLayout>
 
