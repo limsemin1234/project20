@@ -27,6 +27,18 @@
         android:layout_height="0dp"
         android:layout_weight="1"/>
 
+    <TextView
+        android:id="@+id/estateDetailText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:contentDescription="부동산 상세 정보"
+        android:text=""
+        android:textSize="14sp"
+        android:padding="8dp"
+        android:textColor="@android:color/darker_gray"
+        />
+
+
     <!-- 상태 카드 -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/estateStatusCard"
@@ -59,7 +71,7 @@
                 android:layout_height="wrap_content"
                 android:text=""
                 android:textSize="14sp"
-                android:textColor="@color/reward_text"
+                android:textColor="@color/realestate_reward"
                 android:paddingTop="4dp"/>
 
             <TextView

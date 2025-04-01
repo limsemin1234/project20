@@ -17,5 +17,7 @@
     <color name="main_bottom_button">#212C64</color>
     <color name="fragment_lavel">#016666</color>
     <color name="alba_level">#673AB7</color>
+    <color name="realestate_reward">#F44336</color>
+
 
 </resources>
