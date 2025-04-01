@@ -1,5 +1,7 @@
 package com.example.p20
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.animation.ObjectAnimator
 import android.os.Bundle
 import android.os.Handler
@@ -78,14 +80,25 @@ class AlbaFragment : Fragment() {
         return view
     }
 
-    private fun showRewardAnimation(x: Int, y: Int, reward: Long) {
+    private fun showRewardAnimation(
+        x: Int,
+        y: Int,
+        reward: Long,
+        shakeAngle: Float = 20f,          // 🔥 흔들림 강도
+        shakeSpeed: Long = 100L,         // 🔥 흔들림 속도
+        moveDuration: Long = 1500L,      // 🔥 이동 + 사라지는 속도
+        scaleTarget: Float = 0.5f        // 🔥 크기 축소 비율
+    ) {
         val rewardTextView = TextView(requireContext()).apply {
             text = "+${"%,d".format(reward)}원"
             textSize = 20f
             setTextColor(resources.getColor(R.color.reward_text, null))
             setShadowLayer(5f, 1f, 1f, android.graphics.Color.BLACK)
             setPadding(10, 10, 10, 10)
-            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
         }
 
         animationContainer.addView(rewardTextView)
@@ -93,7 +106,6 @@ class AlbaFragment : Fragment() {
         rewardTextView.x = albaImage.x + x
         rewardTextView.y = albaImage.y + y
 
-        // levelText 위치 가져오기
         val targetLocation = IntArray(2)
         levelText.getLocationOnScreen(targetLocation)
 
@@ -103,33 +115,41 @@ class AlbaFragment : Fragment() {
         val targetX = targetLocation[0] - containerLocation[0] + levelText.width / 2 - rewardTextView.width / 2
         val targetY = targetLocation[1] - containerLocation[1] + levelText.height / 2 - rewardTextView.height / 2
 
-        // 애니메이션
-        val moveX = ObjectAnimator.ofFloat(rewardTextView, "x", rewardTextView.x, targetX.toFloat())
-        val moveY = ObjectAnimator.ofFloat(rewardTextView, "y", rewardTextView.y, targetY.toFloat())
-        val fadeOut = ObjectAnimator.ofFloat(rewardTextView, "alpha", 1f, 0f)
-        val scaleX = ObjectAnimator.ofFloat(rewardTextView, "scaleX", 1f, 0.5f)
-        val scaleY = ObjectAnimator.ofFloat(rewardTextView, "scaleY", 1f, 0.5f)
+        val moveX = ObjectAnimator.ofFloat(rewardTextView, "x", rewardTextView.x, targetX.toFloat()).apply {
+            duration = moveDuration
+        }
+        val moveY = ObjectAnimator.ofFloat(rewardTextView, "y", rewardTextView.y, targetY.toFloat()).apply {
+            duration = moveDuration
+        }
+        val fadeOut = ObjectAnimator.ofFloat(rewardTextView, "alpha", 1f, 0f).apply {
+            duration = moveDuration
+        }
+        val scaleX = ObjectAnimator.ofFloat(rewardTextView, "scaleX", 1f, scaleTarget).apply {
+            duration = moveDuration
+        }
+        val scaleY = ObjectAnimator.ofFloat(rewardTextView, "scaleY", 1f, scaleTarget).apply {
+            duration = moveDuration
+        }
 
-        val duration = 1300L
+        val shake = ObjectAnimator.ofFloat(rewardTextView, "rotation", 0f, shakeAngle, -shakeAngle, shakeAngle / 1.5f, -shakeAngle / 1.5f, 0f).apply {
+            this.duration = shakeSpeed
+            repeatCount = ObjectAnimator.INFINITE
+            repeatMode = ObjectAnimator.RESTART
+        }
 
-        // 떨림 효과 (rotation)
-        val shake = ObjectAnimator.ofFloat(rewardTextView, "rotation", 0f, 10f, -10f, 8f, -8f, 0f)
-        shake.duration = 500
-
-        moveX.duration = duration
-        moveY.duration = duration
-        fadeOut.duration = duration
-        scaleX.duration = duration
-        scaleY.duration = duration
+        fadeOut.addListener(object : AnimatorListenerAdapter() {
+            override fun onAnimationEnd(animation: Animator) {
+                shake.cancel()
+                animationContainer.removeView(rewardTextView)
+            }
+        })
 
         moveX.start()
         moveY.start()
         fadeOut.start()
         scaleX.start()
         scaleY.start()
-
-        Handler(Looper.getMainLooper()).postDelayed({
-            animationContainer.removeView(rewardTextView)
-        }, duration)
+        shake.start()
     }
+
 }

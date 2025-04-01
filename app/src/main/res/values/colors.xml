@@ -6,8 +6,8 @@
     <color name="blue">#3385FF</color> <!-- 예: 내릴 때 (파란색) -->
     <color name="button_color">#212675</color>
     <color name="button_pressed">#00BCD4</color>
-    <!--<color name="reward_text">#FFFF00</color> -->
-    <color name="reward_text">#673AB7</color>
+    <color name="reward_text">#FFFF00</color>
+    <!-- <color name="reward_text">#673AB7</color> -->
     <color name="gray">#E0E0E0</color>
     <color name="purple_500">#6200EE</color>
     <color name="purple_700">#3700B3</color>
