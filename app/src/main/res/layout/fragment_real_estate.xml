@@ -24,12 +24,18 @@
             android:layout_margin="15dp"
             android:textColor="@color/fragment_lavel" />
 
+
+
+
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/realEstateRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
             android:padding="10dp"/>
+
+
 
         <!-- 임대 수익 발생 텍스트창 (현재 전역 텍스트, 필요 시 삭제 가능) -->
         <TextView

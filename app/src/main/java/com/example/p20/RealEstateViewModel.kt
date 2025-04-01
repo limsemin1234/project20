@@ -21,7 +21,6 @@ class RealEstateViewModel(application: Application) : AndroidViewModel(applicati
     private val incomeHandler = Handler(Looper.getMainLooper())
     private val incomeInterval = 10000L
 
-    // 수정: estate, income 전달하도록 변경
     var incomeCallback: ((RealEstate, Long) -> Unit)? = null
 
     init {
@@ -84,15 +83,6 @@ class RealEstateViewModel(application: Application) : AndroidViewModel(applicati
     private fun updatePrices() {
         _realEstateList.value?.forEach { estate ->
             estate.updatePrice()
-            println("변동 결과 → ${estate.name}: ${estate.price}원")
-        }
-        _realEstateList.value = _realEstateList.value
-        saveRealEstateData()
-    }
-
-    fun resetRealEstatePrices() {
-        _realEstateList.value?.forEach { estate ->
-            estate.price = estate.initialPrice
         }
         _realEstateList.value = _realEstateList.value
         saveRealEstateData()
@@ -114,6 +104,14 @@ class RealEstateViewModel(application: Application) : AndroidViewModel(applicati
                 incomeCallback?.invoke(estate, income)
             }
         }
+    }
+
+    fun resetRealEstatePrices() {
+        _realEstateList.value?.forEach { estate ->
+            estate.price = estate.initialPrice
+        }
+        _realEstateList.value = _realEstateList.value
+        saveRealEstateData()
     }
 
     override fun onCleared() {

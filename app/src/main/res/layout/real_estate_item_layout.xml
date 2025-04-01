@@ -2,51 +2,29 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="12dp"
-    android:gravity="center_vertical"
-    android:weightSum="1">
-
-    <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_weight="0.7">
-
-        <TextView
-            android:id="@+id/estateName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="부동산 이름"
-            android:textSize="16sp"
-            android:textStyle="bold"/>
-
-        <TextView
-            android:id="@+id/estatePrice"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="가격"
-            android:textSize="14sp"/>
-
-        <TextView
-            android:id="@+id/estateOwned"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="보유 여부"
-            android:textSize="14sp"/>
-    </LinearLayout>
+    android:orientation="vertical"
+    android:padding="12dp">
 
     <TextView
-        android:id="@+id/incomeMessage"
-        android:layout_width="0dp"
+        android:id="@+id/estateName"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="0.3"
-        android:gravity="end"
-        android:text="임대 수익 발생!"
-        android:textColor="@android:color/holo_red_light"
-        android:textSize="12sp"
-        android:background="@drawable/income_background"
-        android:visibility="gone"
-        android:padding="4dp"
-        android:layout_marginStart="8dp"/>
+        android:text="부동산 이름"
+        android:textSize="16sp"
+        android:textStyle="bold"/>
+
+    <TextView
+        android:id="@+id/estatePrice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="가격"
+        android:textSize="14sp"/>
+
+    <TextView
+        android:id="@+id/estateOwned"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="보유 여부"
+        android:textSize="14sp"/>
+
 </LinearLayout>

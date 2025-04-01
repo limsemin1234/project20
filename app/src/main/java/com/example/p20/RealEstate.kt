@@ -1,9 +1,9 @@
 package com.example.p20
 
 data class RealEstate(
-    val id: Int, // 추가
+    val id: Int,
     val name: String,
-    val initialPrice: Long, // 최초 가격
+    val initialPrice: Long,
     var price: Long = initialPrice,
     var owned: Boolean = false,
     val purchasePrices: MutableList<Long> = mutableListOf()
