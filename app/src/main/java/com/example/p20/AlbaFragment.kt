@@ -81,8 +81,8 @@ class AlbaFragment : Fragment() {
     private fun showRewardAnimation(x: Int, y: Int, reward: Long) {
         val rewardTextView = TextView(requireContext()).apply {
             text = "+${"%,d".format(reward)}원"
-            textSize = 18f
-            setTypeface(null, Typeface.BOLD)
+            textSize = 22f
+            //setTypeface(null, Typeface.BOLD)
             setTextColor(resources.getColor(R.color.reward_text, null))
             setShadowLayer(5f, 2f, 2f, android.graphics.Color.BLACK)
             setPadding(10, 10, 10, 10)

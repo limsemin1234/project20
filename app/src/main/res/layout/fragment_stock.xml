@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@drawable/stock5"
+    android:background="@drawable/stock0"
     android:padding="15dp">
 
     <!-- 주식 목록 텍스트 -->
@@ -244,7 +244,7 @@
 
         <Button
             android:id="@+id/buyButton"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_margin="10dp"
@@ -253,7 +253,7 @@
 
         <Button
             android:id="@+id/sellButton"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_margin="10dp"
@@ -271,7 +271,7 @@
 
         <Button
             android:id="@+id/buyAllButton"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_margin="10dp"
@@ -280,7 +280,7 @@
 
         <Button
             android:id="@+id/sellAllButton"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_margin="10dp"
