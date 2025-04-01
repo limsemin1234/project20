@@ -1,20 +1,20 @@
-<!-- fragment_info.xml -->
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:gravity="top|center_horizontal"
-    android:background="@drawable/info6">
+    android:background="@drawable/info6"
+    android:padding="15dp">
 
-    <!-- 여기에 '내정보' 프래그먼트 UI 추가 -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="내정보"
-        android:textSize="30sp"
-        android:textColor="@android:color/white"
-        android:gravity="center"
-        android:textStyle="bold" />
+        android:gravity="top"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_margin="15dp"
+        android:textColor="@color/fragment_lavel" />
 
 
     <!-- 자산 초기화 버튼 -->

@@ -6,7 +6,26 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/bo2"
-    android:padding="16dp">
+    android:padding="15dp">
+
+    <TextView
+        android:id="@+id/stockListTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="부동산"
+        android:gravity="top"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_margin="15dp"
+        android:textColor="@color/fragment_lavel" />
+
+    <!-- 기존 RecyclerView -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/realEstateRecyclerView"
+        android:layout_width="match_parent"
+        android:padding="10dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
 
     <!-- 상태 카드 -->
     <com.google.android.material.card.MaterialCardView
@@ -54,13 +73,6 @@
 
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
-
-    <!-- 기존 RecyclerView -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/realEstateRecyclerView"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"/>
 
     <!-- 매수/매도 버튼 -->
     <LinearLayout
