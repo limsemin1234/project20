@@ -76,7 +76,7 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/stockRecyclerView"
-        android:padding="10dp"
+        android:padding="1dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
