@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.constraintlayout.motion.widget.MotionLayout
 import androidx.fragment.app.Fragment
@@ -25,7 +26,6 @@ class RealEstateFragment : Fragment() {
     private lateinit var realEstateViewModel: RealEstateViewModel
     private var selectedEstate: RealEstate? = null
 
-    private lateinit var selectedEstateText: TextView
     private lateinit var incomeMessageText: TextView
     private lateinit var estateActionResultText: TextView
 
@@ -50,7 +50,6 @@ class RealEstateFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_real_estate, container, false)
 
         realEstateRecyclerView = view.findViewById(R.id.realEstateRecyclerView)
-        selectedEstateText = view.findViewById(R.id.selectedEstateText)
         incomeMessageText = view.findViewById(R.id.incomeMessageText)
         estateActionResultText = view.findViewById(R.id.estateActionResultText)
 
@@ -74,6 +73,13 @@ class RealEstateFragment : Fragment() {
 
         realEstateViewModel.realEstateList.observe(viewLifecycleOwner) { updatedList ->
             realEstateAdapter.updateList(updatedList)
+
+            // 목록의 현재가 변동 시 슬라이드에 있는 정보도 자동으로 업데이트
+            selectedEstate?.let {
+                if (it.name == selectedEstate?.name) {
+                    updateEstateDetailInfo(it)
+                }
+            }
         }
 
         realEstateViewModel.incomeCallback = { income ->
@@ -81,13 +87,20 @@ class RealEstateFragment : Fragment() {
                 assetViewModel.increaseAsset(income)
                 val formatter = DecimalFormat("#,###")
                 incomeMessageText.text = "+${formatter.format(income)}원 임대 수익 발생!"
+                incomeMessageText.visibility = View.VISIBLE // 텍스트를 보이도록 설정
+
+                // 텍스트가 4초 후 사라지게 설정
                 incomeMessageText.alpha = 1f
                 incomeMessageText.animate()
                     .alpha(0f)
-                    .setDuration(4000)
+                    .setDuration(4000) // 4초 후 사라짐
+                    .withEndAction {
+                        incomeMessageText.visibility = View.GONE // 4초 후 텍스트 숨기기
+                    }
                     .start()
             }
         }
+
 
         detailBuyButton.setOnClickListener {
             selectedEstate?.let {
@@ -108,7 +121,17 @@ class RealEstateFragment : Fragment() {
         return view
     }
 
+    // 부동산의 세부 정보를 슬라이드 뷰에 표시
     private fun showEstateDetailSlide(estate: RealEstate) {
+        estateDetailLayout.visibility = View.VISIBLE
+        motionLayout.transitionToEnd()
+
+        // 부동산 세부 정보 업데이트
+        updateEstateDetailInfo(estate)
+    }
+
+    // 부동산 정보에 맞게 슬라이드 뷰 갱신
+    private fun updateEstateDetailInfo(estate: RealEstate) {
         val formatter = DecimalFormat("#,###")
         val currentPrice = estate.price
         val avgPrice = estate.getAvgPurchasePrice()
@@ -128,25 +151,11 @@ class RealEstateFragment : Fragment() {
         estateDetailName.text = estate.name
         estateDetailInfo.text = infoText
         estateDetailInfo.setTextColor(android.graphics.Color.parseColor(profitColor))
-
-        estateDetailLayout.visibility = View.VISIBLE
-        motionLayout.transitionToEnd()
-
-        selectedEstateText.text = "${estate.name} 선택됨"
-
-        // 뒤로가기 콜백 등록
-        backPressedCallback = object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                closeEstateDetailSlide()
-            }
-        }
-        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, backPressedCallback!!)
     }
 
     private fun closeEstateDetailSlide() {
         motionLayout.transitionToStart()
         estateDetailLayout.visibility = View.GONE
-        backPressedCallback?.remove()
     }
 
     private fun attemptToBuyEstate(estate: RealEstate) {
@@ -157,6 +166,7 @@ class RealEstateFragment : Fragment() {
                 assetViewModel.decreaseAsset(estate.price.toLong())
                 realEstateViewModel.buy(estate)
                 showEstateActionMessage("${estate.name} 매수 완료!")
+                Toast.makeText(requireContext(), "${estate.name} 매수 완료!", Toast.LENGTH_SHORT).show()
                 closeEstateDetailSlide()
             }
             else -> showEstateActionMessage("자산이 부족합니다!")
@@ -168,6 +178,7 @@ class RealEstateFragment : Fragment() {
             realEstateViewModel.sell(estate)
             assetViewModel.increaseAsset(estate.price.toLong())
             showEstateActionMessage("${estate.name} 매도 완료!")
+            Toast.makeText(requireContext(), "${estate.name} 매도 완료!", Toast.LENGTH_SHORT).show()
             closeEstateDetailSlide()
         } else {
             showEstateActionMessage("보유하지 않은 부동산입니다.")
