@@ -7,7 +7,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.constraintlayout.motion.widget.MotionLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -25,10 +27,18 @@ class RealEstateFragment : Fragment() {
     private lateinit var selectedEstateText: TextView
     private lateinit var incomeMessageText: TextView
     private lateinit var estateActionResultText: TextView
-    private lateinit var estateDetailText: TextView
+
+    // MotionLayout 관련
+    private lateinit var motionLayout: MotionLayout
+    private lateinit var estateDetailLayout: LinearLayout
+    private lateinit var estateDetailName: TextView
+    private lateinit var estateDetailInfo: TextView
+    private lateinit var detailBuyButton: Button
+    private lateinit var detailSellButton: Button
 
     private val handler = Handler(Looper.getMainLooper())
     private var clearMessageRunnable: Runnable? = null
+    private var hideDetailRunnable: Runnable? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -40,10 +50,16 @@ class RealEstateFragment : Fragment() {
         selectedEstateText = view.findViewById(R.id.selectedEstateText)
         incomeMessageText = view.findViewById(R.id.incomeMessageText)
         estateActionResultText = view.findViewById(R.id.estateActionResultText)
-        estateDetailText = view.findViewById(R.id.estateDetailText)
 
         val buyButton: Button = view.findViewById(R.id.buyRealEstateButton)
         val sellButton: Button = view.findViewById(R.id.sellRealEstateButton)
+
+        motionLayout = view.findViewById(R.id.motionLayout)
+        estateDetailLayout = view.findViewById(R.id.estateDetailLayout)
+        estateDetailName = view.findViewById(R.id.estateDetailName)
+        estateDetailInfo = view.findViewById(R.id.estateDetailInfo)
+        detailBuyButton = view.findViewById(R.id.detailBuyButton)
+        detailSellButton = view.findViewById(R.id.detailSellButton)
 
         realEstateViewModel = ViewModelProvider(requireActivity()).get(RealEstateViewModel::class.java)
         assetViewModel = ViewModelProvider(requireActivity()).get(AssetViewModel::class.java)
@@ -51,13 +67,12 @@ class RealEstateFragment : Fragment() {
         realEstateRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         realEstateAdapter = RealEstateAdapter(emptyList()) { estate ->
             selectedEstate = estate
-            showEstateDetails(estate)
+            showEstateDetailSlide(estate)
         }
         realEstateRecyclerView.adapter = realEstateAdapter
 
         realEstateViewModel.realEstateList.observe(viewLifecycleOwner) { updatedList ->
             realEstateAdapter.updateList(updatedList)
-            selectedEstate?.let { showEstateDetails(it) }
         }
 
         realEstateViewModel.incomeCallback = { income ->
@@ -75,17 +90,7 @@ class RealEstateFragment : Fragment() {
 
         buyButton.setOnClickListener {
             selectedEstate?.let {
-                val currentAsset = assetViewModel.asset.value ?: 0L
-                when {
-                    it.owned -> showEstateActionMessage("이미 보유 중인 부동산입니다.")
-                    currentAsset >= it.price -> {
-                        assetViewModel.decreaseAsset(it.price.toLong())
-                        realEstateViewModel.buy(it)
-                        showEstateDetails(it)
-                        showEstateActionMessage("${it.name} 매수 완료!")
-                    }
-                    else -> showEstateActionMessage("자산이 부족합니다!")
-                }
+                attemptToBuyEstate(it)
             } ?: run {
                 showEstateActionMessage("부동산을 선택하세요.")
             }
@@ -93,40 +98,86 @@ class RealEstateFragment : Fragment() {
 
         sellButton.setOnClickListener {
             selectedEstate?.let {
-                if (it.owned) {
-                    realEstateViewModel.sell(it)
-                    assetViewModel.increaseAsset(it.price.toLong())
-                    showEstateDetails(it)
-                    showEstateActionMessage("${it.name} 매도 완료!")
-                } else {
-                    showEstateActionMessage("보유하지 않은 부동산입니다.")
-                }
+                attemptToSellEstate(it)
             } ?: run {
                 showEstateActionMessage("부동산을 선택하세요.")
+            }
+        }
+
+        detailBuyButton.setOnClickListener {
+            selectedEstate?.let {
+                attemptToBuyEstate(it)
+            }
+        }
+
+        detailSellButton.setOnClickListener {
+            selectedEstate?.let {
+                attemptToSellEstate(it)
             }
         }
 
         return view
     }
 
-    // 부동산 상세 정보 표시
-    private fun showEstateDetails(estate: RealEstate) {
+    // 상세 정보 슬라이드 표시
+    private fun showEstateDetailSlide(estate: RealEstate) {
         val formatter = DecimalFormat("#,###")
-
+        val currentPrice = estate.price
         val avgPrice = estate.getAvgPurchasePrice()
         val profitLoss = estate.getProfitLoss()
         val profitRate = estate.getProfitRate()
 
+        val profitSign = if (profitLoss >= 0) "+" else "-"
+        val profitColor = if (profitLoss >= 0) "#00FF66" else "#FF5555"
+
+        val infoText = """
+        현재가: ${formatter.format(currentPrice)}원
+        구매가: ${formatter.format(avgPrice)}원
+        차익금: $profitSign${formatter.format(kotlin.math.abs(profitLoss))}원
+        수익률: $profitSign${"%.2f".format(kotlin.math.abs(profitRate))}%
+    """.trimIndent()
+
+        estateDetailName.text = estate.name
+        estateDetailInfo.text = infoText
+        estateDetailInfo.setTextColor(android.graphics.Color.parseColor(profitColor))
+
+        estateDetailLayout.visibility = View.VISIBLE
+        motionLayout.transitionToEnd()
+
         selectedEstateText.text = "${estate.name} 선택됨"
-        estateDetailText.text = """
-            현재가: ${formatter.format(estate.price)}원
-            평균 매입가: ${formatter.format(avgPrice)}원
-            평가손익: ${formatter.format(profitLoss)}원
-            수익률: ${"%.2f".format(profitRate)}%
-        """.trimIndent()
+
+        hideDetailRunnable?.let { handler.removeCallbacks(it) }
+        hideDetailRunnable = Runnable {
+            motionLayout.transitionToStart()
+        }
+        handler.postDelayed(hideDetailRunnable!!, 5000)
     }
 
-    // 상태 메시지 표시 후 3초 후 자동 삭제
+
+
+    private fun attemptToBuyEstate(estate: RealEstate) {
+        val currentAsset = assetViewModel.asset.value ?: 0L
+        when {
+            estate.owned -> showEstateActionMessage("이미 보유 중인 부동산입니다.")
+            currentAsset >= estate.price -> {
+                assetViewModel.decreaseAsset(estate.price.toLong())
+                realEstateViewModel.buy(estate)
+                showEstateActionMessage("${estate.name} 매수 완료!")
+            }
+            else -> showEstateActionMessage("자산이 부족합니다!")
+        }
+    }
+
+    private fun attemptToSellEstate(estate: RealEstate) {
+        if (estate.owned) {
+            realEstateViewModel.sell(estate)
+            assetViewModel.increaseAsset(estate.price.toLong())
+            showEstateActionMessage("${estate.name} 매도 완료!")
+        } else {
+            showEstateActionMessage("보유하지 않은 부동산입니다.")
+        }
+    }
+
     private fun showEstateActionMessage(message: String) {
         estateActionResultText.text = message
         clearMessageRunnable?.let { handler.removeCallbacks(it) }
