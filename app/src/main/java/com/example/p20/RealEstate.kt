@@ -1,6 +1,7 @@
 package com.example.p20
 
 data class RealEstate(
+    val id: Int, // 추가
     val name: String,
     val initialPrice: Long, // 최초 가격
     var price: Long = initialPrice,
@@ -8,7 +9,7 @@ data class RealEstate(
     val purchasePrices: MutableList<Long> = mutableListOf()
 ) {
     fun updatePrice() {
-        val changeRates = listOf( -30, -20, -10, 0, 10, 20, 30,)
+        val changeRates = listOf(-30, -20, -10, 0, 10, 20, 30)
         val rate = changeRates.random()
         price = (initialPrice * (1 + rate / 100.0)).toLong()
     }

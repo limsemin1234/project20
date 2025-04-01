@@ -21,13 +21,14 @@ class RealEstateViewModel(application: Application) : AndroidViewModel(applicati
     private val incomeHandler = Handler(Looper.getMainLooper())
     private val incomeInterval = 10000L
 
-    var incomeCallback: ((Long) -> Unit)? = null
+    // 수정: estate, income 전달하도록 변경
+    var incomeCallback: ((RealEstate, Long) -> Unit)? = null
 
     init {
         _realEstateList.value = mutableListOf(
-            RealEstate("서울 아파트", 300_000_000L),
-            RealEstate("부산 오피스텔", 200_000_000L),
-            RealEstate("제주 타운하우스", 100_000_000L)
+            RealEstate(1, "서울 아파트", 300_000_000L),
+            RealEstate(2, "부산 오피스텔", 200_000_000L),
+            RealEstate(3, "제주 타운하우스", 100_000_000L)
         )
         loadRealEstateData()
         startPriceUpdates()
@@ -107,14 +108,12 @@ class RealEstateViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     private fun generateIncome() {
-        var totalIncome = 0L
         _realEstateList.value?.forEach { estate ->
             if (estate.owned) {
                 val income = (estate.price * 0.01).toLong()
-                totalIncome += income
+                incomeCallback?.invoke(estate, income)
             }
         }
-        incomeCallback?.invoke(totalIncome)
     }
 
     override fun onCleared() {

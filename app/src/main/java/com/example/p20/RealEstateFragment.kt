@@ -82,25 +82,13 @@ class RealEstateFragment : Fragment() {
             }
         }
 
-        realEstateViewModel.incomeCallback = { income ->
+        // 임대 수익 발생 시 해당 부동산 아이템에 메시지 표시
+        realEstateViewModel.incomeCallback = { estate, income ->
             if (income > 0) {
                 assetViewModel.increaseAsset(income)
-                val formatter = DecimalFormat("#,###")
-                incomeMessageText.text = "+${formatter.format(income)}원 임대 수익 발생!"
-                incomeMessageText.visibility = View.VISIBLE // 텍스트를 보이도록 설정
-
-                // 텍스트가 4초 후 사라지게 설정
-                incomeMessageText.alpha = 1f
-                incomeMessageText.animate()
-                    .alpha(0f)
-                    .setDuration(4000) // 4초 후 사라짐
-                    .withEndAction {
-                        incomeMessageText.visibility = View.GONE // 4초 후 텍스트 숨기기
-                    }
-                    .start()
+                realEstateAdapter.showIncomeMessage(estate.id, income)
             }
         }
-
 
         detailBuyButton.setOnClickListener {
             selectedEstate?.let {

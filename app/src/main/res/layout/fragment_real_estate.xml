@@ -24,19 +24,6 @@
             android:layout_margin="15dp"
             android:textColor="@color/fragment_lavel" />
 
-        <!-- 임대 수익 발생 텍스트창 -->
-        <TextView
-            android:id="@+id/incomeMessageText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="임대 수익 발생 시 여기에 텍스트가 보입니다."
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="@color/realestate_reward"
-            android:padding="1dp"
-            android:gravity="center"
-            android:visibility="visible"/>  <!-- 기본적으로 숨김 -->
-
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/realEstateRecyclerView"
             android:layout_width="match_parent"
@@ -44,6 +31,21 @@
             android:layout_weight="1"
             android:padding="10dp"/>
 
+        <!-- 임대 수익 발생 텍스트창 (현재 전역 텍스트, 필요 시 삭제 가능) -->
+        <TextView
+            android:id="@+id/incomeMessageText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="임대 수익 발생 시 여기에 텍스트가 보입니다."
+            android:textSize="18sp"
+            android:textColor="@android:color/holo_green_light"
+            android:background="@android:color/white"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:paddingTop="10dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="20dp"
+            android:visibility="gone"/>
 
         <!-- 부동산 거래 상태 메시지 -->
         <TextView
