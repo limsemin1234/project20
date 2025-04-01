@@ -16,7 +16,6 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.Observer
-import android.graphics.Typeface
 
 class AlbaFragment : Fragment() {
 
@@ -28,14 +27,16 @@ class AlbaFragment : Fragment() {
     private lateinit var animationContainer: FrameLayout
     private lateinit var albaImage: ImageView
 
+    private var activeRewardTextCount = 0 // 현재 떠있는 rewardText 개수
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         val view = inflater.inflate(R.layout.fragment_alba, container, false)
 
-        albaViewModel = ViewModelProvider(requireActivity()).get(AlbaViewModel::class.java)
-        assetViewModel = ViewModelProvider(requireActivity()).get(AssetViewModel::class.java)
+        albaViewModel = ViewModelProvider(requireActivity())[AlbaViewModel::class.java]
+        assetViewModel = ViewModelProvider(requireActivity())[AssetViewModel::class.java]
 
         albaImage = view.findViewById(R.id.albaImage)
         earnText = view.findViewById(R.id.earnText)
@@ -49,10 +50,9 @@ class AlbaFragment : Fragment() {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 if (albaViewModel.isCooldown.value == false) {
                     albaViewModel.increaseTouchCount()
-                    val rewardAmount = albaViewModel.getRewardAmount().toLong() // Long으로 변경
+                    val rewardAmount = albaViewModel.getRewardAmount().toLong()
                     assetViewModel.increaseAsset(rewardAmount)
 
-                    // 클릭한 위치에 보상 표시
                     val location = IntArray(2)
                     albaImage.getLocationOnScreen(location)
                     val touchX = event.rawX - location[0]
@@ -84,10 +84,10 @@ class AlbaFragment : Fragment() {
         x: Int,
         y: Int,
         reward: Long,
-        shakeAngle: Float = 20f,          // 🔥 흔들림 강도
-        shakeSpeed: Long = 100L,         // 🔥 흔들림 속도
-        moveDuration: Long = 1500L,      // 🔥 이동 + 사라지는 속도
-        scaleTarget: Float = 0.5f        // 🔥 크기 축소 비율
+        shakeAngle: Float = 20f,
+        shakeSpeed: Long = 100L,
+        moveDuration: Long = 1500L,
+        scaleTarget: Float = 0.5f
     ) {
         val rewardTextView = TextView(requireContext()).apply {
             text = "+${"%,d".format(reward)}원"
@@ -102,6 +102,7 @@ class AlbaFragment : Fragment() {
         }
 
         animationContainer.addView(rewardTextView)
+        activeRewardTextCount++
 
         rewardTextView.x = albaImage.x + x
         rewardTextView.y = albaImage.y + y
@@ -141,6 +142,8 @@ class AlbaFragment : Fragment() {
             override fun onAnimationEnd(animation: Animator) {
                 shake.cancel()
                 animationContainer.removeView(rewardTextView)
+                activeRewardTextCount--
+                albaViewModel.onRewardAnimationEnd()
             }
         })
 
@@ -151,5 +154,4 @@ class AlbaFragment : Fragment() {
         scaleY.start()
         shake.start()
     }
-
 }

@@ -15,29 +15,39 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
     private val _touchCount = MutableLiveData(0)
     val touchCount: LiveData<Int> get() = _touchCount
 
-    private val _albaLevel = MutableLiveData(1) // 알바 레벨
+    private val _albaLevel = MutableLiveData(1)
     val albaLevel: LiveData<Int> get() = _albaLevel
 
-    private val _isCooldown = MutableLiveData(false) // 30초 쿨다운 상태 확인
+    private val _isCooldown = MutableLiveData(false)
     val isCooldown: LiveData<Boolean> get() = _isCooldown
 
-    private val _cooldownTime = MutableLiveData(0) // 남은 시간
+    private val _cooldownTime = MutableLiveData(0)
     val cooldownTime: LiveData<Int> get() = _cooldownTime
+
+    private var rewardTextCount = 0 // 애니메이션 카운트
 
     init {
         loadAlbaData()
         if (_isCooldown.value == true) {
-            startCooldown() // 앱 실행 시 쿨다운이 있으면 타이머 실행
+            startCooldown()
         }
     }
 
     fun increaseTouchCount() {
         if (_isCooldown.value == false && _touchCount.value ?: 0 < 10) {
             _touchCount.value = (_touchCount.value ?: 0) + 1
+            rewardTextCount++
         }
 
         if (_touchCount.value == 10) {
             startCooldown()
+        }
+    }
+
+    fun onRewardAnimationEnd() {
+        rewardTextCount--
+        if (_touchCount.value == 10 && rewardTextCount == 0) {
+            increaseLevel()
         }
     }
 
@@ -61,7 +71,6 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
                 } else {
                     _isCooldown.value = false
                     _touchCount.value = 0
-                    increaseLevel()
                     saveAlbaData()
                 }
             }
@@ -90,11 +99,11 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun resetAlba() {
-        _albaLevel.value = 1 // 레벨 초기화
-        _touchCount.value = 0 // 터치 횟수 초기화
-        _isCooldown.value = false // 쿨다운 상태 해제
-        _cooldownTime.value = 0 // 쿨다운 시간 초기화
-        saveAlbaData() // 변경 사항 저장
+        _albaLevel.value = 1
+        _touchCount.value = 0
+        _isCooldown.value = false
+        _cooldownTime.value = 0
+        rewardTextCount = 0
+        saveAlbaData()
     }
-
 }
