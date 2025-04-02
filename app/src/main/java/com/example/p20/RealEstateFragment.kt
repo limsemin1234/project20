@@ -115,9 +115,12 @@ class RealEstateFragment : Fragment() {
     private fun showEstateDetailSlide(estate: RealEstate) {
         estateDetailLayout.visibility = View.VISIBLE
         motionLayout.transitionToEnd()
+        estateDetailName.text = estate.name // 이 부분 추가
         updateEstateDetailInfo(estate)
     }
 
+
+    /////////슬라이스 안에 내용///////
     private fun updateEstateDetailInfo(estate: RealEstate) {
         val formatter = DecimalFormat("#,###")
         val currentPrice = estate.price
@@ -125,20 +128,46 @@ class RealEstateFragment : Fragment() {
         val profitLoss = estate.getProfitLoss()
         val profitRate = estate.getProfitRate()
 
-        val profitSign = if (profitLoss >= 0) "+" else "-"
-        val profitColor = if (profitLoss >= 0) "#00FF66" else "#FF5555"
-
+        val profitSign = if (profitLoss > 0) "+" else if (profitLoss < 0) "-" else ""
         val infoText = """
-            현재가: ${formatter.format(currentPrice)}원
-            구매가: ${formatter.format(avgPrice)}원
-            차익금: $profitSign${formatter.format(kotlin.math.abs(profitLoss))}원
-            수익률: $profitSign${"%.2f".format(kotlin.math.abs(profitRate))}%
-        """.trimIndent()
+        현재가: ${formatter.format(currentPrice)}원
+        구매가: ${formatter.format(avgPrice)}원
+        차익금: $profitSign${formatter.format(kotlin.math.abs(profitLoss))}원
+        수익률: $profitSign${"%.2f".format(kotlin.math.abs(profitRate))}%
+    """.trimIndent()
 
-        estateDetailName.text = estate.name
-        estateDetailInfo.text = infoText
-        estateDetailInfo.setTextColor(android.graphics.Color.parseColor(profitColor))
+        val spannable = android.text.SpannableString(infoText)
+
+        // 현재가 & 구매가 → 흰색
+        val currentPriceStart = infoText.indexOf("현재가:")
+        val avgPriceStart = infoText.indexOf("구매가:")
+        spannable.setSpan(
+            android.text.style.ForegroundColorSpan(android.graphics.Color.WHITE),
+            currentPriceStart,
+            avgPriceStart + "구매가: ${formatter.format(avgPrice)}원".length,
+            android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+
+        // 차익금 & 수익률 → 조건별 색상
+        val profitStart = infoText.indexOf("차익금:")
+        val profitColor = when {
+            profitLoss > 0 -> "#00FF66" // 초록
+            profitLoss < 0 -> "#FF5555" // 빨강
+            else -> "#FFFFFF" // 0일 때 흰색
+        }
+        spannable.setSpan(
+            android.text.style.ForegroundColorSpan(android.graphics.Color.parseColor(profitColor)),
+            profitStart,
+            infoText.length,
+            android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+
+        estateDetailInfo.text = spannable
     }
+
+
+    ///////////////////////////
+
 
     private fun closeEstateDetailSlide() {
         motionLayout.transitionToStart()
