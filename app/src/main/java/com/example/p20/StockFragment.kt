@@ -12,6 +12,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import android.widget.LinearLayout
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
 
 class StockFragment : Fragment() {
@@ -31,6 +32,7 @@ class StockFragment : Fragment() {
     private var profitLossData: TextView? = null
     private var profitRateData: TextView? = null
     private var stockQuantityData: TextView? = null
+    private var selectedStockName: TextView? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -58,6 +60,7 @@ class StockFragment : Fragment() {
         profitLossData = view.findViewById(R.id.profitLossData)
         profitRateData = view.findViewById(R.id.profitRateData)
         stockQuantityData = view.findViewById(R.id.stockQuantityData)
+        selectedStockName = view.findViewById(R.id.selectedStockName)
 
         assetViewModel = ViewModelProvider(requireActivity()).get(AssetViewModel::class.java)
 
@@ -142,30 +145,51 @@ class StockFragment : Fragment() {
     }
 
     private fun updateStockStatus(message: String) {
-        stockStatusText.text = "$message"
+        stockStatusText.text = message
         selectedStock?.let { updateStockDetails(it) }
     }
 
     private fun updateStockDetails(stock: Stock) {
-        if (avgPurchasePriceData != null && profitLossData != null && profitRateData != null && stockQuantityData != null) {
-            val stockNameTextView: TextView = view?.findViewById(R.id.selectedStockName) ?: return
-            stockNameTextView.text = stock.name
+        selectedStockName?.text = stock.name
 
-            if (stock.holding > 0) {
-                val avgPurchasePrice = stock.getAvgPurchasePrice()
-                val profitLoss = stock.getProfitLoss()
-                val profitRate = stock.getProfitRate()
+        if (stock.holding > 0) {
+            val avgPurchasePrice = stock.getAvgPurchasePrice()
+            val profitLoss = stock.getProfitLoss()
+            val profitRate = stock.getProfitRate()
 
-                avgPurchasePriceData?.text = "${avgPurchasePrice}원"
-                profitLossData?.text = "${profitLoss}원"
-                profitRateData?.text = "${"%.2f".format(profitRate)}%"
-                stockQuantityData?.text = "${stock.holding}주"
-            } else {
-                avgPurchasePriceData?.text = "0원"
-                profitLossData?.text = "0원"
-                profitRateData?.text = "0%"
-                stockQuantityData?.text = "0주"
+            avgPurchasePriceData?.text = "${String.format("%,d", avgPurchasePrice)}원"
+            profitLossData?.text = "${String.format("%,d", profitLoss)}원"
+            profitRateData?.text = "${"%.2f".format(profitRate)}%"
+            stockQuantityData?.text = "${String.format("%,d", stock.holding)}주"
+
+
+            // 색상 처리
+            val red = ContextCompat.getColor(requireContext(), android.R.color.holo_red_dark)
+            val blue = ContextCompat.getColor(requireContext(), android.R.color.holo_blue_dark)
+            val black = ContextCompat.getColor(requireContext(), android.R.color.black)
+
+            val profitLossColor = when {
+                profitLoss > 0 -> red
+                profitLoss < 0 -> blue
+                else -> black
             }
+            val profitRateColor = when {
+                profitRate > 0 -> red
+                profitRate < 0 -> blue
+                else -> black
+            }
+
+            profitLossData?.setTextColor(profitLossColor)
+            profitRateData?.setTextColor(profitRateColor)
+
+        } else {
+            avgPurchasePriceData?.text = "0원"
+            profitLossData?.text = "0원"
+            profitRateData?.text = "0%"
+            stockQuantityData?.text = "0주"
+
+            profitLossData?.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.black))
+            profitRateData?.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.black))
         }
     }
 
@@ -192,10 +216,10 @@ class StockFragment : Fragment() {
             val stock = stockList[position]
 
             holder.stockName.text = stock.name
-            holder.stockPrice.text = "${stock.price}원"
-            holder.stockChangeValue.text = "${stock.changeValue}원"
+            holder.stockPrice.text = "${String.format("%,d", stock.price)}원"
+            holder.stockChangeValue.text = "${String.format("%,d", stock.changeValue)}원"
             holder.stockChangeRate.text = "${"%.2f".format(stock.changeRate)}%"
-            holder.stockHolding.text = "${stock.holding}주"
+            holder.stockHolding.text = "${String.format("%,d", stock.holding)}주"
 
             val riseColor = Color.parseColor("#FF5733")
             val fallColor = Color.parseColor("#3385FF")
