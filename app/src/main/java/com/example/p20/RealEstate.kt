@@ -6,7 +6,8 @@ data class RealEstate(
     val initialPrice: Long,
     var price: Long = initialPrice,
     var owned: Boolean = false,
-    val purchasePrices: MutableList<Long> = mutableListOf()
+    val purchasePrices: MutableList<Long> = mutableListOf(),
+    val rentalRate: Double = 0.005 // ⭐️ 임대 수익률 추가 (기본 0.5%)
 ) {
     fun updatePrice() {
         val changeRates = listOf(-30, -20, -10, 0, 10, 20, 30)
@@ -55,5 +56,10 @@ data class RealEstate(
             rate >= -30 -> -20
             else -> -30
         }
+    }
+
+    // ✅ 예상 임대 수익 반환 (현재 가격의 0.5% 예시)
+    fun getExpectedRentalIncome(): Long {
+        return (price * rentalRate).toLong()
     }
 }

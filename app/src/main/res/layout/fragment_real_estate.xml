@@ -20,7 +20,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="15dp"
-            android:text="부동산"
+            android:text="🏠 오늘의 부동산 시장"
             android:textColor="@color/fragment_lavel"
             android:textSize="20sp"
             android:textStyle="bold" />

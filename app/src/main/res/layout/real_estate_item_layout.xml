@@ -39,6 +39,17 @@
             android:layout_marginStart="8dp"/>
     </LinearLayout>
 
+    <!-- ⭐️ 임대 수익 표시 -->
+    <TextView
+        android:id="@+id/estateIncome"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="임대 수익: 0원"
+        android:textSize="12sp"
+        android:textColor="#555555"
+        android:layout_marginTop="2dp"/>
+
+
     <TextView
         android:id="@+id/estateOwned"
         android:layout_width="wrap_content"

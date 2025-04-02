@@ -16,10 +16,10 @@ class RealEstateViewModel(application: Application) : AndroidViewModel(applicati
     private val sharedPreferences = application.getSharedPreferences("real_estate_data", Context.MODE_PRIVATE)
 
     private val handler = Handler(Looper.getMainLooper())
-    private val updateInterval = 5000L
+    private val updateInterval = 10000L // 부동산 가격변동 10초
 
     private val incomeHandler = Handler(Looper.getMainLooper())
-    private val incomeInterval = 15000L // 15초
+    private val incomeInterval = 25000L // 임대수익 25초
 
     var incomeCallback: ((Long) -> Unit)? = null
 

@@ -18,6 +18,7 @@ class RealEstateAdapter(
         val estatePrice: TextView = itemView.findViewById(R.id.estatePrice)
         val estateOwned: TextView = itemView.findViewById(R.id.estateOwned)
         val estateStageIndicator: TextView = itemView.findViewById(R.id.estateStageIndicator)
+        val estateIncome: TextView = itemView.findViewById(R.id.estateIncome)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RealEstateViewHolder {
@@ -38,6 +39,10 @@ class RealEstateAdapter(
             if (estate.owned) Color.parseColor("#00C853") // 초록
             else Color.parseColor("#D50000") // 빨강
         )
+
+        // ⭐️ 예상 임대 수익 표시
+        val expectedIncome = estate.getExpectedRentalIncome()
+        holder.estateIncome.text = "예상 수익: ${formatter.format(expectedIncome)}원"
 
         // 단계 표시
         val rate = estate.getCurrentRate()
