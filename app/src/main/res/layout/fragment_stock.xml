@@ -11,7 +11,7 @@
         android:id="@+id/stockListTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="주식"
+        android:text="📈 오늘의 주식 시장"
         android:gravity="top"
         android:textSize="20sp"
         android:textStyle="bold"
@@ -191,8 +191,9 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="이름"
+                android:textStyle="bold"
                 android:gravity="center"
-                android:textSize="15sp" />
+                android:textSize="13sp" />
 
             <TextView
                 android:id="@+id/avgPurchasePriceData"
@@ -200,8 +201,9 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="0원"
+                android:textStyle="bold"
                 android:gravity="center"
-                android:textSize="15sp" />
+                android:textSize="13sp" />
 
             <TextView
                 android:id="@+id/profitLossData"
@@ -209,8 +211,9 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="0원"
+                android:textStyle="bold"
                 android:gravity="center"
-                android:textSize="15sp" />
+                android:textSize="13sp" />
 
             <TextView
                 android:id="@+id/profitRateData"
@@ -218,8 +221,9 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="0%"
+                android:textStyle="bold"
                 android:gravity="center"
-                android:textSize="15sp" />
+                android:textSize="13sp" />
 
             <TextView
                 android:id="@+id/stockQuantityData"
@@ -227,8 +231,9 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="0주"
+                android:textStyle="bold"
                 android:gravity="center"
-                android:textSize="15sp" />
+                android:textSize="13sp" />
         </LinearLayout>
 
     </LinearLayout>
