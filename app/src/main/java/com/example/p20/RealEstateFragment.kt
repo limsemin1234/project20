@@ -13,7 +13,7 @@ import android.widget.Toast
 import androidx.constraintlayout.motion.widget.MotionLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.text.DecimalFormat
 
@@ -58,7 +58,7 @@ class RealEstateFragment : Fragment() {
         realEstateViewModel = ViewModelProvider(requireActivity()).get(RealEstateViewModel::class.java)
         assetViewModel = ViewModelProvider(requireActivity()).get(AssetViewModel::class.java)
 
-        realEstateRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        realEstateRecyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
         realEstateAdapter = RealEstateAdapter(emptyList()) { estate ->
             selectedEstate = estate
             showEstateDetailSlide(estate)
