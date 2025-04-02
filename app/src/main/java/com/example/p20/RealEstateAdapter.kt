@@ -9,14 +9,15 @@ import androidx.recyclerview.widget.RecyclerView
 import java.text.DecimalFormat
 
 class RealEstateAdapter(
-    private var realEstateList: List<RealEstate>,
+    private var estateList: List<RealEstate>,
     private val onItemClick: (RealEstate) -> Unit
 ) : RecyclerView.Adapter<RealEstateAdapter.RealEstateViewHolder>() {
 
-    class RealEstateViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class RealEstateViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val estateName: TextView = itemView.findViewById(R.id.estateName)
         val estatePrice: TextView = itemView.findViewById(R.id.estatePrice)
         val estateOwned: TextView = itemView.findViewById(R.id.estateOwned)
+        val estateStageIndicator: TextView = itemView.findViewById(R.id.estateStageIndicator)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RealEstateViewHolder {
@@ -26,7 +27,7 @@ class RealEstateAdapter(
     }
 
     override fun onBindViewHolder(holder: RealEstateViewHolder, position: Int) {
-        val estate = realEstateList[position]
+        val estate = estateList[position]
         val formatter = DecimalFormat("#,###")
 
         holder.estateName.text = estate.name
@@ -34,18 +35,42 @@ class RealEstateAdapter(
         holder.estateOwned.text = if (estate.owned) "보유 중" else "미보유"
 
         holder.estateOwned.setTextColor(
-            if (estate.owned) Color.parseColor("#FF5733") else Color.parseColor("#888888")
+            if (estate.owned) Color.parseColor("#00C853") // 초록
+            else Color.parseColor("#D50000") // 빨강
         )
+
+        // 단계 표시
+        val rate = estate.getCurrentRate()
+        holder.estateStageIndicator.text = getStageIndicator(rate)
+
+        // scale 조절
+        val scale = when (rate) {
+            10, -10 -> 0.7f
+            20, -20 -> 1.0f
+            30, -30 -> 1.3f
+            else -> 0.9f
+        }
+        holder.estateStageIndicator.scaleX = scale
+        holder.estateStageIndicator.scaleY = scale
 
         holder.itemView.setOnClickListener {
             onItemClick(estate)
         }
     }
 
-    override fun getItemCount(): Int = realEstateList.size
+    override fun getItemCount(): Int = estateList.size
 
     fun updateList(newList: List<RealEstate>) {
-        realEstateList = newList
+        estateList = newList
         notifyDataSetChanged()
+    }
+
+    // 🔺, 🔻, ➖ 표시
+    private fun getStageIndicator(rate: Int): String {
+        return when {
+            rate > 0 -> "🔺"
+            rate < 0 -> "🔻"
+            else -> "➖"
+        }
     }
 }

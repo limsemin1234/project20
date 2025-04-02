@@ -18,6 +18,8 @@
     <color name="fragment_lavel">#016666</color>
     <color name="alba_level">#673AB7</color>
     <color name="realestate_reward">#F44336</color>
+    <color name="stock_button">#616161</color>
+    <color name="realestate_button">#616161</color>
 
 
 </resources>

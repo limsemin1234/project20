@@ -42,4 +42,18 @@ data class RealEstate(
             ((price - avgPrice) / avgPrice.toDouble()) * 100
         } else 0.0
     }
+
+    // ✅ 현재 가격 단계 반환 (-30, -20, -10, 0, 10, 20, 30)
+    fun getCurrentRate(): Int {
+        val rate = ((price - initialPrice).toDouble() / initialPrice * 100).toInt()
+        return when {
+            rate >= 30 -> 30
+            rate >= 20 -> 20
+            rate >= 10 -> 10
+            rate >= -10 -> 0
+            rate >= -20 -> -10
+            rate >= -30 -> -20
+            else -> -30
+        }
+    }
 }

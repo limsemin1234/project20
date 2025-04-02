@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -34,7 +35,6 @@ class RealEstateFragment : Fragment() {
     private lateinit var estateDetailInfo: TextView
     private lateinit var detailBuyButton: Button
     private lateinit var detailSellButton: Button
-    private lateinit var detailCloseButton: Button
 
     private val handler = Handler(Looper.getMainLooper())
 
@@ -53,7 +53,6 @@ class RealEstateFragment : Fragment() {
         estateDetailInfo = view.findViewById(R.id.estateDetailInfo)
         detailBuyButton = view.findViewById(R.id.detailBuyButton)
         detailSellButton = view.findViewById(R.id.detailSellButton)
-        detailCloseButton = view.findViewById(R.id.detailCloseButton)
 
         realEstateViewModel = ViewModelProvider(requireActivity()).get(RealEstateViewModel::class.java)
         assetViewModel = ViewModelProvider(requireActivity()).get(AssetViewModel::class.java)
@@ -105,9 +104,11 @@ class RealEstateFragment : Fragment() {
             }
         }
 
-        detailCloseButton.setOnClickListener {
-            closeEstateDetailSlide()
+        val closeButton = view.findViewById<ImageButton>(R.id.detailCloseButton)
+        closeButton.setOnClickListener {
+            motionLayout.transitionToStart()
         }
+
 
         return view
     }
@@ -182,7 +183,7 @@ class RealEstateFragment : Fragment() {
                 assetViewModel.decreaseAsset(estate.price.toLong())
                 realEstateViewModel.buy(estate)
                 Toast.makeText(requireContext(), "${estate.name} 매수 완료!", Toast.LENGTH_SHORT).show()
-                closeEstateDetailSlide()
+                //closeEstateDetailSlide() //구매 시 슬라이스 닫힘
             }
             else -> Toast.makeText(requireContext(), "자산이 부족합니다!", Toast.LENGTH_SHORT).show()
         }
@@ -193,7 +194,7 @@ class RealEstateFragment : Fragment() {
             realEstateViewModel.sell(estate)
             assetViewModel.increaseAsset(estate.price.toLong())
             Toast.makeText(requireContext(), "${estate.name} 매도 완료!", Toast.LENGTH_SHORT).show()
-            closeEstateDetailSlide()
+            //closeEstateDetailSlide() //판매 시 슬라이스 닫힘
         } else {
             Toast.makeText(requireContext(), "보유하지 않은 부동산입니다.", Toast.LENGTH_SHORT).show()
         }

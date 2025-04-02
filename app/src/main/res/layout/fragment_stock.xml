@@ -274,6 +274,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_margin="10dp"
+            android:backgroundTint="@color/stock_button"
             android:text="매수"
             android:textSize="16sp"/>
 
@@ -283,6 +284,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_margin="10dp"
+            android:backgroundTint="@color/stock_button"
             android:text="매도"
             android:textSize="16sp"/>
     </LinearLayout>
@@ -301,6 +303,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_margin="10dp"
+            android:backgroundTint="@color/stock_button"
             android:text="전체 매수"
             android:textSize="16sp"/>
 
@@ -310,6 +313,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_margin="10dp"
+            android:backgroundTint="@color/stock_button"
             android:text="전체 매도"
             android:textSize="16sp"/>
     </LinearLayout>

@@ -10,8 +10,8 @@
         android:id="@+id/mainContent"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
         android:background="@drawable/bo2"
+        android:orientation="vertical"
         android:padding="15dp">
 
 
@@ -19,23 +19,24 @@
             android:id="@+id/stockListTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="부동산"
-            android:textSize="20sp"
-            android:textStyle="bold"
             android:layout_margin="15dp"
-            android:textColor="@color/fragment_lavel" />
+            android:text="부동산"
+            android:textColor="@color/fragment_lavel"
+            android:textSize="20sp"
+            android:textStyle="bold" />
 
 
         <TextView
             android:id="@+id/incomeMessageText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="임대 수익 발생 시 표시됩니다."
-            android:textSize="15sp"
-            android:textColor="@android:color/holo_red_light"
             android:gravity="center"
-            android:padding="8dp"
-            android:visibility="visible"/>
+            android:padding="4dp"
+            android:text="임대 수익 발생 시 표시됩니다."
+            android:background="#20000000"
+            android:textColor="@android:color/holo_red_light"
+            android:textSize="16sp"
+            android:visibility="visible" />
 
 
         <androidx.recyclerview.widget.RecyclerView
@@ -43,7 +44,7 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:padding="10dp"/>
+            android:padding="10dp" />
 
 
     </LinearLayout>
@@ -63,6 +64,17 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:visibility="gone">
 
+        <ImageButton
+            android:id="@+id/detailCloseButton"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="end"
+            android:layout_margin="8dp"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_close"
+            android:contentDescription="닫기"
+            app:tint="#FFFFFF" />
+
         <TextView
             android:id="@+id/estateDetailName"
             android:layout_width="wrap_content"
@@ -79,7 +91,7 @@
             android:layout_height="wrap_content"
             android:text="상세 정보"
             android:textColor="#DDDDDD"
-            android:textSize="14sp"
+            android:textSize="16sp"
             android:lineSpacingExtra="4dp"/>
 
         <LinearLayout
@@ -94,6 +106,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="구매"
+                android:textStyle="bold"
+                android:backgroundTint="@color/realestate_button"
                 android:layout_marginEnd="8dp"/>
 
             <Button
@@ -101,14 +115,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="판매"
+                android:textStyle="bold"
+                android:backgroundTint="@color/realestate_button"
                 android:layout_marginStart="8dp"/>
 
-            <Button
-                android:id="@+id/detailCloseButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="닫기"
-                android:layout_marginStart="8dp"/>
         </LinearLayout>
     </LinearLayout>
 
