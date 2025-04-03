@@ -21,7 +21,6 @@ import android.view.Gravity
 import android.view.ViewGroup
 import androidx.fragment.app.FragmentManager
 
-
 class MainActivity : AppCompatActivity() {
 
     private lateinit var assetViewModel: AssetViewModel // 자산 관리 뷰모델
@@ -87,7 +86,6 @@ class MainActivity : AppCompatActivity() {
         val buttonItem = findViewById<Button>(R.id.buttonItem)
         val slidePanel = findViewById<LinearLayout>(R.id.slidePanel)
 
-        // 슬라이드 패널의 반투명 배경 클릭 시 패널 닫기
         slidePanel.getChildAt(0).setOnClickListener {
             val slideDown = AnimationUtils.loadAnimation(this, R.anim.slide_down)
             slideDown.setAnimationListener(object : Animation.AnimationListener {
@@ -100,51 +98,43 @@ class MainActivity : AppCompatActivity() {
             slidePanel.startAnimation(slideDown)
         }
 
-        // 각 버튼 클릭 시 동작 설정
         button1.setOnClickListener {
-            // 제목 숨기고 '내정보' 프래그먼트로 변경
-            titleText.visibility = View.GONE  // 제목 숨기기
-            slidePanel.visibility = View.GONE // 슬라이드 패널 숨기기
-            showFragment(InfoFragment(),"InfoFragment") // 예시: '내정보' 프래그먼트
+            titleText.visibility = View.GONE
+            slidePanel.visibility = View.GONE
+            showFragment(InfoFragment(),"InfoFragment")
         }
 
         button2.setOnClickListener {
-            titleText.visibility = View.GONE  // 제목 숨기기
-            slidePanel.visibility = View.GONE // 슬라이드 패널 숨기기
-            showFragment(AlbaFragment(), "AlbaFragment") // 알바 화면 표시
+            titleText.visibility = View.GONE
+            slidePanel.visibility = View.GONE
+            showFragment(AlbaFragment(), "AlbaFragment")
         }
 
         button3.setOnClickListener {
-            titleText.visibility = View.GONE  // 제목 숨기기
-            slidePanel.visibility = View.GONE // 슬라이드 패널 숨기기
-            showFragment(StockFragment(), "StockFragment") // 주식 화면 표시
+            titleText.visibility = View.GONE
+            slidePanel.visibility = View.GONE
+            showFragment(StockFragment(), "StockFragment")
         }
 
         button4.setOnClickListener {
-            titleText.visibility = View.GONE  // 제목 숨기기
-            slidePanel.visibility = View.GONE // 슬라이드 패널 숨기기
-            showFragment(RealEstateFragment(), "RealEstateFragment") // 주식 화면 표시
+            titleText.visibility = View.GONE
+            slidePanel.visibility = View.GONE
+            showFragment(RealEstateFragment(), "RealEstateFragment")
         }
 
         buttonInfo.setOnClickListener {
-            titleText.visibility = View.GONE  // 제목 숨기기
-            slidePanel.visibility = View.GONE // 슬라이드 패널 숨기기
+            titleText.visibility = View.GONE
+            slidePanel.visibility = View.GONE
             showFragment(RealInfoFragment(), "RealInfoFragment")
         }
 
         buttonItem.setOnClickListener {
-            titleText.visibility = View.GONE  // 제목 숨기기
-            slidePanel.visibility = View.GONE // 슬라이드 패널 숨기기
-            // 임시로 알림 표시
-            AlertDialog.Builder(this)
-                .setTitle("아이템")
-                .setMessage("아이템 기능은 아직 준비 중입니다.")
-                .setPositiveButton("확인", null)
-                .show()
+            titleText.visibility = View.GONE
+            slidePanel.visibility = View.GONE
+            showFragment(ItemFragment(), "ItemFragment")
         }
 
         button6.setOnClickListener {
-            // 슬라이드 패널 토글
             if (slidePanel.visibility == View.VISIBLE) {
                 val slideDown = AnimationUtils.loadAnimation(this, R.anim.slide_down)
                 slideDown.setAnimationListener(object : Animation.AnimationListener {
@@ -163,21 +153,19 @@ class MainActivity : AppCompatActivity() {
         }
 
         button5.setOnClickListener {
-            slidePanel.visibility = View.GONE // 슬라이드 패널 숨기기
+            slidePanel.visibility = View.GONE
             AlertDialog.Builder(this)
                 .setTitle("게임 종료")
                 .setMessage("정말 종료하시겠습니까?")
                 .setPositiveButton("예") { _, _ ->
-                    stockViewModel.saveStockData() // 데이터 저장
-                    finishAffinity()               // 앱 전체 종료
+                    stockViewModel.saveStockData()
+                    finishAffinity()
                 }
                 .setNegativeButton("아니오", null)
                 .show()
         }
-
     }
 
-    //이미 같은 프래그먼트가 있다면 새로 추가하지 않도록 체크
     private fun showFragment(fragment: Fragment, tag: String) {
         val existingFragment = supportFragmentManager.findFragmentByTag(tag)
 
@@ -185,14 +173,13 @@ class MainActivity : AppCompatActivity() {
 
         if (existingFragment == null) {
             transaction.setCustomAnimations(
-                R.anim.fragment_slide_in,   // 진입 애니메이션
-                R.anim.fragment_slide_out,  // 퇴장 애니메이션
-                R.anim.fragment_pop_in,     // 백스택에서 돌아올 때 진입 애니메이션
-                R.anim.fragment_pop_out     // 백스택에서 나갈 때 퇴장 애니메이션
+                R.anim.fragment_slide_in,
+                R.anim.fragment_slide_out,
+                R.anim.fragment_pop_in,
+                R.anim.fragment_pop_out
             )
             transaction.replace(R.id.contentFrame, fragment, tag)
         } else {
-            // 기존 프래그먼트가 있으면 보여주는 방식으로 처리
             transaction.setCustomAnimations(
                 R.anim.fragment_pop_in,
                 R.anim.fragment_pop_out
@@ -203,15 +190,13 @@ class MainActivity : AppCompatActivity() {
         transaction.commit()
     }
 
-    // 메모리 릭 방지를 위한 정리 작업
     override fun onDestroy() {
         super.onDestroy()
-        handler.removeCallbacksAndMessages(null) // activity 종료 시 handler의 모든 콜백과 메시지 제거
+        handler.removeCallbacksAndMessages(null)
     }
 
     override fun onStop() {
         super.onStop()
-        stockViewModel.saveStockData() // 앱 종료 시 주식 데이터 저장
+        stockViewModel.saveStockData()
     }
-
 }

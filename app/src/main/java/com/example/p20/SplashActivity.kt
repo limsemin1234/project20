@@ -18,17 +18,18 @@ class SplashActivity : AppCompatActivity() {
 
         val appNameText = findViewById<TextView>(R.id.appNameText)
         val loadingText = findViewById<TextView>(R.id.loadingText)
-        val startGameButton = findViewById<Button>(R.id.startGameButton)
+        val startButton = findViewById<Button>(R.id.startButton)
 
         // 텍스트 페이드인 애니메이션 시작
         appNameText.startAnimation(fadeIn)
         loadingText.startAnimation(fadeIn)
-        startGameButton.startAnimation(fadeIn)
+        startButton.startAnimation(fadeIn)
 
         // 게임 시작 버튼 클릭 리스너
-        startGameButton.setOnClickListener {
+        startButton.setOnClickListener {
             // 메인 액티비티로 이동
-            startActivity(Intent(this, MainActivity::class.java))
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
             finish()
         }
     }

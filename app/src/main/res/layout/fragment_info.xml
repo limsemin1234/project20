@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@drawable/info6"
-    android:padding="15dp">
+    android:orientation="vertical">
 
     <!-- 상단 제목 레이아웃 -->
     <LinearLayout
@@ -33,66 +32,80 @@
             android:textColor="@android:color/white"/>
     </LinearLayout>
 
-    <!-- 자산 초기화 버튼 -->
-    <Button
-        android:id="@+id/resetAssetButton"
+    <!-- 버튼들을 위한 컨테이너 -->
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:text="자산 초기화"
-        android:layout_margin="15dp"
-        android:background="@drawable/button_selector"
-        android:textColor="@android:color/white" />
+        android:layout_height="match_parent"
+        android:layout_marginTop="16dp">
 
-    <!-- 🔥 추가된 "주식 가격 초기화" 버튼 -->
-    <Button
-        android:id="@+id/resetStockButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:text="주식 가격 초기화"
-        android:layout_margin="15dp"
-        android:background="@drawable/button_selector"
-        android:textColor="@android:color/white" />
-
-    <!-- 🔥 추가된 "알바 가격 초기화" 버튼 -->
-    <Button
-        android:id="@+id/resetAlbaButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:text="알바 초기화"
-        android:layout_margin="15dp"
-        android:background="@drawable/button_selector"
-        android:textColor="@android:color/white" />
-
-    <!-- 🔥 추가된 "부동산 가격 초기화" 버튼 -->
-    <Button
-        android:id="@+id/resetRealEstateButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:text="부동산 가격 초기화"
-        android:layout_margin="15dp"
-        android:background="@drawable/button_selector"
-        android:textColor="@android:color/white" />
-
-    <!-- 시간 제어 버튼들 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_marginBottom="16dp">
-
-        <!-- 시간 초기화 버튼 -->
-        <Button
-            android:id="@+id/resetTimeButton"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:text="시간 초기화"/>
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:padding="16dp">
 
-    </LinearLayout>
+            <!-- 자산 초기화 버튼 -->
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/resetAssetButton"
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:text="자산 초기화"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/reset_button_background"
+                android:textColor="#424242"
+                android:elevation="4dp" />
+
+            <!-- 주식 가격 초기화 버튼 -->
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/resetStockButton"
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:text="주식 가격 초기화"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/reset_button_background"
+                android:textColor="#424242"
+                android:elevation="4dp" />
+
+            <!-- 알바 가격 초기화 버튼 -->
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/resetAlbaButton"
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:text="알바 초기화"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/reset_button_background"
+                android:textColor="#424242"
+                android:elevation="4dp" />
+
+            <!-- 부동산 가격 초기화 버튼 -->
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/resetRealEstateButton"
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:text="부동산 가격 초기화"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/reset_button_background"
+                android:textColor="#424242"
+                android:elevation="4dp" />
+
+            <!-- 시간 초기화 버튼 -->
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/resetTimeButton"
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/reset_button_background"
+                android:textColor="#424242"
+                android:textSize="16sp"
+                android:elevation="4dp"
+                android:text="시간 초기화"/>
+
+        </LinearLayout>
+    </ScrollView>
 
 </LinearLayout>

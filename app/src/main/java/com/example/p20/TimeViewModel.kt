@@ -14,6 +14,21 @@ class TimeViewModel(application: Application) : AndroidViewModel(application) {
     private val _time = MutableLiveData<String>()
     val time: LiveData<String> = _time
 
+    private val _isGameOver = MutableLiveData<Boolean>()
+    val isGameOver: LiveData<Boolean> = _isGameOver
+
+    private val _asset = MutableLiveData<Long>()
+    val asset: LiveData<Long> = _asset
+
+    private val _stockInfo = MutableLiveData<Map<String, Int>>()
+    val stockInfo: LiveData<Map<String, Int>> = _stockInfo
+
+    private val _albaInfo = MutableLiveData<Map<String, Int>>()
+    val albaInfo: LiveData<Map<String, Int>> = _albaInfo
+
+    private val _realEstateInfo = MutableLiveData<Map<String, Boolean>>()
+    val realEstateInfo: LiveData<Map<String, Boolean>> = _realEstateInfo
+
     private val handler = Handler(Looper.getMainLooper())
     private var isTimerRunning = false
     var useCurrentTime = true
@@ -23,6 +38,26 @@ class TimeViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         loadTimeData()
+        _asset.value = 1000000L // 초기 자산 100만원
+        _stockInfo.value = mapOf(
+            "삼성전자" to 0,
+            "SK하이닉스" to 0,
+            "네이버" to 0,
+            "카카오" to 0
+        )
+        _albaInfo.value = mapOf(
+            "편의점 알바" to 0,
+            "카페 알바" to 0,
+            "음식점 알바" to 0,
+            "학원 강사" to 0
+        )
+        _realEstateInfo.value = mapOf(
+            "원룸" to false,
+            "아파트" to false,
+            "빌딩" to false,
+            "주상복합" to false
+        )
+        startTimer()
     }
 
     private fun loadTimeData() {
@@ -98,6 +133,28 @@ class TimeViewModel(application: Application) : AndroidViewModel(application) {
         super.onCleared()
         stopTimer()
         saveTimeData()
+    }
+
+    fun updateAsset(newAsset: Long) {
+        _asset.value = newAsset
+    }
+
+    fun updateStockInfo(stockName: String, quantity: Int) {
+        val currentStocks = _stockInfo.value?.toMutableMap() ?: mutableMapOf()
+        currentStocks[stockName] = quantity
+        _stockInfo.value = currentStocks
+    }
+
+    fun updateAlbaInfo(albaName: String, count: Int) {
+        val currentAlba = _albaInfo.value?.toMutableMap() ?: mutableMapOf()
+        currentAlba[albaName] = count
+        _albaInfo.value = currentAlba
+    }
+
+    fun updateRealEstateInfo(propertyName: String, owned: Boolean) {
+        val currentRealEstate = _realEstateInfo.value?.toMutableMap() ?: mutableMapOf()
+        currentRealEstate[propertyName] = owned
+        _realEstateInfo.value = currentRealEstate
     }
 }
 
