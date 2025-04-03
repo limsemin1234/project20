@@ -116,6 +116,8 @@ class RealEstateViewModel(application: Application) : AndroidViewModel(applicati
     fun resetRealEstatePrices() {
         _realEstateList.value?.forEach { estate ->
             estate.price = estate.initialPrice
+            estate.owned = false
+            estate.purchasePrices.clear()
         }
         _realEstateList.value = _realEstateList.value
         saveRealEstateData()

@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.p20.databinding.FragmentInfoBinding
 import androidx.lifecycle.Observer
+import android.widget.Button
 
 class InfoFragment : Fragment() {
 
@@ -17,6 +18,7 @@ class InfoFragment : Fragment() {
     private lateinit var stockViewModel: StockViewModel
     private lateinit var albaViewModel: AlbaViewModel
     private lateinit var realEstateViewModel: RealEstateViewModel
+    private lateinit var timeViewModel: TimeViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -28,20 +30,30 @@ class InfoFragment : Fragment() {
         stockViewModel = ViewModelProvider(requireActivity()).get(StockViewModel::class.java)
         albaViewModel = ViewModelProvider(requireActivity()).get(AlbaViewModel::class.java)
         realEstateViewModel = ViewModelProvider(requireActivity()).get(RealEstateViewModel::class.java)
+        timeViewModel = ViewModelProvider(requireActivity()).get(TimeViewModel::class.java)
 
-        // 자산 초기화 버튼 클릭 시 자산을 초기화
-        binding.resetAssetButton.setOnClickListener {
-            assetViewModel.resetAsset()
-            Toast.makeText(requireContext(), "자산이 초기화되었습니다.", Toast.LENGTH_SHORT).show()
+        // 시간 초기화 버튼
+        binding.resetTimeButton.setOnClickListener {
+            timeViewModel.resetTimer()
+            Toast.makeText(requireContext(), "시간이 초기화되었습니다.", Toast.LENGTH_SHORT).show()
         }
 
-        // 주식 가격 초기화 버튼 클릭 시 주식 초기화
+        // 자산 초기화 버튼
+        binding.resetAssetButton.setOnClickListener {
+            assetViewModel.resetAssets()
+            stockViewModel.resetStocks()
+            albaViewModel.resetAlba()
+            realEstateViewModel.resetRealEstatePrices()
+            Toast.makeText(requireContext(), "초기화되었습니다.", Toast.LENGTH_SHORT).show()
+        }
+
+        // 주식 가격 초기화 버튼
         binding.resetStockButton.setOnClickListener {
             stockViewModel.resetStockPrices()
             Toast.makeText(requireContext(), "주식 가격이 초기화되었습니다.", Toast.LENGTH_SHORT).show()
         }
 
-        // 알바 초기화 버튼 클릭 시 알바 레벨과 보상 초기화
+        // 알바 초기화 버튼
         binding.resetAlbaButton.setOnClickListener {
             albaViewModel.resetAlba()
             Toast.makeText(requireContext(), "알바가 초기화되었습니다.", Toast.LENGTH_SHORT).show()
@@ -52,7 +64,6 @@ class InfoFragment : Fragment() {
             realEstateViewModel.resetRealEstatePrices()
             Toast.makeText(requireContext(), "부동산 가격이 초기화되었습니다.", Toast.LENGTH_SHORT).show()
         }
-
 
         return binding.root
     }

@@ -17,6 +17,9 @@ import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.LinearLayout
+import android.view.Gravity
+import android.view.ViewGroup
+import androidx.fragment.app.FragmentManager
 
 
 class MainActivity : AppCompatActivity() {
@@ -25,6 +28,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var assetTextView: TextView // 최상단 자산 표시
     private lateinit var stockViewModel: StockViewModel
     private lateinit var timeViewModel: TimeViewModel // 뷰모델 선언
+    private lateinit var realEstateViewModel: RealEstateViewModel // 부동산 뷰모델 추가
+    private lateinit var albaViewModel: AlbaViewModel // 알바 뷰모델 추가
     private val handler: Handler by lazy { Handler(Looper.getMainLooper()) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,36 +49,32 @@ class MainActivity : AppCompatActivity() {
         // StockViewModel 초기화
         stockViewModel = ViewModelProvider(this).get(StockViewModel::class.java)
 
+        // RealEstateViewModel 초기화
+        realEstateViewModel = ViewModelProvider(this).get(RealEstateViewModel::class.java)
 
-/////////////////////////////////시간관리//////////////////////////
-        // ViewModel 초기화 (기존 viewModels() 대신 ViewModelProvider 사용)
-        timeViewModel = ViewModelProvider(this, TimeViewModelFactory(applicationContext))
-            .get(TimeViewModel::class.java)
+        // AlbaViewModel 초기화
+        albaViewModel = ViewModelProvider(this).get(AlbaViewModel::class.java)
+
+        // TimeViewModel 초기화 (수정)
+        timeViewModel = ViewModelProvider(this).get(TimeViewModel::class.java)
 
         // LiveData 감시하여 UI 업데이트
-        timeViewModel.time.observe(this, Observer { newTime ->
+        timeViewModel.time.observe(this) { newTime ->
             timeInfo.text = "시간: $newTime"
-        })
+        }
 
-        // 타이머 시작
+        // 앱 시작 시 저장된 상태 그대로 시작
         timeViewModel.startTimer()
-
-
- //////////////////////////자산관리/////////////////////////////////////
 
         // AssetViewModel 초기화
         assetViewModel = ViewModelProvider(this, AssetViewModelFactory(applicationContext))
             .get(AssetViewModel::class.java)
-        assetTextView = findViewById(R.id.assetInfo) // 자산 TextView
+        assetTextView = findViewById(R.id.assetInfo)
 
-        // 자산 초기 표시 (LiveData를 통해 자산 값을 가져옴)
-        assetViewModel.asset.observe(this, Observer { newAsset ->
-            assetTextView.text = assetViewModel.getAssetText() // 자산 텍스트 업데이트
-        })
-
-
-
-
+        // 자산 초기 표시
+        assetViewModel.asset.observe(this) { newAsset ->
+            assetTextView.text = assetViewModel.getAssetText()
+        }
 
         /////////////////////////////버튼///////////////////////////////
         val button1 = findViewById<Button>(R.id.button1)
@@ -128,7 +129,7 @@ class MainActivity : AppCompatActivity() {
         buttonInfo.setOnClickListener {
             titleText.visibility = View.GONE  // 제목 숨기기
             slidePanel.visibility = View.GONE // 슬라이드 패널 숨기기
-            showFragment(InfoFragment(), "InfoFragment")
+            showFragment(RealInfoFragment(), "RealInfoFragment")
         }
 
         buttonItem.setOnClickListener {
@@ -175,7 +176,6 @@ class MainActivity : AppCompatActivity() {
         }
 
     }
-
 
     //이미 같은 프래그먼트가 있다면 새로 추가하지 않도록 체크
     private fun showFragment(fragment: Fragment, tag: String) {

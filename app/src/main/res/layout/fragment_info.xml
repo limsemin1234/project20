@@ -6,16 +6,32 @@
     android:background="@drawable/info6"
     android:padding="15dp">
 
-    <TextView
+    <!-- 상단 제목 레이아웃 -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="내정보"
-        android:gravity="top"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:layout_margin="15dp"
-        android:textColor="@color/fragment_lavel" />
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical"
+        android:background="#80000000">
 
+        <!-- 이모지 텍스트뷰 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🔄"
+            android:textSize="24sp"
+            android:layout_marginEnd="8dp"/>
+
+        <!-- 제목 텍스트뷰 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="초기화"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"/>
+    </LinearLayout>
 
     <!-- 자산 초기화 버튼 -->
     <Button
@@ -61,5 +77,22 @@
         android:background="@drawable/button_selector"
         android:textColor="@android:color/white" />
 
+    <!-- 시간 제어 버튼들 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="16dp">
+
+        <!-- 시간 초기화 버튼 -->
+        <Button
+            android:id="@+id/resetTimeButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="시간 초기화"/>
+
+    </LinearLayout>
 
 </LinearLayout>

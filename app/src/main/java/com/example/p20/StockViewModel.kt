@@ -105,6 +105,17 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         _stockItems.value = _stockItems.value
     }
 
+    fun resetStocks() {
+        _stockItems.value = mutableListOf(
+            Stock("테슬라", 10000, 0, 0.0, 0),
+            Stock("애플", 10000, 0, 0.0, 0),
+            Stock("아마존", 10000, 0, 0.0, 0),
+            Stock("MS", 10000, 0, 0.0, 0),
+            Stock("구글", 10000, 0, 0.0, 0)
+        )
+        saveStockData()
+    }
+
     override fun onCleared() {
         super.onCleared()
         handler.removeCallbacksAndMessages(null)

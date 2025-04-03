@@ -9,9 +9,3 @@ class AssetViewModelFactory(private val context: Context) : ViewModelProvider.Fa
         return AssetViewModel(context) as T
     }
 }
-
-class TimeViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return TimeViewModel(context) as T
-    }
-}
