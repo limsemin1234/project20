@@ -32,12 +32,17 @@ class RealEstateAdapter(
 
         holder.estateName.text = estate.name
         holder.estatePrice.text = "${formatter.format(estate.price)}원"
-        holder.estateOwned.text = if (estate.owned) "보유 중" else "미보유"
-
-        holder.estateOwned.setTextColor(
-            if (estate.owned) Color.parseColor("#00C853") // 초록
-            else Color.parseColor("#D50000") // 빨강
-        )
+        
+        // 보유 상태 설정
+        if (estate.owned) {
+            holder.estateOwned.text = "보유중"
+            holder.estateOwned.setTextColor(Color.parseColor("#00C853"))
+            holder.estateOwned.setBackgroundResource(R.drawable.ownership_status_background_owned)
+        } else {
+            holder.estateOwned.text = "미보유"
+            holder.estateOwned.setTextColor(Color.parseColor("#D50000"))
+            holder.estateOwned.setBackgroundResource(R.drawable.ownership_status_background_unowned)
+        }
 
         // 단계 표시
         val rate = estate.getCurrentRate()

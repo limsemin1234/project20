@@ -43,8 +43,15 @@
         android:id="@+id/estateOwned"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="보유 여부"
+        android:text="미보유"
         android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="#FF0000"
+        android:background="@drawable/ownership_status_background"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp"
         android:layout_marginTop="4dp"/>
 
 </LinearLayout>
