@@ -14,6 +14,9 @@ import android.animation.ObjectAnimator
 import android.os.Handler
 import android.os.Looper
 import android.view.View
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
+import android.widget.LinearLayout
 
 
 class MainActivity : AppCompatActivity() {
@@ -78,30 +81,88 @@ class MainActivity : AppCompatActivity() {
         val button3 = findViewById<Button>(R.id.button3)
         val button4 = findViewById<Button>(R.id.button4)
         val button5 = findViewById<Button>(R.id.button5)
+        val button6 = findViewById<Button>(R.id.button6)
+        val buttonInfo = findViewById<Button>(R.id.buttonInfo)
+        val buttonItem = findViewById<Button>(R.id.buttonItem)
+        val slidePanel = findViewById<LinearLayout>(R.id.slidePanel)
+
+        // 슬라이드 패널의 반투명 배경 클릭 시 패널 닫기
+        slidePanel.getChildAt(0).setOnClickListener {
+            val slideDown = AnimationUtils.loadAnimation(this, R.anim.slide_down)
+            slideDown.setAnimationListener(object : Animation.AnimationListener {
+                override fun onAnimationStart(animation: Animation?) {}
+                override fun onAnimationEnd(animation: Animation?) {
+                    slidePanel.visibility = View.GONE
+                }
+                override fun onAnimationRepeat(animation: Animation?) {}
+            })
+            slidePanel.startAnimation(slideDown)
+        }
 
         // 각 버튼 클릭 시 동작 설정
         button1.setOnClickListener {
             // 제목 숨기고 '내정보' 프래그먼트로 변경
             titleText.visibility = View.GONE  // 제목 숨기기
+            slidePanel.visibility = View.GONE // 슬라이드 패널 숨기기
             showFragment(InfoFragment(),"InfoFragment") // 예시: '내정보' 프래그먼트
         }
 
         button2.setOnClickListener {
             titleText.visibility = View.GONE  // 제목 숨기기
+            slidePanel.visibility = View.GONE // 슬라이드 패널 숨기기
             showFragment(AlbaFragment(), "AlbaFragment") // 알바 화면 표시
         }
 
         button3.setOnClickListener {
             titleText.visibility = View.GONE  // 제목 숨기기
+            slidePanel.visibility = View.GONE // 슬라이드 패널 숨기기
             showFragment(StockFragment(), "StockFragment") // 주식 화면 표시
         }
 
         button4.setOnClickListener {
             titleText.visibility = View.GONE  // 제목 숨기기
+            slidePanel.visibility = View.GONE // 슬라이드 패널 숨기기
             showFragment(RealEstateFragment(), "RealEstateFragment") // 주식 화면 표시
         }
 
+        buttonInfo.setOnClickListener {
+            titleText.visibility = View.GONE  // 제목 숨기기
+            slidePanel.visibility = View.GONE // 슬라이드 패널 숨기기
+            showFragment(InfoFragment(), "InfoFragment")
+        }
+
+        buttonItem.setOnClickListener {
+            titleText.visibility = View.GONE  // 제목 숨기기
+            slidePanel.visibility = View.GONE // 슬라이드 패널 숨기기
+            // 임시로 알림 표시
+            AlertDialog.Builder(this)
+                .setTitle("아이템")
+                .setMessage("아이템 기능은 아직 준비 중입니다.")
+                .setPositiveButton("확인", null)
+                .show()
+        }
+
+        button6.setOnClickListener {
+            // 슬라이드 패널 토글
+            if (slidePanel.visibility == View.VISIBLE) {
+                val slideDown = AnimationUtils.loadAnimation(this, R.anim.slide_down)
+                slideDown.setAnimationListener(object : Animation.AnimationListener {
+                    override fun onAnimationStart(animation: Animation?) {}
+                    override fun onAnimationEnd(animation: Animation?) {
+                        slidePanel.visibility = View.GONE
+                    }
+                    override fun onAnimationRepeat(animation: Animation?) {}
+                })
+                slidePanel.startAnimation(slideDown)
+            } else {
+                slidePanel.visibility = View.VISIBLE
+                val slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up)
+                slidePanel.startAnimation(slideUp)
+            }
+        }
+
         button5.setOnClickListener {
+            slidePanel.visibility = View.GONE // 슬라이드 패널 숨기기
             AlertDialog.Builder(this)
                 .setTitle("게임 종료")
                 .setMessage("정말 종료하시겠습니까?")
