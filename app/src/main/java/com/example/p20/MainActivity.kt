@@ -36,6 +36,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var gameOverFinalAssetText: TextView
     private lateinit var gameOverRestartButton: Button
     private lateinit var gameOverExitButton: Button
+    private lateinit var gameOverRestartMessageText: TextView // 추가
     private val handler: Handler by lazy { Handler(Looper.getMainLooper()) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -107,6 +108,7 @@ class MainActivity : AppCompatActivity() {
         gameOverFinalAssetText = findViewById(R.id.gameOverFinalAssetText)
         gameOverRestartButton = findViewById(R.id.gameOverRestartButton)
         gameOverExitButton = findViewById(R.id.gameOverExitButton)
+        gameOverRestartMessageText = findViewById(R.id.gameOverRestartMessageText) // 추가
         // --- 추가 끝 ---
 
         // --- 추가: View.post를 사용하여 gameOverView 숨김 예약 ---
@@ -130,13 +132,39 @@ class MainActivity : AppCompatActivity() {
         
         // --- 추가: 게임 오버 뷰 버튼 리스너 설정 ---
         gameOverRestartButton.setOnClickListener {
-            // --- 추가: 즉시 gameOverView 숨김 ---
-            gameOverView.visibility = View.GONE
-            // --- 추가 끝 ---
+            // 버튼 비활성화
+            gameOverRestartButton.isEnabled = false
+            gameOverExitButton.isEnabled = false
             
-            // 다시 시작 요청 (기존 메시지 표시 및 리셋 로직 트리거)
-            timeViewModel.requestRestart()
-            // gameOverView는 isGameOver가 false로 바뀌면 옵저버에 의해 숨겨짐
+            // 기존 내용 숨기기 (선택적: 메시지만 보이게 할 경우)
+             findViewById<TextView>(R.id.gameOverFinalAssetText).visibility = View.GONE // 예시
+            // TODO: 필요하다면 게임오버 텍스트, 종료 버튼 등도 숨김 처리
+
+            // 메시지 표시 및 깜빡임 애니메이션 시작
+            gameOverRestartMessageText.visibility = View.VISIBLE
+            val blinkAnimation = AlphaAnimation(1.0f, 0.0f).apply {
+                duration = 500 // 0.5초 간격
+                repeatMode = Animation.REVERSE
+                repeatCount = Animation.INFINITE
+            }
+            gameOverRestartMessageText.startAnimation(blinkAnimation)
+
+            // 3초 후 실행
+            handler.postDelayed({
+                // 애니메이션 중지 및 메시지 숨기기
+                gameOverRestartMessageText.clearAnimation()
+                gameOverRestartMessageText.visibility = View.GONE
+                
+                // (선택적) 버튼 다시 활성화 - 하지만 바로 리셋/화면 전환됨
+                // gameOverRestartButton.isEnabled = true
+                // gameOverExitButton.isEnabled = true
+                
+                // (선택적) 숨겼던 내용 다시 보이게 - 하지만 바로 리셋/화면 전환됨
+                // findViewById<TextView>(R.id.gameOverFinalAssetText).visibility = View.VISIBLE
+                
+                // 다시 시작 요청 (리셋 및 ExplanationFragment 표시 트리거)
+                timeViewModel.requestRestart()
+            }, 3000) // 3초 지연
         }
 
         gameOverExitButton.setOnClickListener {

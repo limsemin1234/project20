@@ -240,6 +240,17 @@
             android:textStyle="bold"
             android:layout_marginBottom="24dp"/>
 
+        <!-- 추가: 다시 시작 시 메시지 (gameOverView 내부, 초기에는 숨김) -->
+        <TextView
+            android:id="@+id/gameOverRestartMessageText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:layout_marginTop="16dp"
+            android:text="시간을 되돌립니다..."
+            android:textColor="@android:color/white"
+            android:textSize="18sp" />
+
         <TextView
             android:id="@+id/gameOverFinalAssetText"
             android:layout_width="wrap_content"
