@@ -515,7 +515,8 @@ class BlackjackFragment : Fragment() {
     }
     
     private fun showCustomSnackbar(message: String) {
-        val snackbar = Snackbar.make(requireView(), message, Snackbar.LENGTH_SHORT)
+        val activity = requireActivity()
+        val snackbar = Snackbar.make(activity.findViewById(android.R.id.content), message, Snackbar.LENGTH_SHORT)
         val snackbarView = snackbar.view
         snackbarView.setBackgroundColor(Color.argb(200, 33, 33, 33))
         try {
@@ -528,7 +529,8 @@ class BlackjackFragment : Fragment() {
     }
     
     private fun showResultSnackbar(message: String, backgroundColor: Int) {
-        val snackbar = Snackbar.make(requireView(), message, Snackbar.LENGTH_LONG)
+        val activity = requireActivity()
+        val snackbar = Snackbar.make(activity.findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG)
         val snackbarView = snackbar.view
         snackbarView.setBackgroundColor(backgroundColor)
         try {

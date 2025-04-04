@@ -48,10 +48,6 @@ class PokerFragment : Fragment() {
     // 카드 관련 변수
     private val suits = listOf("♠", "♥", "♦", "♣")
     private val ranks = listOf("A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K")
-    private val rankValues = mapOf(
-        "2" to 2, "3" to 3, "4" to 4, "5" to 5, "6" to 6, "7" to 7, "8" to 8, "9" to 9,
-        "10" to 10, "J" to 11, "Q" to 12, "K" to 13, "A" to 14
-    )
     
     // 카드 덱과 손패
     private val deck = mutableListOf<Card>()
@@ -60,12 +56,20 @@ class PokerFragment : Fragment() {
     // ViewModel 공유
     private val assetViewModel: AssetViewModel by activityViewModels()
 
+    companion object {
+        // 카드 랭크 값 매핑
+        val rankValues = mapOf(
+            "2" to 2, "3" to 3, "4" to 4, "5" to 5, "6" to 6, "7" to 7, "8" to 8, "9" to 9,
+            "10" to 10, "J" to 11, "Q" to 12, "K" to 13, "A" to 14
+        )
+    }
+
     data class Card(val rank: String, val suit: String) {
         override fun toString(): String {
             return "$rank$suit"
         }
         
-        fun value(): Int = rankValues[rank] ?: 0
+        fun value(): Int = PokerFragment.rankValues[rank] ?: 0
     }
     
     override fun onCreateView(
@@ -300,7 +304,7 @@ class PokerFragment : Fragment() {
     private fun addCardView(container: LinearLayout, card: Card, index: Int) {
         val cardView = TextView(requireContext())
         cardView.layoutParams = LinearLayout.LayoutParams(
-            resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width) * 2/3,
+            (resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width) * 0.95f).toInt(),
             ViewGroup.LayoutParams.MATCH_PARENT
         ).apply {
             marginEnd = resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width) / 20
@@ -308,8 +312,8 @@ class PokerFragment : Fragment() {
         
         cardView.background = ContextCompat.getDrawable(requireContext(), android.R.drawable.btn_default)
         cardView.gravity = Gravity.CENTER
-        cardView.textSize = 18f
-        cardView.setPadding(8, 8, 8, 8)
+        cardView.textSize = 20f
+        cardView.setPadding(12, 12, 12, 12)
         
         cardView.text = card.toString()
         // 하트/다이아는 빨간색, 스페이드/클럽은 검은색
@@ -459,6 +463,17 @@ class PokerFragment : Fragment() {
         
         // 베팅 초기화
         currentBet = 0L
+        
+        // 3초 후에 카드 지우기
+        Handler(Looper.getMainLooper()).postDelayed({
+            playerCardsLayout.removeAllViews()
+            handRankText.text = "패 없음"
+            
+            // 체크박스 초기화
+            cardCheckBoxes.forEach { it.isChecked = false }
+            
+            showCustomSnackbar("새 게임을 위해 베팅해주세요")
+        }, 3000) // 3초 지연
     }
     
     private fun updateBalanceText() {
@@ -472,7 +487,8 @@ class PokerFragment : Fragment() {
     }
     
     private fun showCustomSnackbar(message: String) {
-        val snackbar = Snackbar.make(requireView(), message, Snackbar.LENGTH_SHORT)
+        val activity = requireActivity()
+        val snackbar = Snackbar.make(activity.findViewById(android.R.id.content), message, Snackbar.LENGTH_SHORT)
         val snackbarView = snackbar.view
         snackbarView.setBackgroundColor(Color.argb(200, 33, 33, 33))
         try {
@@ -485,7 +501,8 @@ class PokerFragment : Fragment() {
     }
     
     private fun showResultSnackbar(message: String, backgroundColor: Int) {
-        val snackbar = Snackbar.make(requireView(), message, Snackbar.LENGTH_LONG)
+        val activity = requireActivity()
+        val snackbar = Snackbar.make(activity.findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG)
         val snackbarView = snackbar.view
         snackbarView.setBackgroundColor(backgroundColor)
         try {
