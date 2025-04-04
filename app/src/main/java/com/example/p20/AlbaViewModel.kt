@@ -106,4 +106,10 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
         rewardTextCount = 0
         saveAlbaData()
     }
+
+    override fun onCleared() {
+        super.onCleared()
+        // ViewModel 파괴 시 예약된 콜백 제거
+        handler.removeCallbacksAndMessages(null)
+    }
 }

@@ -210,4 +210,12 @@ class RealEstateFragment : Fragment() {
             Toast.makeText(requireContext(), "보유하지 않은 부동산입니다.", Toast.LENGTH_SHORT).show()
         }
     }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        // 콜백 참조 해제하여 메모리 누수 방지
+        realEstateViewModel.incomeCallback = null
+        // 핸들러 콜백도 명시적으로 제거 (안전성 강화)
+        handler.removeCallbacksAndMessages(null)
+    }
 }

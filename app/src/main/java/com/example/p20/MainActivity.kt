@@ -33,7 +33,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var albaViewModel: AlbaViewModel // 알바 뷰모델 추가
     private lateinit var globalRemainingTimeTextView: TextView // 전역 남은 시간 표시 텍스트뷰
     private lateinit var mainRestartMessageTextView: TextView // 메인 재시작 메시지 텍스트뷰
-    private val handler: Handler by lazy { Handler(Looper.getMainLooper()) }
+    // private val handler: Handler by lazy { Handler(Looper.getMainLooper()) }
+    private lateinit var gameOverExitButton: Button
+    private lateinit var gameOverRestartMessageText: TextView // 추가
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -301,7 +303,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        handler.removeCallbacksAndMessages(null)
+        // --- 삭제: 미사용 핸들러 콜백 제거 ---
+        // handler.removeCallbacksAndMessages(null)
+        // --- 삭제 끝 ---
     }
 
     override fun onStop() {
