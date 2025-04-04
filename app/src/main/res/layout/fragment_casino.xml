@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/ca1"
     tools:context=".CasinoFragment">
 
     <!-- 여기에 카지노 UI가 추가될 예정입니다. -->
@@ -10,6 +11,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
-        android:text="카지노 화면 준비 중..." />
+        android:text="카지노 화면 준비 중..."
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:textStyle="bold" />
 
 </FrameLayout>
