@@ -63,7 +63,7 @@ class AssetViewModel(private val context: Context) : ViewModel() {
     }
 
     fun resetAssets() {
-        _asset.value = 10000000 // 초기 현금으로 초기화
+        _asset.value = 1_000_000L // 초기 자산 100만원으로 통일
         _realEstateList.value = listOf( // 부동산 목록 초기화
             RealEstate(1, "반지하 원룸", 30_000_000L),
             RealEstate(2, "상가 건물", 50_000_000L),

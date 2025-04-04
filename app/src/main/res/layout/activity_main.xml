@@ -24,20 +24,20 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:gravity="start"
+                android:gravity="start|center_vertical"
                 android:text="자산: 0원"
                 android:textColor="@android:color/white"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
-            <!-- 시간 정보 -->
+            <!-- 게임 시간 정보 (우측) -->
             <TextView
                 android:id="@+id/timeInfo"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:gravity="end"
-                android:text="시간: 00:00:00"
+                android:gravity="end|center_vertical"
+                android:text="게임시간: 00:00:00"
                 android:textColor="@android:color/white"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -50,6 +50,8 @@
             android:layout_weight="1"
             android:background="@drawable/main1">
 
+            <!-- 삭제: 기존 titleText TextView -->
+            <!--
             <TextView
                 android:id="@+id/titleText"
                 android:layout_width="wrap_content"
@@ -65,6 +67,7 @@
                 android:lineSpacingExtra="6dp"
                 android:elevation="4dp"
                 android:textStyle="normal" />
+            -->
         </FrameLayout>
 
         <!-- 하단 버튼 -->
@@ -133,6 +136,35 @@
         </LinearLayout>
     </LinearLayout>
 
+    <!-- 전역 남은 시간 표시 (topLayout 아래 우측, 반투명 오버레이) -->
+    <TextView
+        android:id="@+id/globalRemainingTimeInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="45dp"
+        android:layout_marginEnd="5dp"
+        android:background="#80000000"
+        android:padding="6dp"
+        android:text="남은 시간: -초"
+        android:textColor="@android:color/white"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <!-- 메인 화면 중앙 메시지 (초기에는 숨김) -->
+    <TextView
+        android:id="@+id/mainRestartMessageText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        android:background="#80000000"
+        android:padding="16dp"
+        android:text="시간을 되돌립니다..."
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:elevation="20dp" />
+
     <!-- 슬라이드업 패널 (최상단에 오버레이) -->
     <LinearLayout
         android:id="@+id/slidePanel"
@@ -184,5 +216,53 @@
                 android:background="@drawable/button_selector"
                 android:textColor="@android:color/white" />
         </LinearLayout>
+    </LinearLayout>
+
+    <!-- 게임 오버 뷰 (초기에는 숨김) -->
+    <LinearLayout
+        android:id="@+id/gameOverView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="#E6000000"
+        android:padding="32dp"
+        android:visibility="gone"
+        android:elevation="12dp"
+        android:saveEnabled="false">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Game Over!"
+            android:textSize="32sp"
+            android:textColor="@android:color/holo_red_light"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp"/>
+
+        <TextView
+            android:id="@+id/gameOverFinalAssetText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="최종 자산: 0원"
+            android:textSize="20sp"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="48dp"/>
+
+        <Button
+            android:id="@+id/gameOverRestartButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="다시 시작"
+            android:textSize="18sp"
+            android:layout_marginBottom="16dp"/>
+
+        <Button
+            android:id="@+id/gameOverExitButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="종료"
+            android:textSize="18sp"/>
+
     </LinearLayout>
 </FrameLayout>

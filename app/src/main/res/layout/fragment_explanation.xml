@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clickable="true" 
+    android:focusable="true" 
+    android:background="@drawable/main1" 
+    tools:context=".ExplanationFragment">
+
+    <TextView
+        android:id="@+id/explanationText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:padding="20dp"
+        android:background="#A0000000"
+        android:text="🕒 시간과 돈의 게임 🪙\n\n게임 설명\n\n- 알바, 주식, 부동산 등 다양한 방법으로\n  돈을 벌 수 있습니다.\n\n- 번 돈으로 시간을 구매하여\n  수명을 늘릴 수 있습니다.\n\n- 아이템을 사용하여 게임을 더 유리하게\n  진행할 수 있습니다.\n\n최종 목표는 현재 개발 중입니다.\n더 많은 컨텐츠를 기대해 주세요!\n\n▼ 터치하여 시작하기 ▼"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:lineSpacingExtra="6dp"
+        android:elevation="4dp"
+        android:textStyle="normal" />
+
+</FrameLayout> 

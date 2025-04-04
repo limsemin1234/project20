@@ -14,11 +14,17 @@ class TimeViewModel(application: Application) : AndroidViewModel(application) {
     private val _time = MutableLiveData<String>()
     val time: LiveData<String> = _time
 
-    private val _isGameOver = MutableLiveData<Boolean>()
+    private val _isGameOver = MutableLiveData<Boolean>(false)
     val isGameOver: LiveData<Boolean> = _isGameOver
 
     private val _remainingTime = MutableLiveData<Int>()
     val remainingTime: LiveData<Int> = _remainingTime
+
+    private val _restartRequested = MutableLiveData<Boolean>(false)
+    val restartRequested: LiveData<Boolean> = _restartRequested
+
+    private val _showRestartMessageInInfo = MutableLiveData<Boolean>(false)
+    val showRestartMessageInInfo: LiveData<Boolean> = _showRestartMessageInInfo
 
     private val _asset = MutableLiveData<Long>()
     val asset: LiveData<Long> = _asset
@@ -34,7 +40,6 @@ class TimeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val handler = Handler(Looper.getMainLooper())
     private var isTimerRunning = false
-    var useCurrentTime = true
     private val sharedPreferences = application.getSharedPreferences("time_data", Context.MODE_PRIVATE)
     private var startTimeInSeconds = 0L
     private var startTime: Long = 0
@@ -60,21 +65,27 @@ class TimeViewModel(application: Application) : AndroidViewModel(application) {
             "빌딩" to false,
             "주상복합" to false
         )
-        _remainingTime.value = 60 // 1분 = 60초
-        _isGameOver.value = false
-        startTimer()
     }
 
     private fun loadTimeData() {
         _time.value = sharedPreferences.getString("current_time", "00:00:00") ?: "00:00:00"
-        useCurrentTime = sharedPreferences.getBoolean("use_current_time", true)
         startTimeInSeconds = timeStringToSeconds(_time.value ?: "00:00:00")
+        
+        val loadedRemainingTime = sharedPreferences.getInt("remaining_time", 60)
+        if (loadedRemainingTime <= 1) {
+            _remainingTime.value = 60
+            _time.value = "00:00:00"
+            startTimeInSeconds = 0
+            saveTimeData()
+        } else {
+            _remainingTime.value = loadedRemainingTime
+        }
     }
 
     private fun saveTimeData() {
         val editor = sharedPreferences.edit()
         editor.putString("current_time", _time.value)
-        editor.putBoolean("use_current_time", useCurrentTime)
+        editor.putInt("remaining_time", _remainingTime.value ?: 60)
         editor.apply()
     }
 
@@ -93,15 +104,9 @@ class TimeViewModel(application: Application) : AndroidViewModel(application) {
     private val updateTimeRunnable = object : Runnable {
         override fun run() {
             if (isTimerRunning) {
-                if (useCurrentTime) {
-                    val currentTime = Calendar.getInstance().time
-                    val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
-                    _time.value = timeFormat.format(currentTime)
-                } else {
-                    val currentTimeInSeconds = startTimeInSeconds + 
-                        ((System.currentTimeMillis() - startTime) / 1000)
-                    _time.value = secondsToTimeString(currentTimeInSeconds)
-                }
+                val currentTimeInSeconds = startTimeInSeconds + 
+                    ((System.currentTimeMillis() - startTime) / 1000)
+                _time.value = secondsToTimeString(currentTimeInSeconds)
 
                 // 남은 시간 감소
                 _remainingTime.value = _remainingTime.value?.minus(1)
@@ -139,10 +144,11 @@ class TimeViewModel(application: Application) : AndroidViewModel(application) {
         editor.apply()
 
         _time.value = "00:00:00"
-        useCurrentTime = false
         startTimeInSeconds = 0
-        _remainingTime.value = 60 // 타이머 리셋시 60초로 초기화
+        _remainingTime.value = 60
         _isGameOver.value = false
+        _restartRequested.value = false
+        _showRestartMessageInInfo.value = false
         saveTimeData()
         startTimer()
     }
@@ -173,6 +179,26 @@ class TimeViewModel(application: Application) : AndroidViewModel(application) {
         val currentRealEstate = _realEstateInfo.value?.toMutableMap() ?: mutableMapOf()
         currentRealEstate[propertyName] = owned
         _realEstateInfo.value = currentRealEstate
+    }
+
+    // 게임 시작 시 타이머를 명시적으로 시작하는 함수
+    fun startGameTimer() {
+        // isGameOver 상태 확인 제거 (항상 false로 시작) 및 isTimerRunning 확인만
+        if (!isTimerRunning) {
+            startTimer()
+        }
+    }
+
+    fun requestRestart() {
+        _restartRequested.value = true
+    }
+
+    fun triggerShowRestartMessageInInfo() {
+        _showRestartMessageInInfo.value = true
+    }
+
+    fun consumedShowRestartMessageInInfo() {
+        _showRestartMessageInInfo.value = false
     }
 }
 

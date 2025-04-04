@@ -135,13 +135,21 @@ class StockFragment : Fragment() {
         return view
     }
 
-    private fun updateStockList(stockItems: MutableList<Stock>) {
-        stockAdapter = StockAdapter(stockItems) { stock ->
-            selectedStock = stock
-            updateStockStatus("${stock.name}이(가) 선택되었습니다.")
+    private fun updateStockList(newStockItems: MutableList<Stock>?) {
+        // 기존 어댑터에 데이터 업데이트
+        newStockItems?.let {
+             stockAdapter.updateData(it)
         }
-        stockRecyclerView.adapter = stockAdapter
-        stockAdapter.notifyDataSetChanged()
+    }
+
+    private fun clearStockDetails() {
+        selectedStockName?.text = "-"
+        avgPurchasePriceData?.text = "0원"
+        profitLossData?.text = "0원"
+        profitRateData?.text = "0%"
+        stockQuantityData?.text = "0주"
+        profitLossData?.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.black))
+        profitRateData?.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.black))
     }
 
     private fun updateStockStatus(message: String) {
@@ -202,7 +210,7 @@ class StockFragment : Fragment() {
     }
 
     class StockAdapter(
-        private val stockList: List<Stock>,
+        private var stockList: List<Stock>,
         private val onItemClick: (Stock) -> Unit
     ) : RecyclerView.Adapter<StockViewHolder>() {
 
@@ -239,5 +247,10 @@ class StockFragment : Fragment() {
         }
 
         override fun getItemCount(): Int = stockList.size
+        
+        fun updateData(newStockList: List<Stock>) {
+             stockList = newStockList
+             notifyDataSetChanged()
+        }
     }
 }

@@ -66,9 +66,20 @@ class RealEstateFragment : Fragment() {
 
         realEstateViewModel.realEstateList.observe(viewLifecycleOwner) { updatedList ->
             realEstateAdapter.updateList(updatedList)
-            selectedEstate?.let {
-                updateEstateDetailInfo(it)
+            
+            // --- 추가: 리스트 업데이트 시 선택 상태 및 상세 UI 초기화 ---
+            selectedEstate?.let { currentSelected ->
+                // 리셋 등으로 인해 기존 선택 항목이 사라졌는지 확인
+                val stillExists = updatedList?.any { it.id == currentSelected.id } ?: false
+                if (!stillExists || !currentSelected.owned) { // 소유하지 않게 된 경우 포함
+                    selectedEstate = null
+                    motionLayout.transitionToStart() // 슬라이드 닫기
+                } else {
+                    // 선택 상태 유지 시 상세 정보만 업데이트
+                    updateEstateDetailInfo(currentSelected)
+                }
             }
+            // --- 추가 끝 ---
         }
 
         // 통합형 임대 수익 메시지 처리

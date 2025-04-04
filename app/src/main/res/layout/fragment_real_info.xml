@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    tools:context=".RealInfoFragment">
 
     <!-- 상단 제목 레이아웃 -->
     <LinearLayout
+        android:id="@+id/titleLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -31,72 +33,63 @@
             android:textColor="@android:color/white"/>
     </LinearLayout>
 
-    <!-- 남은 시간 표시 -->
-    <TextView
-        android:id="@+id/remainingTimeText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="32dp"
-        android:text="⏰ 60초"
-        android:textSize="40sp"
-        android:textStyle="bold"
-        android:textColor="#FF5252"
-        android:background="#80000000"
-        android:padding="20dp"/>
-
-    <!-- 기존 내용을 ScrollView로 감싸기 -->
-    <ScrollView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingTop="72dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:paddingBottom="16dp">
 
-        <LinearLayout
+        <!-- 자산 정보 TextView -->
+        <TextView
+            android:id="@+id/assetTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:textSize="18sp"
+            android:textColor="#FFFFFF"
+            android:background="#80000000"
+            android:padding="16dp"
+            android:layout_marginBottom="8dp"/>
 
-            <!-- 기존 내용들... -->
-            <TextView
-                android:id="@+id/assetTextView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textSize="18sp"
-                android:textColor="#FFFFFF"
-                android:background="#80000000"
-                android:padding="16dp"
-                android:layout_marginBottom="8dp"/>
+        <!-- 삭제: stockTextView -->
+<!--
+        <TextView
+            android:id="@+id/stockTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textColor="#FFFFFF"
+            android:background="#80000000"
+            android:padding="16dp"
+            android:layout_marginBottom="8dp"/>
+-->
+        <!-- 삭제: albaTextView -->
+<!--
+        <TextView
+            android:id="@+id/albaTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textColor="#FFFFFF"
+            android:background="#80000000"
+            android:padding="16dp"
+            android:layout_marginBottom="8dp"/>
+-->
+        <!-- 삭제: realEstateTextView -->
+<!--
+        <TextView
+            android:id="@+id/realEstateTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textColor="#FFFFFF"
+            android:background="#80000000"
+            android:padding="16dp"
+            android:layout_marginBottom="8dp"/>
+-->
+    </LinearLayout>
 
-            <TextView
-                android:id="@+id/stockTextView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textSize="18sp"
-                android:textColor="#FFFFFF"
-                android:background="#80000000"
-                android:padding="16dp"
-                android:layout_marginBottom="8dp"/>
-
-            <TextView
-                android:id="@+id/albaTextView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textSize="18sp"
-                android:textColor="#FFFFFF"
-                android:background="#80000000"
-                android:padding="16dp"
-                android:layout_marginBottom="8dp"/>
-
-            <TextView
-                android:id="@+id/realEstateTextView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textSize="18sp"
-                android:textColor="#FFFFFF"
-                android:background="#80000000"
-                android:padding="16dp"
-                android:layout_marginBottom="8dp"/>
-
-        </LinearLayout>
-    </ScrollView>
-</LinearLayout> 
+</FrameLayout> 

@@ -20,6 +20,7 @@ import android.widget.LinearLayout
 import android.view.Gravity
 import android.view.ViewGroup
 import androidx.fragment.app.FragmentManager
+import android.view.animation.AlphaAnimation
 
 class MainActivity : AppCompatActivity() {
 
@@ -29,18 +30,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var timeViewModel: TimeViewModel // 뷰모델 선언
     private lateinit var realEstateViewModel: RealEstateViewModel // 부동산 뷰모델 추가
     private lateinit var albaViewModel: AlbaViewModel // 알바 뷰모델 추가
+    private lateinit var globalRemainingTimeTextView: TextView // 전역 남은 시간 표시 텍스트뷰
+    private lateinit var mainRestartMessageTextView: TextView // 메인 재시작 메시지 텍스트뷰
+    private lateinit var gameOverView: LinearLayout
+    private lateinit var gameOverFinalAssetText: TextView
+    private lateinit var gameOverRestartButton: Button
+    private lateinit var gameOverExitButton: Button
     private val handler: Handler by lazy { Handler(Looper.getMainLooper()) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        val titleText = findViewById<TextView>(R.id.titleText)
-
-        // 텍스트가 서서히 나타나는 애니메이션
-        val fadeIn = ObjectAnimator.ofFloat(titleText, "alpha", 0f, 1f)
-        fadeIn.duration = 5000 // 5초 동안 애니메이션 진행
-        fadeIn.start()
 
         val contentFrame = findViewById<FrameLayout>(R.id.contentFrame)
         val timeInfo: TextView = findViewById(R.id.timeInfo)
@@ -59,11 +59,96 @@ class MainActivity : AppCompatActivity() {
 
         // LiveData 감시하여 UI 업데이트
         timeViewModel.time.observe(this) { newTime ->
-            timeInfo.text = "시간: $newTime"
+            timeInfo.text = "게임시간: $newTime"
+        }
+        
+        // 전역 남은 시간 UI 업데이트 추가
+        globalRemainingTimeTextView = findViewById(R.id.globalRemainingTimeInfo) // 텍스트뷰 참조
+        timeViewModel.remainingTime.observe(this) { remainingSeconds ->
+            globalRemainingTimeTextView.text = "남은 시간: ${remainingSeconds}초"
+            
+            // 10초 이하일 때 깜빡이는 애니메이션
+            if (remainingSeconds <= 10) {
+                val anim = AlphaAnimation(0.0f, 1.0f)
+                anim.duration = 500
+                anim.repeatMode = Animation.REVERSE
+                anim.repeatCount = Animation.INFINITE
+                globalRemainingTimeTextView.startAnimation(anim)
+            } else {
+                globalRemainingTimeTextView.clearAnimation()
+            }
         }
 
-        // 앱 시작 시 저장된 상태 그대로 시작
-        timeViewModel.startTimer()
+        // --- 수정: 다시 시작 요청 처리 로직 변경 ---
+        timeViewModel.restartRequested.observe(this) { requested ->
+            if (requested) {
+                // 실제 데이터 리셋 (ViewModel의 resetTimer에서 restartRequested를 false로 돌림)
+                timeViewModel.resetTimer()
+                assetViewModel.resetAssets()
+                stockViewModel.resetStocks()
+                albaViewModel.resetAlba()
+                realEstateViewModel.resetRealEstatePrices()
+                // 필요하다면 다른 ViewModel 리셋 추가
+
+                // --- 추가: ExplanationFragment 표시 ---
+                val explanationTag = "ExplanationFragment"
+                if (supportFragmentManager.findFragmentByTag(explanationTag) == null) {
+                    supportFragmentManager.beginTransaction()
+                        .add(R.id.contentFrame, ExplanationFragment(), explanationTag)
+                        .commit()
+                }
+                // --- 추가 끝 ---
+            }
+        }
+        // --- 수정 끝 ---
+
+        // --- 추가: 게임 오버 뷰 및 버튼 참조 ---
+        gameOverView = findViewById(R.id.gameOverView)
+        gameOverFinalAssetText = findViewById(R.id.gameOverFinalAssetText)
+        gameOverRestartButton = findViewById(R.id.gameOverRestartButton)
+        gameOverExitButton = findViewById(R.id.gameOverExitButton)
+        // --- 추가 끝 ---
+
+        // --- 추가: View.post를 사용하여 gameOverView 숨김 예약 ---
+        gameOverView.post {
+            gameOverView.visibility = View.GONE
+        }
+        // --- 추가 끝 ---
+
+        // 게임 오버 처리 (MainActivity에서 유지)
+        timeViewModel.isGameOver.observe(this) { isGameOver ->
+            if (isGameOver) {
+                globalRemainingTimeTextView.clearAnimation()
+                // 게임 오버 뷰 표시 및 최종 자산 업데이트
+                gameOverFinalAssetText.text = "최종 자산: ${formatNumber(assetViewModel.asset.value ?: 0)}원"
+                gameOverView.visibility = View.VISIBLE
+            } else {
+                // 게임 오버 뷰 숨김
+                gameOverView.visibility = View.GONE
+            }
+        }
+        
+        // --- 추가: 게임 오버 뷰 버튼 리스너 설정 ---
+        gameOverRestartButton.setOnClickListener {
+            // --- 추가: 즉시 gameOverView 숨김 ---
+            gameOverView.visibility = View.GONE
+            // --- 추가 끝 ---
+            
+            // 다시 시작 요청 (기존 메시지 표시 및 리셋 로직 트리거)
+            timeViewModel.requestRestart()
+            // gameOverView는 isGameOver가 false로 바뀌면 옵저버에 의해 숨겨짐
+        }
+
+        gameOverExitButton.setOnClickListener {
+            finishAffinity() // 앱 종료
+        }
+        // --- 추가 끝 ---
+
+        // TimeViewModel 초기화 후 명시적으로 게임 타이머 시작 호출
+        timeViewModel.startGameTimer()
+
+        // 앱 시작 시 저장된 상태 그대로 시작 -> startGameTimer로 대체됨
+        // timeViewModel.startTimer()
 
         // AssetViewModel 초기화
         assetViewModel = ViewModelProvider(this, AssetViewModelFactory(applicationContext))
@@ -86,6 +171,14 @@ class MainActivity : AppCompatActivity() {
         val buttonItem = findViewById<Button>(R.id.buttonItem)
         val slidePanel = findViewById<LinearLayout>(R.id.slidePanel)
 
+        // --- 추가: 앱 첫 시작 시 ExplanationFragment 추가 ---
+        if (savedInstanceState == null) { // 액티비티가 처음 생성될 때만
+             supportFragmentManager.beginTransaction()
+                .add(R.id.contentFrame, ExplanationFragment(), "ExplanationFragment")
+                .commit()
+        }
+        // --- 추가 끝 ---
+
         slidePanel.getChildAt(0).setOnClickListener {
             val slideDown = AnimationUtils.loadAnimation(this, R.anim.slide_down)
             slideDown.setAnimationListener(object : Animation.AnimationListener {
@@ -99,37 +192,49 @@ class MainActivity : AppCompatActivity() {
         }
 
         buttonReset.setOnClickListener {
-            titleText.visibility = View.GONE
+            // --- 수정: titleText 숨김 제거, ExplanationFragment 제거 추가 ---
+            // titleText.visibility = View.GONE
+            removeExplanationFragment()
             slidePanel.visibility = View.GONE
             showFragment(InfoFragment(),"InfoFragment")
         }
 
         buttonAlba.setOnClickListener {
-            titleText.visibility = View.GONE
+            // --- 수정: titleText 숨김 제거, ExplanationFragment 제거 추가 ---
+            // titleText.visibility = View.GONE
+            removeExplanationFragment()
             slidePanel.visibility = View.GONE
             showFragment(AlbaFragment(), "AlbaFragment")
         }
 
         buttonStock.setOnClickListener {
-            titleText.visibility = View.GONE
+            // --- 수정: titleText 숨김 제거, ExplanationFragment 제거 추가 ---
+            // titleText.visibility = View.GONE
+            removeExplanationFragment()
             slidePanel.visibility = View.GONE
             showFragment(StockFragment(), "StockFragment")
         }
 
         buttonRealEstate.setOnClickListener {
-            titleText.visibility = View.GONE
+            // --- 수정: titleText 숨김 제거, ExplanationFragment 제거 추가 ---
+            // titleText.visibility = View.GONE
+            removeExplanationFragment()
             slidePanel.visibility = View.GONE
             showFragment(RealEstateFragment(), "RealEstateFragment")
         }
 
         buttonMyInfo.setOnClickListener {
-            titleText.visibility = View.GONE
+            // --- 수정: titleText 숨김 제거, ExplanationFragment 제거 추가 ---
+            // titleText.visibility = View.GONE
+            removeExplanationFragment()
             slidePanel.visibility = View.GONE
             showFragment(RealInfoFragment(), "RealInfoFragment")
         }
 
         buttonItem.setOnClickListener {
-            titleText.visibility = View.GONE
+            // --- 수정: titleText 숨김 제거, ExplanationFragment 제거 추가 ---
+            // titleText.visibility = View.GONE
+            removeExplanationFragment()
             slidePanel.visibility = View.GONE
             showFragment(ItemFragment(), "ItemFragment")
         }
@@ -167,6 +272,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showFragment(fragment: Fragment, tag: String) {
+        // 게임 오버 뷰가 보이는 동안에는 다른 프래그먼트 표시 안 함 (선택 사항)
+        // if (findViewById<View>(R.id.gameOverView)?.visibility == View.VISIBLE) {
+        //     return
+        // }
+        
         val existingFragment = supportFragmentManager.findFragmentByTag(tag)
 
         val transaction = supportFragmentManager.beginTransaction()
@@ -190,6 +300,20 @@ class MainActivity : AppCompatActivity() {
         transaction.commit()
     }
 
+    // --- 삭제: onResume 내 GameOverFragment 제거 로직 ---
+//    override fun onResume() {
+//        super.onResume()
+//        // ViewModel이 초기화되었고, 게임 오버 상태가 아닐 때만 확인
+//        if (::timeViewModel.isInitialized && timeViewModel.isGameOver.value == false) {
+//             val gameOverFragmentTag = \"GameOverFragment\"
+//             val existingGameOverFragment = supportFragmentManager.findFragmentByTag(gameOverFragmentTag)
+//             if (existingGameOverFragment != null) {
+//                 supportFragmentManager.beginTransaction().remove(existingGameOverFragment).commitNow()
+//             }
+//        }
+//    }
+    // --- 삭제 끝 ---
+
     override fun onDestroy() {
         super.onDestroy()
         handler.removeCallbacksAndMessages(null)
@@ -199,4 +323,19 @@ class MainActivity : AppCompatActivity() {
         super.onStop()
         stockViewModel.saveStockData()
     }
+
+    // --- 추가: 숫자 포맷팅 함수 ---
+    private fun formatNumber(number: Long): String {
+        return String.format("%,d", number)
+    }
+    // --- 추가 끝 ---
+
+    // --- 추가: ExplanationFragment 제거 함수 ---
+    private fun removeExplanationFragment() {
+        val explanationFragment = supportFragmentManager.findFragmentByTag("ExplanationFragment")
+        if (explanationFragment != null) {
+            supportFragmentManager.beginTransaction().remove(explanationFragment).commit()
+        }
+    }
+    // --- 추가 끝 ---
 }
