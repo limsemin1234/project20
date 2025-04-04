@@ -85,6 +85,10 @@ class MainActivity : AppCompatActivity() {
                 realEstateViewModel.resetRealEstatePrices()
                 // 필요하다면 다른 ViewModel 리셋 추가
 
+                // --- 추가: 게임 리셋 이벤트 발생 ---
+                timeViewModel.triggerGameResetEvent()
+                // --- 추가 끝 ---
+
                 // --- 추가: ExplanationFragment 표시 ---
                 val explanationTag = "ExplanationFragment"
                 if (supportFragmentManager.findFragmentByTag(explanationTag) == null) {

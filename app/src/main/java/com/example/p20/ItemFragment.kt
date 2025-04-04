@@ -62,6 +62,16 @@ class ItemFragment : Fragment() {
         binding.useButton.setOnClickListener {
             useItem()
         }
+
+        // --- 추가: 게임 리셋 이벤트 관찰 ---
+        timeViewModel.gameResetEvent.observe(viewLifecycleOwner) { isReset ->
+            if (isReset) {
+                loadItemQuantity() // 보유 수량 다시 로드
+                updateItemUI()     // UI 갱신
+                timeViewModel.consumedGameResetEvent() // 이벤트 소비 (선택 사항)
+            }
+        }
+        // --- 추가 끝 ---
     }
 
     // 저장된 아이템 수량 로드 함수

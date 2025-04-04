@@ -26,6 +26,11 @@ class TimeViewModel(application: Application) : AndroidViewModel(application) {
     private val _showRestartMessageInInfo = MutableLiveData<Boolean>(false)
     val showRestartMessageInInfo: LiveData<Boolean> = _showRestartMessageInInfo
 
+    // --- 추가: 게임 리셋 이벤트 LiveData ---
+    private val _gameResetEvent = MutableLiveData<Boolean>()
+    val gameResetEvent: LiveData<Boolean> = _gameResetEvent
+    // --- 추가 끝 ---
+
     private val _asset = MutableLiveData<Long>()
     val asset: LiveData<Long> = _asset
 
@@ -205,5 +210,25 @@ class TimeViewModel(application: Application) : AndroidViewModel(application) {
         _remainingTime.value = (_remainingTime.value ?: 0) + seconds
         saveTimeData()
     }
+
+    // --- 추가: 남은 시간 직접 설정 함수 (테스트용) ---
+    fun setRemainingTime(seconds: Int) {
+        if (seconds >= 0) { // 음수 값 방지
+            _remainingTime.value = seconds
+            saveTimeData() // 변경된 시간 저장
+        }
+    }
+    // --- 추가 끝 ---
+
+    // --- 추가: 게임 리셋 이벤트 발생 함수 ---
+    fun triggerGameResetEvent() {
+        _gameResetEvent.value = true
+    }
+
+    // --- 추가: 게임 리셋 이벤트 소비 함수 (선택 사항) ---
+    fun consumedGameResetEvent() {
+        _gameResetEvent.value = false
+    }
+    // --- 추가 끝 ---
 }
 

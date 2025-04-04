@@ -70,7 +70,13 @@ class ResetFragment : Fragment() {
             realEstateViewModel.resetRealEstatePrices()
             Toast.makeText(requireContext(), "부동산 가격이 초기화되었습니다.", Toast.LENGTH_SHORT).show()
         }
-        // --- 수정 끝 ---
+
+        // --- 추가: 테스트용 시간 초기화(10초) 버튼 리스너 ---
+        binding.testResetTime10sButton.setOnClickListener {
+            timeViewModel.setRemainingTime(10) // 남은 시간을 10초로 설정
+            Toast.makeText(requireContext(), "테스트: 남은 시간이 10초로 설정되었습니다.", Toast.LENGTH_SHORT).show()
+        }
+        // --- 추가 끝 ---
 
         return binding.root // binding.root 반환
     }
