@@ -16,6 +16,10 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.snackbar.Snackbar
+import android.graphics.Color
+import android.view.Gravity
+import android.widget.FrameLayout
 import java.text.DecimalFormat
 
 class RealEstateFragment : Fragment() {
@@ -189,14 +193,13 @@ class RealEstateFragment : Fragment() {
     private fun attemptToBuyEstate(estate: RealEstate) {
         val currentAsset = assetViewModel.asset.value ?: 0L
         when {
-            estate.owned -> Toast.makeText(requireContext(), "이미 보유 중인 부동산입니다.", Toast.LENGTH_SHORT).show()
+            estate.owned -> showCustomSnackbar("이미 보유 중인 부동산입니다.")
             currentAsset >= estate.price -> {
                 assetViewModel.decreaseAsset(estate.price.toLong())
                 realEstateViewModel.buy(estate)
-                Toast.makeText(requireContext(), "${estate.name} 매수 완료!", Toast.LENGTH_SHORT).show()
-                //closeEstateDetailSlide() //구매 시 슬라이스 닫힘
+                showCustomSnackbar("${estate.name} 매수 완료!")
             }
-            else -> Toast.makeText(requireContext(), "자산이 부족합니다!", Toast.LENGTH_SHORT).show()
+            else -> showCustomSnackbar("자산이 부족합니다!")
         }
     }
 
@@ -204,11 +207,24 @@ class RealEstateFragment : Fragment() {
         if (estate.owned) {
             realEstateViewModel.sell(estate)
             assetViewModel.increaseAsset(estate.price.toLong())
-            Toast.makeText(requireContext(), "${estate.name} 매도 완료!", Toast.LENGTH_SHORT).show()
-            //closeEstateDetailSlide() //판매 시 슬라이스 닫힘
+            showCustomSnackbar("${estate.name} 매도 완료!")
         } else {
-            Toast.makeText(requireContext(), "보유하지 않은 부동산입니다.", Toast.LENGTH_SHORT).show()
+            showCustomSnackbar("보유하지 않은 부동산입니다.")
         }
+    }
+
+    private fun showCustomSnackbar(message: String) {
+        val snackbar = Snackbar.make(requireView(), message, Snackbar.LENGTH_SHORT)
+        val snackbarView = snackbar.view
+        snackbarView.setBackgroundColor(Color.argb(150, 50, 50, 50))
+        try {
+            val params = snackbarView.layoutParams as FrameLayout.LayoutParams
+            params.gravity = Gravity.CENTER
+            snackbarView.layoutParams = params
+        } catch (e: ClassCastException) {
+            // 부모 레이아웃이 FrameLayout이 아닐 경우 예외 발생 가능
+        }
+        snackbar.show()
     }
 
     override fun onDestroyView() {

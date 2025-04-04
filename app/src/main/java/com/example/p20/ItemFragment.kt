@@ -7,13 +7,17 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
+import android.widget.Toast // 제거 또는 주석처리
 import androidx.fragment.app.activityViewModels
 import com.example.p20.databinding.FragmentItemBinding // View Binding import
 import com.example.p20.AssetViewModel
 import com.example.p20.TimeViewModel
+import com.google.android.material.snackbar.Snackbar // Snackbar import 추가
 import java.text.NumberFormat
 import java.util.Locale
+import android.graphics.Color // Color 사용 위해 추가
+import android.view.Gravity // Gravity 사용 위해 추가
+import android.widget.FrameLayout // FrameLayout 사용 위해 추가
 
 class ItemFragment : Fragment() {
 
@@ -101,31 +105,51 @@ class ItemFragment : Fragment() {
         if (currentAsset >= itemPrice) {
             assetViewModel.decreaseAsset(itemPrice)
             itemQuantity++
-            saveItemQuantity() // 구매 후 수량 저장
+            saveItemQuantity()
             updateItemUI()
-            Toast.makeText(context, "Time증폭 아이템을 구매했습니다.", Toast.LENGTH_SHORT).show()
+            // Snackbar.make(requireView(), "Time증폭 아이템을 구매했습니다.", Snackbar.LENGTH_SHORT).show()
+            showCustomSnackbar("Time증폭 아이템을 구매했습니다.")
         } else {
-            Toast.makeText(context, "자산이 부족합니다.", Toast.LENGTH_SHORT).show()
+            // Snackbar.make(requireView(), "자산이 부족합니다.", Snackbar.LENGTH_SHORT).show()
+            showCustomSnackbar("자산이 부족합니다.")
         }
     }
 
     // 사용 로직
     private fun useItem() {
         if (itemQuantity > 0) {
-            timeViewModel.increaseRemainingTime(60) // 1분(60초) 추가
+            timeViewModel.increaseRemainingTime(60)
             itemQuantity--
-            saveItemQuantity() // 사용 후 수량 저장
+            saveItemQuantity()
             updateItemUI()
-            Toast.makeText(context, "Time증폭 아이템을 사용했습니다. 남은 시간이 1분 증가합니다.", Toast.LENGTH_SHORT).show()
+            // Snackbar.make(requireView(), "Time증폭 아이템을 사용했습니다. 남은 시간이 1분 증가합니다.", Snackbar.LENGTH_SHORT).show()
+            showCustomSnackbar("Time증폭 아이템을 사용했습니다. 남은 시간이 1분 증가합니다.")
         }
     }
 
-     // 숫자 포맷팅 함수 (원화)
+    // --- 수정: 상단 -> 중앙 스낵바 표시 함수, 투명도 조절 ---
+    private fun showCustomSnackbar(message: String) { // 함수 이름 변경
+        val snackbar = Snackbar.make(requireView(), message, Snackbar.LENGTH_SHORT)
+        val snackbarView = snackbar.view
+        // 배경 투명도 설정 (약 60% 불투명한 어두운 회색)
+        snackbarView.setBackgroundColor(Color.argb(150, 50, 50, 50)) // alpha 값 150으로 변경
+        // 중앙으로 이동 시도
+        try {
+            val params = snackbarView.layoutParams as FrameLayout.LayoutParams
+            params.gravity = Gravity.CENTER // Gravity.TOP -> Gravity.CENTER
+            snackbarView.layoutParams = params
+        } catch (e: ClassCastException) {
+            // 부모 레이아웃이 FrameLayout이 아닐 경우 예외 발생 가능
+        }
+        snackbar.show()
+    }
+    // --- 수정 끝 ---
+
+    // 숫자 포맷팅 함수 (원화)
     private fun formatCurrency(amount: Long): String {
         val formatter = NumberFormat.getCurrencyInstance(Locale.KOREA)
         return formatter.format(amount)
     }
-
 
     override fun onDestroyView() {
         super.onDestroyView()

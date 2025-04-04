@@ -8,6 +8,10 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.p20.databinding.FragmentResetBinding // 새 바인딩 클래스 사용
+import com.google.android.material.snackbar.Snackbar // Snackbar import 추가
+import android.graphics.Color // Color 사용 위해 추가
+import android.view.Gravity // Gravity 사용 위해 추가
+import android.widget.FrameLayout // FrameLayout 사용 위해 추가
 
 // --- 수정: 클래스 이름 변경 InfoFragment -> ResetFragment ---
 class ResetFragment : Fragment() {
@@ -41,7 +45,7 @@ class ResetFragment : Fragment() {
         // 시간 초기화 버튼
         binding.resetTimeButton.setOnClickListener { // binding. 사용
             timeViewModel.resetTimer()
-            Toast.makeText(requireContext(), "시간이 초기화되었습니다.", Toast.LENGTH_SHORT).show()
+            showCustomSnackbar("시간이 초기화되었습니다.")
         }
 
         // 자산 초기화 버튼
@@ -50,36 +54,54 @@ class ResetFragment : Fragment() {
             stockViewModel.resetStocks()
             albaViewModel.resetAlba()
             realEstateViewModel.resetRealEstatePrices()
-            Toast.makeText(requireContext(), "초기화되었습니다.", Toast.LENGTH_SHORT).show()
+            showCustomSnackbar("초기화되었습니다.")
         }
 
         // 주식 가격 초기화 버튼
         binding.resetStockButton.setOnClickListener { // binding. 사용
             stockViewModel.resetStockPrices()
-            Toast.makeText(requireContext(), "주식 가격이 초기화되었습니다.", Toast.LENGTH_SHORT).show()
+            showCustomSnackbar("주식 가격이 초기화되었습니다.")
         }
 
         // 알바 초기화 버튼
         binding.resetAlbaButton.setOnClickListener { // binding. 사용
             albaViewModel.resetAlba()
-            Toast.makeText(requireContext(), "알바가 초기화되었습니다.", Toast.LENGTH_SHORT).show()
+            showCustomSnackbar("알바가 초기화되었습니다.")
         }
 
         // 부동산 가격 초기화
         binding.resetRealEstateButton.setOnClickListener { // binding. 사용
             realEstateViewModel.resetRealEstatePrices()
-            Toast.makeText(requireContext(), "부동산 가격이 초기화되었습니다.", Toast.LENGTH_SHORT).show()
+            showCustomSnackbar("부동산 가격이 초기화되었습니다.")
         }
 
         // --- 추가: 테스트용 시간 초기화(10초) 버튼 리스너 ---
         binding.testResetTime10sButton.setOnClickListener {
             timeViewModel.setRemainingTime(10) // 남은 시간을 10초로 설정
-            Toast.makeText(requireContext(), "테스트: 남은 시간이 10초로 설정되었습니다.", Toast.LENGTH_SHORT).show()
+            showCustomSnackbar("테스트: 남은 시간이 10초로 설정되었습니다.")
         }
         // --- 추가 끝 ---
 
         return binding.root // binding.root 반환
     }
+
+    // --- 수정: 상단 -> 중앙 스낵바 표시 함수, 투명도 조절 ---
+    private fun showCustomSnackbar(message: String) { // 함수 이름 변경
+        val snackbar = Snackbar.make(requireView(), message, Snackbar.LENGTH_SHORT)
+        val snackbarView = snackbar.view
+        // 배경 투명도 설정 (약 60% 불투명한 어두운 회색)
+        snackbarView.setBackgroundColor(Color.argb(150, 50, 50, 50)) // alpha 값 150으로 변경
+        // 중앙으로 이동 시도
+        try {
+            val params = snackbarView.layoutParams as FrameLayout.LayoutParams
+            params.gravity = Gravity.CENTER // Gravity.TOP -> Gravity.CENTER
+            snackbarView.layoutParams = params
+        } catch (e: ClassCastException) {
+            // 부모 레이아웃이 FrameLayout이 아닐 경우 예외 발생 가능
+        }
+        snackbar.show()
+    }
+    // --- 수정 끝 ---
 
     override fun onDestroyView() {
         super.onDestroyView()
