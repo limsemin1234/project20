@@ -31,11 +31,16 @@ class ItemFragment : Fragment() {
     // SharedPreferences 관련 상수
     private val PREFS_FILENAME = "item_prefs"
     private val KEY_ITEM_QUANTITY = "time_amplifier_quantity"
+    private val KEY_ITEM2_QUANTITY = "time_amplifier2_quantity" // 새 아이템 키 추가
     private lateinit var prefs: SharedPreferences
 
     // 아이템 정보
     private val itemPrice = 50_000L // Time증폭 아이템 가격 5만원
     private var itemQuantity = 0 // Time증폭 아이템 보유 수량 (이제 SharedPreferences에서 로드)
+    
+    // Time증폭(120초) 아이템 정보
+    private val item2Price = 80_000L // Time증폭 아이템2 가격 8만원
+    private var item2Quantity = 0 // Time증폭 아이템2 보유 수량
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -52,10 +57,10 @@ class ItemFragment : Fragment() {
         prefs = requireContext().getSharedPreferences(PREFS_FILENAME, Context.MODE_PRIVATE)
 
         // 저장된 보유 수량 로드
-        loadItemQuantity()
+        loadItemStates()
 
         // 초기 UI 설정 (로드 이후 호출)
-        updateItemUI()
+        updateAllItemUIs()
 
         // 구매 버튼 클릭 리스너
         binding.buyButton.setOnClickListener {
@@ -66,12 +71,22 @@ class ItemFragment : Fragment() {
         binding.useButton.setOnClickListener {
             useItem()
         }
+        
+        // Time증폭(120초) 구매 버튼 클릭 리스너
+        binding.buyButton2.setOnClickListener {
+            buyItem2()
+        }
+
+        // Time증폭(120초) 사용 버튼 클릭 리스너
+        binding.useButton2.setOnClickListener {
+            useItem2()
+        }
 
         // --- 추가: 게임 리셋 이벤트 관찰 ---
         timeViewModel.gameResetEvent.observe(viewLifecycleOwner) { isReset ->
             if (isReset) {
-                loadItemQuantity() // 보유 수량 다시 로드
-                updateItemUI()     // UI 갱신
+                loadItemStates() // 보유 수량 다시 로드
+                updateAllItemUIs()     // UI 갱신
                 timeViewModel.consumedGameResetEvent() // 이벤트 소비 (선택 사항)
             }
         }
@@ -79,51 +94,80 @@ class ItemFragment : Fragment() {
     }
 
     // 저장된 아이템 수량 로드 함수
-    private fun loadItemQuantity() {
+    private fun loadItemStates() {
         itemQuantity = prefs.getInt(KEY_ITEM_QUANTITY, 0)
+        item2Quantity = prefs.getInt(KEY_ITEM2_QUANTITY, 0)
     }
 
     // 아이템 수량 저장 함수
-    private fun saveItemQuantity() {
+    private fun saveItemStates() {
         with(prefs.edit()) {
             putInt(KEY_ITEM_QUANTITY, itemQuantity)
+            putInt(KEY_ITEM2_QUANTITY, item2Quantity)
             apply() // 비동기 저장
         }
     }
 
-    // UI 업데이트 함수
-    private fun updateItemUI() {
+    // 모든 아이템 UI 업데이트
+    private fun updateAllItemUIs() {
+        // 첫 번째 아이템 UI 업데이트
         binding.itemPriceTextView.text = formatCurrency(itemPrice)
         binding.itemQuantityTextView.text = "${itemQuantity}개"
-        // 보유 수량이 1 이상일 때만 사용 버튼 활성화
         binding.useButton.isEnabled = itemQuantity > 0
+        
+        // 두 번째 아이템 UI 업데이트
+        binding.item2PriceTextView.text = formatCurrency(item2Price)
+        binding.item2QuantityTextView.text = "${item2Quantity}개"
+        binding.useButton2.isEnabled = item2Quantity > 0
     }
 
-    // 구매 로직
+    // 첫 번째 아이템 구매 로직
     private fun buyItem() {
         val currentAsset = assetViewModel.asset.value ?: 0L
         if (currentAsset >= itemPrice) {
             assetViewModel.decreaseAsset(itemPrice)
             itemQuantity++
-            saveItemQuantity()
-            updateItemUI()
-            // Snackbar.make(requireView(), "Time증폭 아이템을 구매했습니다.", Snackbar.LENGTH_SHORT).show()
-            showCustomSnackbar("Time증폭 아이템을 구매했습니다.")
+            saveItemStates()
+            updateAllItemUIs()
+            showCustomSnackbar("Time증폭(60초) 아이템을 구매했습니다.")
         } else {
-            // Snackbar.make(requireView(), "자산이 부족합니다.", Snackbar.LENGTH_SHORT).show()
             showCustomSnackbar("자산이 부족합니다.")
         }
     }
 
-    // 사용 로직
+    // 두 번째 아이템 구매 로직
+    private fun buyItem2() {
+        val currentAsset = assetViewModel.asset.value ?: 0L
+        if (currentAsset >= item2Price) {
+            assetViewModel.decreaseAsset(item2Price)
+            item2Quantity++
+            saveItemStates()
+            updateAllItemUIs()
+            showCustomSnackbar("Time증폭(120초) 아이템을 구매했습니다.")
+        } else {
+            showCustomSnackbar("자산이 부족합니다.")
+        }
+    }
+
+    // 첫 번째 아이템 사용 로직
     private fun useItem() {
         if (itemQuantity > 0) {
             timeViewModel.increaseRemainingTime(60)
             itemQuantity--
-            saveItemQuantity()
-            updateItemUI()
-            // Snackbar.make(requireView(), "Time증폭 아이템을 사용했습니다. 남은 시간이 1분 증가합니다.", Snackbar.LENGTH_SHORT).show()
-            showCustomSnackbar("Time증폭 아이템을 사용했습니다. 남은 시간이 1분 증가합니다.")
+            saveItemStates()
+            updateAllItemUIs()
+            showCustomSnackbar("Time증폭(60초) 아이템을 사용했습니다. 남은 시간이 60초 증가합니다.")
+        }
+    }
+    
+    // 두 번째 아이템 사용 로직
+    private fun useItem2() {
+        if (item2Quantity > 0) {
+            timeViewModel.increaseRemainingTime(120)
+            item2Quantity--
+            saveItemStates()
+            updateAllItemUIs()
+            showCustomSnackbar("Time증폭(120초) 아이템을 사용했습니다. 남은 시간이 120초 증가합니다.")
         }
     }
 
