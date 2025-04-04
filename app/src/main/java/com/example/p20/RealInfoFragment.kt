@@ -4,7 +4,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AlphaAnimation
+import android.view.animation.Animation
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 
@@ -23,54 +26,49 @@ class RealInfoFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // TextView 참조
-        val assetTextView = view.findViewById<TextView>(R.id.assetTextView)
-        val stockTextView = view.findViewById<TextView>(R.id.stockTextView)
-        val albaTextView = view.findViewById<TextView>(R.id.albaTextView)
-        val realEstateTextView = view.findViewById<TextView>(R.id.realEstateTextView)
+        val remainingTimeText = view.findViewById<TextView>(R.id.remainingTimeText)
 
         // ViewModel 초기화
         viewModel = ViewModelProvider(requireActivity())[TimeViewModel::class.java]
 
-        // 자산 정보 업데이트
-        viewModel.asset.observe(viewLifecycleOwner) { asset ->
-            assetTextView.text = "현재 자산: ${formatNumber(asset)}원"
+        // 남은 시간 업데이트
+        viewModel.remainingTime.observe(viewLifecycleOwner) { remainingSeconds ->
+            remainingTimeText.text = "⏰ ${remainingSeconds}초"
+            
+            // 10초 이하일 때 빨간색으로 깜빡이게
+            if (remainingSeconds <= 10) {
+                val anim = AlphaAnimation(0.0f, 1.0f)
+                anim.duration = 500
+                anim.repeatMode = Animation.REVERSE
+                anim.repeatCount = Animation.INFINITE
+                remainingTimeText.startAnimation(anim)
+            } else {
+                remainingTimeText.clearAnimation()
+            }
         }
 
-        // 주식 정보 업데이트
-        viewModel.stockInfo.observe(viewLifecycleOwner) { stockInfo ->
-            val stockText = StringBuilder()
-            stockText.append("보유 주식 정보:\n")
-            for ((stockName, quantity) in stockInfo) {
-                if (quantity > 0) {
-                    stockText.append("$stockName: $quantity 주\n")
-                }
+        // 게임 오버 처리
+        viewModel.isGameOver.observe(viewLifecycleOwner) { isGameOver ->
+            if (isGameOver) {
+                // 애니메이션 중지
+                remainingTimeText.clearAnimation()
+                
+                // 게임 오버 다이얼로그 표시
+                AlertDialog.Builder(requireContext())
+                    .setTitle("게임 오버!")
+                    .setMessage("시간이 모두 소진되었습니다.\n최종 자산: ${formatNumber(viewModel.asset.value ?: 0)}원")
+                    .setPositiveButton("다시 시작") { _, _ ->
+                        viewModel.resetTimer()
+                    }
+                    .setCancelable(false)
+                    .show()
             }
-            stockTextView.text = stockText.toString()
         }
+    }
 
-        // 알바 정보 업데이트
-        viewModel.albaInfo.observe(viewLifecycleOwner) { albaInfo ->
-            val albaText = StringBuilder()
-            albaText.append("알바 정보:\n")
-            for ((albaName, count) in albaInfo) {
-                if (count > 0) {
-                    albaText.append("$albaName: $count 명\n")
-                }
-            }
-            albaTextView.text = albaText.toString()
-        }
-
-        // 부동산 정보 업데이트
-        viewModel.realEstateInfo.observe(viewLifecycleOwner) { realEstateInfo ->
-            val realEstateText = StringBuilder()
-            realEstateText.append("보유 부동산 정보:\n")
-            for ((propertyName, owned) in realEstateInfo) {
-                if (owned) {
-                    realEstateText.append("$propertyName\n")
-                }
-            }
-            realEstateTextView.text = realEstateText.toString()
-        }
+    override fun onResume() {
+        super.onResume()
+        viewModel.startTimer() // 화면이 보일 때 타이머 시작
     }
 
     private fun formatNumber(number: Long): String {

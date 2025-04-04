@@ -17,6 +17,9 @@ class TimeViewModel(application: Application) : AndroidViewModel(application) {
     private val _isGameOver = MutableLiveData<Boolean>()
     val isGameOver: LiveData<Boolean> = _isGameOver
 
+    private val _remainingTime = MutableLiveData<Int>()
+    val remainingTime: LiveData<Int> = _remainingTime
+
     private val _asset = MutableLiveData<Long>()
     val asset: LiveData<Long> = _asset
 
@@ -57,6 +60,8 @@ class TimeViewModel(application: Application) : AndroidViewModel(application) {
             "빌딩" to false,
             "주상복합" to false
         )
+        _remainingTime.value = 60 // 1분 = 60초
+        _isGameOver.value = false
         startTimer()
     }
 
@@ -97,6 +102,17 @@ class TimeViewModel(application: Application) : AndroidViewModel(application) {
                         ((System.currentTimeMillis() - startTime) / 1000)
                     _time.value = secondsToTimeString(currentTimeInSeconds)
                 }
+
+                // 남은 시간 감소
+                _remainingTime.value = _remainingTime.value?.minus(1)
+                
+                // 시간이 0이 되면 게임 오버
+                if (_remainingTime.value ?: 0 <= 0) {
+                    _isGameOver.value = true
+                    stopTimer()
+                    return
+                }
+
                 handler.postDelayed(this, 1000)
             }
         }
@@ -125,6 +141,8 @@ class TimeViewModel(application: Application) : AndroidViewModel(application) {
         _time.value = "00:00:00"
         useCurrentTime = false
         startTimeInSeconds = 0
+        _remainingTime.value = 60 // 타이머 리셋시 60초로 초기화
+        _isGameOver.value = false
         saveTimeData()
         startTimer()
     }

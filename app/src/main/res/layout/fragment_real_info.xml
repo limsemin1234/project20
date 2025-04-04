@@ -31,6 +31,20 @@
             android:textColor="@android:color/white"/>
     </LinearLayout>
 
+    <!-- 남은 시간 표시 -->
+    <TextView
+        android:id="@+id/remainingTimeText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="32dp"
+        android:text="⏰ 60초"
+        android:textSize="40sp"
+        android:textStyle="bold"
+        android:textColor="#FF5252"
+        android:background="#80000000"
+        android:padding="20dp"/>
+
     <!-- 기존 내용을 ScrollView로 감싸기 -->
     <ScrollView
         android:layout_width="match_parent"
