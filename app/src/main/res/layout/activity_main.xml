@@ -215,6 +215,19 @@
                 android:layout_margin="5dp"
                 android:background="@drawable/button_selector"
                 android:textColor="@android:color/white" />
+
+            <!-- 카지노 버튼 추가 -->
+            <Button
+                android:id="@+id/buttonCasino"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="카지노"
+                android:textStyle="bold"
+                android:layout_margin="5dp"
+                android:background="@drawable/button_selector"
+                android:textColor="@android:color/white" />
+
         </LinearLayout>
     </LinearLayout>
 

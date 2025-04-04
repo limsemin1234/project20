@@ -1,5 +1,8 @@
 package com.example.p20
 
+import kotlin.math.roundToInt
+import kotlin.random.Random
+
 data class Stock(
     val name: String,        // 주식 이름
     var price: Int,          // 주식 가격
@@ -9,10 +12,17 @@ data class Stock(
     val purchasePrices: MutableList<Int> = mutableListOf() // 매입 가격 리스트
 ) {
     fun updateChangeValue() {
-        val minChange = -400
-        val maxChange = 600
-        val randomChangeValue = (minChange..maxChange).random()
-        changeValue = (randomChangeValue / 100) * 100
+        val minChangePercent = -0.05
+        val maxChangePercent = 0.05
+        val randomPercent = (minChangePercent..maxChangePercent).random()
+
+        val calculatedChange = (price * randomPercent / 100.0).roundToInt() * 100
+        changeValue = calculatedChange
+
+        if (changeValue == 0 && price >= 1000) {
+            changeValue = if (Random.nextBoolean()) 100 else -100
+        }
+
         updatePriceAndChangeValue()
     }
 
@@ -78,3 +88,5 @@ data class Stock(
         return sellCount
     }
 }
+
+fun ClosedRange<Double>.random() = Random.nextDouble(start, endInclusive)

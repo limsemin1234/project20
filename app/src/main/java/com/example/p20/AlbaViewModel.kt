@@ -60,7 +60,7 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
 
     fun startCooldown() {
         _isCooldown.value = true
-        _cooldownTime.value = 30
+        _cooldownTime.value = 20
         saveAlbaData()
 
         val cooldownRunnable = object : Runnable {

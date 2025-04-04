@@ -19,11 +19,11 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         _stockItems.value = mutableListOf(
-            Stock("테슬라", 10000, 0, 0.0, 0),
-            Stock("애플", 10000, 0, 0.0, 0),
-            Stock("아마존", 10000, 0, 0.0, 0),
-            Stock("MS", 10000, 0, 0.0, 0),
-            Stock("구글", 10000, 0, 0.0, 0)
+            Stock("만원", 10000, 0, 0.0, 0),
+            Stock("이만", 20000, 0, 0.0, 0),
+            Stock("오만", 50000, 0, 0.0, 0),
+            Stock("십만", 100000, 0, 0.0, 0),
+            Stock("이십만", 200000, 0, 0.0, 0)
         )
 
         loadStockData()
@@ -97,7 +97,13 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
 
     fun resetStockPrices() {
         _stockItems.value?.forEach { stock ->
-            stock.price = 10000
+            when (stock.name) {
+                "만원" -> stock.price = 10000
+                "이만" -> stock.price = 20000
+                "오만" -> stock.price = 50000
+                "십만" -> stock.price = 100000
+                "이십만" -> stock.price = 200000
+            }
             stock.holding = 0
             stock.purchasePrices.clear()
         }
@@ -107,11 +113,11 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
 
     fun resetStocks() {
         _stockItems.value = mutableListOf(
-            Stock("테슬라", 10000, 0, 0.0, 0),
-            Stock("애플", 10000, 0, 0.0, 0),
-            Stock("아마존", 10000, 0, 0.0, 0),
-            Stock("MS", 10000, 0, 0.0, 0),
-            Stock("구글", 10000, 0, 0.0, 0)
+            Stock("만원", 10000, 0, 0.0, 0),
+            Stock("이만", 20000, 0, 0.0, 0),
+            Stock("오만", 50000, 0, 0.0, 0),
+            Stock("십만", 100000, 0, 0.0, 0),
+            Stock("이십만", 200000, 0, 0.0, 0)
         )
         saveStockData()
     }

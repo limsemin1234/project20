@@ -17,6 +17,7 @@ import androidx.fragment.app.DialogFragment
 import com.example.p20.ResetFragment
 import com.example.p20.RealInfoFragment
 import com.example.p20.ItemFragment
+import com.example.p20.CasinoFragment
 
 class MainActivity : AppCompatActivity() {
 
@@ -155,6 +156,7 @@ class MainActivity : AppCompatActivity() {
         val buttonEarnMoney = findViewById<Button>(R.id.buttonEarnMoney)
         val buttonMyInfo = findViewById<Button>(R.id.buttonMyInfo)
         val buttonItem = findViewById<Button>(R.id.buttonItem)
+        val buttonCasino = findViewById<Button>(R.id.buttonCasino)
         val slidePanel = findViewById<LinearLayout>(R.id.slidePanel)
 
         // --- 추가: 앱 첫 시작 시 ExplanationFragment 추가 ---
@@ -207,6 +209,12 @@ class MainActivity : AppCompatActivity() {
             removeExplanationFragment()
             slidePanel.visibility = View.GONE
             showFragment(RealEstateFragment(), "RealEstateFragment")
+        }
+
+        buttonCasino.setOnClickListener {
+            removeExplanationFragment()
+            slidePanel.visibility = View.GONE
+            showFragment(CasinoFragment(), "CasinoFragment")
         }
 
         buttonMyInfo.setOnClickListener {
