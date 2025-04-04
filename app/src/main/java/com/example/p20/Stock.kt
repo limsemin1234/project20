@@ -12,8 +12,8 @@ data class Stock(
     val purchasePrices: MutableList<Int> = mutableListOf() // 매입 가격 리스트
 ) {
     fun updateChangeValue() {
-        val minChangePercent = -0.05
-        val maxChangePercent = 0.05
+        val minChangePercent = -0.04
+        val maxChangePercent = 0.043
         val randomPercent = (minChangePercent..maxChangePercent).random()
 
         val calculatedChange = (price * randomPercent / 100.0).roundToInt() * 100
