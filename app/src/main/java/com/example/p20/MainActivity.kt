@@ -59,9 +59,10 @@ class MainActivity : AppCompatActivity() {
         // 전역 남은 시간 UI 업데이트 추가
         globalRemainingTimeTextView = findViewById(R.id.globalRemainingTimeInfo) // 텍스트뷰 참조
         timeViewModel.remainingTime.observe(this) { remainingSeconds ->
+            // 텍스트 업데이트 (초 단위)
             globalRemainingTimeTextView.text = "남은 시간: ${remainingSeconds}초"
-            
-            // 10초 이하일 때 깜빡이는 애니메이션
+
+            // 10초 이하일 때 깜빡이는 애니메이션 로직 통합
             if (remainingSeconds <= 10) {
                 val anim = AlphaAnimation(0.0f, 1.0f)
                 anim.duration = 500

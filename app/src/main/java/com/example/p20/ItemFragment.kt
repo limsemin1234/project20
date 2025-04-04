@@ -79,8 +79,8 @@ class ItemFragment : Fragment() {
 
     // UI 업데이트 함수
     private fun updateItemUI() {
-        binding.itemPriceTextView.text = "가격: ${formatCurrency(itemPrice)}"
-        binding.itemQuantityTextView.text = "보유: ${itemQuantity}개"
+        binding.itemPriceTextView.text = formatCurrency(itemPrice)
+        binding.itemQuantityTextView.text = "${itemQuantity}개"
         // 보유 수량이 1 이상일 때만 사용 버튼 활성화
         binding.useButton.isEnabled = itemQuantity > 0
     }

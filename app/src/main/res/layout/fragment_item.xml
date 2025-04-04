@@ -58,16 +58,16 @@
                     android:id="@+id/itemNameTextView"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_weight="1.2"
                     android:gravity="center"
-                    android:text="Time증폭"
+                    android:text="Time증폭\n(60초)"
                     android:textColor="@android:color/white" />
 
                 <TextView
                     android:id="@+id/itemPriceTextView"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_weight="1.5"
                     android:gravity="center"
                     android:layout_marginStart="8dp"
                     android:text="가격: 1,000,000원"
@@ -77,7 +77,7 @@
                     android:id="@+id/itemQuantityTextView"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_weight="0.8"
                     android:gravity="center"
                     android:layout_marginStart="8dp"
                     android:text="보유: 0개"
@@ -87,7 +87,7 @@
                     android:id="@+id/buyButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_weight="0.8"
                     android:layout_marginStart="8dp"
                     android:text="구매" />
 
@@ -95,7 +95,7 @@
                     android:id="@+id/useButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_weight="0.8"
                     android:layout_marginStart="8dp"
                     android:text="사용"
                     android:enabled="false" /> <!-- 초기에는 사용 불가 상태 -->
