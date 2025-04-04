@@ -15,7 +15,7 @@ class AssetViewModel(private val context: Context) : ViewModel() {
 
     init {
         val sharedPreferences = context.getSharedPreferences("game_preferences", Context.MODE_PRIVATE)
-        val savedAsset = sharedPreferences.getLong("asset", 1_000_000L) // 초기 자산 1,000,000원
+        val savedAsset = sharedPreferences.getLong("asset", 40_000_000L) // 초기 자산 4000만원으로 변경
         _asset.value = savedAsset
     }
 
@@ -63,7 +63,7 @@ class AssetViewModel(private val context: Context) : ViewModel() {
     }
 
     fun resetAssets() {
-        _asset.value = 1_000_000L // 초기 자산 100만원으로 통일
+        _asset.value = 40_000_000L // 초기 자산 4000만원으로 변경
         _realEstateList.value = listOf( // 부동산 목록 초기화
             RealEstate(1, "반지하 원룸", 30_000_000L),
             RealEstate(2, "상가 건물", 50_000_000L),
