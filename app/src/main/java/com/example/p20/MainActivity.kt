@@ -305,7 +305,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-        stockViewModel.saveStockData()
+        stockViewModel.saveStockData() // 기존 주식 데이터 저장
+        assetViewModel.saveAssetToPreferences() // 추가: 자산 데이터 저장
     }
 
     // --- 추가: ExplanationFragment 제거 함수 ---

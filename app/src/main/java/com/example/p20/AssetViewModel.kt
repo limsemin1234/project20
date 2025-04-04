@@ -14,12 +14,12 @@ class AssetViewModel(private val context: Context) : ViewModel() {
     val realEstateList: LiveData<List<RealEstate>> get() = _realEstateList
 
     init {
-        // --- 수정: SharedPreferences 값 로드 대신 항상 4천만원으로 시작 ---
-        // val sharedPreferences = context.getSharedPreferences("game_preferences", Context.MODE_PRIVATE)
-        // val savedAsset = sharedPreferences.getLong("asset", 40_000_000L) 
-        // _asset.value = savedAsset
-        _asset.value = 40_000_000L // 항상 4천만원으로 시작
-        saveAssetToPreferences() // 시작 시 4천만원 상태 저장 (선택 사항)
+        // --- 수정: SharedPreferences에서 자산 로드 활성화 ---
+        val sharedPreferences = context.getSharedPreferences("game_preferences", Context.MODE_PRIVATE)
+        val savedAsset = sharedPreferences.getLong("asset", 40_000_000L) // 저장된 값 로드, 없으면 4천만원
+        _asset.value = savedAsset
+        // _asset.value = 40_000_000L // 항상 4천만원으로 시작하는 코드 삭제 또는 주석 처리
+        // saveAssetToPreferences() // 시작 시 저장 로직은 필요 없음 (로드 실패 시 기본값 사용)
         // --- 수정 끝 ---
     }
 
@@ -39,7 +39,7 @@ class AssetViewModel(private val context: Context) : ViewModel() {
         }
     }
 
-    private fun saveAssetToPreferences() {
+    fun saveAssetToPreferences() {
         val sharedPreferences = context.getSharedPreferences("game_preferences", Context.MODE_PRIVATE)
         val editor = sharedPreferences.edit()
         editor.putLong("asset", _asset.value ?: 0L)
@@ -79,4 +79,11 @@ class AssetViewModel(private val context: Context) : ViewModel() {
         saveAssetToPreferences()
         saveRealEstateToPreferences()
     }
+
+    // --- 추가: ViewModel 소멸 시 자산 저장 ---
+    override fun onCleared() {
+        super.onCleared()
+        saveAssetToPreferences() // ViewModel이 제거될 때 현재 자산 저장
+    }
+    // --- 추가 끝 ---
 }

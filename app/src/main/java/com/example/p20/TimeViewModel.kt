@@ -200,5 +200,10 @@ class TimeViewModel(application: Application) : AndroidViewModel(application) {
     fun consumedShowRestartMessageInInfo() {
         _showRestartMessageInInfo.value = false
     }
+
+    fun increaseRemainingTime(seconds: Int) {
+        _remainingTime.value = (_remainingTime.value ?: 0) + seconds
+        saveTimeData()
+    }
 }
 

@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-// import com.example.p20.databinding.FragmentInfoBinding // 이전 바인딩 클래스 제거 또는 주석처리
 import com.example.p20.databinding.FragmentResetBinding // 새 바인딩 클래스 사용
 
 // --- 수정: 클래스 이름 변경 InfoFragment -> ResetFragment ---
