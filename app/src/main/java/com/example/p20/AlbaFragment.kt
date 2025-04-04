@@ -26,8 +26,7 @@ class AlbaFragment : Fragment() {
     private lateinit var cooldownText: TextView
     private lateinit var animationContainer: FrameLayout
     private lateinit var albaImage: ImageView
-
-    private var activeRewardTextCount = 0 // 현재 떠있는 rewardText 개수
+    private lateinit var activePhaseText: TextView
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -43,33 +42,41 @@ class AlbaFragment : Fragment() {
         levelText = view.findViewById(R.id.levelText)
         cooldownText = view.findViewById(R.id.cooldownText)
         animationContainer = view.findViewById(R.id.animationContainer)
+        activePhaseText = view.findViewById(R.id.cooldownText)
 
-        earnText.text = "터치!! 터치!!"
+        earnText.text = "알바 시작!"
 
         albaImage.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
-                if (albaViewModel.isCooldown.value == false) {
-                    albaViewModel.increaseTouchCount()
+                if (albaViewModel.isCooldown.value == false && albaViewModel.isActivePhase.value == false) {
+                    albaViewModel.startActivePhase()
                     val rewardAmount = albaViewModel.getRewardAmount().toLong()
                     assetViewModel.increaseAsset(rewardAmount)
-
                     val location = IntArray(2)
                     albaImage.getLocationOnScreen(location)
-                    val touchX = event.rawX - location[0]
-                    val touchY = event.rawY - location[1]
-
-                    showRewardAnimation(touchX.toInt(), touchY.toInt(), rewardAmount)
+                    showRewardAnimation(event.rawX.toInt() - location[0], event.rawY.toInt() - location[1], rewardAmount)
+                } else if (albaViewModel.isActivePhase.value == true) {
+                    val rewardAmount = albaViewModel.getRewardAmount().toLong()
+                    assetViewModel.increaseAsset(rewardAmount)
+                    val location = IntArray(2)
+                    albaImage.getLocationOnScreen(location)
+                    showRewardAnimation(event.rawX.toInt() - location[0], event.rawY.toInt() - location[1], rewardAmount)
                 }
             }
             true
         }
 
+        albaViewModel.isCooldown.observe(viewLifecycleOwner, Observer { isCoolingDown ->
+            updateStatusText()
+        })
         albaViewModel.cooldownTime.observe(viewLifecycleOwner, Observer { time ->
-            cooldownText.text = if (albaViewModel.isCooldown.value == true && time > 0) {
-                "쿨다운: ${time}초"
-            } else {
-                "알바 가능!"
-            }
+            updateStatusText()
+        })
+        albaViewModel.isActivePhase.observe(viewLifecycleOwner, Observer { isActive ->
+            updateStatusText()
+        })
+        albaViewModel.activePhaseTime.observe(viewLifecycleOwner, Observer { time ->
+            updateStatusText()
         })
 
         albaViewModel.albaLevel.observe(viewLifecycleOwner, Observer { level ->
@@ -78,6 +85,19 @@ class AlbaFragment : Fragment() {
         })
 
         return view
+    }
+
+    private fun updateStatusText() {
+        val isActive = albaViewModel.isActivePhase.value ?: false
+        val isCooldown = albaViewModel.isCooldown.value ?: false
+        val activeTime = albaViewModel.activePhaseTime.value ?: 0
+        val cooldownTime = albaViewModel.cooldownTime.value ?: 0
+
+        activePhaseText.text = when {
+            isActive -> "클릭! 남은 시간: ${activeTime}초"
+            isCooldown -> "쿨다운: ${cooldownTime}초"
+            else -> "알바 가능!"
+        }
     }
 
     private fun showRewardAnimation(
@@ -102,7 +122,6 @@ class AlbaFragment : Fragment() {
         }
 
         animationContainer.addView(rewardTextView)
-        activeRewardTextCount++
 
         rewardTextView.x = albaImage.x + x
         rewardTextView.y = albaImage.y + y
@@ -142,8 +161,6 @@ class AlbaFragment : Fragment() {
             override fun onAnimationEnd(animation: Animator) {
                 shake.cancel()
                 animationContainer.removeView(rewardTextView)
-                activeRewardTextCount--
-                albaViewModel.onRewardAnimationEnd()
             }
         })
 

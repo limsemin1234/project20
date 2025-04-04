@@ -12,11 +12,16 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
     private val sharedPreferences = application.getSharedPreferences("alba_data", Context.MODE_PRIVATE)
     private val handler = Handler(Looper.getMainLooper())
 
-    private val _touchCount = MutableLiveData(0)
-    val touchCount: LiveData<Int> get() = _touchCount
-
     private val _albaLevel = MutableLiveData(1)
     val albaLevel: LiveData<Int> get() = _albaLevel
+
+    private val _isActivePhase = MutableLiveData(false)
+    val isActivePhase: LiveData<Boolean> get() = _isActivePhase
+
+    private val _activePhaseTime = MutableLiveData(0)
+    val activePhaseTime: LiveData<Int> get() = _activePhaseTime
+
+    private val activePhaseDuration = 5 // 알바 활성 시간 (초)
 
     private val _isCooldown = MutableLiveData(false)
     val isCooldown: LiveData<Boolean> get() = _isCooldown
@@ -24,45 +29,47 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
     private val _cooldownTime = MutableLiveData(0)
     val cooldownTime: LiveData<Int> get() = _cooldownTime
 
-    private var rewardTextCount = 0 // 애니메이션 카운트
-
     init {
         loadAlbaData()
-        if (_isCooldown.value == true) {
-            startCooldown()
+        if (_isCooldown.value == true && _cooldownTime.value ?: 0 > 0) {
+            continueCooldown()
+        } else {
+            _isCooldown.value = false
+            _cooldownTime.value = 0
         }
     }
 
-    fun increaseTouchCount() {
-        if (_isCooldown.value == false && _touchCount.value ?: 0 < 10) {
-            _touchCount.value = (_touchCount.value ?: 0) + 1
-            rewardTextCount++
-        }
+    fun startActivePhase() {
+        if (_isCooldown.value == true || _isActivePhase.value == true) return
 
-        if (_touchCount.value == 10) {
-            startCooldown()
-        }
-    }
-
-    fun onRewardAnimationEnd() {
-        rewardTextCount--
-        if (_touchCount.value == 10 && rewardTextCount == 0) {
-            increaseLevel()
-        }
-    }
-
-    private fun increaseLevel() {
-        val currentLevel = _albaLevel.value ?: 1
-        _albaLevel.value = currentLevel + 1
-        _touchCount.value = 0
+        _isActivePhase.value = true
+        _activePhaseTime.value = activePhaseDuration
         saveAlbaData()
+
+        val activePhaseRunnable = object : Runnable {
+            override fun run() {
+                if (_activePhaseTime.value ?: 0 > 0) {
+                    _activePhaseTime.value = (_activePhaseTime.value ?: 0) - 1
+                    handler.postDelayed(this, 1000)
+                } else {
+                    _isActivePhase.value = false
+                    saveAlbaData()
+                    startCooldown()
+                }
+            }
+        }
+        handler.post(activePhaseRunnable)
     }
 
     fun startCooldown() {
         _isCooldown.value = true
         _cooldownTime.value = 20
         saveAlbaData()
+        continueCooldown()
+    }
 
+    private fun continueCooldown() {
+        handler.removeCallbacksAndMessages(null)
         val cooldownRunnable = object : Runnable {
             override fun run() {
                 if (_cooldownTime.value ?: 0 > 0) {
@@ -70,12 +77,13 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
                     handler.postDelayed(this, 1000)
                 } else {
                     _isCooldown.value = false
-                    _touchCount.value = 0
                     saveAlbaData()
                 }
             }
         }
-        handler.post(cooldownRunnable)
+        if (_cooldownTime.value ?: 0 > 0) {
+            handler.postDelayed(cooldownRunnable, 1000)
+        }
     }
 
     fun getRewardAmount(): Int {
@@ -85,7 +93,6 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
     private fun saveAlbaData() {
         val editor = sharedPreferences.edit()
         editor.putInt("alba_level", _albaLevel.value ?: 1)
-        editor.putInt("touch_count", _touchCount.value ?: 0)
         editor.putBoolean("is_cooldown", _isCooldown.value ?: false)
         editor.putInt("cooldown_time", _cooldownTime.value ?: 0)
         editor.apply()
@@ -93,23 +100,22 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun loadAlbaData() {
         _albaLevel.value = sharedPreferences.getInt("alba_level", 1)
-        _touchCount.value = sharedPreferences.getInt("touch_count", 0)
         _isCooldown.value = sharedPreferences.getBoolean("is_cooldown", false)
         _cooldownTime.value = sharedPreferences.getInt("cooldown_time", 0)
     }
 
     fun resetAlba() {
         _albaLevel.value = 1
-        _touchCount.value = 0
+        _isActivePhase.value = false
+        _activePhaseTime.value = 0
         _isCooldown.value = false
         _cooldownTime.value = 0
-        rewardTextCount = 0
+        handler.removeCallbacksAndMessages(null)
         saveAlbaData()
     }
 
     override fun onCleared() {
         super.onCleared()
-        // ViewModel 파괴 시 예약된 콜백 제거
         handler.removeCallbacksAndMessages(null)
     }
 }
