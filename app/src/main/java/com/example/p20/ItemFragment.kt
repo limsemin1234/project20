@@ -30,7 +30,7 @@ class ItemFragment : Fragment() {
     private lateinit var prefs: SharedPreferences
 
     // 아이템 정보
-    private val itemPrice = 1000000L // Time증폭 아이템 가격
+    private val itemPrice = 100_000L // Time증폭 아이템 가격 10만원
     private var itemQuantity = 0 // Time증폭 아이템 보유 수량 (이제 SharedPreferences에서 로드)
 
     override fun onCreateView(

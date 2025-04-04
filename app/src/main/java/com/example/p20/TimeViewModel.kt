@@ -71,9 +71,9 @@ class TimeViewModel(application: Application) : AndroidViewModel(application) {
         _time.value = sharedPreferences.getString("current_time", "00:00:00") ?: "00:00:00"
         startTimeInSeconds = timeStringToSeconds(_time.value ?: "00:00:00")
         
-        val loadedRemainingTime = sharedPreferences.getInt("remaining_time", 10)
+        val loadedRemainingTime = sharedPreferences.getInt("remaining_time", 120)
         if (loadedRemainingTime <= 1) {
-            _remainingTime.value = 10
+            _remainingTime.value = 120
             _time.value = "00:00:00"
             startTimeInSeconds = 0
             saveTimeData()
@@ -145,7 +145,7 @@ class TimeViewModel(application: Application) : AndroidViewModel(application) {
 
         _time.value = "00:00:00"
         startTimeInSeconds = 0
-        _remainingTime.value = 10
+        _remainingTime.value = 120
         _isGameOver.value = false
         _restartRequested.value = false
         _showRestartMessageInInfo.value = false
