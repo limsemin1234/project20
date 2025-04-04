@@ -76,13 +76,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         /////////////////////////////버튼///////////////////////////////
-        val button1 = findViewById<Button>(R.id.button1)
-        val button2 = findViewById<Button>(R.id.button2)
-        val button3 = findViewById<Button>(R.id.button3)
-        val button4 = findViewById<Button>(R.id.button4)
-        val button5 = findViewById<Button>(R.id.button5)
-        val button6 = findViewById<Button>(R.id.button6)
-        val buttonInfo = findViewById<Button>(R.id.buttonInfo)
+        val buttonReset = findViewById<Button>(R.id.buttonReset)
+        val buttonAlba = findViewById<Button>(R.id.buttonAlba)
+        val buttonStock = findViewById<Button>(R.id.buttonStock)
+        val buttonRealEstate = findViewById<Button>(R.id.buttonRealEstate)
+        val buttonExit = findViewById<Button>(R.id.buttonExit)
+        val buttonEarnMoney = findViewById<Button>(R.id.buttonEarnMoney)
+        val buttonMyInfo = findViewById<Button>(R.id.buttonMyInfo)
         val buttonItem = findViewById<Button>(R.id.buttonItem)
         val slidePanel = findViewById<LinearLayout>(R.id.slidePanel)
 
@@ -98,31 +98,31 @@ class MainActivity : AppCompatActivity() {
             slidePanel.startAnimation(slideDown)
         }
 
-        button1.setOnClickListener {
+        buttonReset.setOnClickListener {
             titleText.visibility = View.GONE
             slidePanel.visibility = View.GONE
             showFragment(InfoFragment(),"InfoFragment")
         }
 
-        button2.setOnClickListener {
+        buttonAlba.setOnClickListener {
             titleText.visibility = View.GONE
             slidePanel.visibility = View.GONE
             showFragment(AlbaFragment(), "AlbaFragment")
         }
 
-        button3.setOnClickListener {
+        buttonStock.setOnClickListener {
             titleText.visibility = View.GONE
             slidePanel.visibility = View.GONE
             showFragment(StockFragment(), "StockFragment")
         }
 
-        button4.setOnClickListener {
+        buttonRealEstate.setOnClickListener {
             titleText.visibility = View.GONE
             slidePanel.visibility = View.GONE
             showFragment(RealEstateFragment(), "RealEstateFragment")
         }
 
-        buttonInfo.setOnClickListener {
+        buttonMyInfo.setOnClickListener {
             titleText.visibility = View.GONE
             slidePanel.visibility = View.GONE
             showFragment(RealInfoFragment(), "RealInfoFragment")
@@ -134,7 +134,7 @@ class MainActivity : AppCompatActivity() {
             showFragment(ItemFragment(), "ItemFragment")
         }
 
-        button6.setOnClickListener {
+        buttonEarnMoney.setOnClickListener {
             if (slidePanel.visibility == View.VISIBLE) {
                 val slideDown = AnimationUtils.loadAnimation(this, R.anim.slide_down)
                 slideDown.setAnimationListener(object : Animation.AnimationListener {
@@ -152,7 +152,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        button5.setOnClickListener {
+        buttonExit.setOnClickListener {
             slidePanel.visibility = View.GONE
             AlertDialog.Builder(this)
                 .setTitle("게임 종료")
