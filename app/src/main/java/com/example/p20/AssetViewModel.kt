@@ -14,9 +14,13 @@ class AssetViewModel(private val context: Context) : ViewModel() {
     val realEstateList: LiveData<List<RealEstate>> get() = _realEstateList
 
     init {
-        val sharedPreferences = context.getSharedPreferences("game_preferences", Context.MODE_PRIVATE)
-        val savedAsset = sharedPreferences.getLong("asset", 40_000_000L) // 초기 자산 4000만원으로 변경
-        _asset.value = savedAsset
+        // --- 수정: SharedPreferences 값 로드 대신 항상 4천만원으로 시작 ---
+        // val sharedPreferences = context.getSharedPreferences("game_preferences", Context.MODE_PRIVATE)
+        // val savedAsset = sharedPreferences.getLong("asset", 40_000_000L) 
+        // _asset.value = savedAsset
+        _asset.value = 40_000_000L // 항상 4천만원으로 시작
+        saveAssetToPreferences() // 시작 시 4천만원 상태 저장 (선택 사항)
+        // --- 수정 끝 ---
     }
 
     fun increaseAsset(amount: Long) {

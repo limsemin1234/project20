@@ -21,6 +21,7 @@ import android.view.Gravity
 import android.view.ViewGroup
 import androidx.fragment.app.FragmentManager
 import android.view.animation.AlphaAnimation
+import androidx.fragment.app.DialogFragment
 
 class MainActivity : AppCompatActivity() {
 
@@ -32,11 +33,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var albaViewModel: AlbaViewModel // 알바 뷰모델 추가
     private lateinit var globalRemainingTimeTextView: TextView // 전역 남은 시간 표시 텍스트뷰
     private lateinit var mainRestartMessageTextView: TextView // 메인 재시작 메시지 텍스트뷰
-    private lateinit var gameOverView: LinearLayout
-    private lateinit var gameOverFinalAssetText: TextView
-    private lateinit var gameOverRestartButton: Button
-    private lateinit var gameOverExitButton: Button
-    private lateinit var gameOverRestartMessageText: TextView // 추가
     private val handler: Handler by lazy { Handler(Looper.getMainLooper()) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -104,73 +100,34 @@ class MainActivity : AppCompatActivity() {
         // --- 수정 끝 ---
 
         // --- 추가: 게임 오버 뷰 및 버튼 참조 ---
-        gameOverView = findViewById(R.id.gameOverView)
-        gameOverFinalAssetText = findViewById(R.id.gameOverFinalAssetText)
-        gameOverRestartButton = findViewById(R.id.gameOverRestartButton)
-        gameOverExitButton = findViewById(R.id.gameOverExitButton)
-        gameOverRestartMessageText = findViewById(R.id.gameOverRestartMessageText) // 추가
+        // gameOverView = findViewById(R.id.gameOverView)
+        // gameOverFinalAssetText = findViewById(R.id.gameOverFinalAssetText)
+        // gameOverRestartButton = findViewById(R.id.gameOverRestartButton)
+        // gameOverExitButton = findViewById(R.id.gameOverExitButton)
+        // gameOverRestartMessageText = findViewById(R.id.gameOverRestartMessageText)
         // --- 추가 끝 ---
 
         // --- 추가: View.post를 사용하여 gameOverView 숨김 예약 ---
-        gameOverView.post {
-            gameOverView.visibility = View.GONE
-        }
+        // gameOverView.post { ... }
         // --- 추가 끝 ---
 
-        // 게임 오버 처리 (MainActivity에서 유지)
+        // --- 수정: 게임 오버 처리 로직 (DialogFragment 사용) ---
         timeViewModel.isGameOver.observe(this) { isGameOver ->
+            val dialogTag = "GameOverDialog"
+            val existingDialog = supportFragmentManager.findFragmentByTag(dialogTag) as? DialogFragment
+
             if (isGameOver) {
                 globalRemainingTimeTextView.clearAnimation()
-                // 게임 오버 뷰 표시 및 최종 자산 업데이트
-                gameOverFinalAssetText.text = "최종 자산: ${formatNumber(assetViewModel.asset.value ?: 0)}원"
-                gameOverView.visibility = View.VISIBLE
+                // 다이얼로그가 이미 떠 있지 않다면 새로 띄움
+                if (existingDialog == null) {
+                     GameOverDialogFragment().show(supportFragmentManager, dialogTag)
+                }
             } else {
-                // 게임 오버 뷰 숨김
-                gameOverView.visibility = View.GONE
+                // 게임 오버 상태가 아니라면 다이얼로그 닫기
+                existingDialog?.dismiss()
             }
         }
-        
-        // --- 추가: 게임 오버 뷰 버튼 리스너 설정 ---
-        gameOverRestartButton.setOnClickListener {
-            // 버튼 비활성화
-            gameOverRestartButton.isEnabled = false
-            gameOverExitButton.isEnabled = false
-            
-            // 기존 내용 숨기기 (선택적: 메시지만 보이게 할 경우)
-             findViewById<TextView>(R.id.gameOverFinalAssetText).visibility = View.GONE // 예시
-            // TODO: 필요하다면 게임오버 텍스트, 종료 버튼 등도 숨김 처리
-
-            // 메시지 표시 및 깜빡임 애니메이션 시작
-            gameOverRestartMessageText.visibility = View.VISIBLE
-            val blinkAnimation = AlphaAnimation(1.0f, 0.0f).apply {
-                duration = 500 // 0.5초 간격
-                repeatMode = Animation.REVERSE
-                repeatCount = Animation.INFINITE
-            }
-            gameOverRestartMessageText.startAnimation(blinkAnimation)
-
-            // 3초 후 실행
-            handler.postDelayed({
-                // 애니메이션 중지 및 메시지 숨기기
-                gameOverRestartMessageText.clearAnimation()
-                gameOverRestartMessageText.visibility = View.GONE
-                
-                // (선택적) 버튼 다시 활성화 - 하지만 바로 리셋/화면 전환됨
-                // gameOverRestartButton.isEnabled = true
-                // gameOverExitButton.isEnabled = true
-                
-                // (선택적) 숨겼던 내용 다시 보이게 - 하지만 바로 리셋/화면 전환됨
-                // findViewById<TextView>(R.id.gameOverFinalAssetText).visibility = View.VISIBLE
-                
-                // 다시 시작 요청 (리셋 및 ExplanationFragment 표시 트리거)
-                timeViewModel.requestRestart()
-            }, 3000) // 3초 지연
-        }
-
-        gameOverExitButton.setOnClickListener {
-            finishAffinity() // 앱 종료
-        }
-        // --- 추가 끝 ---
+        // --- 수정 끝 ---
 
         // TimeViewModel 초기화 후 명시적으로 게임 타이머 시작 호출
         timeViewModel.startGameTimer()
@@ -351,12 +308,6 @@ class MainActivity : AppCompatActivity() {
         super.onStop()
         stockViewModel.saveStockData()
     }
-
-    // --- 추가: 숫자 포맷팅 함수 ---
-    private fun formatNumber(number: Long): String {
-        return String.format("%,d", number)
-    }
-    // --- 추가 끝 ---
 
     // --- 추가: ExplanationFragment 제거 함수 ---
     private fun removeExplanationFragment() {

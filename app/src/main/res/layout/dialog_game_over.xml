@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" 
+    android:layout_height="match_parent" 
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="#E6212121"
+    android:padding="32dp">
+
+    <TextView
+        android:id="@+id/gameOverTitleText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Game Over!"
+        android:textSize="32sp"
+        android:textColor="@android:color/holo_red_light"
+        android:textStyle="bold"
+        android:layout_marginBottom="24dp"/>
+
+    <!-- 다시 시작 시 메시지 (초기에는 숨김) -->
+    <TextView
+        android:id="@+id/dialogRestartMessageText" 
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:layout_marginTop="16dp"
+        android:padding="16dp"
+        android:text="시간을 되돌립니다..."
+        android:textColor="@android:color/white"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/dialogFinalAssetText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="최종 자산: 0원"
+        android:textSize="20sp"
+        android:textColor="@android:color/white"
+        android:layout_marginBottom="48dp"/>
+
+    <Button
+        android:id="@+id/dialogRestartButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="다시 시작"
+        android:textSize="18sp"
+        android:layout_marginBottom="16dp"/>
+
+    <Button
+        android:id="@+id/dialogExitButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="나가기"
+        android:textSize="18sp"/>
+
+</LinearLayout> 
