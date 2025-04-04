@@ -1,6 +1,5 @@
 package com.example.p20
 
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,11 +7,12 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import com.example.p20.databinding.FragmentInfoBinding
-import androidx.lifecycle.Observer
-import android.widget.Button
+// import com.example.p20.databinding.FragmentInfoBinding // 이전 바인딩 클래스 제거 또는 주석처리
+import com.example.p20.databinding.FragmentResetBinding // 새 바인딩 클래스 사용
 
-class InfoFragment : Fragment() {
+// --- 수정: 클래스 이름 변경 InfoFragment -> ResetFragment ---
+class ResetFragment : Fragment() {
+// --- 수정 끝 ---
 
     private lateinit var assetViewModel: AssetViewModel
     private lateinit var stockViewModel: StockViewModel
@@ -20,11 +20,17 @@ class InfoFragment : Fragment() {
     private lateinit var realEstateViewModel: RealEstateViewModel
     private lateinit var timeViewModel: TimeViewModel
 
+    private var _binding: FragmentResetBinding? = null // 바인딩 변수 타입 변경
+    private val binding get() = _binding!!
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val binding = FragmentInfoBinding.inflate(inflater, container, false)
+        // --- 수정: View Binding 사용 및 레이아웃 참조 확인 ---
+        _binding = FragmentResetBinding.inflate(inflater, container, false) // 새 바인딩 클래스 사용
+        // val view = inflater.inflate(R.layout.fragment_reset, container, false) // 이전 inflate 제거
+        // --- 수정 끝 ---
 
         assetViewModel = ViewModelProvider(requireActivity()).get(AssetViewModel::class.java)
         stockViewModel = ViewModelProvider(requireActivity()).get(StockViewModel::class.java)
@@ -32,14 +38,15 @@ class InfoFragment : Fragment() {
         realEstateViewModel = ViewModelProvider(requireActivity()).get(RealEstateViewModel::class.java)
         timeViewModel = ViewModelProvider(requireActivity()).get(TimeViewModel::class.java)
 
+        // --- 수정: View Binding 사용하도록 버튼 참조 변경 ---
         // 시간 초기화 버튼
-        binding.resetTimeButton.setOnClickListener {
+        binding.resetTimeButton.setOnClickListener { // binding. 사용
             timeViewModel.resetTimer()
             Toast.makeText(requireContext(), "시간이 초기화되었습니다.", Toast.LENGTH_SHORT).show()
         }
 
         // 자산 초기화 버튼
-        binding.resetAssetButton.setOnClickListener {
+        binding.resetAssetButton.setOnClickListener { // binding. 사용
             assetViewModel.resetAssets()
             stockViewModel.resetStocks()
             albaViewModel.resetAlba()
@@ -48,23 +55,29 @@ class InfoFragment : Fragment() {
         }
 
         // 주식 가격 초기화 버튼
-        binding.resetStockButton.setOnClickListener {
+        binding.resetStockButton.setOnClickListener { // binding. 사용
             stockViewModel.resetStockPrices()
             Toast.makeText(requireContext(), "주식 가격이 초기화되었습니다.", Toast.LENGTH_SHORT).show()
         }
 
         // 알바 초기화 버튼
-        binding.resetAlbaButton.setOnClickListener {
+        binding.resetAlbaButton.setOnClickListener { // binding. 사용
             albaViewModel.resetAlba()
             Toast.makeText(requireContext(), "알바가 초기화되었습니다.", Toast.LENGTH_SHORT).show()
         }
 
         // 부동산 가격 초기화
-        binding.resetRealEstateButton.setOnClickListener {
+        binding.resetRealEstateButton.setOnClickListener { // binding. 사용
             realEstateViewModel.resetRealEstatePrices()
             Toast.makeText(requireContext(), "부동산 가격이 초기화되었습니다.", Toast.LENGTH_SHORT).show()
         }
+        // --- 수정 끝 ---
 
-        return binding.root
+        return binding.root // binding.root 반환
     }
-}
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null // 메모리 누수 방지
+    }
+} 

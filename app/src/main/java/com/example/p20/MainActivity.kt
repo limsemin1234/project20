@@ -1,6 +1,5 @@
 package com.example.p20
 
-import android.graphics.Color
 import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
@@ -9,19 +8,15 @@ import androidx.fragment.app.Fragment
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.Observer
-import android.animation.ObjectAnimator
-import android.os.Handler
-import android.os.Looper
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.LinearLayout
-import android.view.Gravity
-import android.view.ViewGroup
-import androidx.fragment.app.FragmentManager
 import android.view.animation.AlphaAnimation
 import androidx.fragment.app.DialogFragment
+import com.example.p20.ResetFragment
+import com.example.p20.RealInfoFragment
+import com.example.p20.ItemFragment
 
 class MainActivity : AppCompatActivity() {
 
@@ -183,7 +178,7 @@ class MainActivity : AppCompatActivity() {
             // titleText.visibility = View.GONE
             removeExplanationFragment()
             slidePanel.visibility = View.GONE
-            showFragment(InfoFragment(),"InfoFragment")
+            showFragment(ResetFragment(), "ResetFragment")
         }
 
         buttonAlba.setOnClickListener {
