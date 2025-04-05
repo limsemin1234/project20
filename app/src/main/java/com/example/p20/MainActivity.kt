@@ -170,9 +170,6 @@ class MainActivity : AppCompatActivity() {
         // --- 추가 끝 ---
 
         slidePanel.getChildAt(0).setOnClickListener {
-            // 화살표를 위로 바꾸기
-            buttonEarnMoney.text = "돈벌기\n↑"
-            
             val slideDown = AnimationUtils.loadAnimation(this, R.anim.slide_down)
             slideDown.setAnimationListener(object : Animation.AnimationListener {
                 override fun onAnimationStart(animation: Animation?) {}
@@ -246,9 +243,6 @@ class MainActivity : AppCompatActivity() {
 
         buttonEarnMoney.setOnClickListener {
             if (slidePanel.visibility == View.VISIBLE) {
-                // 화살표를 위로 바꾸기
-                buttonEarnMoney.text = "돈벌기\n↑"
-                
                 val slideDown = AnimationUtils.loadAnimation(this, R.anim.slide_down)
                 slideDown.setAnimationListener(object : Animation.AnimationListener {
                     override fun onAnimationStart(animation: Animation?) {}
@@ -259,9 +253,6 @@ class MainActivity : AppCompatActivity() {
                 })
                 slidePanel.startAnimation(slideDown)
             } else {
-                // 화살표를 아래로 바꾸기
-                buttonEarnMoney.text = "돈벌기\n↓"
-                
                 // 버튼 깜빡임 효과
                 val buttonFlash = AlphaAnimation(1.0f, 0.4f)
                 buttonFlash.duration = 200
@@ -291,9 +282,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showFragment(fragment: Fragment, tag: String) {
-        // 화살표를 위로 바꾸기
-        findViewById<Button>(R.id.buttonEarnMoney).text = "돈벌기\n↑"
-        
         // 게임 오버 뷰가 보이는 동안에는 다른 프래그먼트 표시 안 함 (선택 사항)
         // if (findViewById<View>(R.id.gameOverView)?.visibility == View.VISIBLE) {
         //     return

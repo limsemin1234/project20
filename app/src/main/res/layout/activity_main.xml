@@ -121,7 +121,7 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:text="돈벌기\n↑"
+                android:text="돈벌기"
                 android:gravity="center"
                 android:textStyle="bold"
                 android:layout_margin="3dp"
