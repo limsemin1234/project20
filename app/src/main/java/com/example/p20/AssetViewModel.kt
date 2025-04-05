@@ -16,8 +16,8 @@ class AssetViewModel(private val context: Context) : ViewModel() {
     init {
         // --- 수정: SharedPreferences에서 자산 로드 활성화 ---
         val sharedPreferences = context.getSharedPreferences("game_preferences", Context.MODE_PRIVATE)
-        // --- 수정: 기본 자산 100만원으로 변경 ---
-        val savedAsset = sharedPreferences.getLong("asset", 1_000_000L) // 저장된 값 로드, 없으면 100만원
+        // --- 수정: 기본 자산 50만원으로 변경 ---
+        val savedAsset = sharedPreferences.getLong("asset", 500_000L) // 저장된 값 로드, 없으면 50만원
         // --- 수정 끝 ---
         _asset.value = savedAsset
         // _asset.value = 40_000_000L // 항상 4천만원으로 시작하는 코드 삭제 또는 주석 처리
@@ -54,7 +54,7 @@ class AssetViewModel(private val context: Context) : ViewModel() {
     }
 
     fun resetAsset() {
-        _asset.value = 1_000_000_000L // 초기 자산
+        _asset.value = 500_000L // 초기 자산 50만원으로 변경
         saveAssetToPreferences()
     }
 
@@ -69,8 +69,8 @@ class AssetViewModel(private val context: Context) : ViewModel() {
     }
 
     fun resetAssets() {
-        // --- 수정: 초기 자산 100만원으로 변경 ---
-        _asset.value = 1_000_000L // 초기 자산 100만원으로 변경
+        // --- 수정: 초기 자산 50만원으로 변경 ---
+        _asset.value = 500_000L // 초기 자산 50만원으로 변경
         // --- 수정 끝 ---
         _realEstateList.value = listOf( // 부동산 목록 초기화
             RealEstate(1, "반지하 원룸", 30_000_000L),
