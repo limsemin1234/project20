@@ -86,11 +86,6 @@ class StockFragment : Fragment() {
 
         assetViewModel = ViewModelProvider(requireActivity()).get(AssetViewModel::class.java)
 
-        assetViewModel.asset.observe(viewLifecycleOwner, Observer { newAsset ->
-            // 자산 정보를 스낵바로 표시
-            showSnackbar("현재 자산: ${String.format("%,d", newAsset)}원")
-        })
-
         stockRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         stockAdapter = StockAdapter(stockItems) { stock ->
             selectedStock = stock
