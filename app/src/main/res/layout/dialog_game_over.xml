@@ -36,7 +36,9 @@
         android:text="최종 자산: 0원"
         android:textSize="20sp"
         android:textColor="@android:color/white"
-        android:layout_marginBottom="48dp"/>
+        android:layout_marginBottom="48dp"
+        android:gravity="center"
+        android:lineSpacingExtra="8dp"/>
 
     <Button
         android:id="@+id/dialogRestartButton"

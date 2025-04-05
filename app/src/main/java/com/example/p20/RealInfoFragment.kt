@@ -65,7 +65,7 @@ class RealInfoFragment : Fragment() {
         // 자산 정보 표시
         assetViewModel.asset.observe(viewLifecycleOwner) { asset ->
             currentAsset = asset
-            assetTextView.text = "현재 자산: ${formatCurrency(asset)}"
+            assetTextView.text = formatCurrency(asset)
             updateTotalAsset()
         }
 
@@ -78,7 +78,7 @@ class RealInfoFragment : Fragment() {
                     stockAsset += stock.price.toLong() * stock.holding
                 }
             }
-            stockTextView.text = "주식 자산: ${formatCurrency(stockAsset)}"
+            stockTextView.text = formatCurrency(stockAsset)
             updateTotalAsset()
         }
 
@@ -91,7 +91,7 @@ class RealInfoFragment : Fragment() {
                     realEstateAsset += estate.price
                 }
             }
-            realEstateTextView.text = "부동산 자산: ${formatCurrency(realEstateAsset)}"
+            realEstateTextView.text = formatCurrency(realEstateAsset)
             updateTotalAsset()
         }
     }
@@ -99,7 +99,7 @@ class RealInfoFragment : Fragment() {
     // 총자산 업데이트 함수
     private fun updateTotalAsset() {
         val totalAsset = currentAsset + stockAsset + realEstateAsset
-        totalAssetTextView.text = "총자산: ${formatCurrency(totalAsset)}"
+        totalAssetTextView.text = formatCurrency(totalAsset)
     }
     
     // 통화 형식 포맷팅 함수

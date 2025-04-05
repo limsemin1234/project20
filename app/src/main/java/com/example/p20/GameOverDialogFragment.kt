@@ -50,8 +50,33 @@ class GameOverDialogFragment : DialogFragment() {
         val restartButton = view.findViewById<Button>(R.id.dialogRestartButton)
         val exitButton = view.findViewById<Button>(R.id.dialogExitButton)
 
-        // 최종 자산 표시
-        finalAssetText.text = "최종 자산: ${formatNumber(assetViewModel.asset.value ?: 0)}원"
+        // 총자산 계산 (현재 자산 + 주식 자산 + 부동산 자산)
+        val currentAsset = assetViewModel.asset.value ?: 0
+        var stockAsset = 0L
+        var realEstateAsset = 0L
+        
+        // 주식 자산 계산
+        stockViewModel.stockItems.value?.forEach { stock ->
+            if (stock.holding > 0) {
+                stockAsset += stock.price.toLong() * stock.holding
+            }
+        }
+        
+        // 부동산 자산 계산
+        realEstateViewModel.realEstateList.value?.forEach { estate ->
+            if (estate.owned) {
+                realEstateAsset += estate.price
+            }
+        }
+        
+        // 총자산 합계
+        val totalAsset = currentAsset + stockAsset + realEstateAsset
+        
+        // 최종 자산 표시 (총자산으로 변경)
+        finalAssetText.text = "최종 총자산: ${formatNumber(totalAsset)}원\n" +
+                              "현금 자산: ${formatNumber(currentAsset)}원\n" +
+                              "주식 자산: ${formatNumber(stockAsset)}원\n" +
+                              "부동산 자산: ${formatNumber(realEstateAsset)}원"
 
         // 다시 시작 버튼 리스너
         restartButton.setOnClickListener {
