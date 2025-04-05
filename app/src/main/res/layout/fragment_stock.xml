@@ -1,22 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/stock0"
-    android:padding="15dp">
+    android:padding="5dp">
 
-    <!-- 주식 목록 텍스트 -->
+    <!-- 제목 -->
     <TextView
-        android:id="@+id/stockListTitle"
-        android:layout_width="wrap_content"
+        android:id="@+id/stockTitleTextView"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="📈 오늘의 주식 시장"
-        android:gravity="top"
         android:textSize="20sp"
         android:textStyle="bold"
-        android:layout_margin="15dp"
-        android:textColor="@color/fragment_lavel" />
+        android:background="#E91E63"
+        android:padding="10dp"
+        android:gravity="center"
+        android:layout_marginTop="0dp"
+        android:textColor="#FFFFFF"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
 
     <!-- 첫 번째 행: 각 항목의 제목 -->
     <LinearLayout

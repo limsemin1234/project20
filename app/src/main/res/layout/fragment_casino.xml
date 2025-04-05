@@ -5,17 +5,21 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding="5dp"
     tools:context=".CasinoFragment">
 
     <!-- 상단 제목 -->
     <TextView
         android:id="@+id/casinoTitleText"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:background="#673AB7"
+        android:padding="10dp"
+        android:layout_marginTop="0dp"
+        android:gravity="center"
         android:text="🎰 카지노 게임장"
-        android:textColor="@color/fragment_lavel"
-        android:textSize="24sp"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -25,8 +29,8 @@
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/casinoTabLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_height="30dp"
+        android:layout_marginTop="1dp"
         android:background="#E0E0E0"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

@@ -4,24 +4,26 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
+    android:padding="5dp"
     android:background="#202040"
     tools:context=".LottoFragment">
 
     <!-- 제목 추가 -->
     <TextView
         android:id="@+id/lottoTitleText"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="🎫 행운의 복권 판매점"
-        android:textSize="24sp"
+        android:textSize="20sp"
         android:textStyle="bold"
+        android:background="#303050"
+        android:padding="10dp"
+        android:gravity="center"
+        android:layout_marginTop="0dp"
         android:textColor="@color/fragment_lavel"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="16dp"/>
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- 로또 가격 -->
     <TextView
@@ -29,6 +31,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="티켓 가격: 1,000원"
+        android:padding="10dp"
         android:textSize="18sp"
         android:textStyle="bold"
         android:textColor="#FFFFFF"

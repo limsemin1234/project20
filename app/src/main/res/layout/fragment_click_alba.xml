@@ -6,16 +6,6 @@
     android:background="#FFFACD"
     android:padding="15dp">
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="☕ 클릭 알바"
-        android:gravity="top"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:layout_margin="15dp"
-        android:textColor="@color/fragment_lavel" />
-
     <!-- 새로운 레벨 표시 텍스트 -->
     <TextView
         android:id="@+id/levelText"
@@ -25,7 +15,6 @@
         android:gravity="center"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:layout_marginTop="30dp"
         android:textColor="@color/alba_level" />
 
     <FrameLayout
