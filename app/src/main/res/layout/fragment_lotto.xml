@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
+    android:background="#202040"
     tools:context=".LottoFragment">
 
     <!-- 로또 가격 -->
@@ -15,6 +16,7 @@
         android:text="티켓 가격: 1,000원"
         android:textSize="18sp"
         android:textStyle="bold"
+        android:textColor="#FFFFFF"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
@@ -38,6 +40,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="복권 구매"
+        android:backgroundTint="#5C5CFF"
         app:layout_constraintTop_toBottomOf="@id/lottoPriceText"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -90,6 +93,7 @@
         android:text="결과 메시지"
         android:textSize="20sp"
         android:textStyle="bold"
+        android:textColor="#FFFFFF"
         android:visibility="invisible"
         tools:visibility="visible"
         app:layout_constraintTop_toBottomOf="@id/scratchAreaLayout"
@@ -101,11 +105,12 @@
         android:id="@+id/probabilityCardView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="0dp"
+        android:layout_marginBottom="16dp"
         app:cardCornerRadius="8dp"
         app:cardElevation="4dp"
-        app:cardBackgroundColor="#F5F5F5"
-        app:layout_constraintTop_toBottomOf="@id/resultMessageText"
+        app:cardBackgroundColor="#303555"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -121,7 +126,7 @@
                 android:text="당첨 확률 안내"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#1A237E"
+                android:textColor="#ADD8E6"
                 android:layout_marginBottom="8dp"/>
 
             <LinearLayout
@@ -134,7 +139,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="꽝"
-                    android:textColor="#333333"/>
+                    android:textColor="#E0E0E0"/>
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -153,7 +158,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="소액 당첨 (100원 ~ 5만원)"
-                    android:textColor="#333333"/>
+                    android:textColor="#E0E0E0"/>
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -172,7 +177,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="중액 당첨 (5만원 ~ 50만원)"
-                    android:textColor="#333333"/>
+                    android:textColor="#E0E0E0"/>
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -191,13 +196,13 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="대박 당첨 (300만원)"
-                    android:textColor="#333333"/>
+                    android:textColor="#E0E0E0"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="1%"
-                    android:textColor="#9C27B0"/>
+                    android:textColor="#E040FB"/>
             </LinearLayout>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
