@@ -30,7 +30,11 @@ class RealEstateViewModel(application: Application) : AndroidViewModel(applicati
             RealEstate(3, "아파트", 80_000_000L),
             RealEstate(4, "오피스텔", 120_000_000L),
             RealEstate(5, "단독 주택", 200_000_000L),
-            RealEstate(6, "빌딩", 400_000_000L)
+            RealEstate(6, "빌딩", 400_000_000L),
+            RealEstate(7, "고급빌라", 800_000_000L),
+            RealEstate(8, "초고층 빌딩", 1_500_000_000L),
+            RealEstate(9, "월드타워", 3_000_000_000L),
+            RealEstate(10, "킹타워", 6_000_000_000L)
         )
         loadRealEstateData()
         startPriceUpdates()
