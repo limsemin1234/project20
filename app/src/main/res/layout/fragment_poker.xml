@@ -179,7 +179,17 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
                 android:layout_weight="1"
-                android:text="카드 교체" />
+                android:text="카드 교체\n(무료)"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/endGameButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:text="게임 종료"
+                android:textSize="12sp" />
 
             <Button
                 android:id="@+id/newGameButton"

@@ -27,6 +27,7 @@ class PokerFragment : Fragment() {
     private lateinit var handRankText: TextView
     private lateinit var betAmountText: TextView
     private lateinit var changeButton: Button
+    private lateinit var endGameButton: Button
     private lateinit var newGameButton: Button
     private lateinit var bet10kButton: Button
     private lateinit var bet50kButton: Button
@@ -39,6 +40,7 @@ class PokerFragment : Fragment() {
     private var isGameActive = false
     private var isCardDealt = false
     private var isCardChanged = false
+    private var changeCount = 0 // 카드 교체 횟수 추적
     private var winCount = 0
     private var loseCount = 0
     private var isWaitingForCleanup = false
@@ -50,6 +52,9 @@ class PokerFragment : Fragment() {
     // 카드 덱과 손패
     private val deck = mutableListOf<Card>()
     private val playerCards = mutableListOf<Card>()
+    
+    // 카드 교체 기본 비용
+    private val baseCostForChange = 50000L
     
     // ViewModel 공유
     private val assetViewModel: AssetViewModel by activityViewModels()
@@ -85,6 +90,7 @@ class PokerFragment : Fragment() {
         handRankText = view.findViewById(R.id.handRankText)
         betAmountText = view.findViewById(R.id.betAmountText)
         changeButton = view.findViewById(R.id.changeButton)
+        endGameButton = view.findViewById(R.id.endGameButton)
         newGameButton = view.findViewById(R.id.newGameButton)
         bet10kButton = view.findViewById(R.id.bet10kButton)
         bet50kButton = view.findViewById(R.id.bet50kButton)
@@ -167,12 +173,24 @@ class PokerFragment : Fragment() {
                 return@setOnClickListener
             }
             
-            if (isCardChanged) {
-                showCustomSnackbar("이미 카드를 교체했습니다.")
+            changeCards()
+        }
+        
+        // 게임 종료 버튼
+        endGameButton.setOnClickListener {
+            if (!isGameActive) {
+                showCustomSnackbar("게임이 시작되지 않았습니다.")
                 return@setOnClickListener
             }
             
-            changeCards()
+            if (!isCardDealt) {
+                showCustomSnackbar("먼저 카드를 받아야 합니다.")
+                return@setOnClickListener
+            }
+            
+            // 족보 평가 후 게임 종료
+            evaluateHand()
+            endGame()
         }
     }
     
@@ -204,8 +222,9 @@ class PokerFragment : Fragment() {
     private fun startNewGame() {
         // 게임 상태 초기화
         isGameActive = true
-        isCardDealt = true
+        isCardDealt = true  // 바로 카드를 받으므로 true로 설정
         isCardChanged = false
+        changeCount = 0  // 카드 교체 횟수 초기화
         playerCards.clear()
         playerCardsLayout.removeAllViews()
         handRankText.text = "패 없음"
@@ -218,6 +237,10 @@ class PokerFragment : Fragment() {
         
         // 버튼 활성화
         changeButton.isEnabled = true
+        endGameButton.isEnabled = true
+        
+        // 교체 버튼 텍스트 업데이트
+        updateChangeButtonText()
     }
     
     private fun createShuffledDeck() {
@@ -248,6 +271,22 @@ class PokerFragment : Fragment() {
     }
     
     private fun changeCards() {
+        // 카드 교체 비용 확인 (첫 번째는 무료)
+        val changeCost = getChangeCost()
+        
+        // 교체 횟수가 0보다 크면 비용 지불
+        if (changeCount > 0) {
+            val currentAsset = assetViewModel.asset.value ?: 0L
+            if (currentAsset < changeCost) {
+                showCustomSnackbar("카드 교체 비용(${formatCurrency(changeCost)})이 부족합니다.")
+                return
+            }
+            
+            // 교체 비용 지불
+            assetViewModel.decreaseAsset(changeCost)
+            updateBalanceText()
+        }
+        
         // 선택한 카드 교체
         val selectedIndices = cardCheckBoxes.mapIndexed { index, checkBox -> 
             if (checkBox.isChecked) index else -1 
@@ -269,13 +308,27 @@ class PokerFragment : Fragment() {
             addCardView(playerCardsLayout, playerCards[i], i)
         }
         
+        // 교체 횟수 증가 및 상태 업데이트
+        changeCount++
         isCardChanged = true
+        
+        // 교체 버튼 텍스트 업데이트
+        updateChangeButtonText()
         
         // 족보 재평가
         evaluateHand()
         
-        // 게임 종료
-        endGame()
+        // 체크박스 초기화
+        cardCheckBoxes.forEach { it.isChecked = false }
+        
+        // 교체 완료 메시지
+        if (changeCount < 10) { // 너무 많은 교체를 방지하기 위한 상한선
+            val nextCost = getChangeCost()
+            showCustomSnackbar("카드 교체 완료. 다음 교체 비용: ${formatCurrency(nextCost)}")
+        } else {
+            showCustomSnackbar("최대 교체 횟수에 도달했습니다. 게임을 종료해주세요.")
+            changeButton.isEnabled = false
+        }
     }
     
     private fun drawCard(): Card {
@@ -415,6 +468,7 @@ class PokerFragment : Fragment() {
         isGameActive = false
         isWaitingForCleanup = true
         changeButton.isEnabled = false
+        endGameButton.isEnabled = false
         
         // 배팅 버튼 비활성화
         bet10kButton.isEnabled = false
@@ -509,6 +563,21 @@ class PokerFragment : Fragment() {
         } catch (e: ClassCastException) {
         }
         snackbar.show()
+    }
+    
+    // 카드 교체 비용 계산 함수
+    private fun getChangeCost(): Long {
+        return if (changeCount == 0) 0L else baseCostForChange * changeCount
+    }
+    
+    // 교체 버튼 텍스트 업데이트
+    private fun updateChangeButtonText() {
+        val cost = getChangeCost()
+        changeButton.text = if (cost == 0L) {
+            "카드 교체\n(무료)"
+        } else {
+            "카드 교체\n(${formatCurrency(cost)})"
+        }
     }
     
     // 포커 패 족보 enum
