@@ -15,6 +15,9 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
     private val _albaLevel = MutableLiveData(1)
     val albaLevel: LiveData<Int> get() = _albaLevel
 
+    private var clickCounter = 0
+    private val CLICKS_PER_LEVEL = 5 // 5번 클릭해야 레벨 1 증가
+
     private val _isActivePhase = MutableLiveData(false)
     val isActivePhase: LiveData<Boolean> get() = _isActivePhase
 
@@ -45,6 +48,8 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
         _isActivePhase.value = true
         _activePhaseTime.value = activePhaseDuration
         saveAlbaData()
+
+        increaseAlbaLevel()
 
         val activePhaseRunnable = object : Runnable {
             override fun run() {
@@ -87,7 +92,18 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun getRewardAmount(): Int {
-        return (_albaLevel.value ?: 1) * 100
+        return (_albaLevel.value ?: 1) * 50
+    }
+
+    fun increaseAlbaLevel() {
+        clickCounter++
+        
+        if (clickCounter >= CLICKS_PER_LEVEL) {
+            val currentLevel = _albaLevel.value ?: 1
+            _albaLevel.value = currentLevel + 1
+            clickCounter = 0
+            saveAlbaData()
+        }
     }
 
     private fun saveAlbaData() {
@@ -95,6 +111,7 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
         editor.putInt("alba_level", _albaLevel.value ?: 1)
         editor.putBoolean("is_cooldown", _isCooldown.value ?: false)
         editor.putInt("cooldown_time", _cooldownTime.value ?: 0)
+        editor.putInt("click_counter", clickCounter)
         editor.apply()
     }
 
@@ -102,6 +119,7 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
         _albaLevel.value = sharedPreferences.getInt("alba_level", 1)
         _isCooldown.value = sharedPreferences.getBoolean("is_cooldown", false)
         _cooldownTime.value = sharedPreferences.getInt("cooldown_time", 0)
+        clickCounter = sharedPreferences.getInt("click_counter", 0)
     }
 
     fun resetAlba() {
@@ -110,6 +128,7 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
         _activePhaseTime.value = 0
         _isCooldown.value = false
         _cooldownTime.value = 0
+        clickCounter = 0
         handler.removeCallbacksAndMessages(null)
         saveAlbaData()
     }

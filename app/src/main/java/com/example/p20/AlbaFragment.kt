@@ -56,6 +56,7 @@ class AlbaFragment : Fragment() {
                     albaImage.getLocationOnScreen(location)
                     showRewardAnimation(event.rawX.toInt() - location[0], event.rawY.toInt() - location[1], rewardAmount)
                 } else if (albaViewModel.isActivePhase.value == true) {
+                    albaViewModel.increaseAlbaLevel()
                     val rewardAmount = albaViewModel.getRewardAmount().toLong()
                     assetViewModel.increaseAsset(rewardAmount)
                     val location = IntArray(2)
@@ -81,7 +82,7 @@ class AlbaFragment : Fragment() {
 
         albaViewModel.albaLevel.observe(viewLifecycleOwner, Observer { level ->
             val rewardAmount = albaViewModel.getRewardAmount()
-            levelText.text = "레벨: $level\n보상: ${"%,d".format(rewardAmount)}원"
+            levelText.text = "레벨: $level\n보상: ${"%,d".format(rewardAmount)}원\n(5번 클릭마다 레벨업)"
         })
 
         return view
