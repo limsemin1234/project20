@@ -9,6 +9,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 
 class AlbaViewModel(application: Application) : AndroidViewModel(application) {
+    private val context = application.applicationContext
     private val sharedPreferences = application.getSharedPreferences("alba_data", Context.MODE_PRIVATE)
     private val handler = Handler(Looper.getMainLooper())
 
@@ -31,6 +32,10 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _cooldownTime = MutableLiveData(0)
     val cooldownTime: LiveData<Int> get() = _cooldownTime
+    
+    // 아이템 획득 이벤트
+    private val _itemRewardEvent = MutableLiveData<ItemReward?>()
+    val itemRewardEvent: LiveData<ItemReward?> get() = _itemRewardEvent
 
     init {
         loadAlbaData()
@@ -40,6 +45,11 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
             _isCooldown.value = false
             _cooldownTime.value = 0
         }
+    }
+    
+    // 아이템 획득 이벤트를 소비합니다
+    fun consumeItemRewardEvent() {
+        _itemRewardEvent.value = null
     }
 
     fun startActivePhase() {
@@ -100,9 +110,16 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
         
         if (clickCounter >= CLICKS_PER_LEVEL) {
             val currentLevel = _albaLevel.value ?: 1
-            _albaLevel.value = currentLevel + 1
+            val newLevel = currentLevel + 1
+            _albaLevel.value = newLevel
             clickCounter = 0
             saveAlbaData()
+            
+            // 레벨업 시 아이템 획득 처리
+            val itemReward = ItemUtil.processClickAlbaLevelUp(context, newLevel)
+            if (itemReward != null) {
+                _itemRewardEvent.value = itemReward
+            }
         }
     }
 

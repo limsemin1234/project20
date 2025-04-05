@@ -9,6 +9,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 
 class TimingAlbaViewModel(application: Application) : AndroidViewModel(application) {
+    private val context = application.applicationContext
     private val sharedPreferences = application.getSharedPreferences("timing_alba_data", Context.MODE_PRIVATE)
     private val handler = Handler(Looper.getMainLooper())
 
@@ -45,6 +46,10 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
     private val _isGameActive = MutableLiveData(false)
     val isGameActive: LiveData<Boolean> get() = _isGameActive
     
+    // 아이템 획득 이벤트
+    private val _itemRewardEvent = MutableLiveData<ItemReward?>()
+    val itemRewardEvent: LiveData<ItemReward?> get() = _itemRewardEvent
+    
     // 성공 시 중앙에서의 거리에 따른 보상 배율
     private val SUCCESS_ZONE_SIZE = 0.1f // 중앙으로부터 5% 거리 내에서 성공으로 간주
     private val PERFECT_ZONE_SIZE = 0.02f // 중앙으로부터 1% 거리 내에서 퍼펙트
@@ -60,6 +65,11 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
 
     init {
         loadTimingAlbaData()
+    }
+    
+    // 아이템 획득 이벤트를 소비합니다
+    fun consumeItemRewardEvent() {
+        _itemRewardEvent.value = null
     }
     
     fun startGame() {
@@ -123,9 +133,16 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
             sharedPreferences.edit().putInt("successful_attempts", newAttempts).apply()
             
             if (newAttempts == 0) {
-                val newLevel = (_albaLevel.value ?: 1) + 1
+                val currentLevel = _albaLevel.value ?: 1
+                val newLevel = currentLevel + 1
                 _albaLevel.value = newLevel
                 sharedPreferences.edit().putInt("timing_alba_level", newLevel).apply()
+                
+                // 레벨업 시 아이템 획득 처리
+                val itemReward = ItemUtil.processTimingAlbaLevelUp(context, newLevel)
+                if (itemReward != null) {
+                    _itemRewardEvent.value = itemReward
+                }
             }
         } else {
             // 실패 처리

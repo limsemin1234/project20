@@ -4,6 +4,8 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ObjectAnimator
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -103,6 +105,15 @@ class TimingAlbaFragment : Fragment() {
             timingLevelText.text = "레벨: $level\n보상: ${"%,d".format(baseReward)}원 x 배율\n(성공 5번마다 레벨업)"
         })
         
+        // 아이템 획득 이벤트 관찰
+        timingViewModel.itemRewardEvent.observe(viewLifecycleOwner, Observer { reward ->
+            if (reward != null) {
+                // 아이템 획득 애니메이션 표시
+                showItemRewardAnimation(reward)
+                timingViewModel.consumeItemRewardEvent() // 이벤트 소비
+            }
+        })
+        
         return view
     }
     
@@ -191,5 +202,67 @@ class TimingAlbaFragment : Fragment() {
         fadeOut.start()
         scaleX.start()
         scaleY.start()
+    }
+    
+    // 아이템 획득 애니메이션 표시
+    private fun showItemRewardAnimation(reward: ItemReward) {
+        // 아이템 획득 텍스트뷰 생성
+        val rewardTextView = TextView(requireContext()).apply {
+            text = if (reward.isMultiple) {
+                "${reward.itemName} 획득!"
+            } else {
+                "${reward.itemName} ${reward.quantity}개 획득!"
+            }
+            textSize = 24f
+            setTextColor(resources.getColor(android.R.color.holo_green_light, null))
+            setShadowLayer(5f, 1f, 1f, android.graphics.Color.BLACK)
+            setPadding(16, 16, 16, 16)
+            gravity = android.view.Gravity.CENTER
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+        
+        // 애니메이션 컨테이너에 추가
+        animationContainer.addView(rewardTextView)
+        
+        // 중앙에 배치
+        rewardTextView.post {
+            rewardTextView.x = (animationContainer.width - rewardTextView.width) / 2f
+            rewardTextView.y = (animationContainer.height - rewardTextView.height) / 2f
+            
+            // 애니메이션 시작
+            val fadeIn = ObjectAnimator.ofFloat(rewardTextView, "alpha", 0f, 1f).apply {
+                duration = 500
+            }
+            
+            val scaleX = ObjectAnimator.ofFloat(rewardTextView, "scaleX", 0.5f, 1.2f, 1f).apply {
+                duration = 1000
+            }
+            
+            val scaleY = ObjectAnimator.ofFloat(rewardTextView, "scaleY", 0.5f, 1.2f, 1f).apply {
+                duration = 1000
+            }
+            
+            // 2초 후 페이드 아웃
+            Handler(Looper.getMainLooper()).postDelayed({
+                val fadeOut = ObjectAnimator.ofFloat(rewardTextView, "alpha", 1f, 0f).apply {
+                    duration = 1000
+                }
+                
+                fadeOut.addListener(object : AnimatorListenerAdapter() {
+                    override fun onAnimationEnd(animation: Animator) {
+                        animationContainer.removeView(rewardTextView)
+                    }
+                })
+                
+                fadeOut.start()
+            }, 2000)
+            
+            fadeIn.start()
+            scaleX.start()
+            scaleY.start()
+        }
     }
 } 
