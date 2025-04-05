@@ -26,7 +26,6 @@ class PokerFragment : Fragment() {
     private lateinit var playerCardsLayout: LinearLayout
     private lateinit var handRankText: TextView
     private lateinit var betAmountText: TextView
-    private lateinit var dealButton: Button
     private lateinit var changeButton: Button
     private lateinit var newGameButton: Button
     private lateinit var bet10kButton: Button
@@ -85,7 +84,6 @@ class PokerFragment : Fragment() {
         playerCardsLayout = view.findViewById(R.id.playerCardsLayout)
         handRankText = view.findViewById(R.id.handRankText)
         betAmountText = view.findViewById(R.id.betAmountText)
-        dealButton = view.findViewById(R.id.dealButton)
         changeButton = view.findViewById(R.id.changeButton)
         newGameButton = view.findViewById(R.id.newGameButton)
         bet10kButton = view.findViewById(R.id.bet10kButton)
@@ -153,20 +151,7 @@ class PokerFragment : Fragment() {
             
             // 게임 초기화 및 시작
             startNewGame()
-        }
-        
-        // 카드 받기 버튼
-        dealButton.setOnClickListener {
-            if (!isGameActive) {
-                showCustomSnackbar("게임이 시작되지 않았습니다.")
-                return@setOnClickListener
-            }
-            
-            if (isCardDealt) {
-                showCustomSnackbar("이미 카드를 받았습니다. 카드를 교체하거나 게임을 끝내세요.")
-                return@setOnClickListener
-            }
-            
+            // 바로 카드 배포
             dealCards()
         }
         
@@ -219,7 +204,7 @@ class PokerFragment : Fragment() {
     private fun startNewGame() {
         // 게임 상태 초기화
         isGameActive = true
-        isCardDealt = false
+        isCardDealt = true
         isCardChanged = false
         playerCards.clear()
         playerCardsLayout.removeAllViews()
@@ -232,10 +217,7 @@ class PokerFragment : Fragment() {
         createShuffledDeck()
         
         // 버튼 활성화
-        dealButton.isEnabled = true
         changeButton.isEnabled = true
-        
-        showCustomSnackbar("카드를 받으려면 '카드 받기' 버튼을 누르세요.")
     }
     
     private fun createShuffledDeck() {
@@ -432,7 +414,6 @@ class PokerFragment : Fragment() {
     private fun endGame() {
         isGameActive = false
         isWaitingForCleanup = true
-        dealButton.isEnabled = false
         changeButton.isEnabled = false
         
         // 배팅 버튼 비활성화
