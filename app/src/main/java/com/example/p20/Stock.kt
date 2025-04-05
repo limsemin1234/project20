@@ -13,7 +13,7 @@ data class Stock(
 ) {
     fun updateChangeValue() {
         val minChangePercent = -0.04
-        val maxChangePercent = 0.043
+        val maxChangePercent = 0.045
         val randomPercent = (minChangePercent..maxChangePercent).random()
 
         val calculatedChange = (price * randomPercent / 100.0).roundToInt() * 100
