@@ -13,7 +13,7 @@
     <color name="purple_700">#3700B3</color>
     <color name="teal_200">#03DAC5</color>
     <color name="main_top_color">#212C64</color>
-    <color name="main_bottom_color">#016666</color>
+    <color name="main_bottom_color">#212C64</color>
     <color name="main_bottom_button">#212C64</color>
     <color name="fragment_lavel">#016666</color>
     <color name="alba_level">#673AB7</color>
