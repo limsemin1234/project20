@@ -27,6 +27,7 @@ class TimingAlbaFragment : Fragment() {
     private lateinit var pointer: View
     private lateinit var gameButton: Button
     private lateinit var animationContainer: FrameLayout
+    private lateinit var successCountText: TextView
     
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -45,6 +46,7 @@ class TimingAlbaFragment : Fragment() {
         pointer = view.findViewById(R.id.pointer)
         gameButton = view.findViewById(R.id.gameButton)
         animationContainer = view.findViewById(R.id.timingAnimationContainer)
+        successCountText = view.findViewById(R.id.successCountText)
         
         // 통합된 게임 버튼 리스너
         gameButton.setOnClickListener {
@@ -103,6 +105,20 @@ class TimingAlbaFragment : Fragment() {
         timingViewModel.albaLevel.observe(viewLifecycleOwner, Observer { level ->
             val baseReward = 500 * level  // 100 -> 500으로 변경
             timingLevelText.text = "레벨: $level\n보상: ${"%,d".format(baseReward)}원 x 배율\n(성공 5번마다 레벨업)"
+        })
+        
+        // 성공 횟수 관찰
+        timingViewModel.successfulAttempts.observe(viewLifecycleOwner, Observer { attempts ->
+            val remainingAttempts = 5 - attempts
+            successCountText.text = "레벨업까지 남은 성공: ${remainingAttempts}회"
+            
+            // 남은 횟수가 적을수록 텍스트 색상 변경
+            val textColor = when (remainingAttempts) {
+                1 -> resources.getColor(R.color.perfect_timing, null) // 1회 남으면 빨간색
+                2 -> resources.getColor(R.color.good_timing, null) // 2회 남으면 주황색
+                else -> resources.getColor(R.color.normal_timing, null) // 그 외에는 일반 색상
+            }
+            successCountText.setTextColor(textColor)
         })
         
         // 아이템 획득 이벤트 관찰

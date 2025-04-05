@@ -202,6 +202,26 @@
                 android:layout_weight="1"
                 android:text="새 게임" />
         </LinearLayout>
+        
+        <!-- 게임 방법 설명 -->
+        <TextView
+            android:id="@+id/blackjackRulesText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
+            android:background="#151515"
+            android:padding="12dp"
+            android:text="📌 블랙잭 게임 방법:\n\n• 목표: 카드 합계가 21에 가까우면서 21을 초과하지 않도록 하세요.\n• A는 1 또는 11, K/Q/J는 10, 나머지 카드는 숫자 그대로 계산됩니다.\n• Hit: 카드를 한 장 더 받습니다.\n• Stand: 더 이상 카드를 받지 않고 결과를 확인합니다.\n• 21을 초과하면 버스트(Bust)로 패배합니다.\n• 딜러는 합계가 17 미만이면 반드시 카드를 더 받아야 합니다.\n• 블랙잭(A+10)으로 이기면 베팅 금액의 3배를 획득하고, 일반적으로 이기면 2.5배를 획득합니다."
+            android:textColor="#E0E0E0"
+            android:textSize="14sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/gameControlLayout"
+            app:layout_constraintVertical_bias="0.0" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView> 

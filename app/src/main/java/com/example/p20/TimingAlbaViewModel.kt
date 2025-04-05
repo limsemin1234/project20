@@ -50,6 +50,10 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
     private val _itemRewardEvent = MutableLiveData<ItemReward?>()
     val itemRewardEvent: LiveData<ItemReward?> get() = _itemRewardEvent
     
+    // 레벨업까지 남은 성공 횟수 추적
+    private val _successfulAttempts = MutableLiveData<Int>(0)
+    val successfulAttempts: LiveData<Int> get() = _successfulAttempts
+    
     // 성공 시 중앙에서의 거리에 따른 보상 배율
     private val SUCCESS_ZONE_SIZE = 0.1f // 중앙으로부터 5% 거리 내에서 성공으로 간주
     private val PERFECT_ZONE_SIZE = 0.02f // 중앙으로부터 1% 거리 내에서 퍼펙트
@@ -129,8 +133,12 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
             _rewardMultiplier.value = multiplier
             
             // 5번 성공할 때마다 레벨업
-            val newAttempts = (sharedPreferences.getInt("successful_attempts", 0) + 1) % 5
+            val currentAttempts = sharedPreferences.getInt("successful_attempts", 0)
+            val newAttempts = (currentAttempts + 1) % 5
             sharedPreferences.edit().putInt("successful_attempts", newAttempts).apply()
+            
+            // 남은 성공 횟수 업데이트
+            _successfulAttempts.value = newAttempts
             
             if (newAttempts == 0) {
                 val currentLevel = _albaLevel.value ?: 1
@@ -184,6 +192,7 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
     
     private fun loadTimingAlbaData() {
         _albaLevel.value = sharedPreferences.getInt("timing_alba_level", 1)
+        _successfulAttempts.value = sharedPreferences.getInt("successful_attempts", 0)
     }
     
     fun resetTimingAlba() {
@@ -192,6 +201,7 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
         _isCooldown.value = false
         _cooldownTime.value = 0
         _lastSuccess.value = 0
+        _successfulAttempts.value = 0
         
         val editor = sharedPreferences.edit()
         editor.putInt("timing_alba_level", 1)

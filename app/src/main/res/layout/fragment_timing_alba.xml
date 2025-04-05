@@ -36,6 +36,18 @@
             android:layout_marginTop="15dp"
             android:textColor="@android:color/black" />
 
+        <!-- 레벨업까지 남은 성공 횟수 -->
+        <TextView
+            android:id="@+id/successCountText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="레벨업까지 남은 성공: 5회"
+            android:gravity="center"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="10dp"
+            android:textColor="#FF5722" />
+
         <!-- 게이지 컨테이너 -->
         <FrameLayout
             android:layout_width="match_parent"
