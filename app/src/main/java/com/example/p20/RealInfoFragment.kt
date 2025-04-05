@@ -11,9 +11,14 @@ import android.view.animation.Animation
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import java.text.NumberFormat
+import java.util.Locale
 
 class RealInfoFragment : Fragment() {
     private lateinit var viewModel: TimeViewModel
+    private lateinit var assetViewModel: AssetViewModel
+    private lateinit var stockViewModel: StockViewModel
+    private lateinit var realEstateViewModel: RealEstateViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -29,14 +34,48 @@ class RealInfoFragment : Fragment() {
 
         // ViewModel 초기화
         viewModel = ViewModelProvider(requireActivity())[TimeViewModel::class.java]
+        assetViewModel = ViewModelProvider(requireActivity())[AssetViewModel::class.java]
+        stockViewModel = ViewModelProvider(requireActivity())[StockViewModel::class.java]
+        realEstateViewModel = ViewModelProvider(requireActivity())[RealEstateViewModel::class.java]
 
-        // 기존 정보 TextView들에 데이터 표시 (필요 시)
+        // 텍스트뷰 참조
         val assetTextView = view.findViewById<TextView>(R.id.assetTextView)
+        val stockTextView = view.findViewById<TextView>(R.id.stockTextView)
+        val realEstateTextView = view.findViewById<TextView>(R.id.realEstateTextView)
 
-        // 예시: AssetViewModel 데이터 표시 (다른 ViewModel도 유사하게 처리)
-        val assetViewModel = ViewModelProvider(requireActivity()).get(AssetViewModel::class.java)
+        // 자산 정보 표시
         assetViewModel.asset.observe(viewLifecycleOwner) {
-             assetTextView.text = "현재 자산: ${String.format("%,d", it)}원"
+            assetTextView.text = "현재 자산: ${formatCurrency(it)}"
         }
+
+        // 주식 자산 정보 표시
+        stockViewModel.stockItems.observe(viewLifecycleOwner) { stocks ->
+            var totalStockValue = 0L
+            stocks.forEach { stock ->
+                // 보유 주식 * 현재가
+                if (stock.holding > 0) {
+                    totalStockValue += stock.price.toLong() * stock.holding
+                }
+            }
+            stockTextView.text = "주식 자산: ${formatCurrency(totalStockValue)}"
+        }
+
+        // 부동산 자산 정보 표시
+        realEstateViewModel.realEstateList.observe(viewLifecycleOwner) { realEstates ->
+            var totalRealEstateValue = 0L
+            realEstates.forEach { estate ->
+                // 보유 부동산 * 현재가
+                if (estate.owned) {
+                    totalRealEstateValue += estate.price
+                }
+            }
+            realEstateTextView.text = "부동산 자산: ${formatCurrency(totalRealEstateValue)}"
+        }
+    }
+    
+    // 통화 형식 포맷팅 함수
+    private fun formatCurrency(amount: Long): String {
+        val formatter = NumberFormat.getCurrencyInstance(Locale.KOREA)
+        return formatter.format(amount)
     }
 } 
