@@ -20,7 +20,6 @@ class StockFragment : Fragment() {
 
     private lateinit var stockRecyclerView: RecyclerView
     private lateinit var stockAdapter: StockAdapter
-    private lateinit var stockStatusText: TextView
     private lateinit var stockDetailsTextView: LinearLayout
     private lateinit var assetViewModel: AssetViewModel
     private lateinit var featuresInfoText: TextView
@@ -67,7 +66,6 @@ class StockFragment : Fragment() {
         }
 
         stockRecyclerView = view.findViewById(R.id.stockRecyclerView)
-        stockStatusText = view.findViewById(R.id.stockStatusText)
         stockDetailsTextView = view.findViewById(R.id.stockDetailsTextView)
         featuresInfoText = view.findViewById(R.id.stockFeaturesInfoText)
 
@@ -91,13 +89,15 @@ class StockFragment : Fragment() {
         assetViewModel = ViewModelProvider(requireActivity()).get(AssetViewModel::class.java)
 
         assetViewModel.asset.observe(viewLifecycleOwner, Observer { newAsset ->
-            stockStatusText.text = "현재 자산: ${String.format("%,d", newAsset)}원"
+            // 자산 정보를 스낵바로 표시
+            showSnackbar("현재 자산: ${String.format("%,d", newAsset)}원")
         })
 
         stockRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         stockAdapter = StockAdapter(stockItems) { stock ->
             selectedStock = stock
-            updateStockStatus("${stock.name}이(가) 선택되었습니다.")
+            showSnackbar("${stock.name}이(가) 선택되었습니다.")
+            updateStockDetails(stock) // 주식 상세 정보 업데이트
         }
         stockRecyclerView.adapter = stockAdapter
 
@@ -107,12 +107,13 @@ class StockFragment : Fragment() {
                 if (currentAsset >= it.price.toLong()) {
                     assetViewModel.decreaseAsset(it.price.toLong())
                     stockViewModel.buyStock(it)
-                    updateStockStatus("${it.name}을(를) 매수했습니다! 보유량: ${it.holding}주")
+                    showSnackbar("${it.name}을(를) 매수했습니다! 보유량: ${it.holding}주")
                     stockAdapter.notifyDataSetChanged()
+                    updateStockDetails(it) // 주식 상세 정보 업데이트
                 } else {
-                    updateStockStatus("자산이 부족합니다!")
+                    showSnackbar("자산이 부족합니다!")
                 }
-            } ?: updateStockStatus("주식을 선택하세요.")
+            } ?: showSnackbar("주식을 선택하세요.")
         }
 
         sellButton.setOnClickListener {
@@ -121,12 +122,13 @@ class StockFragment : Fragment() {
                     stockViewModel.sellStock(it)
                     assetViewModel.increaseAsset(it.price.toLong())
                     val profitLoss = it.getProfitLoss()
-                    updateStockStatus("${it.name} 매도! 손익: ${profitLoss}원")
+                    showSnackbar("${it.name} 매도! 손익: ${profitLoss}원")
                     stockAdapter.notifyDataSetChanged()
+                    updateStockDetails(it) // 주식 상세 정보 업데이트
                 } else {
-                    updateStockStatus("보유한 주식이 없습니다!")
+                    showSnackbar("보유한 주식이 없습니다!")
                 }
-            } ?: updateStockStatus("주식을 선택하세요.")
+            } ?: showSnackbar("주식을 선택하세요.")
         }
 
         buyAllButton.setOnClickListener {
@@ -136,12 +138,13 @@ class StockFragment : Fragment() {
                     val buyCount = stockViewModel.buyAllStock(stock, currentAsset)
                     val usedAsset = stock.price.toLong() * buyCount
                     assetViewModel.decreaseAsset(usedAsset)
-                    updateStockStatus("${stock.name}을(를) ${buyCount}주 전체 매수했습니다!")
+                    showSnackbar("${stock.name}을(를) ${buyCount}주 전체 매수했습니다!")
                     stockAdapter.notifyDataSetChanged()
+                    updateStockDetails(stock) // 주식 상세 정보 업데이트
                 } else {
-                    updateStockStatus("자산이 부족합니다!")
+                    showSnackbar("자산이 부족합니다!")
                 }
-            } ?: updateStockStatus("주식을 선택하세요.")
+            } ?: showSnackbar("주식을 선택하세요.")
         }
 
         sellAllButton.setOnClickListener {
@@ -150,15 +153,26 @@ class StockFragment : Fragment() {
                     val sellCount = stockViewModel.sellAllStock(stock)
                     val gain = stock.price.toLong() * sellCount
                     assetViewModel.increaseAsset(gain)
-                    updateStockStatus("${stock.name} ${sellCount}주 전체 매도 완료!")
+                    showSnackbar("${stock.name} ${sellCount}주 전체 매도 완료!")
                     stockAdapter.notifyDataSetChanged()
+                    updateStockDetails(stock) // 주식 상세 정보 업데이트
                 } else {
-                    updateStockStatus("보유한 주식이 없습니다!")
+                    showSnackbar("보유한 주식이 없습니다!")
                 }
-            } ?: updateStockStatus("주식을 선택하세요.")
+            } ?: showSnackbar("주식을 선택하세요.")
         }
 
         return view
+    }
+
+    /**
+     * 일반 메시지용 스낵바를 표시합니다.
+     */
+    private fun showSnackbar(message: String) {
+        val snackbar = Snackbar.make(requireView(), message, Snackbar.LENGTH_SHORT)
+        val textView = snackbar.view.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
+        textView.maxLines = 3
+        snackbar.show()
     }
 
     private fun showPositiveNewsMessage(stockNames: List<String>) {
@@ -172,15 +186,6 @@ class StockFragment : Fragment() {
         textView.maxLines = 3
         
         snackbar.show()
-        
-        // 상태 메시지도 업데이트
-        stockStatusText.text = message
-        stockStatusText.setTextColor(Color.parseColor("#4CAF50"))
-        
-        // 3초 후 상태 메시지 색상 복원
-        handler.postDelayed({
-            stockStatusText.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
-        }, 3000)
     }
     
     private fun showNegativeNewsMessage(stockNames: List<String>) {
@@ -194,15 +199,6 @@ class StockFragment : Fragment() {
         textView.maxLines = 3
         
         snackbar.show()
-        
-        // 상태 메시지도 업데이트
-        stockStatusText.text = message
-        stockStatusText.setTextColor(Color.parseColor("#F44336"))
-        
-        // 3초 후 상태 메시지 색상 복원
-        handler.postDelayed({
-            stockStatusText.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
-        }, 3000)
     }
     
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
@@ -222,11 +218,6 @@ class StockFragment : Fragment() {
         stockQuantityData?.text = "0주"
         profitLossData?.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.black))
         profitRateData?.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.black))
-    }
-
-    private fun updateStockStatus(message: String) {
-        stockStatusText.text = message
-        selectedStock?.let { updateStockDetails(it) }
     }
 
     private fun updateStockDetails(stock: Stock) {
