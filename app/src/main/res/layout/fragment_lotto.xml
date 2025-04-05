@@ -8,6 +8,21 @@
     android:background="#202040"
     tools:context=".LottoFragment">
 
+    <!-- 제목 추가 -->
+    <TextView
+        android:id="@+id/lottoTitleText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🎫 행운의 복권 판매점"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="@color/fragment_lavel"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp"/>
+
     <!-- 로또 가격 -->
     <TextView
         android:id="@+id/lottoPriceText"
@@ -17,7 +32,7 @@
         android:textSize="18sp"
         android:textStyle="bold"
         android:textColor="#FFFFFF"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/lottoTitleText"
         app:layout_constraintStart_toStartOf="parent" />
 
     <!-- 쿨다운 텍스트 추가 -->
