@@ -6,7 +6,7 @@
     android:layout_margin="4dp"
     app:cardCornerRadius="6dp"
     app:cardElevation="3dp"
-    app:cardBackgroundColor="#4D000000">
+    app:cardBackgroundColor="#303555">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -21,7 +21,11 @@
             android:text="부동산 이름"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:textColor="#FFFFFF"/>
+            android:textColor="#FFD700"
+            android:shadowColor="#000000"
+            android:shadowDx="1"
+            android:shadowDy="1"
+            android:shadowRadius="1"/>
 
         <!-- 가격 + 단계 표시를 가로로 배치 -->
         <LinearLayout
@@ -38,7 +42,12 @@
                 android:layout_weight="1"
                 android:text="가격"
                 android:textSize="14sp"
-                android:textColor="#E0E0E0" />
+                android:textColor="#FFFFFF"
+                android:background="#4D3F51B5"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp" />
 
             <TextView
                 android:id="@+id/estateStageIndicator"
@@ -57,8 +66,15 @@
             android:layout_height="wrap_content"
             android:text="임대 수익: 0원"
             android:textSize="12sp"
-            android:textColor="#BBBBBB"
-            android:layout_marginTop="3dp"/>
+            android:textColor="#00FF7F"
+            android:layout_marginTop="6dp"
+            android:background="#4D006400"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:paddingTop="1dp"
+            android:paddingBottom="1dp"
+            android:maxLines="1"
+            android:ellipsize="end" />
 
         <TextView
             android:id="@+id/estateOwned"
