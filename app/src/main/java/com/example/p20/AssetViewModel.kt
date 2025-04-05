@@ -83,13 +83,15 @@ class AssetViewModel(private val context: Context) : ViewModel() {
         saveAssetToPreferences()
         saveRealEstateToPreferences()
 
-        // --- 추가: 아이템 보유 수량(Time증폭) 초기화 ---
+        // --- 수정: 모든 아이템 보유 수량 초기화 ---
         val itemPrefs = context.getSharedPreferences("item_prefs", Context.MODE_PRIVATE)
         with(itemPrefs.edit()) {
-            putInt("time_amplifier_quantity", 0) // Time증폭 아이템 수량 0으로 초기화
+            putInt("time_amplifier_quantity", 0) // Time증폭(60초) 아이템 수량 0으로 초기화
+            putInt("time_amplifier2_quantity", 0) // Time증폭(120초) 아이템 수량 0으로 초기화
+            putInt("time_amplifier3_quantity", 0) // Time증폭(180초) 아이템 수량 0으로 초기화
             apply()
         }
-        // --- 추가 끝 ---
+        // --- 수정 끝 ---
     }
 
     // --- 추가: ViewModel 소멸 시 자산 저장 ---

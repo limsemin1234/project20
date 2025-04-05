@@ -34,13 +34,17 @@ class RealEstateAdapter(
 
         holder.estateName.text = estate.name
         
-        // 전쟁 이벤트 영향 체크하여 가격 텍스트 색상 설정
+        // 전쟁 이벤트 영향 체크하여 가격 텍스트 색상 및 카드 배경색 설정
         if (viewModel.isAffectedByWar(estate.id)) {
             holder.estatePrice.text = "${formatter.format(estate.price)}원 (전쟁 영향)"
             holder.estatePrice.setTextColor(Color.parseColor("#FF0000"))  // 빨간색으로 변경
+            // 카드 배경색 변경 - 약간 붉은 색조로
+            (holder.itemView as androidx.cardview.widget.CardView).setCardBackgroundColor(Color.parseColor("#502020"))
         } else {
             holder.estatePrice.text = "${formatter.format(estate.price)}원"
             holder.estatePrice.setTextColor(Color.parseColor("#FFFFFF"))  // 기본 색상(흰색)으로 복원
+            // 카드 배경색 복원 - 원래 색상(#303555)으로
+            (holder.itemView as androidx.cardview.widget.CardView).setCardBackgroundColor(Color.parseColor("#303555"))
         }
         
         // 보유 상태 설정

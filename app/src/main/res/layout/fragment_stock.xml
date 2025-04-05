@@ -318,4 +318,16 @@
             android:textSize="16sp"/>
     </LinearLayout>
 
+    <!-- 구현 기능 설명 영역 추가 -->
+    <TextView
+        android:id="@+id/stockFeaturesInfoText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="#CC000000"
+        android:padding="8dp"
+        android:text="📌 구현 기능:\n- 주식 가격 변동: 3초마다 랜덤하게 변경\n- 종목별 대비/등락률 표시: 오늘 시작가 대비 가격 변동 표시"
+        android:textColor="#E0E0E0"
+        android:textSize="12sp" />
+
 </LinearLayout>

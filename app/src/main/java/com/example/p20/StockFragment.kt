@@ -22,6 +22,7 @@ class StockFragment : Fragment() {
     private lateinit var stockStatusText: TextView
     private lateinit var stockDetailsTextView: LinearLayout
     private lateinit var assetViewModel: AssetViewModel
+    private lateinit var featuresInfoText: TextView
 
     private var selectedStock: Stock? = null
 
@@ -50,6 +51,7 @@ class StockFragment : Fragment() {
         stockRecyclerView = view.findViewById(R.id.stockRecyclerView)
         stockStatusText = view.findViewById(R.id.stockStatusText)
         stockDetailsTextView = view.findViewById(R.id.stockDetailsTextView)
+        featuresInfoText = view.findViewById(R.id.stockFeaturesInfoText)
 
         val buyButton: Button = view.findViewById(R.id.buyButton)
         val sellButton: Button = view.findViewById(R.id.sellButton)
@@ -252,5 +254,18 @@ class StockFragment : Fragment() {
              stockList = newStockList
              notifyDataSetChanged()
         }
+    }
+
+    fun updateFeaturesInfo(newFeature: String) {
+        val currentText = featuresInfoText.text.toString()
+        val baseText = currentText.split("\n")[0]
+        val features = currentText.substringAfter("\n").split("\n- ").filter { it.isNotEmpty() }.toMutableList()
+        
+        if (!features.contains(newFeature)) {
+            features.add(newFeature)
+        }
+        
+        val updatedText = "$baseText\n- ${features.joinToString("\n- ")}"
+        featuresInfoText.text = updatedText
     }
 }
