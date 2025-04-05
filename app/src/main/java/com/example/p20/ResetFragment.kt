@@ -41,6 +41,22 @@ class ResetFragment : Fragment() {
         realEstateViewModel = ViewModelProvider(requireActivity()).get(RealEstateViewModel::class.java)
         timeViewModel = ViewModelProvider(requireActivity()).get(TimeViewModel::class.java)
 
+        // 모든 초기화 버튼 비활성화
+        binding.resetTimeButton.isEnabled = false
+        binding.resetAssetButton.isEnabled = false
+        binding.resetStockButton.isEnabled = false
+        binding.resetAlbaButton.isEnabled = false
+        binding.resetRealEstateButton.isEnabled = false
+        binding.testResetTime10sButton.isEnabled = false
+        
+        // 비활성화 상태를 시각적으로 표시
+        binding.resetTimeButton.alpha = 0.5f
+        binding.resetAssetButton.alpha = 0.5f
+        binding.resetStockButton.alpha = 0.5f
+        binding.resetAlbaButton.alpha = 0.5f
+        binding.resetRealEstateButton.alpha = 0.5f
+        binding.testResetTime10sButton.alpha = 0.5f
+
         // --- 수정: View Binding 사용하도록 버튼 참조 변경 ---
         // 시간 초기화 버튼
         binding.resetTimeButton.setOnClickListener { // binding. 사용

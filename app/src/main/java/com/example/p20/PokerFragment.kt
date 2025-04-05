@@ -32,7 +32,6 @@ class PokerFragment : Fragment() {
     private lateinit var bet10kButton: Button
     private lateinit var bet50kButton: Button
     private lateinit var bet100kButton: Button
-    private lateinit var cardCheckBoxes: Array<CheckBox>
     
     // 게임 상태
     private var currentBet = 0L
@@ -44,6 +43,10 @@ class PokerFragment : Fragment() {
     private var winCount = 0
     private var loseCount = 0
     private var isWaitingForCleanup = false
+    
+    // 선택된 카드 추적
+    private val selectedCardIndices = mutableSetOf<Int>()
+    private val cardViews = mutableListOf<TextView>()
     
     // 카드 관련 변수
     private val suits = listOf("♠", "♥", "♦", "♣")
@@ -95,15 +98,6 @@ class PokerFragment : Fragment() {
         bet10kButton = view.findViewById(R.id.bet10kButton)
         bet50kButton = view.findViewById(R.id.bet50kButton)
         bet100kButton = view.findViewById(R.id.bet100kButton)
-        
-        // 체크박스 초기화
-        cardCheckBoxes = arrayOf(
-            view.findViewById(R.id.checkCard1),
-            view.findViewById(R.id.checkCard2),
-            view.findViewById(R.id.checkCard3),
-            view.findViewById(R.id.checkCard4),
-            view.findViewById(R.id.checkCard5)
-        )
         
         // 잔액 업데이트
         updateBalanceText()
@@ -227,10 +221,9 @@ class PokerFragment : Fragment() {
         changeCount = 0  // 카드 교체 횟수 초기화
         playerCards.clear()
         playerCardsLayout.removeAllViews()
+        cardViews.clear()
+        selectedCardIndices.clear()
         handRankText.text = "패 없음"
-        
-        // 카드 체크박스 초기화
-        cardCheckBoxes.forEach { it.isChecked = false }
         
         // 덱 생성 및 섞기
         createShuffledDeck()
@@ -257,6 +250,8 @@ class PokerFragment : Fragment() {
         // 카드 초기 배포 (5장)
         playerCardsLayout.removeAllViews()
         playerCards.clear()
+        cardViews.clear()
+        selectedCardIndices.clear()
         
         for (i in 0 until 5) {
             val card = drawCard()
@@ -288,20 +283,17 @@ class PokerFragment : Fragment() {
         }
         
         // 선택한 카드 교체
-        val selectedIndices = cardCheckBoxes.mapIndexed { index, checkBox -> 
-            if (checkBox.isChecked) index else -1 
-        }.filter { it >= 0 }
-        
-        if (selectedIndices.isEmpty()) {
+        if (selectedCardIndices.isEmpty()) {
             showCustomSnackbar("교체할 카드를 선택하세요.")
             return
         }
         
         // 선택한 카드 교체
         playerCardsLayout.removeAllViews()
+        cardViews.clear()
         
         for (i in 0 until 5) {
-            if (i in selectedIndices) {
+            if (i in selectedCardIndices) {
                 val newCard = drawCard()
                 playerCards[i] = newCard
             }
@@ -312,14 +304,14 @@ class PokerFragment : Fragment() {
         changeCount++
         isCardChanged = true
         
+        // 선택 초기화
+        selectedCardIndices.clear()
+        
         // 교체 버튼 텍스트 업데이트
         updateChangeButtonText()
         
         // 족보 재평가
         evaluateHand()
-        
-        // 체크박스 초기화
-        cardCheckBoxes.forEach { it.isChecked = false }
         
         // 교체 완료 메시지
         if (changeCount < 10) { // 너무 많은 교체를 방지하기 위한 상한선
@@ -359,6 +351,32 @@ class PokerFragment : Fragment() {
         
         // 카드뷰 태그 설정
         cardView.tag = index
+        
+        // 카드 뷰 목록에 추가
+        if (index < cardViews.size) {
+            cardViews[index] = cardView
+        } else {
+            cardViews.add(cardView)
+        }
+        
+        // 카드 터치 이벤트 추가
+        cardView.setOnClickListener {
+            if (!isGameActive || isWaitingForCleanup) return@setOnClickListener
+            
+            val cardIndex = it.tag as Int
+            
+            if (selectedCardIndices.contains(cardIndex)) {
+                // 선택 해제
+                selectedCardIndices.remove(cardIndex)
+                cardView.alpha = 1.0f
+                cardView.setBackgroundResource(android.R.drawable.btn_default)
+            } else {
+                // 선택
+                selectedCardIndices.add(cardIndex)
+                cardView.alpha = 0.7f
+                cardView.setBackgroundResource(android.R.drawable.button_onoff_indicator_on)
+            }
+        }
         
         container.addView(cardView)
     }
@@ -476,6 +494,9 @@ class PokerFragment : Fragment() {
         bet100kButton.isEnabled = false
         newGameButton.isEnabled = false
         
+        // 선택된 카드 초기화
+        selectedCardIndices.clear()
+        
         // 족보 평가
         val handRank = evaluateHand()
         val multiplier = getMultiplier(handRank)
@@ -510,10 +531,7 @@ class PokerFragment : Fragment() {
         // 3초 후에 카드 지우기
         Handler(Looper.getMainLooper()).postDelayed({
             playerCardsLayout.removeAllViews()
-            handRankText.text = "패 없음"
-            
-            // 체크박스 초기화
-            cardCheckBoxes.forEach { it.isChecked = false }
+            cardViews.clear()
             
             // 배팅 버튼 다시 활성화
             bet10kButton.isEnabled = true

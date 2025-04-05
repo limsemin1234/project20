@@ -53,7 +53,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="내 카드"
+                android:text="내 카드 (터치하여 교체할 카드 선택)"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF" />
@@ -71,59 +71,6 @@
                     android:orientation="horizontal" />
             </HorizontalScrollView>
 
-            <!-- 카드 교체 체크박스 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:gravity="center"
-                android:orientation="horizontal">
-
-                <CheckBox
-                    android:id="@+id/checkCard1"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="교체"
-                    android:textColor="#FFFFFF" />
-
-                <CheckBox
-                    android:id="@+id/checkCard2"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="교체"
-                    android:textColor="#FFFFFF" />
-
-                <CheckBox
-                    android:id="@+id/checkCard3"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="교체"
-                    android:textColor="#FFFFFF" />
-
-                <CheckBox
-                    android:id="@+id/checkCard4"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="교체"
-                    android:textColor="#FFFFFF" />
-
-                <CheckBox
-                    android:id="@+id/checkCard5"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
-                    android:text="교체"
-                    android:textColor="#FFFFFF" />
-            </LinearLayout>
         </LinearLayout>
 
         <!-- 베팅 금액 표시 -->
