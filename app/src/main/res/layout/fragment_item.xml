@@ -48,7 +48,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@id/bottomButtonLayout"
-        android:background="#80000000"
+        android:background="#CC000000"
         android:padding="8dp"
         android:orientation="horizontal">
 
@@ -59,7 +59,7 @@
             android:layout_weight="1"
             android:text="선택된 아이템 없음"
             android:textColor="@android:color/white"
-            android:textSize="16sp"/>
+            android:textSize="14sp"/>
 
         <TextView
             android:id="@+id/selectedItemQuantityTextView"
@@ -68,7 +68,7 @@
             android:layout_marginStart="16dp"
             android:text="보유: 0개"
             android:textColor="@android:color/white"
-            android:textSize="16sp"/>
+            android:textSize="14sp"/>
     </LinearLayout>
 
     <!-- 하단 버튼 레이아웃 -->
@@ -79,7 +79,7 @@
         android:layout_alignParentBottom="true"
         android:padding="16dp"
         android:orientation="horizontal"
-        android:background="#80000000">
+        android:background="#CC000000">
 
         <Button
             android:id="@+id/buyButton"

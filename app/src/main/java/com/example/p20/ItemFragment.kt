@@ -127,7 +127,7 @@ class ItemFragment : Fragment() {
      * 아이템 ID에 따른 초기 재고를 반환합니다.
      */
     private fun getInitialStock(itemId: Int): Int {
-        return 3  // 모든 아이템 재고 3개로 통일
+        return 1  // 모든 아이템 재고 1개로 통일
     }
 
     /**
