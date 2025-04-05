@@ -61,7 +61,7 @@ class RealEstateFragment : Fragment() {
         realEstateViewModel = ViewModelProvider(requireActivity()).get(RealEstateViewModel::class.java)
         assetViewModel = ViewModelProvider(requireActivity()).get(AssetViewModel::class.java)
 
-        realEstateRecyclerView.layoutManager = GridLayoutManager(requireContext(), 1)
+        realEstateRecyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
         realEstateAdapter = RealEstateAdapter(emptyList()) { estate ->
             selectedEstate = estate
             showEstateDetailSlide(estate)
