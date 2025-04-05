@@ -10,9 +10,10 @@ data class RealEstate(
     val rentalRate: Double = 0.005 // ⭐️ 임대 수익률 추가 (기본 0.5%)
 ) {
     fun updatePrice() {
-        val changeRates = listOf(-30, -20, -10, 0, 10, 20, 30)
+        val changeRates = listOf(-15, -10, -5, 0, 5, 10, 15)
         val rate = changeRates.random()
-        price = (initialPrice * (1 + rate / 100.0)).toLong()
+        val calculated = (initialPrice * (1 + rate / 100.0))
+        price = Math.round(calculated)
     }
 
     fun buy() {
@@ -44,17 +45,17 @@ data class RealEstate(
         } else 0.0
     }
 
-    // ✅ 현재 가격 단계 반환 (-30, -20, -10, 0, 10, 20, 30)
+    // ✅ 현재 가격 단계 반환 (-15, -10, -5, 0, 5, 10, 15)
     fun getCurrentRate(): Int {
         val rate = ((price - initialPrice).toDouble() / initialPrice * 100).toInt()
         return when {
-            rate >= 30 -> 30
-            rate >= 20 -> 20
+            rate >= 15 -> 15
             rate >= 10 -> 10
-            rate >= -10 -> 0
-            rate >= -20 -> -10
-            rate >= -30 -> -20
-            else -> -30
+            rate >= 5 -> 5
+            rate >= -5 -> 0
+            rate >= -10 -> -5
+            rate >= -15 -> -10
+            else -> -15
         }
     }
 

@@ -103,7 +103,10 @@ class RealEstateViewModel(application: Application) : AndroidViewModel(applicati
 
     private fun updatePrices() {
         _realEstateList.value?.forEach { estate ->
-            estate.updatePrice()
+            // 전쟁 이벤트의 영향을 받는 부동산은 가격 업데이트 건너뛰기
+            if (!affectedEstateIds.contains(estate.id)) {
+                estate.updatePrice()
+            }
         }
         _realEstateList.value = _realEstateList.value
         saveRealEstateData()
@@ -219,6 +222,11 @@ class RealEstateViewModel(application: Application) : AndroidViewModel(applicati
         // 리스트 업데이트 및 저장
         _realEstateList.value = estateList
         saveRealEstateData()
+    }
+
+    // 특정 부동산이 전쟁 이벤트의 영향을 받고 있는지 확인하는 메서드
+    fun isAffectedByWar(estateId: Int): Boolean {
+        return affectedEstateIds.contains(estateId)
     }
 
     override fun onCleared() {

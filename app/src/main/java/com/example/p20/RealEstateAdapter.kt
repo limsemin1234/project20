@@ -10,7 +10,8 @@ import java.text.DecimalFormat
 
 class RealEstateAdapter(
     private var estateList: List<RealEstate>,
-    private val onItemClick: (RealEstate) -> Unit
+    private val onItemClick: (RealEstate) -> Unit,
+    private val viewModel: RealEstateViewModel
 ) : RecyclerView.Adapter<RealEstateAdapter.RealEstateViewHolder>() {
 
     inner class RealEstateViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -32,7 +33,15 @@ class RealEstateAdapter(
         val formatter = DecimalFormat("#,###")
 
         holder.estateName.text = estate.name
-        holder.estatePrice.text = "${formatter.format(estate.price)}원"
+        
+        // 전쟁 이벤트 영향 체크하여 가격 텍스트 색상 설정
+        if (viewModel.isAffectedByWar(estate.id)) {
+            holder.estatePrice.text = "${formatter.format(estate.price)}원 (전쟁 영향)"
+            holder.estatePrice.setTextColor(Color.parseColor("#FF0000"))  // 빨간색으로 변경
+        } else {
+            holder.estatePrice.text = "${formatter.format(estate.price)}원"
+            holder.estatePrice.setTextColor(Color.parseColor("#FFFFFF"))  // 기본 색상(흰색)으로 복원
+        }
         
         // 보유 상태 설정
         if (estate.owned) {
@@ -55,10 +64,10 @@ class RealEstateAdapter(
 
         // scale 조절
         val scale = when (rate) {
-            10, -10 -> 0.7f
-            20, -20 -> 1.0f
-            30, -30 -> 1.3f
-            else -> 0.9f
+            5, -5 -> 0.6f
+            10, -10 -> 0.9f
+            15, -15 -> 1.2f
+            else -> 0.5f
         }
         holder.estateStageIndicator.scaleX = scale
         holder.estateStageIndicator.scaleY = scale

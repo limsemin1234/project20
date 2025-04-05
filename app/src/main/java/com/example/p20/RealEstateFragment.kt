@@ -66,10 +66,14 @@ class RealEstateFragment : Fragment() {
         assetViewModel = ViewModelProvider(requireActivity()).get(AssetViewModel::class.java)
 
         realEstateRecyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
-        realEstateAdapter = RealEstateAdapter(emptyList()) { estate ->
-            selectedEstate = estate
-            showEstateDetailSlide(estate)
-        }
+        realEstateAdapter = RealEstateAdapter(
+            emptyList(),
+            { estate ->
+                selectedEstate = estate
+                showEstateDetailSlide(estate)
+            },
+            realEstateViewModel  // ViewModel 전달
+        )
         realEstateRecyclerView.adapter = realEstateAdapter
 
         realEstateViewModel.realEstateList.observe(viewLifecycleOwner) { updatedList ->
