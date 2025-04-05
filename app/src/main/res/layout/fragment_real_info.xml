@@ -5,6 +5,15 @@
     android:layout_height="match_parent"
     tools:context=".RealInfoFragment">
 
+    <!-- 배경 이미지 추가 -->
+    <ImageView
+        android:id="@+id/backgroundImageView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/bg_profile"
+        android:scaleType="centerCrop"
+        android:alpha="0.9"/>
+
     <!-- 상단 제목 레이아웃 -->
     <LinearLayout
         android:id="@+id/titleLayout"
@@ -42,6 +51,19 @@
         android:paddingLeft="16dp"
         android:paddingRight="16dp"
         android:paddingBottom="16dp">
+
+        <!-- 총자산 정보 TextView -->
+        <TextView
+            android:id="@+id/totalAssetTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="28sp"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:background="#80000000"
+            android:padding="20dp"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp"/>
 
         <!-- 자산 정보 TextView -->
         <TextView
