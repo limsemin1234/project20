@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="@drawable/bo3">
 
     <!-- 상단 제목 레이아웃 -->
     <LinearLayout
+        android:id="@+id/titleLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -32,189 +32,72 @@
             android:textColor="@android:color/white"/>
     </LinearLayout>
 
-    <!-- 아이템 목록을 위한 ScrollView -->
-    <ScrollView
+    <!-- 아이템 목록 RecyclerView -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/itemsRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="16dp">
+        android:layout_below="@id/titleLayout"
+        android:layout_above="@id/bottomButtonLayout"
+        android:padding="16dp"
+        android:clipToPadding="false"/>
 
-        <LinearLayout
-            android:layout_width="match_parent"
+    <!-- 선택된 아이템 정보 -->
+    <LinearLayout
+        android:id="@+id/selectedItemInfoLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/bottomButtonLayout"
+        android:background="#80000000"
+        android:padding="8dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/selectedItemNameTextView"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_weight="1"
+            android:text="선택된 아이템 없음"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"/>
 
-            <!-- 아이템 설명 제거 -->
-            <!-- <TextView ... /> -->
+        <TextView
+            android:id="@+id/selectedItemQuantityTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="보유: 0개"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"/>
+    </LinearLayout>
 
-            <!-- 시가증폭(분) 아이템 UI 추가 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="8dp"> <!-- 아이템 간 간격 -->
+    <!-- 하단 버튼 레이아웃 -->
+    <LinearLayout
+        android:id="@+id/bottomButtonLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:padding="16dp"
+        android:orientation="horizontal"
+        android:background="#80000000">
 
-                <TextView
-                    android:id="@+id/itemNameTextView"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1.2"
-                    android:gravity="center"
-                    android:text="Time증폭\n(60초)"
-                    android:textColor="@android:color/white" />
+        <Button
+            android:id="@+id/buyButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="구매"
+            android:layout_marginEnd="8dp"
+            android:enabled="false"/>
 
-                <TextView
-                    android:id="@+id/itemPriceTextView"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1.5"
-                    android:gravity="center"
-                    android:layout_marginStart="8dp"
-                    android:text="가격: 50,000원"
-                    android:textColor="@android:color/white" />
+        <Button
+            android:id="@+id/useButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="사용"
+            android:layout_marginStart="8dp"
+            android:enabled="false"/>
+    </LinearLayout>
 
-                <TextView
-                    android:id="@+id/itemQuantityTextView"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.8"
-                    android:gravity="center"
-                    android:layout_marginStart="8dp"
-                    android:text="보유: 0개"
-                    android:textColor="@android:color/white" />
-
-                <Button
-                    android:id="@+id/buyButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.8"
-                    android:layout_marginStart="8dp"
-                    android:text="구매" />
-
-                <Button
-                    android:id="@+id/useButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.8"
-                    android:layout_marginStart="8dp"
-                    android:text="사용"
-                    android:enabled="false" /> <!-- 초기에는 사용 불가 상태 -->
-
-            </LinearLayout>
-
-            <!-- Time증폭(120초) 아이템 추가 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="8dp"> <!-- 아이템 간 간격 -->
-
-                <TextView
-                    android:id="@+id/item2NameTextView"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1.2"
-                    android:gravity="center"
-                    android:text="Time증폭\n(120초)"
-                    android:textColor="@android:color/white" />
-
-                <TextView
-                    android:id="@+id/item2PriceTextView"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1.5"
-                    android:gravity="center"
-                    android:layout_marginStart="8dp"
-                    android:text="가격: 90,000원"
-                    android:textColor="@android:color/white" />
-
-                <TextView
-                    android:id="@+id/item2QuantityTextView"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.8"
-                    android:gravity="center"
-                    android:layout_marginStart="8dp"
-                    android:text="보유: 0개"
-                    android:textColor="@android:color/white" />
-
-                <Button
-                    android:id="@+id/buyButton2"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.8"
-                    android:layout_marginStart="8dp"
-                    android:text="구매" />
-
-                <Button
-                    android:id="@+id/useButton2"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.8"
-                    android:layout_marginStart="8dp"
-                    android:text="사용"
-                    android:enabled="false" /> <!-- 초기에는 사용 불가 상태 -->
-            </LinearLayout>
-
-            <!-- Time증폭(180초) 아이템 추가 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="8dp"> <!-- 아이템 간 간격 -->
-
-                <TextView
-                    android:id="@+id/item3NameTextView"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1.2"
-                    android:gravity="center"
-                    android:text="Time증폭\n(180초)"
-                    android:textColor="@android:color/white" />
-
-                <TextView
-                    android:id="@+id/item3PriceTextView"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1.5"
-                    android:gravity="center"
-                    android:layout_marginStart="8dp"
-                    android:text="가격: 130,000원"
-                    android:textColor="@android:color/white" />
-
-                <TextView
-                    android:id="@+id/item3QuantityTextView"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.8"
-                    android:gravity="center"
-                    android:layout_marginStart="8dp"
-                    android:text="보유: 0개"
-                    android:textColor="@android:color/white" />
-
-                <Button
-                    android:id="@+id/buyButton3"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.8"
-                    android:layout_marginStart="8dp"
-                    android:text="구매" />
-
-                <Button
-                    android:id="@+id/useButton3"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.8"
-                    android:layout_marginStart="8dp"
-                    android:text="사용"
-                    android:enabled="false" /> <!-- 초기에는 사용 불가 상태 -->
-            </LinearLayout>
-
-            <!-- 다른 아이템들을 여기에 추가 -->
-
-        </LinearLayout>
-    </ScrollView>
-
-</LinearLayout> 
+</RelativeLayout> 

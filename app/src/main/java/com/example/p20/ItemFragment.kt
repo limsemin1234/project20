@@ -18,6 +18,10 @@ import java.util.Locale
 import android.graphics.Color // Color 사용 위해 추가
 import android.view.Gravity // Gravity 사용 위해 추가
 import android.widget.FrameLayout // FrameLayout 사용 위해 추가
+import android.widget.Button
+import android.widget.TextView
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 
 class ItemFragment : Fragment() {
 
@@ -30,22 +34,15 @@ class ItemFragment : Fragment() {
 
     // SharedPreferences 관련 상수
     private val PREFS_FILENAME = "item_prefs"
-    private val KEY_ITEM_QUANTITY = "time_amplifier_quantity"
-    private val KEY_ITEM2_QUANTITY = "time_amplifier2_quantity"
-    private val KEY_ITEM3_QUANTITY = "time_amplifier3_quantity" // 새 아이템 키 추가
+    private val KEY_ITEM_QUANTITY_PREFIX = "item_quantity_"
+    private val KEY_ITEM_STOCK_PREFIX = "item_stock_"
     private lateinit var prefs: SharedPreferences
 
-    // 아이템 정보
-    private val itemPrice = 50_000L // Time증폭 아이템 가격 5만원
-    private var itemQuantity = 0 // Time증폭 아이템 보유 수량 (이제 SharedPreferences에서 로드)
-    
-    // Time증폭(120초) 아이템 정보
-    private val item2Price = 90_000L // Time증폭(120초) 아이템 가격 9만원으로 변경
-    private var item2Quantity = 0 // Time증폭 아이템2 보유 수량
-    
-    // Time증폭(180초) 아이템 정보
-    private val item3Price = 130_000L // Time증폭(180초) 아이템 가격 13만원
-    private var item3Quantity = 0 // Time증폭 아이템3 보유 수량
+    // 아이템 어댑터
+    private lateinit var itemAdapter: ItemAdapter
+
+    // 아이템 목록
+    private val itemList = mutableListOf<Item>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -61,189 +58,304 @@ class ItemFragment : Fragment() {
         // SharedPreferences 초기화
         prefs = requireContext().getSharedPreferences(PREFS_FILENAME, Context.MODE_PRIVATE)
 
-        // 저장된 보유 수량 로드
-        loadItemStates()
+        // 아이템 목록 초기화
+        initItemList()
 
-        // 초기 UI 설정 (로드 이후 호출)
-        updateAllItemUIs()
+        // RecyclerView 설정
+        setupRecyclerView()
 
-        // 구매 버튼 클릭 리스너
-        binding.buyButton.setOnClickListener {
-            buyItem()
-        }
+        // 버튼 리스너 설정
+        setupButtons()
 
-        // 사용 버튼 클릭 리스너
-        binding.useButton.setOnClickListener {
-            useItem()
-        }
-        
-        // Time증폭(120초) 구매 버튼 클릭 리스너
-        binding.buyButton2.setOnClickListener {
-            buyItem2()
-        }
+        // 게임 리셋 이벤트 관찰
+        observeGameResetEvent()
+    }
 
-        // Time증폭(120초) 사용 버튼 클릭 리스너
-        binding.useButton2.setOnClickListener {
-            useItem2()
-        }
-        
-        // Time증폭(180초) 구매 버튼 클릭 리스너
-        binding.buyButton3.setOnClickListener {
-            buyItem3()
-        }
+    /**
+     * 아이템 목록을 초기화합니다.
+     */
+    private fun initItemList() {
+        itemList.clear()
 
-        // Time증폭(180초) 사용 버튼 클릭 리스너
-        binding.useButton3.setOnClickListener {
-            useItem3()
-        }
+        // 각 아이템 추가 (id, 이름, 설명, 가격, 효과, 초기 재고, 초기 수량)
+        itemList.add(
+            Item(
+                id = 1,
+                name = "Time증폭(60초)",
+                description = "남은 시간을 60초 증가시킵니다.",
+                price = 50000L,
+                effect = 60,
+                stock = loadItemStock(1),
+                quantity = loadItemQuantity(1)
+            )
+        )
 
-        // --- 추가: 게임 리셋 이벤트 관찰 ---
-        timeViewModel.gameResetEvent.observe(viewLifecycleOwner) { isReset ->
-            if (isReset) {
-                loadItemStates() // 보유 수량 다시 로드
-                updateAllItemUIs()     // UI 갱신
-                timeViewModel.consumedGameResetEvent() // 이벤트 소비 (선택 사항)
+        itemList.add(
+            Item(
+                id = 2,
+                name = "Time증폭(120초)",
+                description = "남은 시간을 120초 증가시킵니다.",
+                price = 90000L,
+                effect = 120,
+                stock = loadItemStock(2),
+                quantity = loadItemQuantity(2)
+            )
+        )
+
+        itemList.add(
+            Item(
+                id = 3,
+                name = "Time증폭(180초)",
+                description = "남은 시간을 180초 증가시킵니다.",
+                price = 130000L,
+                effect = 180,
+                stock = loadItemStock(3),
+                quantity = loadItemQuantity(3)
+            )
+        )
+
+        // 아이템이 처음 생성될 때 재고가 없으면 초기화
+        itemList.forEach { item ->
+            if (item.stock <= 0) {
+                item.stock = getInitialStock(item.id)
+                saveItemStock(item.id, item.stock)
             }
         }
-        // --- 추가 끝 ---
     }
 
-    // 저장된 아이템 수량 로드 함수
-    private fun loadItemStates() {
-        itemQuantity = prefs.getInt(KEY_ITEM_QUANTITY, 0)
-        item2Quantity = prefs.getInt(KEY_ITEM2_QUANTITY, 0)
-        item3Quantity = prefs.getInt(KEY_ITEM3_QUANTITY, 0)
+    /**
+     * 아이템 ID에 따른 초기 재고를 반환합니다.
+     */
+    private fun getInitialStock(itemId: Int): Int {
+        return 3  // 모든 아이템 재고 3개로 통일
     }
 
-    // 아이템 수량 저장 함수
-    private fun saveItemStates() {
-        with(prefs.edit()) {
-            putInt(KEY_ITEM_QUANTITY, itemQuantity)
-            putInt(KEY_ITEM2_QUANTITY, item2Quantity)
-            putInt(KEY_ITEM3_QUANTITY, item3Quantity)
-            apply() // 비동기 저장
+    /**
+     * RecyclerView를 설정합니다.
+     */
+    private fun setupRecyclerView() {
+        itemAdapter = ItemAdapter(itemList) { selectedItem ->
+            // 아이템이 클릭되었을 때 선택 정보 업데이트
+            updateSelectedItemInfo(selectedItem)
+            updateButtonStates()
+        }
+
+        binding.itemsRecyclerView.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = itemAdapter
         }
     }
 
-    // 모든 아이템 UI 업데이트
-    private fun updateAllItemUIs() {
-        // 첫 번째 아이템 UI 업데이트
-        binding.itemPriceTextView.text = formatCurrency(itemPrice)
-        binding.itemQuantityTextView.text = "${itemQuantity}개"
-        binding.useButton.isEnabled = itemQuantity > 0
+    /**
+     * 버튼 리스너를 설정합니다.
+     */
+    private fun setupButtons() {
+        // 구매 버튼
+        binding.buyButton.setOnClickListener {
+            buySelectedItem()
+        }
+
+        // 사용 버튼
+        binding.useButton.setOnClickListener {
+            useSelectedItem()
+        }
+
+        // 초기 버튼 상태 설정
+        updateButtonStates()
+    }
+
+    /**
+     * 선택된 아이템 정보를 UI에 업데이트합니다.
+     */
+    private fun updateSelectedItemInfo(item: Item?) {
+        if (item != null) {
+            binding.selectedItemNameTextView.text = "${item.name} - ${item.description}"
+            binding.selectedItemQuantityTextView.text = "보유: ${item.quantity}개"
+        } else {
+            binding.selectedItemNameTextView.text = "선택된 아이템 없음"
+            binding.selectedItemQuantityTextView.text = "보유: 0개"
+        }
+    }
+
+    /**
+     * 버튼 상태를 업데이트합니다.
+     */
+    private fun updateButtonStates() {
+        val selectedItem = itemAdapter.getSelectedItem()
+        if (selectedItem != null) {
+            // 구매 버튼: 재고가 있고 충분한 자산이 있을 때 활성화
+            val currentAsset = assetViewModel.asset.value ?: 0L
+            binding.buyButton.isEnabled = selectedItem.stock > 0 && currentAsset >= selectedItem.price
+
+            // 사용 버튼: 보유 수량이 있을 때 활성화
+            binding.useButton.isEnabled = selectedItem.quantity > 0
+        } else {
+            binding.buyButton.isEnabled = false
+            binding.useButton.isEnabled = false
+        }
+    }
+
+    /**
+     * 선택된 아이템을 구매합니다.
+     */
+    private fun buySelectedItem() {
+        val selectedItem = itemAdapter.getSelectedItem() ?: return
+        val currentAsset = assetViewModel.asset.value ?: 0L
+
+        if (currentAsset >= selectedItem.price && selectedItem.stock > 0) {
+            // 자산 감소
+            assetViewModel.decreaseAsset(selectedItem.price)
+
+            // 아이템 수량 증가, 재고 감소
+            selectedItem.quantity++
+            selectedItem.stock--
+
+            // 수량 및 재고 저장
+            saveItemQuantity(selectedItem.id, selectedItem.quantity)
+            saveItemStock(selectedItem.id, selectedItem.stock)
+
+            // UI 업데이트
+            itemAdapter.notifyDataSetChanged()
+            updateSelectedItemInfo(selectedItem)
+            updateButtonStates()
+
+            // 안내 메시지
+            showCustomSnackbar("${selectedItem.name}을(를) 구매했습니다.")
+        } else if (selectedItem.stock <= 0) {
+            showCustomSnackbar("아이템 재고가 없습니다.")
+        } else {
+            showCustomSnackbar("자산이 부족합니다.")
+        }
+    }
+
+    /**
+     * 선택된 아이템을 사용합니다.
+     */
+    private fun useSelectedItem() {
+        val selectedItem = itemAdapter.getSelectedItem() ?: return
+
+        if (selectedItem.quantity > 0) {
+            // 시간 증가
+            timeViewModel.increaseRemainingTime(selectedItem.effect)
+
+            // 아이템 수량 감소
+            selectedItem.quantity--
+
+            // 수량 저장
+            saveItemQuantity(selectedItem.id, selectedItem.quantity)
+
+            // UI 업데이트
+            itemAdapter.notifyDataSetChanged()
+            updateSelectedItemInfo(selectedItem)
+            updateButtonStates()
+
+            // 안내 메시지
+            showCustomSnackbar("${selectedItem.name}을(를) 사용했습니다. 남은 시간이 ${selectedItem.effect}초 증가합니다.")
+        }
+    }
+
+    /**
+     * 아이템 수량을 불러옵니다.
+     */
+    private fun loadItemQuantity(itemId: Int): Int {
+        return prefs.getInt("${KEY_ITEM_QUANTITY_PREFIX}$itemId", 0)
+    }
+
+    /**
+     * 아이템 수량을 저장합니다.
+     */
+    private fun saveItemQuantity(itemId: Int, quantity: Int) {
+        prefs.edit().putInt("${KEY_ITEM_QUANTITY_PREFIX}$itemId", quantity).apply()
+    }
+
+    /**
+     * 아이템 재고를 불러옵니다.
+     */
+    private fun loadItemStock(itemId: Int): Int {
+        return prefs.getInt("${KEY_ITEM_STOCK_PREFIX}$itemId", 0)
+    }
+
+    /**
+     * 아이템 재고를 저장합니다.
+     */
+    private fun saveItemStock(itemId: Int, stock: Int) {
+        prefs.edit().putInt("${KEY_ITEM_STOCK_PREFIX}$itemId", stock).apply()
+    }
+
+    /**
+     * 게임 리셋 이벤트를 관찰합니다.
+     */
+    private fun observeGameResetEvent() {
+        timeViewModel.gameResetEvent.observe(viewLifecycleOwner) { isReset ->
+            if (isReset) {
+                resetItems()
+                timeViewModel.consumedGameResetEvent()
+            }
+        }
+    }
+
+    /**
+     * 모든 아이템을 리셋합니다.
+     */
+    private fun resetItems() {
+        val editor = prefs.edit()
         
-        // 두 번째 아이템 UI 업데이트
-        binding.item2PriceTextView.text = formatCurrency(item2Price)
-        binding.item2QuantityTextView.text = "${item2Quantity}개"
-        binding.useButton2.isEnabled = item2Quantity > 0
+        // 모든 아이템 수량 초기화
+        itemList.forEach { item ->
+            item.quantity = 0
+            editor.putInt("${KEY_ITEM_QUANTITY_PREFIX}${item.id}", 0)
+            
+            // 재고도 초기값으로 리셋
+            val initialStock = getInitialStock(item.id)
+            item.stock = initialStock
+            editor.putInt("${KEY_ITEM_STOCK_PREFIX}${item.id}", initialStock)
+        }
         
-        // 세 번째 아이템 UI 업데이트
-        binding.item3PriceTextView.text = formatCurrency(item3Price)
-        binding.item3QuantityTextView.text = "${item3Quantity}개"
-        binding.useButton3.isEnabled = item3Quantity > 0
+        editor.apply()
+        
+        // UI 업데이트
+        itemAdapter.notifyDataSetChanged()
+        updateSelectedItemInfo(null)
+        updateButtonStates()
     }
 
-    // 첫 번째 아이템 구매 로직
-    private fun buyItem() {
-        val currentAsset = assetViewModel.asset.value ?: 0L
-        if (currentAsset >= itemPrice) {
-            assetViewModel.decreaseAsset(itemPrice)
-            itemQuantity++
-            saveItemStates()
-            updateAllItemUIs()
-            showCustomSnackbar("Time증폭(60초) 아이템을 구매했습니다.")
-        } else {
-            showCustomSnackbar("자산이 부족합니다.")
-        }
-    }
-
-    // 두 번째 아이템 구매 로직
-    private fun buyItem2() {
-        val currentAsset = assetViewModel.asset.value ?: 0L
-        if (currentAsset >= item2Price) {
-            assetViewModel.decreaseAsset(item2Price)
-            item2Quantity++
-            saveItemStates()
-            updateAllItemUIs()
-            showCustomSnackbar("Time증폭(120초) 아이템을 구매했습니다.")
-        } else {
-            showCustomSnackbar("자산이 부족합니다.")
-        }
-    }
-
-    // 세 번째 아이템 구매 로직
-    private fun buyItem3() {
-        val currentAsset = assetViewModel.asset.value ?: 0L
-        if (currentAsset >= item3Price) {
-            assetViewModel.decreaseAsset(item3Price)
-            item3Quantity++
-            saveItemStates()
-            updateAllItemUIs()
-            showCustomSnackbar("Time증폭(180초) 아이템을 구매했습니다.")
-        } else {
-            showCustomSnackbar("자산이 부족합니다.")
-        }
-    }
-
-    // 첫 번째 아이템 사용 로직
-    private fun useItem() {
-        if (itemQuantity > 0) {
-            timeViewModel.increaseRemainingTime(60)
-            itemQuantity--
-            saveItemStates()
-            updateAllItemUIs()
-            showCustomSnackbar("Time증폭(60초) 아이템을 사용했습니다. 남은 시간이 60초 증가합니다.")
-        }
-    }
-    
-    // 두 번째 아이템 사용 로직
-    private fun useItem2() {
-        if (item2Quantity > 0) {
-            timeViewModel.increaseRemainingTime(120)
-            item2Quantity--
-            saveItemStates()
-            updateAllItemUIs()
-            showCustomSnackbar("Time증폭(120초) 아이템을 사용했습니다. 남은 시간이 120초 증가합니다.")
-        }
-    }
-    
-    // 세 번째 아이템 사용 로직
-    private fun useItem3() {
-        if (item3Quantity > 0) {
-            timeViewModel.increaseRemainingTime(180)
-            item3Quantity--
-            saveItemStates()
-            updateAllItemUIs()
-            showCustomSnackbar("Time증폭(180초) 아이템을 사용했습니다. 남은 시간이 180초 증가합니다.")
-        }
-    }
-
-    // --- 수정: 상단 -> 중앙 스낵바 표시 함수, 투명도 조절 ---
-    private fun showCustomSnackbar(message: String) { // 함수 이름 변경
+    /**
+     * 커스텀 스낵바를 표시합니다.
+     */
+    private fun showCustomSnackbar(message: String) {
         val snackbar = Snackbar.make(requireView(), message, Snackbar.LENGTH_SHORT)
         val snackbarView = snackbar.view
         // 배경 투명도 설정 (약 60% 불투명한 어두운 회색)
-        snackbarView.setBackgroundColor(Color.argb(150, 50, 50, 50)) // alpha 값 150으로 변경
+        snackbarView.setBackgroundColor(Color.argb(150, 50, 50, 50))
+        
         // 중앙으로 이동 시도
         try {
             val params = snackbarView.layoutParams as FrameLayout.LayoutParams
-            params.gravity = Gravity.CENTER // Gravity.TOP -> Gravity.CENTER
+            params.gravity = Gravity.CENTER
             snackbarView.layoutParams = params
         } catch (e: ClassCastException) {
             // 부모 레이아웃이 FrameLayout이 아닐 경우 예외 발생 가능
         }
+        
         snackbar.show()
     }
-    // --- 수정 끝 ---
 
-    // 숫자 포맷팅 함수 (원화)
+    /**
+     * 통화 포맷을 적용합니다.
+     */
     private fun formatCurrency(amount: Long): String {
         val formatter = NumberFormat.getCurrencyInstance(Locale.KOREA)
         return formatter.format(amount)
     }
 
+    override fun onResume() {
+        super.onResume()
+        // 앱 재진입 시 자산 변화에 따른 버튼 상태 업데이트
+        updateButtonStates()
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null // 메모리 누수 방지
+        _binding = null
     }
 } 
