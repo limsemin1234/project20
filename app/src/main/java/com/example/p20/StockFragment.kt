@@ -15,6 +15,8 @@ import android.widget.LinearLayout
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
 import com.google.android.material.snackbar.Snackbar
+import android.view.Gravity
+import android.widget.FrameLayout
 
 class StockFragment : Fragment() {
 
@@ -37,6 +39,8 @@ class StockFragment : Fragment() {
 
     private var isPositiveNewsFeatureAdded = false
     private var isNegativeNewsFeatureAdded = false
+
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -69,12 +73,6 @@ class StockFragment : Fragment() {
         stockDetailsTextView = view.findViewById(R.id.stockDetailsTextView)
         featuresInfoText = view.findViewById(R.id.stockFeaturesInfoText)
 
-        // 구현 기능 설명에 호재/악제 이벤트 설명 미리 추가
-        updateFeaturesInfo("호재 이벤트: 30초마다 30% 확률로 2개 주식에 호재 발생 (20초간 상승만 함)")
-        updateFeaturesInfo("악제 이벤트: 30초마다 30% 확률로 2개 주식에 악제 발생 (20초간 하락만 함)")
-        isPositiveNewsFeatureAdded = true
-        isNegativeNewsFeatureAdded = true
-        
         val buyButton: Button = view.findViewById(R.id.buyButton)
         val sellButton: Button = view.findViewById(R.id.sellButton)
         val buyAllButton: Button = view.findViewById(R.id.buyAllButton)
@@ -169,18 +167,32 @@ class StockFragment : Fragment() {
      * 일반 메시지용 스낵바를 표시합니다.
      */
     private fun showSnackbar(message: String) {
-        val snackbar = Snackbar.make(requireView(), message, Snackbar.LENGTH_SHORT)
-        val textView = snackbar.view.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
-        textView.maxLines = 3
+        val activity = requireActivity()
+        val snackbar = Snackbar.make(activity.findViewById(android.R.id.content), message, Snackbar.LENGTH_SHORT)
+        val snackbarView = snackbar.view
+        snackbarView.setBackgroundColor(Color.argb(200, 33, 33, 33))
+        try {
+            val params = snackbarView.layoutParams as FrameLayout.LayoutParams
+            params.gravity = Gravity.CENTER
+            snackbarView.layoutParams = params
+        } catch (e: ClassCastException) {
+        }
         snackbar.show()
     }
 
     private fun showPositiveNewsMessage(stockNames: List<String>) {
         val message = "🔥 호재 발생! ${stockNames.joinToString(", ")} 종목 상승중! (20초간)"
         
-        val snackbar = Snackbar.make(requireView(), message, Snackbar.LENGTH_LONG)
+        val activity = requireActivity()
+        val snackbar = Snackbar.make(activity.findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG)
         val snackbarView = snackbar.view
-        snackbarView.setBackgroundColor(Color.parseColor("#4CAF50")) // 초록색 배경
+        snackbarView.setBackgroundColor(Color.argb(200, 76, 175, 80)) // 초록색 배경
+        try {
+            val params = snackbarView.layoutParams as FrameLayout.LayoutParams
+            params.gravity = Gravity.CENTER
+            snackbarView.layoutParams = params
+        } catch (e: ClassCastException) {
+        }
         val textView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
         textView.setTextColor(Color.WHITE)
         textView.maxLines = 3
@@ -191,17 +203,22 @@ class StockFragment : Fragment() {
     private fun showNegativeNewsMessage(stockNames: List<String>) {
         val message = "⚠️ 악제 발생! ${stockNames.joinToString(", ")} 종목 하락중! (20초간)"
         
-        val snackbar = Snackbar.make(requireView(), message, Snackbar.LENGTH_LONG)
+        val activity = requireActivity()
+        val snackbar = Snackbar.make(activity.findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG)
         val snackbarView = snackbar.view
-        snackbarView.setBackgroundColor(Color.parseColor("#F44336")) // 빨간색 배경
+        snackbarView.setBackgroundColor(Color.argb(200, 244, 67, 54)) // 빨간색 배경
+        try {
+            val params = snackbarView.layoutParams as FrameLayout.LayoutParams
+            params.gravity = Gravity.CENTER
+            snackbarView.layoutParams = params
+        } catch (e: ClassCastException) {
+        }
         val textView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
         textView.setTextColor(Color.WHITE)
         textView.maxLines = 3
         
         snackbar.show()
     }
-    
-    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
 
     private fun updateStockList(newStockItems: MutableList<Stock>?) {
         // 기존 어댑터에 데이터 업데이트
