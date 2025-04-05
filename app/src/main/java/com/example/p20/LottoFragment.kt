@@ -30,12 +30,25 @@ class LottoFragment : Fragment() {
     private var currentPrize = 0L
     private var isLottoPurchased = false
 
-    // --- 추가: 구매 버튼 쿨타임 관련 변수 ---
+    // --- 쿨타임 관련 변수 ---
     private var isBuyButtonEnabled = true
     private val buyCooldownHandler = Handler(Looper.getMainLooper())
-    private val buyCooldownRunnable = Runnable { enableBuyButton() } // 버튼 활성화 Runnable
     private val cooldownDuration = 10000L // 10초
-    // --- 추가 끝 ---
+    private var remainingCooldownTime = 0L // 남은 쿨타임 시간 (밀리초)
+    private val updateInterval = 1000L // 1초마다 업데이트
+    
+    // 쿨타임 카운트다운 Runnable
+    private val cooldownCountdownRunnable = object : Runnable {
+        override fun run() {
+            if (remainingCooldownTime > 0) {
+                remainingCooldownTime -= updateInterval
+                updateCooldownDisplay()
+                buyCooldownHandler.postDelayed(this, updateInterval)
+            } else {
+                enableBuyButton()
+            }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -53,14 +66,14 @@ class LottoFragment : Fragment() {
 
         // 구매 버튼 초기 상태 설정
         binding.buyLottoButton.isEnabled = isBuyButtonEnabled
+        updateCooldownDisplay() // 쿨다운 텍스트 초기화
 
         binding.buyLottoButton.setOnClickListener {
-            // --- 추가: 쿨타임 중이면 클릭 무시 ---
+            // 쿨타임 중이면 클릭 무시
             if (!isBuyButtonEnabled) {
-                showCustomSnackbar("잠시 후 다시 시도해주세요.")
+                showCustomSnackbar("잠시 후 다시 시도해주세요. 남은 시간: ${remainingCooldownTime / 1000}초")
                 return@setOnClickListener
             }
-            // --- 추가 끝 ---
             buyLottoTicket()
         }
 
@@ -73,8 +86,7 @@ class LottoFragment : Fragment() {
             }
         }
 
-        // 스크래치 영역 초기 상태 설정 (기존과 동일)
-        // binding.lottoResultLayout.visibility = View.GONE // 이 줄 삭제 또는 주석 처리
+        // 스크래치 영역 초기 상태 설정
         binding.scratchCoatingImage.visibility = View.VISIBLE
     }
 
@@ -103,9 +115,8 @@ class LottoFragment : Fragment() {
             binding.resultMessageText.visibility = View.INVISIBLE
             showCustomSnackbar("로또 구매 완료! 긁어서 확인하세요.")
 
-            // --- 추가: 구매 버튼 비활성화 및 쿨타임 시작 ---
+            // 구매 버튼 비활성화 및 쿨타임 시작
             disableBuyButtonTemporarily()
-            // --- 추가 끝 ---
         } else {
             showCustomSnackbar("자산이 부족합니다.")
         }
@@ -143,26 +154,44 @@ class LottoFragment : Fragment() {
         snackbar.show()
     }
 
-    // --- 추가: 구매 버튼 임시 비활성화 함수 ---
+    // 구매 버튼 임시 비활성화 함수
     private fun disableBuyButtonTemporarily() {
         isBuyButtonEnabled = false
         binding.buyLottoButton.isEnabled = false
-        buyCooldownHandler.postDelayed(buyCooldownRunnable, cooldownDuration)
+        
+        // 쿨타임 시작
+        remainingCooldownTime = cooldownDuration
+        updateCooldownDisplay()
+        
+        // 이전 콜백 제거 후 새로운 카운트다운 시작
+        buyCooldownHandler.removeCallbacks(cooldownCountdownRunnable)
+        buyCooldownHandler.post(cooldownCountdownRunnable)
     }
-    // --- 추가 끝 ---
 
-    // --- 추가: 구매 버튼 활성화 함수 ---
+    // 쿨다운 표시 업데이트
+    private fun updateCooldownDisplay() {
+        if (remainingCooldownTime > 0) {
+            val seconds = (remainingCooldownTime / 1000).toInt()
+            binding.cooldownText.text = "대기 중: ${seconds}초"
+            binding.cooldownText.setTextColor(Color.RED)
+        } else {
+            binding.cooldownText.text = "구매 가능"
+            binding.cooldownText.setTextColor(Color.parseColor("#4CAF50")) // 녹색
+        }
+    }
+    
+    // 구매 버튼 활성화 함수
     private fun enableBuyButton() {
         isBuyButtonEnabled = true
         binding.buyLottoButton.isEnabled = true
+        remainingCooldownTime = 0
+        updateCooldownDisplay()
     }
-    // --- 추가 끝 ---
 
     override fun onDestroyView() {
         super.onDestroyView()
-        // --- 추가: 핸들러 콜백 제거 ---
-        buyCooldownHandler.removeCallbacks(buyCooldownRunnable)
-        // --- 추가 끝 ---
+        // 핸들러 콜백 제거
+        buyCooldownHandler.removeCallbacks(cooldownCountdownRunnable)
         _binding = null
     }
 }

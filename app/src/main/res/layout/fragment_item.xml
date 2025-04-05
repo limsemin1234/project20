@@ -126,7 +126,7 @@
                     android:layout_weight="1.5"
                     android:gravity="center"
                     android:layout_marginStart="8dp"
-                    android:text="가격: 80,000원"
+                    android:text="가격: 90,000원"
                     android:textColor="@android:color/white" />
 
                 <TextView
@@ -149,6 +149,61 @@
 
                 <Button
                     android:id="@+id/useButton2"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.8"
+                    android:layout_marginStart="8dp"
+                    android:text="사용"
+                    android:enabled="false" /> <!-- 초기에는 사용 불가 상태 -->
+            </LinearLayout>
+
+            <!-- Time증폭(180초) 아이템 추가 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp"> <!-- 아이템 간 간격 -->
+
+                <TextView
+                    android:id="@+id/item3NameTextView"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1.2"
+                    android:gravity="center"
+                    android:text="Time증폭\n(180초)"
+                    android:textColor="@android:color/white" />
+
+                <TextView
+                    android:id="@+id/item3PriceTextView"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1.5"
+                    android:gravity="center"
+                    android:layout_marginStart="8dp"
+                    android:text="가격: 130,000원"
+                    android:textColor="@android:color/white" />
+
+                <TextView
+                    android:id="@+id/item3QuantityTextView"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.8"
+                    android:gravity="center"
+                    android:layout_marginStart="8dp"
+                    android:text="보유: 0개"
+                    android:textColor="@android:color/white" />
+
+                <Button
+                    android:id="@+id/buyButton3"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.8"
+                    android:layout_marginStart="8dp"
+                    android:text="구매" />
+
+                <Button
+                    android:id="@+id/useButton3"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="0.8"
