@@ -32,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mainRestartMessageTextView: TextView // 메인 재시작 메시지 텍스트뷰
     private lateinit var gameOverExitButton: Button
     private lateinit var gameOverRestartMessageText: TextView // 추가
+    private lateinit var viewModelFactory: ViewModelFactory // viewModelFactory 클래스 변수로 선언
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,6 +85,13 @@ class MainActivity : AppCompatActivity() {
                 stockViewModel.resetStocks()
                 albaViewModel.resetAlba()
                 realEstateViewModel.resetRealEstatePrices()
+                
+                // ViewModelFactory 초기화 후 TimingAlbaViewModel 리셋 추가
+                if (::viewModelFactory.isInitialized) {
+                    val timingAlbaViewModel = ViewModelProvider(this, viewModelFactory).get(TimingAlbaViewModel::class.java)
+                    timingAlbaViewModel.resetTimingAlba()
+                }
+                
                 // 필요하다면 다른 ViewModel 리셋 추가
 
                 // --- 추가: 게임 리셋 이벤트 발생 ---
@@ -138,13 +146,16 @@ class MainActivity : AppCompatActivity() {
         // 앱 시작 시 저장된 상태 그대로 시작 -> startGameTimer로 대체됨
         // timeViewModel.startTimer()
 
+        // ViewModelFactory 초기화
+        viewModelFactory = ViewModelFactory(application)
+        
         // AssetViewModel과 기타 ViewModel 초기화
-        val viewModelFactory = ViewModelFactory(application)
         assetViewModel = ViewModelProvider(this, viewModelFactory).get(AssetViewModel::class.java)
         
         // 알바 관련 ViewModel 초기화
         ViewModelProvider(this, viewModelFactory).get(AlbaViewModel::class.java)
         ViewModelProvider(this, viewModelFactory).get(TimingAlbaViewModel::class.java)
+        val timingAlbaViewModel = ViewModelProvider(this, viewModelFactory).get(TimingAlbaViewModel::class.java)
         
         assetTextView = findViewById(R.id.assetInfo)
 

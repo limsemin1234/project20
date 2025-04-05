@@ -42,6 +42,7 @@ class GameOverDialogFragment : DialogFragment() {
         stockViewModel = ViewModelProvider(requireActivity()).get(StockViewModel::class.java)
         albaViewModel = ViewModelProvider(requireActivity()).get(AlbaViewModel::class.java)
         realEstateViewModel = ViewModelProvider(requireActivity()).get(RealEstateViewModel::class.java)
+        val timingAlbaViewModel = ViewModelProvider(requireActivity()).get(TimingAlbaViewModel::class.java)
 
         // 뷰 참조
         val finalAssetText = view.findViewById<TextView>(R.id.dialogFinalAssetText)
@@ -89,6 +90,7 @@ class GameOverDialogFragment : DialogFragment() {
             assetViewModel.resetAssets()
             stockViewModel.resetStocks()
             albaViewModel.resetAlba()
+            timingAlbaViewModel.resetTimingAlba()
             realEstateViewModel.resetRealEstatePrices()
             // 앱 종료
             requireActivity().finishAffinity()
