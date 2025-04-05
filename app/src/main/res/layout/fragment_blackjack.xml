@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#052e16"
     android:fillViewport="true">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -19,7 +20,7 @@
             android:layout_marginStart="16dp"
             android:layout_marginTop="16dp"
             android:layout_marginEnd="16dp"
-            android:background="#E8F5E9"
+            android:background="#073d1e"
             android:gravity="center"
             android:orientation="vertical"
             android:padding="8dp"
@@ -31,7 +32,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="딜러"
-                android:textColor="@android:color/black"
+                android:textColor="#FFD700"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -59,7 +60,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="점수: ?"
-                android:textColor="@android:color/black"
+                android:textColor="#FFFFFF"
                 android:textSize="16sp" />
         </LinearLayout>
 
@@ -71,7 +72,7 @@
             android:layout_marginStart="16dp"
             android:layout_marginTop="16dp"
             android:layout_marginEnd="16dp"
-            android:background="#E3F2FD"
+            android:background="#073d1e"
             android:gravity="center"
             android:orientation="vertical"
             android:padding="8dp"
@@ -83,7 +84,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="플레이어"
-                android:textColor="@android:color/black"
+                android:textColor="#FFD700"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -111,7 +112,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="점수: 0"
-                android:textColor="@android:color/black"
+                android:textColor="#FFFFFF"
                 android:textSize="16sp" />
         </LinearLayout>
 
@@ -122,6 +123,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="베팅 금액: ₩0"
+            android:textColor="#FFFFFF"
             android:textSize="18sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
