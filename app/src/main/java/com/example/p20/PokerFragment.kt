@@ -32,8 +32,6 @@ class PokerFragment : Fragment() {
     private lateinit var bet10kButton: Button
     private lateinit var bet50kButton: Button
     private lateinit var bet100kButton: Button
-    private lateinit var balanceText: TextView
-    private lateinit var winLoseText: TextView
     private lateinit var cardCheckBoxes: Array<CheckBox>
     
     // 게임 상태
@@ -93,8 +91,6 @@ class PokerFragment : Fragment() {
         bet10kButton = view.findViewById(R.id.bet10kButton)
         bet50kButton = view.findViewById(R.id.bet50kButton)
         bet100kButton = view.findViewById(R.id.bet100kButton)
-        balanceText = view.findViewById(R.id.balanceText)
-        winLoseText = view.findViewById(R.id.winLoseText)
         
         // 체크박스 초기화
         cardCheckBoxes = arrayOf(
@@ -472,7 +468,6 @@ class PokerFragment : Fragment() {
         
         // 통계 업데이트
         updateBalanceText()
-        winLoseText.text = "승/패: $winCount/$loseCount"
         
         // 베팅 초기화
         currentBet = 0L
@@ -499,8 +494,7 @@ class PokerFragment : Fragment() {
     }
     
     private fun updateBalanceText() {
-        val currentAsset = assetViewModel.asset.value ?: 0L
-        balanceText.text = "잔액: ${formatCurrency(currentAsset)}"
+        // UI 요소 제거됨 - 메서드만 유지
     }
     
     private fun formatCurrency(amount: Long): String {

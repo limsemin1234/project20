@@ -266,32 +266,5 @@
                 android:text="하이카드: 패배" />
         </LinearLayout>
 
-        <!-- 정보 표시 영역 -->
-        <LinearLayout
-            android:id="@+id/infoLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:orientation="horizontal"
-            app:layout_constraintTop_toBottomOf="@+id/rankInfo">
-
-            <TextView
-                android:id="@+id/balanceText"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="잔액: ₩0"
-                android:textSize="16sp" />
-
-            <TextView
-                android:id="@+id/winLoseText"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="end"
-                android:text="승/패: 0/0"
-                android:textSize="16sp" />
-        </LinearLayout>
-
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView> 
