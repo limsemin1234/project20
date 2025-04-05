@@ -16,7 +16,7 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
     val albaLevel: LiveData<Int> get() = _albaLevel
 
     private var clickCounter = 0
-    private val CLICKS_PER_LEVEL = 5 // 5번 클릭해야 레벨 1 증가
+    private val CLICKS_PER_LEVEL = 10 // 10번 클릭해야 레벨 1 증가
 
     private val _isActivePhase = MutableLiveData(false)
     val isActivePhase: LiveData<Boolean> get() = _isActivePhase

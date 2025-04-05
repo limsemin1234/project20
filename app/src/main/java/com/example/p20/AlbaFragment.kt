@@ -136,7 +136,7 @@ class ClickAlbaFragment : Fragment() {
 
         albaViewModel.albaLevel.observe(viewLifecycleOwner, Observer { level ->
             val rewardAmount = albaViewModel.getRewardAmount()
-            levelText.text = "레벨: $level\n보상: ${"%,d".format(rewardAmount)}원\n(5번 클릭마다 레벨업)"
+            levelText.text = "레벨: $level\n보상: ${"%,d".format(rewardAmount)}원\n(10번 클릭마다 레벨업)"
         })
 
         return view
