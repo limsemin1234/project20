@@ -243,9 +243,9 @@ class ClickAlbaFragment : Fragment() {
         
         val rewardTextView = TextView(requireContext()).apply {
             text = if (reward.isMultiple) {
-                "${reward.itemName} 획득!"
+                "${reward.itemName} 재고 증가!"
             } else {
-                "${reward.itemName} ${reward.quantity}개 획득!"
+                "${reward.itemName} 재고 ${reward.quantity}개 증가!"
             }
             textSize = 24f
             setTextColor(resources.getColor(android.R.color.holo_green_light, null))

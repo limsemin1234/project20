@@ -108,18 +108,23 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
     fun increaseAlbaLevel() {
         clickCounter++
         
+        // 레벨업에 필요한 클릭 수에 도달했는지 확인
         if (clickCounter >= CLICKS_PER_LEVEL) {
             val currentLevel = _albaLevel.value ?: 1
             val newLevel = currentLevel + 1
             _albaLevel.value = newLevel
             clickCounter = 0
-            saveAlbaData()
             
-            // 레벨업 시 아이템 획득 처리
+            // 레벨업 시 아이템 재고 증가 처리
+            val context = getApplication<Application>().applicationContext
             val itemReward = ItemUtil.processClickAlbaLevelUp(context, newLevel)
+            
+            // 아이템 재고 증가 이벤트 발생
             if (itemReward != null) {
                 _itemRewardEvent.value = itemReward
             }
+            
+            saveAlbaData()
         }
     }
 

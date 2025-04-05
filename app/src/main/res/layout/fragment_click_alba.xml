@@ -1,60 +1,77 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#FFFACD"
-    android:padding="15dp">
-
-    <!-- 새로운 레벨 표시 텍스트 -->
-    <TextView
-        android:id="@+id/levelText"
+    android:fillViewport="true">
+    
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="레벨: 1"
-        android:gravity="center"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:textColor="@color/alba_level" />
+        android:orientation="vertical"
+        android:background="#FFFACD"
+        android:padding="15dp">
 
-    <FrameLayout
-        android:id="@+id/animationContainer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"> <!-- 중앙 정렬 -->
+        <!-- 새로운 레벨 표시 텍스트 -->
+        <TextView
+            android:id="@+id/levelText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="레벨: 1"
+            android:gravity="center"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/alba_level" />
 
-        <!-- 알바 이미지 -->
-        <ImageView
-            android:id="@+id/albaImage"
-            android:layout_width="350dp"
-            android:layout_height="350dp"
-            android:src="@drawable/alba1"
-            android:contentDescription="알바 이미지"
-            android:layout_gravity="center" />
+        <FrameLayout
+            android:id="@+id/animationContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"> <!-- 중앙 정렬 -->
 
-    </FrameLayout>
+            <!-- 알바 이미지 -->
+            <ImageView
+                android:id="@+id/albaImage"
+                android:layout_width="350dp"
+                android:layout_height="350dp"
+                android:src="@drawable/alba1"
+                android:contentDescription="알바 이미지"
+                android:layout_gravity="center" />
 
-    <!-- 알바 화면 설명 텍스트 -->
-    <TextView
-        android:id="@+id/earnText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="터치!! 터치!!"
-        android:textStyle="bold"
-        android:textSize="18sp"
-        android:gravity="center"
-        android:padding="16dp"
-        android:textColor="@android:color/black" />
+        </FrameLayout>
 
-    <!-- 🔥 기본 텍스트 추가: "알바 가능!" -->
-    <TextView
-        android:id="@+id/cooldownText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="알바 가능!"
-        android:gravity="center"
-        android:textSize="17sp"
-        android:layout_marginBottom="8dp"
-        android:textColor="@android:color/holo_red_dark" />
+        <!-- 알바 화면 설명 텍스트 -->
+        <TextView
+            android:id="@+id/earnText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="터치!! 터치!!"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:gravity="center"
+            android:padding="16dp"
+            android:textColor="@android:color/black" />
 
-</LinearLayout> 
+        <!-- 🔥 기본 텍스트 추가: "알바 가능!" -->
+        <TextView
+            android:id="@+id/cooldownText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="알바 가능!"
+            android:gravity="center"
+            android:textSize="17sp"
+            android:layout_marginBottom="8dp"
+            android:textColor="@android:color/holo_red_dark" />
+            
+        <!-- 구현 기능 설명 - 주식처럼 설명 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="#CC000000"
+            android:padding="8dp"
+            android:text="📌 클릭 알바 기능:\n- 이미지를 연속으로 클릭하여 돈을 벌 수 있습니다.\n- 10번 클릭마다 레벨이 올라가며, 레벨이 높을수록 더 많은 돈을 받습니다.\n- 일정 시간 작업 후에는 쿨다운 시간이 필요합니다.\n- 레벨 5, 10, 15... 단위로 상점 아이템의 재고가 1개씩 증가합니다.\n- 아이템 재고 증가 시 화면에 알림이 표시됩니다."
+            android:textColor="#E0E0E0"
+            android:textSize="12sp" />
+
+    </LinearLayout>
+</ScrollView> 

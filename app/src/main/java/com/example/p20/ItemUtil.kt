@@ -11,6 +11,7 @@ object ItemUtil {
     // 아이템 획득 관련 SharedPreferences 이름
     private const val PREFS_FILENAME = "item_prefs"
     private const val KEY_ITEM_QUANTITY_PREFIX = "item_quantity_"
+    private const val KEY_ITEM_STOCK_PREFIX = "item_stock_"
     
     /**
      * 클릭알바 레벨업 시 아이템 획득 처리
@@ -25,16 +26,16 @@ object ItemUtil {
         }
         
         return when (currentLevel) {
-            5, 10 -> addItem(context, 1, 1) // 레벨 5, 10 -> 60초 아이템 1개
-            15, 20 -> addItem(context, 2, 1) // 레벨 15, 20 -> 120초 아이템 1개
-            25, 30 -> addItem(context, 3, 1) // 레벨 25, 30 -> 180초 아이템 1개
+            5, 10 -> increaseItemStock(context, 1, 1) // 레벨 5, 10 -> 60초 아이템 재고 1개 증가
+            15, 20 -> increaseItemStock(context, 2, 1) // 레벨 15, 20 -> 120초 아이템 재고 1개 증가
+            25, 30 -> increaseItemStock(context, 3, 1) // 레벨 25, 30 -> 180초 아이템 재고 1개 증가
             else -> {
-                // 30레벨 이후 랜덤으로 2개 획득
+                // 30레벨 이후 랜덤으로 2개 아이템 재고 증가
                 val randomItems = getRandomItems(2)
                 val rewards = mutableListOf<ItemReward>()
                 
                 randomItems.forEach { itemId ->
-                    addItem(context, itemId, 1)?.let {
+                    increaseItemStock(context, itemId, 1)?.let {
                         rewards.add(it)
                     }
                 }
@@ -42,7 +43,7 @@ object ItemUtil {
                 if (rewards.isEmpty()) null
                 else ItemReward(
                     itemId = 0, // 복합 보상이므로 0
-                    itemName = "랜덤 아이템 2개",
+                    itemName = "랜덤 아이템 재고 2개",
                     quantity = 2,
                     isMultiple = true
                 )
@@ -63,16 +64,16 @@ object ItemUtil {
         }
         
         return when (currentLevel) {
-            5, 10 -> addItem(context, 1, 1) // 레벨 5, 10 -> 60초 아이템 1개
-            15, 20 -> addItem(context, 2, 1) // 레벨 15, 20 -> 120초 아이템 1개
-            25, 30 -> addItem(context, 3, 1) // 레벨 25, 30 -> 180초 아이템 1개
+            5, 10 -> increaseItemStock(context, 1, 1) // 레벨 5, 10 -> 60초 아이템 재고 1개 증가
+            15, 20 -> increaseItemStock(context, 2, 1) // 레벨 15, 20 -> 120초 아이템 재고 1개 증가
+            25, 30 -> increaseItemStock(context, 3, 1) // 레벨 25, 30 -> 180초 아이템 재고 1개 증가
             else -> {
-                // 30레벨 이후 랜덤으로 2개 획득
+                // 30레벨 이후 랜덤으로 2개 아이템 재고 증가
                 val randomItems = getRandomItems(2)
                 val rewards = mutableListOf<ItemReward>()
                 
                 randomItems.forEach { itemId ->
-                    addItem(context, itemId, 1)?.let {
+                    increaseItemStock(context, itemId, 1)?.let {
                         rewards.add(it)
                     }
                 }
@@ -80,7 +81,7 @@ object ItemUtil {
                 if (rewards.isEmpty()) null
                 else ItemReward(
                     itemId = 0, // 복합 보상이므로 0
-                    itemName = "랜덤 아이템 2개",
+                    itemName = "랜덤 아이템 재고 2개",
                     quantity = 2,
                     isMultiple = true
                 )
@@ -89,18 +90,18 @@ object ItemUtil {
     }
     
     /**
-     * 특정 아이템을 획득합니다.
+     * 아이템 재고를 증가시킵니다.
      * @param context Context
      * @param itemId 아이템 ID
-     * @param quantity 수량
-     * @return 획득한 아이템 정보
+     * @param quantity 증가시킬 수량
+     * @return 증가된 아이템 정보
      */
-    private fun addItem(context: Context, itemId: Int, quantity: Int): ItemReward? {
+    private fun increaseItemStock(context: Context, itemId: Int, quantity: Int): ItemReward? {
         val prefs = context.getSharedPreferences(PREFS_FILENAME, Context.MODE_PRIVATE)
-        val currentQuantity = prefs.getInt("${KEY_ITEM_QUANTITY_PREFIX}$itemId", 0)
-        val newQuantity = currentQuantity + quantity
+        val currentStock = prefs.getInt("${KEY_ITEM_STOCK_PREFIX}$itemId", 0)
+        val newStock = currentStock + quantity
         
-        prefs.edit().putInt("${KEY_ITEM_QUANTITY_PREFIX}$itemId", newQuantity).apply()
+        prefs.edit().putInt("${KEY_ITEM_STOCK_PREFIX}$itemId", newStock).apply()
         
         val itemName = when (itemId) {
             1 -> "Time증폭(60초)"

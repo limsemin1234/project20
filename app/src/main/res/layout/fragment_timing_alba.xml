@@ -1,136 +1,152 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#F0F8FF"
-    android:padding="15dp">
-
-    <!-- 레벨 및 보상 정보 -->
-    <TextView
-        android:id="@+id/timingLevelText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="레벨: 1\n보상: 100원 x 배율\n(성공 5번마다 레벨업)"
-        android:gravity="center"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:layout_marginTop="20dp"
-        android:textColor="@color/alba_level" />
+    android:fillViewport="true">
     
-    <!-- 결과 메시지 -->
-    <TextView
-        android:id="@+id/resultText"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="중앙에 도달했을 때 탭하세요!"
-        android:gravity="center"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:layout_marginTop="15dp"
-        android:textColor="@android:color/black" />
+        android:orientation="vertical"
+        android:background="#F0F8FF"
+        android:padding="15dp">
 
-    <!-- 게이지 컨테이너 -->
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="30dp"
-        android:layout_marginBottom="30dp">
-
-        <!-- 배경 게이지 -->
-        <LinearLayout
+        <!-- 레벨 및 보상 정보 -->
+        <TextView
+            android:id="@+id/timingLevelText"
             android:layout_width="match_parent"
-            android:layout_height="40dp"
-            android:orientation="horizontal"
-            android:background="#E0E0E0">
-
-            <!-- 성공 영역 표시 -->
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="0.4" />
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="0.2"
-                android:background="#4CAF50"
-                android:alpha="0.3" />
-
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="0.4" />
-        </LinearLayout>
-
-        <!-- 퍼펙트 영역 표시 -->
-        <LinearLayout
+            android:layout_height="wrap_content"
+            android:text="레벨: 1\n보상: 100원 x 배율\n(성공 5번마다 레벨업)"
+            android:gravity="center"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="20dp"
+            android:textColor="@color/alba_level" />
+        
+        <!-- 결과 메시지 -->
+        <TextView
+            android:id="@+id/resultText"
             android:layout_width="match_parent"
-            android:layout_height="40dp"
-            android:orientation="horizontal">
+            android:layout_height="wrap_content"
+            android:text="중앙에 도달했을 때 탭하세요!"
+            android:gravity="center"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="15dp"
+            android:textColor="@android:color/black" />
 
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="0.48" />
+        <!-- 게이지 컨테이너 -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
+            android:layout_marginBottom="30dp">
 
+            <!-- 배경 게이지 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:orientation="horizontal"
+                android:background="#E0E0E0">
+
+                <!-- 성공 영역 표시 -->
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.4" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.2"
+                    android:background="#4CAF50"
+                    android:alpha="0.3" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.4" />
+            </LinearLayout>
+
+            <!-- 퍼펙트 영역 표시 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:orientation="horizontal">
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.48" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.04"
+                    android:background="#FF5722" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.48" />
+            </LinearLayout>
+
+            <!-- 중앙선 표시 -->
             <View
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="0.04"
-                android:background="#FF5722" />
+                android:layout_width="2dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:background="#000000" />
 
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="0.48" />
-        </LinearLayout>
+            <!-- 움직이는 포인터 -->
+            <View
+                android:id="@+id/pointer"
+                android:layout_width="8dp"
+                android:layout_height="50dp"
+                android:background="#2196F3"
+                android:layout_gravity="start|center_vertical" />
+        </FrameLayout>
 
-        <!-- 중앙선 표시 -->
-        <View
-            android:layout_width="2dp"
-            android:layout_height="50dp"
+        <!-- 통합된 게임 버튼 (시작 및 탭) -->
+        <Button
+            android:id="@+id/gameButton"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:text="시작하기"
+            android:textSize="24sp"
             android:layout_gravity="center"
-            android:background="#000000" />
+            android:backgroundTint="@color/alba_start_button"
+            android:textColor="@android:color/white"
+            android:layout_marginTop="20dp" />
 
-        <!-- 움직이는 포인터 -->
-        <View
-            android:id="@+id/pointer"
-            android:layout_width="8dp"
-            android:layout_height="50dp"
-            android:background="#2196F3"
-            android:layout_gravity="start|center_vertical" />
-    </FrameLayout>
+        <!-- 쿨다운 및 상태 텍스트 -->
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="게임 준비 중..."
+            android:gravity="center"
+            android:textSize="17sp"
+            android:layout_marginTop="15dp"
+            android:textColor="@android:color/holo_red_dark" />
 
-    <!-- 통합된 게임 버튼 (시작 및 탭) -->
-    <Button
-        android:id="@+id/gameButton"
-        android:layout_width="match_parent"
-        android:layout_height="120dp"
-        android:text="시작하기"
-        android:textSize="24sp"
-        android:layout_gravity="center"
-        android:backgroundTint="@color/alba_start_button"
-        android:textColor="@android:color/white"
-        android:layout_marginTop="20dp" />
+        <!-- 애니메이션 컨테이너 -->
+        <FrameLayout
+            android:id="@+id/timingAnimationContainer"
+            android:layout_width="match_parent"
+            android:layout_height="100dp" />
+            
+        <!-- 구현 기능 설명 - 주식처럼 설명 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="#CC000000"
+            android:padding="8dp"
+            android:text="📌 타이밍 알바 기능:\n- 포인터가 좌우로 움직이는 게이지 중앙에 가까울 때 버튼을 누르세요.\n- 중앙에 가까울수록 높은 배율을 받아 더 많은 보상을 얻습니다.\n- 퍼펙트 영역(빨간색)에 탭하면 최고 배율을 얻을 수 있습니다.\n- 5번 성공마다 레벨업하며, 레벨이 높을수록 기본 보상이 증가합니다.\n- 레벨 5, 10, 15... 단위로 상점 아이템의 재고가 1개씩 증가합니다."
+            android:textColor="#E0E0E0"
+            android:textSize="12sp" />
 
-    <!-- 쿨다운 및 상태 텍스트 -->
-    <TextView
-        android:id="@+id/statusText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="게임 준비 중..."
-        android:gravity="center"
-        android:textSize="17sp"
-        android:layout_marginTop="15dp"
-        android:textColor="@android:color/holo_red_dark" />
-
-    <!-- 애니메이션 컨테이너 -->
-    <FrameLayout
-        android:id="@+id/timingAnimationContainer"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
-
-</LinearLayout> 
+    </LinearLayout>
+</ScrollView> 

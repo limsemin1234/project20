@@ -138,8 +138,11 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
                 _albaLevel.value = newLevel
                 sharedPreferences.edit().putInt("timing_alba_level", newLevel).apply()
                 
-                // 레벨업 시 아이템 획득 처리
+                // 레벨업 시 아이템 재고 증가 처리
+                val context = getApplication<Application>().applicationContext
                 val itemReward = ItemUtil.processTimingAlbaLevelUp(context, newLevel)
+                
+                // 아이템 재고 증가 이벤트 발생
                 if (itemReward != null) {
                     _itemRewardEvent.value = itemReward
                 }

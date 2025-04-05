@@ -114,12 +114,18 @@ class ItemFragment : Fragment() {
             )
         )
 
-        // 아이템이 처음 생성될 때 재고가 없으면 초기화
-        itemList.forEach { item ->
-            if (item.stock <= 0) {
+        // 아이템이 처음 생성될 때만 재고 초기화 (SharedPreferences에 저장된 적이 없는 경우에만)
+        val hasInitializedKey = "has_initialized_stocks"
+        val hasInitialized = prefs.getBoolean(hasInitializedKey, false)
+        
+        if (!hasInitialized) {
+            // 최초 실행시에만 재고 초기화
+            itemList.forEach { item ->
                 item.stock = getInitialStock(item.id)
                 saveItemStock(item.id, item.stock)
             }
+            // 초기화 완료 표시
+            prefs.edit().putBoolean(hasInitializedKey, true).apply()
         }
     }
 
@@ -350,8 +356,29 @@ class ItemFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
+        // 화면으로 돌아올 때 아이템 목록 업데이트
+        updateItemsFromStorage()
         // 앱 재진입 시 자산 변화에 따른 버튼 상태 업데이트
         updateButtonStates()
+    }
+
+    /**
+     * SharedPreferences에서 아이템 정보를 로드하여 목록을 업데이트합니다.
+     */
+    private fun updateItemsFromStorage() {
+        for (item in itemList) {
+            // 저장된 수량과 재고 읽어오기
+            item.quantity = loadItemQuantity(item.id)
+            item.stock = loadItemStock(item.id)
+        }
+        // UI 업데이트
+        itemAdapter.notifyDataSetChanged()
+        
+        // 선택된 아이템이 있으면 정보 업데이트
+        val selectedItem = itemAdapter.getSelectedItem()
+        if (selectedItem != null) {
+            updateSelectedItemInfo(selectedItem)
+        }
     }
 
     override fun onDestroyView() {
