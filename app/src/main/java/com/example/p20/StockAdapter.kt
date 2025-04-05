@@ -40,6 +40,13 @@ class StockAdapter(
         holder.stockChangeValue.setTextColor(color)
         holder.stockChangeRate.setTextColor(color)
         holder.stockPrice.setTextColor(color)
+        
+        // 호재 영향을 받는 주식인 경우 배경색 변경
+        if (stock.isPositiveNews) {
+            holder.itemView.setBackgroundColor(Color.argb(50, 0, 180, 0)) // 연한 녹색 배경
+        } else {
+            holder.itemView.setBackgroundColor(Color.TRANSPARENT)
+        }
 
         holder.itemView.setOnClickListener { onItemClick(stock) }
     }

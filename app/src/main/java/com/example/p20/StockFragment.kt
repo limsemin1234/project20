@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import android.widget.LinearLayout
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
+import com.google.android.material.snackbar.Snackbar
 
 class StockFragment : Fragment() {
 
@@ -35,6 +36,8 @@ class StockFragment : Fragment() {
     private var stockQuantityData: TextView? = null
     private var selectedStockName: TextView? = null
 
+    private var isPositiveNewsFeatureAdded = false
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -47,6 +50,17 @@ class StockFragment : Fragment() {
             updateStockList(updatedStockList)
             selectedStock?.let { updateStockDetails(it) }
         })
+        
+        // 호재 이벤트 콜백 설정
+        stockViewModel.setPositiveNewsCallback { stockNames ->
+            showPositiveNewsMessage(stockNames)
+            
+            // 호재 기능 설명을 구현 기능에 추가
+            if (!isPositiveNewsFeatureAdded) {
+                updateFeaturesInfo("호재 이벤트: 30초마다 30% 확률로 2개 주식에 호재 발생 (20초간 상승만 함)")
+                isPositiveNewsFeatureAdded = true
+            }
+        }
 
         stockRecyclerView = view.findViewById(R.id.stockRecyclerView)
         stockStatusText = view.findViewById(R.id.stockStatusText)
@@ -137,6 +151,30 @@ class StockFragment : Fragment() {
         return view
     }
 
+    private fun showPositiveNewsMessage(stockNames: List<String>) {
+        val message = "🔥 호재 발생! ${stockNames.joinToString(", ")} 종목 상승중! (20초간)"
+        
+        val snackbar = Snackbar.make(requireView(), message, Snackbar.LENGTH_LONG)
+        val snackbarView = snackbar.view
+        snackbarView.setBackgroundColor(Color.parseColor("#4CAF50")) // 초록색 배경
+        val textView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
+        textView.setTextColor(Color.WHITE)
+        textView.maxLines = 3
+        
+        snackbar.show()
+        
+        // 상태 메시지도 업데이트
+        stockStatusText.text = message
+        stockStatusText.setTextColor(Color.parseColor("#4CAF50"))
+        
+        // 3초 후 상태 메시지 색상 복원
+        handler.postDelayed({
+            stockStatusText.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
+        }, 3000)
+    }
+    
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+
     private fun updateStockList(newStockItems: MutableList<Stock>?) {
         // 기존 어댑터에 데이터 업데이트
         newStockItems?.let {
@@ -214,5 +252,10 @@ class StockFragment : Fragment() {
         
         val updatedText = "$baseText\n- ${features.joinToString("\n- ")}"
         featuresInfoText.text = updatedText
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        handler.removeCallbacksAndMessages(null)
     }
 }
