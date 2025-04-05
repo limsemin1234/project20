@@ -37,6 +37,7 @@ class StockFragment : Fragment() {
     private var selectedStockName: TextView? = null
 
     private var isPositiveNewsFeatureAdded = false
+    private var isNegativeNewsFeatureAdded = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -55,11 +56,14 @@ class StockFragment : Fragment() {
         stockViewModel.setPositiveNewsCallback { stockNames ->
             showPositiveNewsMessage(stockNames)
             
-            // 호재 기능 설명을 구현 기능에 추가
-            if (!isPositiveNewsFeatureAdded) {
-                updateFeaturesInfo("호재 이벤트: 30초마다 30% 확률로 2개 주식에 호재 발생 (20초간 상승만 함)")
-                isPositiveNewsFeatureAdded = true
-            }
+            // 호재 기능 설명은 이미 추가되어 있으므로 제거
+        }
+        
+        // 악제 이벤트 콜백 설정
+        stockViewModel.setNegativeNewsCallback { stockNames ->
+            showNegativeNewsMessage(stockNames)
+            
+            // 악제 기능 설명은 이미 추가되어 있으므로 제거
         }
 
         stockRecyclerView = view.findViewById(R.id.stockRecyclerView)
@@ -67,6 +71,12 @@ class StockFragment : Fragment() {
         stockDetailsTextView = view.findViewById(R.id.stockDetailsTextView)
         featuresInfoText = view.findViewById(R.id.stockFeaturesInfoText)
 
+        // 구현 기능 설명에 호재/악제 이벤트 설명 미리 추가
+        updateFeaturesInfo("호재 이벤트: 30초마다 30% 확률로 2개 주식에 호재 발생 (20초간 상승만 함)")
+        updateFeaturesInfo("악제 이벤트: 30초마다 30% 확률로 2개 주식에 악제 발생 (20초간 하락만 함)")
+        isPositiveNewsFeatureAdded = true
+        isNegativeNewsFeatureAdded = true
+        
         val buyButton: Button = view.findViewById(R.id.buyButton)
         val sellButton: Button = view.findViewById(R.id.sellButton)
         val buyAllButton: Button = view.findViewById(R.id.buyAllButton)
@@ -166,6 +176,28 @@ class StockFragment : Fragment() {
         // 상태 메시지도 업데이트
         stockStatusText.text = message
         stockStatusText.setTextColor(Color.parseColor("#4CAF50"))
+        
+        // 3초 후 상태 메시지 색상 복원
+        handler.postDelayed({
+            stockStatusText.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
+        }, 3000)
+    }
+    
+    private fun showNegativeNewsMessage(stockNames: List<String>) {
+        val message = "⚠️ 악제 발생! ${stockNames.joinToString(", ")} 종목 하락중! (20초간)"
+        
+        val snackbar = Snackbar.make(requireView(), message, Snackbar.LENGTH_LONG)
+        val snackbarView = snackbar.view
+        snackbarView.setBackgroundColor(Color.parseColor("#F44336")) // 빨간색 배경
+        val textView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
+        textView.setTextColor(Color.WHITE)
+        textView.maxLines = 3
+        
+        snackbar.show()
+        
+        // 상태 메시지도 업데이트
+        stockStatusText.text = message
+        stockStatusText.setTextColor(Color.parseColor("#F44336"))
         
         // 3초 후 상태 메시지 색상 복원
         handler.postDelayed({

@@ -10,19 +10,27 @@ data class Stock(
     var changeRate: Double,  // 변동률
     var holding: Int,        // 보유량
     val purchasePrices: MutableList<Int> = mutableListOf(), // 매입 가격 리스트
-    var isPositiveNews: Boolean = false // 호재 영향 여부
+    var isPositiveNews: Boolean = false, // 호재 영향 여부
+    var isNegativeNews: Boolean = false  // 악제 영향 여부
 ) {
     fun updateChangeValue() {
         val minChangePercent: Double
         val maxChangePercent: Double
         
-        // 호재 영향 받는 종목은 항상 상승
-        if (isPositiveNews) {
-            minChangePercent = 0.01 // 최소 0.01% 상승
-            maxChangePercent = 0.10 // 최대 0.10% 상승
-        } else {
-            minChangePercent = -0.04
-            maxChangePercent = 0.045
+        // 호재/악제 영향 받는 종목은 각각 상승/하락만 하도록
+        when {
+            isPositiveNews -> {
+                minChangePercent = 0.01 // 최소 0.01% 상승
+                maxChangePercent = 0.10 // 최대 0.10% 상승
+            }
+            isNegativeNews -> {
+                minChangePercent = -0.10 // 최소 0.10% 하락
+                maxChangePercent = -0.01 // 최대 0.01% 하락
+            }
+            else -> {
+                minChangePercent = -0.04
+                maxChangePercent = 0.045
+            }
         }
         
         val randomPercent = (minChangePercent..maxChangePercent).random()
@@ -30,8 +38,12 @@ data class Stock(
         changeValue = calculatedChange
 
         if (changeValue == 0 && price >= 1000) {
-            // 호재 영향을 받는 종목은 무조건 상승하도록
-            changeValue = if (isPositiveNews) 100 else if (Random.nextBoolean()) 100 else -100
+            // 호재/악제 영향을 받는 종목은 각각 무조건 상승/하락만 하도록
+            changeValue = when {
+                isPositiveNews -> 100
+                isNegativeNews -> -100
+                else -> if (Random.nextBoolean()) 100 else -100
+            }
         }
 
         updatePriceAndChangeValue()

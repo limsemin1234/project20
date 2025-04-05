@@ -16,14 +16,24 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
 
     private val handler = Handler(Looper.getMainLooper())
     private val updateInterval = 3000L // 주식 가격 업데이트 간격 (3초)
+    
+    // 호재 이벤트 설정
     private val positiveNewsInterval = 30000L // 호재 이벤트 체크 간격 (30초)
     private val positiveNewsChance = 0.3 // 호재 발생 확률 (30%)
     private val positiveNewsDuration = 20000L // 호재 지속 시간 (20초)
+    
+    // 악제 이벤트 설정
+    private val negativeNewsInterval = 30000L // 악제 이벤트 체크 간격 (30초)
+    private val negativeNewsChance = 0.3 // 악제 발생 확률 (30%)
+    private val negativeNewsDuration = 20000L // 악제 지속 시간 (20초)
     
     private val sharedPreferences = application.getSharedPreferences("stock_data", Context.MODE_PRIVATE)
     
     // 호재 이벤트 콜백
     private var positiveNewsCallback: ((List<String>) -> Unit)? = null
+    
+    // 악제 이벤트 콜백
+    private var negativeNewsCallback: ((List<String>) -> Unit)? = null
 
     init {
         _stockItems.value = mutableListOf(
@@ -37,10 +47,15 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         loadStockData()
         startStockPriceUpdates()
         startPositiveNewsCheck()
+        startNegativeNewsCheck()
     }
     
     fun setPositiveNewsCallback(callback: (List<String>) -> Unit) {
         positiveNewsCallback = callback
+    }
+    
+    fun setNegativeNewsCallback(callback: (List<String>) -> Unit) {
+        negativeNewsCallback = callback
     }
 
     private fun startStockPriceUpdates() {
@@ -61,6 +76,16 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         }, positiveNewsInterval)
     }
     
+    private fun startNegativeNewsCheck() {
+        // 호재 이벤트와 시간차를 두고 체크하기 위해 15초 딜레이 후 시작
+        handler.postDelayed(object : Runnable {
+            override fun run() {
+                checkForNegativeNews()
+                handler.postDelayed(this, negativeNewsInterval)
+            }
+        }, negativeNewsInterval / 2) // 15초 후 시작하여 30초마다 체크
+    }
+    
     private fun checkForPositiveNews() {
         if (Random.nextDouble() < positiveNewsChance) {
             // 30% 확률로 호재 발생
@@ -68,37 +93,93 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
+    private fun checkForNegativeNews() {
+        if (Random.nextDouble() < negativeNewsChance) {
+            // 30% 확률로 악제 발생
+            applyNegativeNews()
+        }
+    }
+    
     private fun applyPositiveNews() {
         _stockItems.value?.let { stocks ->
-            // 모든 주식 호재 영향 초기화
+            // 기존의 호재 영향 초기화
+            stocks.filter { it.isPositiveNews }.forEach { it.isPositiveNews = false }
+            
+            // 악제 영향을 받고 있지 않은 종목들 중에서 선택
+            val eligibleStocks = stocks.filter { !it.isNegativeNews }
+            
+            // 선택 가능한 종목이 2개 이상 있는지 확인
+            if (eligibleStocks.size >= 2) {
+                // 선택 가능한 종목들 중에서 랜덤하게 2개 선택
+                val selectedStocks = eligibleStocks.shuffled().take(2)
+                
+                // 선택된 주식에 호재 적용
+                selectedStocks.forEach { it.isPositiveNews = true }
+                
+                // 호재 영향 받는 주식 이름 리스트
+                val positiveNewsStockNames = selectedStocks.map { it.name }
+                
+                // 콜백 호출 (Fragment에 알림)
+                positiveNewsCallback?.invoke(positiveNewsStockNames)
+                
+                // 20초 후에 호재 효과 제거
+                handler.postDelayed({
+                    removePositiveNews()
+                }, positiveNewsDuration)
+                
+                // UI 업데이트
+                _stockItems.value = stocks
+            }
+        }
+    }
+    
+    private fun applyNegativeNews() {
+        _stockItems.value?.let { stocks ->
+            // 기존의 악제 영향 초기화
+            stocks.filter { it.isNegativeNews }.forEach { it.isNegativeNews = false }
+            
+            // 호재 영향을 받고 있지 않은 종목들 중에서 선택
+            val eligibleStocks = stocks.filter { !it.isPositiveNews }
+            
+            // 선택 가능한 종목이 2개 이상 있는지 확인
+            if (eligibleStocks.size >= 2) {
+                // 선택 가능한 종목들 중에서 랜덤하게 2개 선택
+                val selectedStocks = eligibleStocks.shuffled().take(2)
+                
+                // 선택된 주식에 악제 적용
+                selectedStocks.forEach { it.isNegativeNews = true }
+                
+                // 악제 영향 받는 주식 이름 리스트
+                val negativeNewsStockNames = selectedStocks.map { it.name }
+                
+                // 콜백 호출 (Fragment에 알림)
+                negativeNewsCallback?.invoke(negativeNewsStockNames)
+                
+                // 20초 후에 악제 효과 제거
+                handler.postDelayed({
+                    removeNegativeNews()
+                }, negativeNewsDuration)
+                
+                // UI 업데이트
+                _stockItems.value = stocks
+            }
+        }
+    }
+    
+    private fun removePositiveNews() {
+        _stockItems.value?.let { stocks ->
+            // 호재 영향 제거
             stocks.forEach { it.isPositiveNews = false }
-            
-            // 주식 목록을 섞고 처음 2개 선택
-            val selectedStocks = stocks.shuffled().take(2)
-            
-            // 선택된 주식에 호재 적용
-            selectedStocks.forEach { it.isPositiveNews = true }
-            
-            // 호재 영향 받는 주식 이름 리스트
-            val positiveNewsStockNames = selectedStocks.map { it.name }
-            
-            // 콜백 호출 (Fragment에 알림)
-            positiveNewsCallback?.invoke(positiveNewsStockNames)
-            
-            // 20초 후에 호재 효과 제거
-            handler.postDelayed({
-                removePositiveNews()
-            }, positiveNewsDuration)
             
             // UI 업데이트
             _stockItems.value = stocks
         }
     }
     
-    private fun removePositiveNews() {
+    private fun removeNegativeNews() {
         _stockItems.value?.let { stocks ->
-            // 모든 주식 호재 영향 제거
-            stocks.forEach { it.isPositiveNews = false }
+            // 악제 영향 제거
+            stocks.forEach { it.isNegativeNews = false }
             
             // UI 업데이트
             _stockItems.value = stocks
@@ -173,6 +254,7 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
             stock.holding = 0
             stock.purchasePrices.clear()
             stock.isPositiveNews = false
+            stock.isNegativeNews = false
         }
         saveStockData()
         _stockItems.value = _stockItems.value
