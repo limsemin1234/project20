@@ -162,57 +162,149 @@ class StockFragment : Fragment() {
      * 일반 메시지용 스낵바를 표시합니다.
      */
     private fun showSnackbar(message: String) {
-        val activity = requireActivity()
-        val snackbar = Snackbar.make(activity.findViewById(android.R.id.content), message, Snackbar.LENGTH_SHORT)
-        val snackbarView = snackbar.view
-        snackbarView.setBackgroundColor(Color.argb(200, 33, 33, 33))
         try {
-            val params = snackbarView.layoutParams as FrameLayout.LayoutParams
-            params.gravity = Gravity.CENTER
-            snackbarView.layoutParams = params
-        } catch (e: ClassCastException) {
+            val view = view
+            if (view == null || !isAdded) {
+                // 프래그먼트가 더 이상 붙어있지 않은 경우
+                return
+            }
+            
+            val activity = activity
+            if (activity == null || activity.isFinishing) {
+                // 액티비티가 없거나 종료 중인 경우
+                return
+            }
+            
+            val snackbar = Snackbar.make(view, message, Snackbar.LENGTH_SHORT)
+            val snackbarView = snackbar.view
+            
+            // 안전하게 배경색 설정
+            snackbarView.setBackgroundColor(Color.argb(200, 33, 33, 33))
+            
+            // 텍스트 스타일 설정
+            try {
+                val textView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
+                if (textView != null) {
+                    textView.maxLines = 3
+                }
+            } catch (e: Exception) {
+                // 텍스트뷰 설정 중 오류 발생시 무시하고 기본 스낵바 표시
+            }
+            
+            // 중앙 배치 시도
+            try {
+                if (snackbarView.layoutParams is FrameLayout.LayoutParams) {
+                    val params = snackbarView.layoutParams as FrameLayout.LayoutParams
+                    params.gravity = Gravity.CENTER
+                    snackbarView.layoutParams = params
+                }
+            } catch (e: Exception) {
+                // 레이아웃 파라미터 설정 중 오류 발생시 무시
+            }
+            
+            // 스낵바 표시
+            snackbar.show()
+        } catch (e: Exception) {
+            // 스낵바 표시 중 발생한 모든 예외 처리
         }
-        snackbar.show()
     }
 
     private fun showPositiveNewsMessage(stockNames: List<String>) {
-        val message = "🔥 호재 발생! ${stockNames.joinToString(", ")} 종목 상승중! (20초간)"
-        
-        val activity = requireActivity()
-        val snackbar = Snackbar.make(activity.findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG)
-        val snackbarView = snackbar.view
-        snackbarView.setBackgroundColor(Color.argb(200, 76, 175, 80)) // 초록색 배경
         try {
-            val params = snackbarView.layoutParams as FrameLayout.LayoutParams
-            params.gravity = Gravity.CENTER
-            snackbarView.layoutParams = params
-        } catch (e: ClassCastException) {
+            val view = view
+            if (view == null || !isAdded) {
+                return
+            }
+            
+            val activity = activity
+            if (activity == null || activity.isFinishing) {
+                return
+            }
+            
+            val message = "🔥 호재 발생! ${stockNames.joinToString(", ")} 종목 상승중! (20초간)"
+            
+            val snackbar = Snackbar.make(view, message, Snackbar.LENGTH_LONG)
+            val snackbarView = snackbar.view
+            
+            // 안전하게 배경색 설정
+            snackbarView.setBackgroundColor(Color.argb(200, 76, 175, 80)) // 초록색 배경
+            
+            // 텍스트 스타일 설정
+            try {
+                val textView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
+                if (textView != null) {
+                    textView.setTextColor(Color.WHITE)
+                    textView.maxLines = 3
+                }
+            } catch (e: Exception) {
+                // 텍스트뷰 설정 중 오류 발생시 무시
+            }
+            
+            // 중앙 배치 시도
+            try {
+                if (snackbarView.layoutParams is FrameLayout.LayoutParams) {
+                    val params = snackbarView.layoutParams as FrameLayout.LayoutParams
+                    params.gravity = Gravity.CENTER
+                    snackbarView.layoutParams = params
+                }
+            } catch (e: Exception) {
+                // 레이아웃 파라미터 설정 중 오류 발생시 무시
+            }
+            
+            // 스낵바 표시
+            snackbar.show()
+        } catch (e: Exception) {
+            // 스낵바 표시 중 발생한 모든 예외 처리
         }
-        val textView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
-        textView.setTextColor(Color.WHITE)
-        textView.maxLines = 3
-        
-        snackbar.show()
     }
     
     private fun showNegativeNewsMessage(stockNames: List<String>) {
-        val message = "⚠️ 악제 발생! ${stockNames.joinToString(", ")} 종목 하락중! (20초간)"
-        
-        val activity = requireActivity()
-        val snackbar = Snackbar.make(activity.findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG)
-        val snackbarView = snackbar.view
-        snackbarView.setBackgroundColor(Color.argb(200, 244, 67, 54)) // 빨간색 배경
         try {
-            val params = snackbarView.layoutParams as FrameLayout.LayoutParams
-            params.gravity = Gravity.CENTER
-            snackbarView.layoutParams = params
-        } catch (e: ClassCastException) {
+            val view = view
+            if (view == null || !isAdded) {
+                return
+            }
+            
+            val activity = activity
+            if (activity == null || activity.isFinishing) {
+                return
+            }
+            
+            val message = "⚠️ 악제 발생! ${stockNames.joinToString(", ")} 종목 하락중! (20초간)"
+            
+            val snackbar = Snackbar.make(view, message, Snackbar.LENGTH_LONG)
+            val snackbarView = snackbar.view
+            
+            // 안전하게 배경색 설정
+            snackbarView.setBackgroundColor(Color.argb(200, 244, 67, 54)) // 빨간색 배경
+            
+            // 텍스트 스타일 설정
+            try {
+                val textView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
+                if (textView != null) {
+                    textView.setTextColor(Color.WHITE)
+                    textView.maxLines = 3
+                }
+            } catch (e: Exception) {
+                // 텍스트뷰 설정 중 오류 발생시 무시
+            }
+            
+            // 중앙 배치 시도
+            try {
+                if (snackbarView.layoutParams is FrameLayout.LayoutParams) {
+                    val params = snackbarView.layoutParams as FrameLayout.LayoutParams
+                    params.gravity = Gravity.CENTER
+                    snackbarView.layoutParams = params
+                }
+            } catch (e: Exception) {
+                // 레이아웃 파라미터 설정 중 오류 발생시 무시
+            }
+            
+            // 스낵바 표시
+            snackbar.show()
+        } catch (e: Exception) {
+            // 스낵바 표시 중 발생한 모든 예외 처리
         }
-        val textView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
-        textView.setTextColor(Color.WHITE)
-        textView.maxLines = 3
-        
-        snackbar.show()
     }
 
     private fun updateStockList(newStockItems: MutableList<Stock>?) {
