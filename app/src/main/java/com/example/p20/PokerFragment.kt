@@ -44,6 +44,7 @@ class PokerFragment : Fragment() {
     private var isCardChanged = false
     private var winCount = 0
     private var loseCount = 0
+    private var isWaitingForCleanup = false
     
     // 카드 관련 변수
     private val suits = listOf("♠", "♥", "♦", "♣")
@@ -197,6 +198,11 @@ class PokerFragment : Fragment() {
     private fun addBet(amount: Long) {
         if (isGameActive) {
             showCustomSnackbar("게임 진행 중에는 베팅할 수 없습니다.")
+            return
+        }
+        
+        if (isWaitingForCleanup) {
+            showCustomSnackbar("이전 게임 정리 중입니다. 잠시 기다려주세요.")
             return
         }
         
@@ -429,8 +435,15 @@ class PokerFragment : Fragment() {
     
     private fun endGame() {
         isGameActive = false
+        isWaitingForCleanup = true
         dealButton.isEnabled = false
         changeButton.isEnabled = false
+        
+        // 배팅 버튼 비활성화
+        bet10kButton.isEnabled = false
+        bet50kButton.isEnabled = false
+        bet100kButton.isEnabled = false
+        newGameButton.isEnabled = false
         
         // 족보 평가
         val handRank = evaluateHand()
@@ -471,6 +484,15 @@ class PokerFragment : Fragment() {
             
             // 체크박스 초기화
             cardCheckBoxes.forEach { it.isChecked = false }
+            
+            // 배팅 버튼 다시 활성화
+            bet10kButton.isEnabled = true
+            bet50kButton.isEnabled = true
+            bet100kButton.isEnabled = true
+            newGameButton.isEnabled = true
+            
+            // 정리 대기 상태 해제
+            isWaitingForCleanup = false
             
             showCustomSnackbar("새 게임을 위해 베팅해주세요")
         }, 3000) // 3초 지연

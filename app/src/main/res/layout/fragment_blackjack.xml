@@ -121,10 +121,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="베팅 금액: 0원"
-            android:textColor="@android:color/black"
+            android:text="베팅 금액: ₩0"
             android:textSize="18sp"
-            android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/playerLayout" />
@@ -142,39 +140,28 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/betAmountText">
 
-            <!-- 1만원 버튼 -->
             <Button
                 android:id="@+id/bet10kButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="4dp"
+                android:layout_marginEnd="8dp"
                 android:layout_weight="1"
-                android:backgroundTint="#2196F3"
-                android:text="1만원"
-                android:textColor="@android:color/white" />
+                android:text="10,000원" />
 
-            <!-- 5만원 버튼 -->
             <Button
                 android:id="@+id/bet50kButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:layout_marginEnd="4dp"
+                android:layout_marginEnd="8dp"
                 android:layout_weight="1"
-                android:backgroundTint="#2196F3"
-                android:text="5만원"
-                android:textColor="@android:color/white" />
+                android:text="50,000원" />
 
-            <!-- 10만원 버튼 -->
             <Button
                 android:id="@+id/bet100kButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
                 android:layout_weight="1"
-                android:backgroundTint="#2196F3"
-                android:text="10만원"
-                android:textColor="@android:color/white" />
+                android:text="100,000원" />
         </LinearLayout>
 
         <!-- 게임 컨트롤 버튼 영역 -->
@@ -190,41 +177,28 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/betButtonsLayout">
 
-            <!-- 히트 버튼 -->
             <Button
                 android:id="@+id/hitButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="4dp"
+                android:layout_marginEnd="8dp"
                 android:layout_weight="1"
-                android:backgroundTint="#2196F3"
-                android:enabled="false"
-                android:text="Hit"
-                android:textColor="@android:color/white" />
+                android:text="Hit" />
 
-            <!-- 스탠드 버튼 -->
             <Button
                 android:id="@+id/standButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:layout_marginEnd="4dp"
+                android:layout_marginEnd="8dp"
                 android:layout_weight="1"
-                android:backgroundTint="#2196F3"
-                android:enabled="false"
-                android:text="Stand"
-                android:textColor="@android:color/white" />
+                android:text="Stand" />
 
-            <!-- 새 게임 버튼 -->
             <Button
                 android:id="@+id/newGameButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
                 android:layout_weight="1"
-                android:backgroundTint="#2196F3"
-                android:text="새 게임"
-                android:textColor="@android:color/white" />
+                android:text="새 게임" />
         </LinearLayout>
 
         <!-- 잔액 및 결과 정보 -->

@@ -44,6 +44,7 @@ class BlackjackFragment : Fragment() {
     private var isGameOver = false
     private var winCount = 0
     private var loseCount = 0
+    private var isWaitingForCleanup = false
     
     // 카드 관련 변수
     private val suits = listOf("♠", "♥", "♦", "♣")
@@ -91,6 +92,10 @@ class BlackjackFragment : Fragment() {
         bet100kButton = view.findViewById(R.id.bet100kButton)
         balanceText = view.findViewById(R.id.balanceText)
         winLoseText = view.findViewById(R.id.winLoseText)
+        
+        // 게임 버튼 초기 비활성화
+        hitButton.isEnabled = false
+        standButton.isEnabled = false
         
         // 잔액 업데이트
         updateBalanceText()
@@ -170,6 +175,11 @@ class BlackjackFragment : Fragment() {
     private fun addBet(amount: Long) {
         if (isGameActive) {
             showCustomSnackbar("게임 진행 중에는 베팅할 수 없습니다.")
+            return
+        }
+        
+        if (isWaitingForCleanup) {
+            showCustomSnackbar("이전 게임 정리 중입니다. 잠시 기다려주세요.")
             return
         }
         
@@ -326,17 +336,23 @@ class BlackjackFragment : Fragment() {
     
     private fun addCardView(container: LinearLayout, card: Card, index: Int) {
         val cardView = TextView(requireContext())
+        
+        // 카드 너비 계산 (전체 화면 너비를 6등분하여 카드 크기 결정)
+        val displayMetrics = resources.displayMetrics
+        val screenWidth = displayMetrics.widthPixels
+        val cardWidth = screenWidth / 7  // 7로 나누면 약간의 여유 공간까지 확보
+        
         cardView.layoutParams = LinearLayout.LayoutParams(
-            resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width) / 2,
+            cardWidth,
             ViewGroup.LayoutParams.MATCH_PARENT
         ).apply {
-            marginEnd = resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width) / 20
+            marginEnd = cardWidth / 15  // 카드 간격 조정
         }
         
         cardView.background = ContextCompat.getDrawable(requireContext(), android.R.drawable.btn_default)
         cardView.gravity = Gravity.CENTER
-        cardView.textSize = 18f
-        cardView.setPadding(8, 8, 8, 8)
+        cardView.textSize = 24f  // 텍스트 크기 증가
+        cardView.setPadding(12, 12, 12, 12)  // 패딩 증가
         
         // 첫 번째 딜러 카드는 숨김 (게임 중일 때)
         if (container == dealerCardsLayout && index == 0 && !isGameOver) {
@@ -442,8 +458,15 @@ class BlackjackFragment : Fragment() {
     
     private fun endGame(isPlayerWin: Boolean?, message: String) {
         isGameActive = false
+        isWaitingForCleanup = true
         hitButton.isEnabled = false
         standButton.isEnabled = false
+        
+        // 배팅 버튼 비활성화
+        bet10kButton.isEnabled = false
+        bet50kButton.isEnabled = false
+        bet100kButton.isEnabled = false
+        newGameButton.isEnabled = false
         
         // 결과에 따라 자산 업데이트 및 메시지 표시
         val snackbarColor: Int
@@ -502,6 +525,28 @@ class BlackjackFragment : Fragment() {
         
         // 베팅 초기화
         currentBet = 0L
+        
+        // 3초 후에 카드 지우기
+        Handler(Looper.getMainLooper()).postDelayed({
+            dealerCardsLayout.removeAllViews()
+            playerCardsLayout.removeAllViews()
+            
+            // 점수 초기화
+            dealerScoreText.text = "점수: ?"
+            playerScoreText.text = "점수: 0"
+            
+            // 배팅 버튼 다시 활성화
+            bet10kButton.isEnabled = true
+            bet50kButton.isEnabled = true
+            bet100kButton.isEnabled = true
+            newGameButton.isEnabled = true
+            
+            // 정리 대기 상태 해제
+            isWaitingForCleanup = false
+            
+            // 게임 준비 메시지
+            showCustomSnackbar("새 게임을 위해 베팅해주세요")
+        }, 3000) // 3초 지연
     }
     
     private fun updateBalanceText() {
