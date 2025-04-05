@@ -1,75 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#FFFACD"
-    android:padding="15dp">
+    tools:context=".AlbaFragment">
 
+    <!-- 상단 제목 -->
     <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="☕ 오늘의 파트타임"
-        android:gravity="top"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:layout_margin="15dp"
-        android:textColor="@color/fragment_lavel" />
-
-    <!-- 새로운 레벨 표시 텍스트 -->
-    <TextView
-        android:id="@+id/levelText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="레벨: 1"
-        android:gravity="center"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:layout_marginTop="30dp"
-        android:textColor="@color/alba_level" />
-
-
-
-    <FrameLayout
-        android:id="@+id/animationContainer"
+        android:id="@+id/albaTitleText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"> <!-- 중앙 정렬 -->
-
-        <!-- 알바 이미지 -->
-        <ImageView
-            android:id="@+id/albaImage"
-            android:layout_width="350dp"
-            android:layout_height="350dp"
-            android:src="@drawable/alba1"
-            android:contentDescription="알바 이미지"
-            android:layout_gravity="center" />
-
-    </FrameLayout>
-
-
-    <!-- 알바 화면 설명 텍스트 -->
-    <TextView
-        android:id="@+id/earnText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="터치!! 터치!!"
+        android:layout_marginTop="16dp"
+        android:text="☕ 오늘의 파트타임"
+        android:textColor="@color/fragment_lavel"
+        android:textSize="24sp"
         android:textStyle="bold"
-        android:textSize="18sp"
-        android:gravity="center"
-        android:padding="16dp"
-        android:textColor="@android:color/black" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- 🔥 기본 텍스트 추가: "알바 가능!" -->
-    <TextView
-        android:id="@+id/cooldownText"
+    <!-- 상단 탭 레이아웃 -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/albaTabLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="알바 가능!"
-        android:gravity="center"
-        android:textSize="17sp"
-        android:layout_marginBottom="8dp"
-        android:textColor="@android:color/holo_red_dark" />
+        android:layout_marginTop="8dp"
+        android:background="#E0E0E0"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/albaTitleText"
+        app:tabIndicatorColor="#2196F3"
+        app:tabSelectedTextColor="#2196F3"
+        app:tabTextColor="#757575">
 
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="클릭 알바" />
 
-</LinearLayout>
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="타이밍 알바" />
+
+    </com.google.android.material.tabs.TabLayout>
+
+    <!-- 알바 내용을 위한 ViewPager -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/albaViewPager"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/albaTabLayout" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

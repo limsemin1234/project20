@@ -138,9 +138,14 @@ class MainActivity : AppCompatActivity() {
         // 앱 시작 시 저장된 상태 그대로 시작 -> startGameTimer로 대체됨
         // timeViewModel.startTimer()
 
-        // AssetViewModel 초기화
-        assetViewModel = ViewModelProvider(this, AssetViewModelFactory(applicationContext))
-            .get(AssetViewModel::class.java)
+        // AssetViewModel과 기타 ViewModel 초기화
+        val viewModelFactory = ViewModelFactory(application)
+        assetViewModel = ViewModelProvider(this, viewModelFactory).get(AssetViewModel::class.java)
+        
+        // 알바 관련 ViewModel 초기화
+        ViewModelProvider(this, viewModelFactory).get(AlbaViewModel::class.java)
+        ViewModelProvider(this, viewModelFactory).get(TimingAlbaViewModel::class.java)
+        
         assetTextView = findViewById(R.id.assetInfo)
 
         // 자산 초기 표시

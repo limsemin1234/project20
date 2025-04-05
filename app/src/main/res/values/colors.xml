@@ -20,6 +20,10 @@
     <color name="realestate_reward">#F44336</color>
     <color name="stock_button">#616161</color>
     <color name="realestate_button">#616161</color>
-
-
+    
+    <!-- 타이밍 알바 색상 -->
+    <color name="alba_start_button">#3F51B5</color>
+    <color name="perfect_timing">#FF9800</color>
+    <color name="good_timing">#4CAF50</color>
+    <color name="normal_timing">#2196F3</color>
 </resources>

@@ -14,10 +14,64 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.Observer
+import androidx.viewpager2.adapter.FragmentStateAdapter
+import androidx.viewpager2.widget.ViewPager2
+import com.google.android.material.tabs.TabLayout
+import com.google.android.material.tabs.TabLayoutMediator
 
 class AlbaFragment : Fragment() {
+
+    private lateinit var tabLayout: TabLayout
+    private lateinit var viewPager: ViewPager2
+    private lateinit var adapter: AlbaViewPagerAdapter
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        return inflater.inflate(R.layout.fragment_alba, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        // 탭 레이아웃과 뷰페이저 초기화
+        tabLayout = view.findViewById(R.id.albaTabLayout)
+        viewPager = view.findViewById(R.id.albaViewPager)
+
+        // 어댑터 설정
+        adapter = AlbaViewPagerAdapter(requireActivity())
+        viewPager.adapter = adapter
+
+        // 탭과 뷰페이저 연결
+        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
+            tab.text = when (position) {
+                0 -> "클릭 알바"
+                1 -> "타이밍 알바"
+                else -> "알바"
+            }
+        }.attach()
+    }
+
+    // 뷰페이저 어댑터
+    private inner class AlbaViewPagerAdapter(fa: FragmentActivity) : FragmentStateAdapter(fa) {
+        
+        override fun getItemCount(): Int = 2
+        
+        override fun createFragment(position: Int): Fragment {
+            return when (position) {
+                0 -> ClickAlbaFragment()
+                1 -> TimingAlbaFragment()
+                else -> ClickAlbaFragment()
+            }
+        }
+    }
+}
+
+class ClickAlbaFragment : Fragment() {
 
     private lateinit var albaViewModel: AlbaViewModel
     private lateinit var assetViewModel: AssetViewModel
@@ -32,7 +86,7 @@ class AlbaFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val view = inflater.inflate(R.layout.fragment_alba, container, false)
+        val view = inflater.inflate(R.layout.fragment_click_alba, container, false)
 
         albaViewModel = ViewModelProvider(requireActivity())[AlbaViewModel::class.java]
         assetViewModel = ViewModelProvider(requireActivity())[AssetViewModel::class.java]
