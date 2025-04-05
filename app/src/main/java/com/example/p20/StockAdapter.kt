@@ -44,10 +44,10 @@ class StockAdapter(
         // 호재/악제 영향을 받는 주식인 경우 배경색 변경
         when {
             stock.isPositiveNews -> {
-                holder.itemView.setBackgroundColor(Color.argb(50, 0, 180, 0)) // 연한 녹색 배경
+                holder.itemView.setBackgroundColor(Color.argb(100, 0, 180, 0)) // 진한 녹색 배경 (알파값 50 -> 100)
             }
             stock.isNegativeNews -> {
-                holder.itemView.setBackgroundColor(Color.argb(50, 180, 0, 0)) // 연한 빨간색 배경
+                holder.itemView.setBackgroundColor(Color.argb(100, 180, 0, 0)) // 진한 빨간색 배경 (알파값 50 -> 100)
             }
             else -> {
                 holder.itemView.setBackgroundColor(Color.TRANSPARENT)
