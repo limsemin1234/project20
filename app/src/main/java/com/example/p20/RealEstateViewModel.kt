@@ -21,7 +21,20 @@ class RealEstateViewModel(application: Application) : AndroidViewModel(applicati
     private val incomeHandler = Handler(Looper.getMainLooper())
     private val incomeInterval = 25000L // 임대수익 25초
 
+    // 전쟁 이벤트 관련 변수
+    private val warEventHandler = Handler(Looper.getMainLooper())
+    private val warEventInterval = 30000L // 30초마다 전쟁 이벤트 발생 확률 체크
+    private val warRecoveryDuration = 60000L // 전쟁 후 1분(60초) 후 가격 회복
+    private val warProbability = 10 // 10% 확률로 전쟁 발생
+    private val _warEventMessage = MutableLiveData<String>()
+    val warEventMessage: LiveData<String> get() = _warEventMessage
+    private val affectedEstateIds = mutableSetOf<Int>() // 전쟁 영향 받는 부동산 ID
+    private val originalPrices = mutableMapOf<Int, Long>() // 원래 가격 저장
+
     var incomeCallback: ((Long) -> Unit)? = null
+
+    // 전쟁 이벤트 콜백
+    var warEventCallback: ((String) -> Unit)? = null
 
     init {
         _realEstateList.value = mutableListOf(
@@ -39,6 +52,7 @@ class RealEstateViewModel(application: Application) : AndroidViewModel(applicati
         loadRealEstateData()
         startPriceUpdates()
         startIncomeGeneration()
+        startWarEventChecker() // 전쟁 이벤트 체커 시작
     }
 
     fun buy(realEstate: RealEstate) {
@@ -127,9 +141,90 @@ class RealEstateViewModel(application: Application) : AndroidViewModel(applicati
         saveRealEstateData()
     }
 
+    // 전쟁 이벤트 체커 시작
+    private fun startWarEventChecker() {
+        warEventHandler.post(object : Runnable {
+            override fun run() {
+                checkWarEvent()
+                warEventHandler.postDelayed(this, warEventInterval)
+            }
+        })
+    }
+
+    // 전쟁 이벤트 발생 여부 체크
+    private fun checkWarEvent() {
+        // 이미 전쟁 진행 중이면 체크하지 않음
+        if (affectedEstateIds.isNotEmpty()) return
+        
+        // 전쟁 발생 확률 체크 (10%)
+        if ((1..100).random() <= warProbability) {
+            triggerWarEvent()
+        }
+    }
+
+    // 전쟁 이벤트 발생
+    private fun triggerWarEvent() {
+        val estateList = _realEstateList.value ?: return
+        
+        // 랜덤하게 1~3개의 부동산 선택
+        val numAffected = (1..3).random()
+        val selectedIndices = estateList.indices.shuffled().take(numAffected)
+        
+        // 선택된 부동산들의 가격 저장 및 반으로 감소
+        selectedIndices.forEach { index ->
+            val estate = estateList[index]
+            affectedEstateIds.add(estate.id)
+            originalPrices[estate.id] = estate.price
+            estate.price = estate.price / 2 // 가격 반으로 감소
+        }
+        
+        // 영향받은 부동산 이름 목록
+        val affectedNames = selectedIndices.map { estateList[it].name }
+        val message = "⚠️ 전쟁 발생! ${affectedNames.joinToString(", ")}의 가격이 반으로 하락했습니다!"
+        
+        // 메시지 업데이트 및 콜백 호출
+        _warEventMessage.value = message
+        warEventCallback?.invoke(message)
+        
+        // 리스트 업데이트 및 저장
+        _realEstateList.value = estateList
+        saveRealEstateData()
+        
+        // 1분 후 가격 복구 스케줄링
+        warEventHandler.postDelayed({
+            recoverFromWarEvent()
+        }, warRecoveryDuration)
+    }
+
+    // 전쟁 이벤트 복구
+    private fun recoverFromWarEvent() {
+        val estateList = _realEstateList.value ?: return
+        
+        // 영향받은 부동산들의 가격 복구
+        estateList.forEach { estate ->
+            if (affectedEstateIds.contains(estate.id)) {
+                estate.price = originalPrices[estate.id] ?: estate.price
+            }
+        }
+        
+        // 복구 메시지
+        val message = "✓ 전쟁 상태가 종료되고 부동산 가격이 복구되었습니다."
+        _warEventMessage.value = message
+        warEventCallback?.invoke(message)
+        
+        // 상태 초기화
+        affectedEstateIds.clear()
+        originalPrices.clear()
+        
+        // 리스트 업데이트 및 저장
+        _realEstateList.value = estateList
+        saveRealEstateData()
+    }
+
     override fun onCleared() {
         super.onCleared()
         handler.removeCallbacksAndMessages(null)
         incomeHandler.removeCallbacksAndMessages(null)
+        warEventHandler.removeCallbacksAndMessages(null) // 전쟁 이벤트 핸들러 정리
     }
 }

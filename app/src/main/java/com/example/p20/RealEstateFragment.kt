@@ -31,6 +31,8 @@ class RealEstateFragment : Fragment() {
     private var selectedEstate: RealEstate? = null
 
     private lateinit var incomeMessageText: TextView
+    private lateinit var warEventMessageText: TextView
+    private lateinit var featuresInfoText: TextView
 
     // MotionLayout 관련
     private lateinit var motionLayout: MotionLayout
@@ -50,6 +52,8 @@ class RealEstateFragment : Fragment() {
 
         realEstateRecyclerView = view.findViewById(R.id.realEstateRecyclerView)
         incomeMessageText = view.findViewById(R.id.incomeMessageText)
+        warEventMessageText = view.findViewById(R.id.warEventMessageText)
+        featuresInfoText = view.findViewById(R.id.featuresInfoText)
 
         motionLayout = view.findViewById(R.id.motionLayout)
         estateDetailLayout = view.findViewById(R.id.estateDetailLayout)
@@ -106,6 +110,30 @@ class RealEstateFragment : Fragment() {
 
         }
 
+        // 전쟁 이벤트 메시지 처리
+        realEstateViewModel.warEventMessage.observe(viewLifecycleOwner) { message ->
+            if (message.isNullOrEmpty()) {
+                warEventMessageText.visibility = View.GONE
+            } else {
+                warEventMessageText.text = message
+                warEventMessageText.visibility = View.VISIBLE
+                
+                // 메시지가 전쟁 종료에 관한 것이면 5초 후 숨김
+                if (message.contains("복구")) {
+                    handler.postDelayed({
+                        warEventMessageText.visibility = View.GONE
+                    }, 5000)
+                }
+            }
+        }
+        
+        // 전쟁 이벤트 콜백 설정
+        realEstateViewModel.warEventCallback = { message ->
+            // 진동, 소리 등 추가 알림을 여기서 처리할 수 있음
+            activity?.runOnUiThread {
+                showCustomSnackbar(message)
+            }
+        }
 
         detailBuyButton.setOnClickListener {
             selectedEstate?.let {
@@ -231,7 +259,24 @@ class RealEstateFragment : Fragment() {
         super.onDestroyView()
         // 콜백 참조 해제하여 메모리 누수 방지
         realEstateViewModel.incomeCallback = null
+        realEstateViewModel.warEventCallback = null
         // 핸들러 콜백도 명시적으로 제거 (안전성 강화)
         handler.removeCallbacksAndMessages(null)
+    }
+
+    // 구현 기능 설명 업데이트 메서드
+    fun updateFeaturesInfo(newFeature: String) {
+        val currentText = featuresInfoText.text.toString()
+        val baseText = currentText.split("\n")[0] // "📌 구현 기능:" 부분만 가져옴
+        val features = currentText.substringAfter("\n").split("\n- ").filter { it.isNotEmpty() }.toMutableList()
+        
+        // 새 기능이 이미 있는지 확인
+        if (!features.contains(newFeature)) {
+            features.add(newFeature)
+        }
+        
+        // 업데이트된 텍스트 설정
+        val updatedText = "$baseText\n- ${features.joinToString("\n- ")}"
+        featuresInfoText.text = updatedText
     }
 }
