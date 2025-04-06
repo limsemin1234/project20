@@ -115,20 +115,20 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
         
         val position = _pointerPosition.value ?: 0.0f
         
-        // 중앙 기준 거리 계산 (직접 계산)
-        val centerDistance = Math.abs(position - 0.5f)
+        // 20분할 기준으로 포인터 위치 확인
+        // 0.0~1.0을 20개 구간으로 나누면 각 구간은 0.05 크기
+        // 10번째 칸: 0.45~0.5, 11번째 칸: 0.5~0.55
+        val isPerfect = position >= 0.45f && position < 0.55f
         
-        // 퍼펙트 영역 크기
-        val perfectZoneSize = 0.05f // 5%
-        
-        // 퍼펙트 영역에 있는지 확인 (중앙에서 perfectZoneSize 이내면 성공)
-        if (centerDistance <= perfectZoneSize) {
-            // 성공 처리 (오직 퍼펙트만 성공)
+        if (isPerfect) {
+            // 성공 처리 (10, 11번째 칸에 들어오면 퍼펙트 성공)
             _lastSuccess.value = 1
             _rewardMultiplier.value = 5.0f // 퍼펙트 - 5배
             
             // 성공 시 디버깅 정보
             android.util.Log.d("TimingAlbaDebug", "퍼펙트 성공!")
+            android.util.Log.d("TimingAlbaDebug", "포인터 위치: $position (${position * 100}%)")
+            android.util.Log.d("TimingAlbaDebug", "구간: ${Math.floor(position.toDouble() * 20).toInt() + 1}번째 칸")
             android.util.Log.d("TimingAlbaDebug", "배율 설정: ${_rewardMultiplier.value}")
             android.util.Log.d("TimingAlbaDebug", "레벨: ${_albaLevel.value}, 기본 보상: ${500 * (_albaLevel.value ?: 1)}")
             android.util.Log.d("TimingAlbaDebug", "예상 보상: ${500 * (_albaLevel.value ?: 1) * 5.0f}")
@@ -159,16 +159,15 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
                 }
             }
         } else {
-            // 실패 처리 (퍼펙트 영역 밖은 모두 실패)
+            // 실패 처리 (10, 11번째 칸 외의 위치)
             _lastSuccess.value = -1
             _rewardMultiplier.value = 0f
             
             // 디버깅 정보 (개발 중에만 사용)
             android.util.Log.d("TimingAlbaDebug", "실패 처리:")
             android.util.Log.d("TimingAlbaDebug", "포인터 위치: $position (${position * 100}%)")
-            android.util.Log.d("TimingAlbaDebug", "중앙 거리: $centerDistance")
-            android.util.Log.d("TimingAlbaDebug", "퍼펙트 영역 크기: $perfectZoneSize")
-            android.util.Log.d("TimingAlbaDebug", "판정: centerDistance($centerDistance) > perfectZoneSize($perfectZoneSize)")
+            android.util.Log.d("TimingAlbaDebug", "구간: ${Math.floor(position.toDouble() * 20).toInt() + 1}번째 칸")
+            android.util.Log.d("TimingAlbaDebug", "판정: 구간이 10, 11번째 칸(0.45~0.55)이 아님")
         }
         
         // 쿨다운 시작
@@ -269,7 +268,7 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
     // 배율에 따른 영역 크기를 반환하는 함수 (Fragment에서 사용)
     fun getMultiplierZoneSize(multiplier: Int): Float {
         return when (multiplier) {
-            5 -> 0.05f // 퍼펙트 영역 크기(5%)
+            5 -> 0.05f // 20분할 시 한 칸의 크기
             else -> 0f
         }
     }
