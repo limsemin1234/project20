@@ -33,7 +33,7 @@
             android:gravity="center"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:layout_marginTop="15dp"
+            android:layout_marginTop="5dp"
             android:layout_marginBottom="5dp"
             android:textColor="#3F51B5" />
 
@@ -46,16 +46,16 @@
             android:gravity="center"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:layout_margin="10dp"
+            android:layout_margin="5dp"
             android:textColor="#FF5722" />
 
         <!-- 원 컨테이너 -->
         <FrameLayout
             android:id="@+id/root_frame_layout"
             android:layout_width="match_parent"
-            android:layout_height="300dp"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="20dp"
+            android:layout_height="280dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="10dp"
             android:background="@android:color/transparent">
 
             <!-- 외부 원 -->
@@ -79,7 +79,7 @@
                 android:id="@+id/perfectGuideText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="퍼펙트 : ±5%"
+                android:text="퍼펙트 : 완벽한 일치(±0.5%)"
                 android:textSize="12sp"
                 android:textStyle="bold"
                 android:textColor="#D32F2F"
@@ -108,7 +108,7 @@
             android:layout_gravity="center"
             android:backgroundTint="@color/alba_start_button"
             android:textColor="@android:color/white"
-            android:layout_marginTop="20dp" />
+            android:layout_marginTop="10dp" />
 
         <!-- 쿨다운 및 상태 텍스트 -->
         <TextView
@@ -118,7 +118,7 @@
             android:text="게임 준비 중..."
             android:gravity="center"
             android:textSize="17sp"
-            android:layout_marginTop="15dp"
+            android:layout_marginTop="10dp"
             android:textColor="@android:color/holo_red_dark" />
 
         <!-- 구현 기능 설명 -->

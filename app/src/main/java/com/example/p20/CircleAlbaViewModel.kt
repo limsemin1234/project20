@@ -119,6 +119,22 @@ class CircleAlbaViewModel(application: Application) : AndroidViewModel(applicati
         _outerCircleScale.value = outerScale
     }
 
+    /**
+     * 현재 두 원의 크기 차이에 따라 보상 배율을 계산합니다.
+     * @return 보상 배율 (퍼펙트: 5.0, 좋음: 2.0, 실패: 0.0)
+     */
+    private fun calculateRewardMultiplier(): Float {
+        val innerScale = _innerCircleScale.value ?: 0.0f
+        val outerScale = _outerCircleScale.value ?: 1.0f
+        val difference = Math.abs(innerScale - outerScale)
+        
+        return when {
+            difference <= 0.005f -> 5.0f  // 퍼펙트 (±0.5% - 두 원이 거의 완벽하게 겹칠 때)
+            difference <= 0.15f -> 2.0f   // 좋음 (±15%)
+            else -> 0.0f                  // 실패
+        }
+    }
+
     fun checkTiming() {
         if (_isGameActive.value != true) return
         
@@ -126,32 +142,28 @@ class CircleAlbaViewModel(application: Application) : AndroidViewModel(applicati
         handler.removeCallbacks(runnable)
         
         // 원의 크기 차이로 판정
-        val innerScale = _innerCircleScale.value ?: 0.0f
-        val outerScale = _outerCircleScale.value ?: 1.0f
-        val difference = Math.abs(innerScale - outerScale)
+        val result = calculateRewardMultiplier()
         
         // 로그 출력
-        android.util.Log.d("CircleAlbaDebug", "내부 원 크기: $innerScale")
-        android.util.Log.d("CircleAlbaDebug", "외부 원 크기: $outerScale")
-        android.util.Log.d("CircleAlbaDebug", "크기 차이: $difference")
+        android.util.Log.d("CircleAlbaDebug", "보상 배율: $result")
         
-        // 판정 기준: 크기 차이
+        // 판정 결과 저장
+        _rewardMultiplier.value = result
+        
+        // 결과에 따른 처리
         when {
-            difference <= 0.05f -> { // 퍼펙트 (5배)
+            result >= 5.0f -> { // 퍼펙트
                 _lastSuccess.value = 1
-                _rewardMultiplier.value = 5.0f
                 android.util.Log.d("CircleAlbaDebug", "퍼펙트! 5배 보상")
                 processSucessResult()
             }
-            difference <= 0.15f -> { // 좋음 (2배)
+            result >= 2.0f -> { // 좋음
                 _lastSuccess.value = 1
-                _rewardMultiplier.value = 2.0f
                 android.util.Log.d("CircleAlbaDebug", "좋음! 2배 보상")
                 processSucessResult()
             }
             else -> { // 실패
                 _lastSuccess.value = -1
-                _rewardMultiplier.value = 0f
                 android.util.Log.d("CircleAlbaDebug", "실패...")
             }
         }

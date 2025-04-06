@@ -175,7 +175,7 @@ class CircleAlbaFragment : Fragment() {
         
         // 원 크기 차이에 따라 적절한 가이드 메시지 표시
         when {
-            difference <= 0.05f -> {
+            difference <= 0.005f -> { // 두 원이 거의 완벽하게 겹칠 때만 퍼펙트 (0.5% 이내)
                 circleResultText.text = "퍼펙트 타이밍! 지금 탭하세요!"
                 circleResultText.setTextColor(resources.getColor(R.color.perfect_timing, null))
                 // 퍼펙트 상태일 때 원 색상 변경
