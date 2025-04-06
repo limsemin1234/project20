@@ -55,8 +55,10 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
     val successfulAttempts: LiveData<Int> get() = _successfulAttempts
     
     // 성공 시 중앙에서의 거리에 따른 보상 배율
-    private val SUCCESS_ZONE_SIZE = 0.1f // 중앙으로부터 5% 거리 내에서 성공으로 간주
-    private val PERFECT_ZONE_SIZE = 0.02f // 중앙으로부터 1% 거리 내에서 퍼펙트
+    private val SUCCESS_ZONE_SIZE = 0.2f // 중앙으로부터 20% 거리 내에서 성공으로 간주
+    private val PERFECT_ZONE_SIZE = 0.05f // 중앙으로부터 5% 거리 내에서 퍼펙트
+    private val MULTIPLIER_4_ZONE_SIZE = SUCCESS_ZONE_SIZE * 3.0f / 7.0f // 4배 영역 - 전체 성공 영역의 3/7
+    private val MULTIPLIER_3_ZONE_SIZE = SUCCESS_ZONE_SIZE * 5.0f / 7.0f // 3배 영역 - 전체 성공 영역의 5/7
     
     private val runnable = object : Runnable {
         override fun run() {
@@ -80,9 +82,11 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
         if (_isCooldown.value == true) return
         
         _isGameActive.value = true
-        _pointerPosition.value = 0.0f
+        _pointerPosition.value = 0.0f  // 이렇게 하면 조정 후 0.3 위치에서 시작
         direction = 1
         speed = 0.012f + (_albaLevel.value ?: 1) * 0.002f // 레벨에 따라 속도 더 빠르게 증가
+        
+        android.util.Log.e("TimingAlba", "게임 시작 - 초기 포인터 위치: ${_pointerPosition.value}, 방향: $direction, 속도: $speed")
         
         handler.removeCallbacks(runnable)
         handler.post(runnable)
@@ -100,9 +104,11 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
         if (currentPosition >= 1.0f) {
             currentPosition = 1.0f
             direction = -1
+            android.util.Log.e("TimingAlba", "포인터 오른쪽 경계 도달 - 방향 전환: $direction")
         } else if (currentPosition <= 0.0f) {
             currentPosition = 0.0f
             direction = 1
+            android.util.Log.e("TimingAlba", "포인터 왼쪽 경계 도달 - 방향 전환: $direction")
         }
         
         _pointerPosition.value = currentPosition
@@ -115,26 +121,34 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
         handler.removeCallbacks(runnable)
         
         val position = _pointerPosition.value ?: 0.0f
+        
+        // 중앙 기준 거리 계산 (직접 계산)
         val centerDistance = Math.abs(position - 0.5f)
         
-        // 중앙 영역(0.45 ~ 0.55)에 있는지 확인
-        if (centerDistance <= SUCCESS_ZONE_SIZE) {
-            // 성공 처리
+        // 퍼펙트 영역 크기 증가 (더 넓게)
+        val perfectZoneSize = 0.08f // 8%로 증가
+        
+        // 상세 로그 출력
+        android.util.Log.e("TimingAlba", "==========================================")
+        android.util.Log.e("TimingAlba", "포인터 위치: $position")
+        android.util.Log.e("TimingAlba", "중앙까지 거리: $centerDistance")
+        android.util.Log.e("TimingAlba", "성공 기준: centerDistance <= $perfectZoneSize (${centerDistance <= perfectZoneSize})")
+        android.util.Log.e("TimingAlba", "실패 영역 기준: centerDistance > $perfectZoneSize (${centerDistance > perfectZoneSize})")
+        
+        // 퍼펙트 영역에 있는지 확인 (중앙에서 perfectZoneSize 이내면 성공)
+        if (centerDistance <= perfectZoneSize) {
+            // 성공 처리 (오직 퍼펙트만 성공)
             _lastSuccess.value = 1
             
-            // 중앙에 가까울수록 높은 보상 (최대 5배로 증가)
-            val normalizedDistance = centerDistance / SUCCESS_ZONE_SIZE // 0~1 사이 값
-            val multiplier = if (centerDistance <= PERFECT_ZONE_SIZE) {
-                5.0f // 퍼펙트 타이밍 - 5배로 증가
-            } else {
-                5.0f - (normalizedDistance * 3.0f) // 거리에 따라 2~5배 보상으로 범위 확대
-            }
+            android.util.Log.e("TimingAlba", "5배 영역 판정 - 거리: $centerDistance, 기준: $perfectZoneSize")
+            _rewardMultiplier.value = 5.0f // 퍼펙트 - 5배
+            android.util.Log.e("TimingAlba", "최종 배율 결정: 5.0")
             
-            _rewardMultiplier.value = multiplier
-            
-            // 10번 성공할 때마다 레벨업 (기존 5번에서 10번으로 변경)
+            // 성공했을 때 레벨업 로직 처리
+            // 5번 성공할 때마다 레벨업
             val currentAttempts = sharedPreferences.getInt("successful_attempts", 0)
-            val newAttempts = (currentAttempts + 1) % 10
+            val newAttempts = (currentAttempts + 1) % 5
+            android.util.Log.e("TimingAlba", "성공 횟수 증가: $currentAttempts -> $newAttempts")
             sharedPreferences.edit().putInt("successful_attempts", newAttempts).apply()
             
             // 남은 성공 횟수 업데이트
@@ -144,6 +158,7 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
                 val currentLevel = _albaLevel.value ?: 1
                 val newLevel = currentLevel + 1
                 _albaLevel.value = newLevel
+                android.util.Log.e("TimingAlba", "레벨업! $currentLevel -> $newLevel")
                 sharedPreferences.edit().putInt("timing_alba_level", newLevel).apply()
                 
                 // 레벨업 시 아이템 재고 증가 처리
@@ -156,7 +171,8 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
                 }
             }
         } else {
-            // 실패 처리
+            // 실패 처리 (퍼펙트 영역 밖은 모두 실패)
+            android.util.Log.e("TimingAlba", "실패 판정 - 중앙 거리(${centerDistance})가 퍼펙트 기준($perfectZoneSize)을 초과함")
             _lastSuccess.value = -1
             _rewardMultiplier.value = 0f
         }
@@ -165,22 +181,28 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
         startCooldown()
     }
     
+    private val cooldownRunnable = object : Runnable {
+        override fun run() {
+            val currentTime = _cooldownTime.value ?: 0
+            if (currentTime > 0) {
+                // 쿨다운 중일 때 isCooldown 값을 true로 유지
+                _isCooldown.value = true
+                _cooldownTime.value = currentTime - 1
+                handler.postDelayed(this, 1000)
+            } else {
+                // 쿨다운이 완전히 끝났을 때만 isCooldown을 false로 설정
+                _isCooldown.value = false
+                _cooldownTime.value = 0
+            }
+        }
+    }
+
     private fun startCooldown() {
         _isCooldown.value = true
         _cooldownTime.value = 5 // 5초 쿨다운
         
-        val cooldownRunnable = object : Runnable {
-            override fun run() {
-                val currentTime = _cooldownTime.value ?: 0
-                if (currentTime > 0) {
-                    _cooldownTime.value = currentTime - 1
-                    handler.postDelayed(this, 1000)
-                } else {
-                    _isCooldown.value = false
-                }
-            }
-        }
-        
+        // 기존 콜백 제거 후 새로운 카운트다운 시작
+        handler.removeCallbacks(cooldownRunnable)
         handler.postDelayed(cooldownRunnable, 1000)
     }
     
@@ -220,9 +242,10 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
     fun onGameButtonClicked() {
         val isActive = _isGameActive.value ?: false
         val isCooldown = _isCooldown.value ?: false
+        val cooldownTime = _cooldownTime.value ?: 0
         
-        // 쿨다운 중이면 아무 동작 안함
-        if (isCooldown) return
+        // 쿨다운 중이거나 쿨다운 시간이 남아있으면 아무 동작 안함
+        if (isCooldown || cooldownTime > 0) return
         
         // 게임 중이면 타이밍 체크
         if (isActive) {
@@ -237,11 +260,18 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
     // 게임 상태를 초기화하는 메소드
     fun resetGameState() {
         _isGameActive.value = false
-        _isCooldown.value = false
         _lastSuccess.value = 0
         _pointerPosition.value = 0.0f
-        _cooldownTime.value = 0
-        _rewardMultiplier.value = 1.0f
-        _successfulAttempts.value = 0
+    }
+
+    // 배율에 따른 영역 크기를 반환하는 함수 (Fragment에서 사용)
+    fun getMultiplierZoneSize(multiplier: Int): Float {
+        return when (multiplier) {
+            5 -> 0.08f // 퍼펙트 영역 크기(8%)
+            4 -> MULTIPLIER_4_ZONE_SIZE // 사용하지 않음
+            3 -> MULTIPLIER_3_ZONE_SIZE // 사용하지 않음
+            2 -> SUCCESS_ZONE_SIZE // 사용하지 않음
+            else -> 0f
+        }
     }
 } 

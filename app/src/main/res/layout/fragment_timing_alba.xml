@@ -24,17 +24,18 @@
             android:layout_marginTop="20dp"
             android:textColor="@color/alba_level" />
         
-        <!-- 결과 메시지 -->
+        <!-- 가이드 메시지 -->
         <TextView
             android:id="@+id/resultText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="중앙에 도달했을 때 탭하세요!"
+            android:text="중앙의 빨간색 영역에 정확히 탭하세요!"
             android:gravity="center"
-            android:textSize="18sp"
+            android:textSize="16sp"
             android:textStyle="bold"
             android:layout_marginTop="15dp"
-            android:textColor="@android:color/black" />
+            android:layout_marginBottom="5dp"
+            android:textColor="#D32F2F" />
 
         <!-- 레벨업까지 남은 성공 횟수 -->
         <TextView
@@ -45,15 +46,15 @@
             android:gravity="center"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:layout_marginTop="10dp"
+            android:layout_margin="10dp"
             android:textColor="#FF5722" />
 
         <!-- 게이지 컨테이너 -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="30dp"
-            android:layout_marginBottom="30dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="20dp"
             android:background="@android:color/transparent"
             android:padding="5dp">
 
@@ -71,51 +72,61 @@
                     android:background="@drawable/timing_gauge_background" />
             </LinearLayout>
 
-            <!-- 성공 영역 표시 (초록색으로 시인성 좋게) -->
+            <!-- 성공 영역 구간별 표시 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
                 android:orientation="horizontal">
 
+                <!-- 왼쪽 여백 -->
                 <Space
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="0.4" />
+                    android:layout_weight="0.42" />
 
+                <!-- 퍼펙트 영역(5배) -->
                 <View
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="0.2"
-                    android:background="#4CAF50"
-                    android:alpha="0.5" />
+                    android:layout_weight="0.16"
+                    android:background="#D32F2F"
+                    android:alpha="0.8" />
 
+                <!-- 오른쪽 여백 -->
                 <Space
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="0.4" />
+                    android:layout_weight="0.42" />
             </LinearLayout>
 
-            <!-- 퍼펙트 영역 표시 -->
+            <!-- 배율 표시 텍스트 -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="40dp"
-                android:orientation="horizontal">
+                android:layout_height="15dp"
+                android:orientation="horizontal"
+                android:layout_marginTop="-15dp">
 
+                <!-- 왼쪽 여백 -->
                 <Space
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="0.48" />
+                    android:layout_weight="0.42" />
 
-                <View
+                <!-- 퍼펙트(5배) 표시 -->
+                <TextView
                     android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="0.04"
-                    android:background="#FF5722" />
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0.16"
+                    android:text="x5"
+                    android:textSize="10sp"
+                    android:gravity="center"
+                    android:textColor="#333333" />
 
+                <!-- 오른쪽 여백 -->
                 <Space
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="0.48" />
+                    android:layout_weight="0.42" />
             </LinearLayout>
 
             <!-- 중앙선 표시 (더 뚜렷하게) -->
@@ -128,7 +139,7 @@
             <!-- 움직이는 포인터 (가로 넓이 줄이고 세로는 늘리고 모서리 둥글게) -->
             <View
                 android:id="@+id/pointer"
-                android:layout_width="6dp"
+                android:layout_width="3dp"
                 android:layout_height="55dp"
                 android:background="@drawable/timing_pointer"
                 android:elevation="4dp"
@@ -137,7 +148,7 @@
             <!-- 눈금 표시 (게이지 위에 추가) -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="10dp"
+                android:layout_height="8dp"
                 android:orientation="horizontal"
                 android:weightSum="10">
 
@@ -177,12 +188,6 @@
             android:layout_marginTop="15dp"
             android:textColor="@android:color/holo_red_dark" />
 
-        <!-- 애니메이션 컨테이너 -->
-        <FrameLayout
-            android:id="@+id/timingAnimationContainer"
-            android:layout_width="match_parent"
-            android:layout_height="100dp" />
-            
         <!-- 구현 기능 설명 - 주식처럼 설명 -->
         <TextView
             android:layout_width="match_parent"
@@ -190,7 +195,7 @@
             android:layout_marginTop="20dp"
             android:background="#CC000000"
             android:padding="8dp"
-            android:text="📌 타이밍 알바 기능:\n- 포인터가 좌우로 움직이는 게이지 중앙에 가까울 때 버튼을 누르세요.\n- 중앙에 가까울수록 높은 배율을 받아 더 많은 보상을 얻습니다.\n- 퍼펙트 영역(빨간색)에 탭하면 최고 배율을 얻을 수 있습니다.\n- 5번 성공마다 레벨업하며, 레벨이 높을수록 기본 보상이 증가합니다.\n- 레벨 5, 10, 15... 단위로 상점 아이템의 재고가 1개씩 증가합니다."
+            android:text="📌 타이밍 알바 기능:\n- 포인터가 좌우로 움직이는 게이지 중앙에 정확히 탭하는 고난이도 게임입니다.\n- 오직 중앙의 퍼펙트 영역(빨간색)에 탭했을 때만 성공하며 5배 배율을 얻습니다.\n- 퍼펙트 영역을 벗어나면 모두 실패로 간주되어 보상을 얻지 못합니다.\n- 이전의 인디고(4배), 파란색(3배), 청록색(2배) 영역은 모두 실패 영역입니다.\n- 5번 성공마다 레벨업하며, 레벨이 높을수록 기본 보상이 증가합니다.\n- 레벨 5, 10, 15... 단위로 상점 아이템의 재고가 1개씩 증가합니다."
             android:textColor="#E0E0E0"
             android:textSize="12sp" />
 

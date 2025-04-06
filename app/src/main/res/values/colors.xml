@@ -26,4 +26,5 @@
     <color name="perfect_timing">#FF9800</color>
     <color name="good_timing">#4CAF50</color>
     <color name="normal_timing">#2196F3</color>
+    <color name="button_disabled">#9E9E9E</color>
 </resources>
