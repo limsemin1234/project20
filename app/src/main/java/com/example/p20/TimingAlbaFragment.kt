@@ -145,21 +145,32 @@ class TimingAlbaFragment : Fragment() {
         val parent = pointer.parent as View
         val containerWidth = parent.width - pointer.width
         
-        // 시각적 영역 계산 - 전체 화면 사용
-        val totalContainerWidth = parent.width
-        
-        // 중앙 기준 거리 계산 (0.5에서 얼마나 떨어졌는지)
-        val centerDistance = Math.abs(position - 0.5f)
-        
-        // 화면 위치 계산 - 원본 위치 그대로 사용
+        // 새로운 포인터 넓이를 고려한 위치 계산 (포인터가 3dp로 변경되었기 때문)
         val translationX = containerWidth * position
         pointer.translationX = translationX
         
         // 게임 진행 중일 때만 안내 메시지 표시
         if (timingViewModel.isGameActive.value == true) {
-            // 가이드 메시지만 표시 (디버깅 정보 표시하지 않음)
-            resultText.text = "중앙의 빨간색 영역에 정확히 탭하세요!"
-            resultText.setTextColor(resources.getColor(R.color.perfect_timing, null))
+            // 현재 위치가 퍼펙트 영역에 있는지 시각적으로 표시
+            val isPerfectZone = position >= 0.44f && position < 0.56f
+            
+            if (isPerfectZone) {
+                // 퍼펙트 영역에 있을 때 시각적 피드백
+                resultText.text = "퍼펙트 영역! 지금 탭하세요!"
+                resultText.setTextColor(resources.getColor(R.color.perfect_timing, null))
+                // 포인터 색상도 변경하여 강조
+                pointer.setBackgroundColor(resources.getColor(R.color.perfect_timing, null))
+            } else {
+                // 퍼펙트 영역 밖에 있을 때
+                resultText.text = "중앙의 빨간색 영역에 정확히 탭하세요!"
+                resultText.setTextColor(resources.getColor(R.color.alba_level, null))
+                // 포인터 색상 원래대로
+                pointer.setBackgroundColor(resources.getColor(R.color.pointer_normal, null))
+            }
+            
+            // 디버깅용 - 현재 포인터 위치 표시 (개발 중에만 사용)
+            android.util.Log.d("TimingAlbaDebug", "현재 포인터 위치: $position (${position * 100}%)")
+            android.util.Log.d("TimingAlbaDebug", "퍼펙트 영역 여부: $isPerfectZone")
         }
     }
     

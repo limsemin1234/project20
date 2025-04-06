@@ -53,178 +53,137 @@
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20\dp"
+            android:layout_marginTop="20dp"
             android:layout_marginBottom="20dp"
             android:background="@android:color/transparent"
-            android:padding="0dp">
+            android:padding="5dp">
 
-            <!-- 배경 게이지 (그라데이션 배경 사용) -->
+            <!-- 배경 게이지 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
-                android:orientation="horizontal"
-                android:background="@android:color/transparent">
+                android:orientation="horizontal">
 
-                <!-- 20개 구간 배경 표시 -->
-                <LinearLayout
+                <!-- 게이지 배경 - 그라데이션 사용 -->
+                <View
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:orientation="horizontal">
-                    
-                    <!-- 20개 구간 (각 칸마다 테두리 추가) -->
-                    <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#E1E1E1" />
-                    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#979797" />
-                    <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#E1E1E1" />
-                    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#979797" />
-                    <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#E1E1E1" />
-                    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#979797" />
-                    <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#E1E1E1" />
-                    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#979797" />
-                    <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#E1E1E1" />
-                    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#979797" />
-                    <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#E1E1E1" />
-                    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#979797" />
-                    <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#E1E1E1" />
-                    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#979797" />
-                    <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#E1E1E1" />
-                    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#979797" />
-                    <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#E1E1E1" />
-                    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#979797" />
-                    <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#E1E1E1" />
-                    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#979797" />
-                    <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#E1E1E1" />
-                    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#979797" />
-                    <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#E1E1E1" />
-                    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#979797" />
-                    <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#E1E1E1" />
-                    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#979797" />
-                    <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#E1E1E1" />
-                    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#979797" />
-                    <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#E1E1E1" />
-                    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#979797" />
-                    <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#E1E1E1" />
-                    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#979797" />
-                    <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#E1E1E1" />
-                </LinearLayout>
+                    android:background="#E0E0E0" />
             </LinearLayout>
 
-            <!-- 성공 영역 구간별 표시 -->
+            <!-- 5칸마다 구분선 표시 (더 세련된 방식) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:orientation="horizontal">
+                
+                <!-- 5% 마다 가이드라인 -->
+                <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#00000000" />
+                <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#BBBBBB" android:alpha="0.5" />
+                <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#00000000" />
+                <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#BBBBBB" android:alpha="0.5" />
+                <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#00000000" />
+                <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#BBBBBB" android:alpha="0.5" />
+                <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#00000000" />
+                <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#BBBBBB" android:alpha="0.5" />
+                <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#00000000" />
+                <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#888888" android:alpha="0.8" />
+                <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#00000000" />
+                <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#BBBBBB" android:alpha="0.5" />
+                <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#00000000" />
+                <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#BBBBBB" android:alpha="0.5" />
+                <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#00000000" />
+                <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#BBBBBB" android:alpha="0.5" />
+                <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#00000000" />
+                <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#888888" android:alpha="0.8" />
+                <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" android:background="#00000000" />
+            </LinearLayout>
+
+            <!-- 퍼펙트 영역 표시 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
                 android:orientation="horizontal">
 
-                <!-- 왼쪽 여백 (1~9번째 칸) -->
+                <!-- 왼쪽 여백 (1~8.8번째 칸) -->
                 <Space
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="0.45" />
+                    android:layout_weight="0.44" />
 
-                <!-- 퍼펙트 영역 (10번째, 11번째 칸) -->
+                <!-- 퍼펙트 영역 (8.8~11.2번째 칸) - 약간 확장 -->
                 <View
-                    android:layout_width="1dp"
+                    android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="0.1"
+                    android:layout_weight="0.12"
                     android:background="#D32F2F"
-                    android:alpha="0.8" />
+                    android:alpha="0.7" />
 
-                <!-- 오른쪽 여백 (12~20번째 칸) -->
+                <!-- 오른쪽 여백 (11.2~20번째 칸) -->
                 <Space
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="0.45" />
+                    android:layout_weight="0.44" />
             </LinearLayout>
 
-            <!-- 구간 번호 표시 -->
+            <!-- 중요 눈금 표시 -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="15dp"
+                android:layout_height="5dp"
                 android:orientation="horizontal"
                 android:layout_marginTop="40dp">
-
-                <!-- 5칸마다 번호 표시 (1, 5, 10, 15, 20) -->
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="0.25" android:text="1" android:textSize="10sp" android:gravity="left" android:textColor="#333333" />
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="0.25" android:text="5" android:textSize="10sp" android:gravity="center" android:textColor="#333333" />
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="0.10" android:text="10" android:textSize="10sp" android:gravity="center" android:textColor="#D32F2F" android:textStyle="bold" />
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="0.10" android:text="11" android:textSize="10sp" android:gravity="center" android:textColor="#D32F2F" android:textStyle="bold" />
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="0.05" android:text="15" android:textSize="10sp" android:gravity="center" android:textColor="#333333" />
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="0.25" android:text="20" android:textSize="10sp" android:gravity="right" android:textColor="#333333" />
+                
+                <!-- 5칸 간격으로 눈금 표시 -->
+                <Space android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" />
+                <View android:layout_width="1dp" android:layout_height="5dp" android:background="#555555" />
+                <Space android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" />
+                <View android:layout_width="1dp" android:layout_height="3dp" android:background="#555555" />
+                <Space android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" />
+                <View android:layout_width="1dp" android:layout_height="3dp" android:background="#555555" />
+                <Space android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" />
+                <View android:layout_width="1dp" android:layout_height="3dp" android:background="#555555" />
+                <Space android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" />
+                <View android:layout_width="2dp" android:layout_height="5dp" android:background="#555555" />
+                <Space android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" />
+                <View android:layout_width="1dp" android:layout_height="3dp" android:background="#555555" />
+                <Space android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" />
+                <View android:layout_width="1dp" android:layout_height="3dp" android:background="#555555" />
+                <Space android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" />
+                <View android:layout_width="1dp" android:layout_height="3dp" android:background="#555555" />
+                <Space android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" />
+                <View android:layout_width="1dp" android:layout_height="5dp" android:background="#555555" />
+                <Space android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.05" />
             </LinearLayout>
 
-            <!-- 눈금 표시 (게이지 위에 20분할 표시) -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="10dp"
-                android:orientation="horizontal">
+            <!-- 퍼펙트 표시 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PERFECT ZONE (x5)"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:textColor="#D32F2F"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="45dp"
+                android:background="#55FFFFFF"
+                android:paddingStart="5dp"
+                android:paddingEnd="5dp" />
 
-                <!-- 20개의 눈금 표시 - 더 뚜렷하게 -->
-                <View android:layout_width="0dp" android:layout_height="8dp" android:layout_weight="0.05" android:background="#757575" android:layout_gravity="bottom" />
-                <View android:layout_width="0dp" android:layout_height="4dp" android:layout_weight="0.05" android:background="#757575" android:layout_gravity="bottom" />
-                <View android:layout_width="0dp" android:layout_height="4dp" android:layout_weight="0.05" android:background="#757575" android:layout_gravity="bottom" />
-                <View android:layout_width="0dp" android:layout_height="4dp" android:layout_weight="0.05" android:background="#757575" android:layout_gravity="bottom" />
-                <View android:layout_width="0dp" android:layout_height="8dp" android:layout_weight="0.05" android:background="#757575" android:layout_gravity="bottom" />
-                <View android:layout_width="0dp" android:layout_height="4dp" android:layout_weight="0.05" android:background="#757575" android:layout_gravity="bottom" />
-                <View android:layout_width="0dp" android:layout_height="4dp" android:layout_weight="0.05" android:background="#757575" android:layout_gravity="bottom" />
-                <View android:layout_width="0dp" android:layout_height="4dp" android:layout_weight="0.05" android:background="#757575" android:layout_gravity="bottom" />
-                <View android:layout_width="0dp" android:layout_height="4dp" android:layout_weight="0.05" android:background="#757575" android:layout_gravity="bottom" />
-                <View android:layout_width="0dp" android:layout_height="10dp" android:layout_weight="0.05" android:background="#D32F2F" android:layout_gravity="bottom" />
-                <View android:layout_width="0dp" android:layout_height="10dp" android:layout_weight="0.05" android:background="#D32F2F" android:layout_gravity="bottom" />
-                <View android:layout_width="0dp" android:layout_height="4dp" android:layout_weight="0.05" android:background="#757575" android:layout_gravity="bottom" />
-                <View android:layout_width="0dp" android:layout_height="4dp" android:layout_weight="0.05" android:background="#757575" android:layout_gravity="bottom" />
-                <View android:layout_width="0dp" android:layout_height="4dp" android:layout_weight="0.05" android:background="#757575" android:layout_gravity="bottom" />
-                <View android:layout_width="0dp" android:layout_height="8dp" android:layout_weight="0.05" android:background="#757575" android:layout_gravity="bottom" />
-                <View android:layout_width="0dp" android:layout_height="4dp" android:layout_weight="0.05" android:background="#757575" android:layout_gravity="bottom" />
-                <View android:layout_width="0dp" android:layout_height="4dp" android:layout_weight="0.05" android:background="#757575" android:layout_gravity="bottom" />
-                <View android:layout_width="0dp" android:layout_height="4dp" android:layout_weight="0.05" android:background="#757575" android:layout_gravity="bottom" />
-                <View android:layout_width="0dp" android:layout_height="4dp" android:layout_weight="0.05" android:background="#757575" android:layout_gravity="bottom" />
-                <View android:layout_width="0dp" android:layout_height="8dp" android:layout_weight="0.05" android:background="#757575" android:layout_gravity="bottom" />
-            </LinearLayout>
-
-            <!-- 배율 표시 텍스트 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="15dp"
-                android:orientation="horizontal"
-                android:layout_marginTop="-15dp">
-
-                <!-- 왼쪽 여백 -->
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="0.45" />
-
-                <!-- 퍼펙트(5배) 표시 -->
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.1"
-                    android:text="x5"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:gravity="center"
-                    android:textColor="#D32F2F" />
-
-                <!-- 오른쪽 여백 -->
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="0.45" />
-            </LinearLayout>
-
-            <!-- 중앙선 표시 (더 뚜렷하게) -->
+            <!-- 중앙선 표시 (유지) -->
             <View
                 android:layout_width="2dp"
                 android:layout_height="55dp"
                 android:layout_gravity="center"
                 android:background="#450702" />
 
-            <!-- 움직이는 포인터 (가로 넓이 줄이고 세로는 늘리고 모서리 둥글게) -->
+            <!-- 움직이는 포인터 (개선) -->
             <View
                 android:id="@+id/pointer"
-                android:layout_width="1dp"
+                android:layout_width="3dp"
                 android:layout_height="50dp"
-                android:background="#673AB7"
-                android:elevation="0dp"
+                android:background="#FF5722"
+                android:elevation="6dp"
                 android:layout_gravity="start|center_vertical" />
         </FrameLayout>
 

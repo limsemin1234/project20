@@ -115,10 +115,11 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
         
         val position = _pointerPosition.value ?: 0.0f
         
-        // 20분할 기준으로 포인터 위치 확인
-        // 0.0~1.0을 20개 구간으로 나누면 각 구간은 0.05 크기
-        // 10번째 칸: 0.45~0.5, 11번째 칸: 0.5~0.55
-        val isPerfect = position >= 0.45f && position < 0.55f
+        // 시각적 요소와 판정 로직 일치를 위한 임계값 조정
+        // 시각적 부분에서의 판정 문제를 해결하기 위해 약간 더 관대하게 설정
+        // 이전: 0.45f ~ 0.55f 범위
+        // 수정: 0.44f ~ 0.56f 로 범위 확장
+        val isPerfect = position >= 0.44f && position < 0.56f
         
         if (isPerfect) {
             // 성공 처리 (10, 11번째 칸에 들어오면 퍼펙트 성공)
@@ -129,6 +130,7 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
             android.util.Log.d("TimingAlbaDebug", "퍼펙트 성공!")
             android.util.Log.d("TimingAlbaDebug", "포인터 위치: $position (${position * 100}%)")
             android.util.Log.d("TimingAlbaDebug", "구간: ${Math.floor(position.toDouble() * 20).toInt() + 1}번째 칸")
+            android.util.Log.d("TimingAlbaDebug", "유효범위: 0.44 ~ 0.56 (44% ~ 56%)")
             android.util.Log.d("TimingAlbaDebug", "배율 설정: ${_rewardMultiplier.value}")
             android.util.Log.d("TimingAlbaDebug", "레벨: ${_albaLevel.value}, 기본 보상: ${500 * (_albaLevel.value ?: 1)}")
             android.util.Log.d("TimingAlbaDebug", "예상 보상: ${500 * (_albaLevel.value ?: 1) * 5.0f}")
@@ -167,7 +169,8 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
             android.util.Log.d("TimingAlbaDebug", "실패 처리:")
             android.util.Log.d("TimingAlbaDebug", "포인터 위치: $position (${position * 100}%)")
             android.util.Log.d("TimingAlbaDebug", "구간: ${Math.floor(position.toDouble() * 20).toInt() + 1}번째 칸")
-            android.util.Log.d("TimingAlbaDebug", "판정: 구간이 10, 11번째 칸(0.45~0.55)이 아님")
+            android.util.Log.d("TimingAlbaDebug", "유효범위: 0.44 ~ 0.56 (44% ~ 56%)")
+            android.util.Log.d("TimingAlbaDebug", "판정: 구간이 퍼펙트 존(0.44~0.56)이 아님")
         }
         
         // 쿨다운 시작
