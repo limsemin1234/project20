@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+    
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#F5F5F5"
+        android:padding="15dp">
+
+        <!-- 레벨 및 보상 정보 -->
+        <TextView
+            android:id="@+id/circleLevelText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="레벨: 1\n보상: 100원 x 배율\n(성공 5번마다 레벨업)"
+            android:gravity="center"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="20dp"
+            android:textColor="@color/alba_level" />
+        
+        <!-- 가이드 메시지 -->
+        <TextView
+            android:id="@+id/circleResultText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="두 원이 일치할 때 탭하세요!"
+            android:gravity="center"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="15dp"
+            android:layout_marginBottom="5dp"
+            android:textColor="#3F51B5" />
+
+        <!-- 레벨업까지 남은 성공 횟수 -->
+        <TextView
+            android:id="@+id/circleSuccessCountText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="레벨업까지 남은 성공: 5회"
+            android:gravity="center"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_margin="10dp"
+            android:textColor="#FF5722" />
+
+        <!-- 원 컨테이너 -->
+        <FrameLayout
+            android:id="@+id/root_frame_layout"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="20dp"
+            android:background="@android:color/transparent">
+
+            <!-- 외부 원 -->
+            <View
+                android:id="@+id/outerCircle"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:background="@drawable/circle_outer"
+                android:layout_gravity="center" />
+
+            <!-- 내부 원 -->
+            <View
+                android:id="@+id/innerCircle"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:background="@drawable/circle_inner"
+                android:layout_gravity="center" />
+                
+            <!-- 판정 가이드 -->
+            <TextView
+                android:id="@+id/perfectGuideText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="퍼펙트 : ±5%"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#D32F2F"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="240dp" />
+                
+            <TextView
+                android:id="@+id/goodGuideText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="좋음 : ±15%"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#FF9800"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="260dp" />
+        </FrameLayout>
+
+        <!-- 통합된 게임 버튼 (시작 및 탭) -->
+        <Button
+            android:id="@+id/circleGameButton"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:text="시작하기"
+            android:textSize="24sp"
+            android:layout_gravity="center"
+            android:backgroundTint="@color/alba_start_button"
+            android:textColor="@android:color/white"
+            android:layout_marginTop="20dp" />
+
+        <!-- 쿨다운 및 상태 텍스트 -->
+        <TextView
+            android:id="@+id/circleStatusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="게임 준비 중..."
+            android:gravity="center"
+            android:textSize="17sp"
+            android:layout_marginTop="15dp"
+            android:textColor="@android:color/holo_red_dark" />
+
+        <!-- 구현 기능 설명 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="#CC000000"
+            android:padding="8dp"
+            android:text="📌 원 알바 기능:\n- 두 원의 크기가 일치할 때 정확히 탭하는 게임입니다.\n- 파란색 내부 원은 점점 커지고, 주황색 외부 원은 작아집니다.\n- 두 원의 크기가 거의 일치할 때(±5%) 탭하면 퍼펙트로 5배 보상!\n- 약간 차이가 있어도(±15%) 좋음 판정으로 2배 보상을 받을 수 있습니다.\n- 그 외에는 실패로 보상이 없습니다.\n- 5번 성공마다 레벨업하며, 레벨이 높을수록 기본 보상이 증가합니다.\n- 레벨 5, 10, 15... 단위로 상점 아이템의 재고가 1개씩 증가합니다."
+            android:textColor="#E0E0E0"
+            android:textSize="12sp" />
+
+    </LinearLayout>
+</ScrollView> 

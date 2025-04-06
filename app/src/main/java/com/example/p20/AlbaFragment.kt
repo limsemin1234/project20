@@ -49,8 +49,9 @@ class AlbaFragment : Fragment() {
         // 탭과 뷰페이저 연결
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
             tab.text = when (position) {
-                0 -> "클릭 알바"
-                1 -> "타이밍 알바"
+                0 -> "☕클릭 알바"
+                1 -> "⏱️타이밍 알바"
+                2 -> "🔄원 알바"
                 else -> "알바"
             }
         }.attach()
@@ -59,12 +60,13 @@ class AlbaFragment : Fragment() {
     // 뷰페이저 어댑터
     private inner class AlbaViewPagerAdapter(fa: FragmentActivity) : FragmentStateAdapter(fa) {
         
-        override fun getItemCount(): Int = 2
+        override fun getItemCount(): Int = 3 // 3개의 탭으로 변경
         
         override fun createFragment(position: Int): Fragment {
             return when (position) {
                 0 -> ClickAlbaFragment()
                 1 -> TimingAlbaFragment()
+                2 -> CircleAlbaFragment() // 새로운 겹치는 원 알바 Fragment 추가
                 else -> ClickAlbaFragment()
             }
         }

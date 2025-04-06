@@ -48,6 +48,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="⏱️타이밍 알바" />
+            
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🔄원 알바" />
 
     </com.google.android.material.tabs.TabLayout>
 

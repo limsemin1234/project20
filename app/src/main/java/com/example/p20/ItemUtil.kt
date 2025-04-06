@@ -132,6 +132,22 @@ object ItemUtil {
         }
         return itemIds
     }
+
+    // 원 알바 레벨업 처리
+    fun processCircleAlbaLevelUp(context: Context, level: Int): ItemReward? {
+        // 레벨 5, 10, 15... 마다 아이템 재고 증가
+        return if (level % 5 == 0) {
+            val itemPreferences = context.getSharedPreferences("item_data", Context.MODE_PRIVATE)
+            val currentStock = itemPreferences.getInt("stock_circle_alba_boost", 0)
+            val editor = itemPreferences.edit()
+            editor.putInt("stock_circle_alba_boost", currentStock + 1)
+            editor.apply()
+            
+            ItemReward(4, "원 알바 부스트", 1, false)
+        } else {
+            null
+        }
+    }
 }
 
 /**
