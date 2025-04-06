@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:background="#F5F5F5"
-        android:padding="15dp">
+        android:padding="10dp">
 
         <!-- 레벨 및 보상 정보 -->
         <TextView
@@ -55,7 +55,7 @@
             android:layout_width="match_parent"
             android:layout_height="280dp"
             android:layout_marginTop="5dp"
-            android:layout_marginBottom="10dp"
+            android:layout_marginBottom="5dp"
             android:background="@android:color/transparent">
 
             <!-- 외부 원 -->
