@@ -95,8 +95,7 @@ class TimingAlbaFragment : Fragment() {
                     showRewardAnimation(reward, timingViewModel.rewardMultiplier.value ?: 1.0f)
                 }
                 -1 -> { // 실패
-                    resultText.text = "실패! 다시 시도하세요."
-                    resultText.setTextColor(resources.getColor(android.R.color.holo_red_dark, null))
+                    showFailureMessage()
                 }
             }
         })
@@ -104,12 +103,12 @@ class TimingAlbaFragment : Fragment() {
         // 레벨 관찰
         timingViewModel.albaLevel.observe(viewLifecycleOwner, Observer { level ->
             val baseReward = 500 * level  // 100 -> 500으로 변경
-            timingLevelText.text = "레벨: $level\n보상: ${"%,d".format(baseReward)}원 x 배율\n(성공 5번마다 레벨업)"
+            timingLevelText.text = "레벨: $level\n보상: ${"%,d".format(baseReward)}원 x 배율\n(성공 10번마다 레벨업)"
         })
         
         // 성공 횟수 관찰
         timingViewModel.successfulAttempts.observe(viewLifecycleOwner, Observer { attempts ->
-            val remainingAttempts = 5 - attempts
+            val remainingAttempts = 10 - attempts
             successCountText.text = "레벨업까지 남은 성공: ${remainingAttempts}회"
             
             // 남은 횟수가 적을수록 텍스트 색상 변경
@@ -211,6 +210,9 @@ class TimingAlbaFragment : Fragment() {
         fadeOut.addListener(object : AnimatorListenerAdapter() {
             override fun onAnimationEnd(animation: Animator) {
                 animationContainer.removeView(rewardTextView)
+                
+                // 애니메이션이 끝나면 게임 상태를 초기화하고 시작 화면으로 돌아감
+                resetGameUI()
             }
         })
         
@@ -218,6 +220,16 @@ class TimingAlbaFragment : Fragment() {
         fadeOut.start()
         scaleX.start()
         scaleY.start()
+    }
+    
+    // 게임 UI를 초기 상태로 재설정하는 메소드
+    private fun resetGameUI() {
+        // 결과 텍스트 초기화
+        resultText.text = "중앙에 도달했을 때 탭하세요!"
+        resultText.setTextColor(resources.getColor(android.R.color.black, null))
+        
+        // 게임 상태 값 초기화
+        timingViewModel.resetGameState()
     }
     
     // 아이템 획득 애니메이션 표시
@@ -280,5 +292,15 @@ class TimingAlbaFragment : Fragment() {
             scaleX.start()
             scaleY.start()
         }
+    }
+    
+    private fun showFailureMessage() {
+        resultText.text = "실패! 다시 시도하세요."
+        resultText.setTextColor(resources.getColor(android.R.color.holo_red_dark, null))
+        
+        // 일정 시간 후 메시지 초기화 및 게임 UI 재설정
+        Handler(Looper.getMainLooper()).postDelayed({
+            resetGameUI()
+        }, 1500) // 1.5초 후 초기화
     }
 } 

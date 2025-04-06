@@ -132,9 +132,9 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
             
             _rewardMultiplier.value = multiplier
             
-            // 5번 성공할 때마다 레벨업
+            // 10번 성공할 때마다 레벨업 (기존 5번에서 10번으로 변경)
             val currentAttempts = sharedPreferences.getInt("successful_attempts", 0)
-            val newAttempts = (currentAttempts + 1) % 5
+            val newAttempts = (currentAttempts + 1) % 10
             sharedPreferences.edit().putInt("successful_attempts", newAttempts).apply()
             
             // 남은 성공 횟수 업데이트
@@ -232,5 +232,16 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
         else {
             startGame()
         }
+    }
+
+    // 게임 상태를 초기화하는 메소드
+    fun resetGameState() {
+        _isGameActive.value = false
+        _isCooldown.value = false
+        _lastSuccess.value = 0
+        _pointerPosition.value = 0.0f
+        _cooldownTime.value = 0
+        _rewardMultiplier.value = 1.0f
+        _successfulAttempts.value = 0
     }
 } 

@@ -1,6 +1,7 @@
 package com.example.p20
 
 import android.app.Dialog
+import android.content.Context
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -117,6 +118,26 @@ class GameOverDialogFragment : DialogFragment() {
             albaViewModel.resetAlba()
             timingAlbaViewModel.resetTimingAlba()
             realEstateViewModel.resetRealEstatePrices()
+            
+            // 아이템 관련 SharedPreferences 초기화
+            val itemPrefs = requireContext().getSharedPreferences("item_prefs", Context.MODE_PRIVATE)
+            val itemEditor = itemPrefs.edit()
+            
+            // 기존 데이터 모두 삭제
+            itemEditor.clear()
+            
+            // 초기 아이템 재고 설정: 각 아이템 재고는 1, 보유량은 0으로 설정
+            for (itemId in 1..3) {
+                // 아이템 재고 = 1
+                itemEditor.putInt("item_stock_$itemId", 1)
+                // 아이템 보유량 = 0
+                itemEditor.putInt("item_quantity_$itemId", 0)
+            }
+            
+            // 아이템 초기화 완료 표시
+            itemEditor.putBoolean("has_initialized_stocks", true)
+            itemEditor.apply()
+            
             // 앱 종료
             requireActivity().finishAffinity()
         }
