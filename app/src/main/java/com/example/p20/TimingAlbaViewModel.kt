@@ -54,12 +54,6 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
     private val _successfulAttempts = MutableLiveData<Int>(0)
     val successfulAttempts: LiveData<Int> get() = _successfulAttempts
     
-    // 성공 시 중앙에서의 거리에 따른 보상 배율
-    //private val SUCCESS_ZONE_SIZE = 0.2f // 중앙으로부터 20% 거리 내에서 성공으로 간주
-    //private val PERFECT_ZONE_SIZE = 0.05f // 중앙으로부터 5% 거리 내에서 퍼펙트
-   // private val MULTIPLIER_4_ZONE_SIZE = SUCCESS_ZONE_SIZE * 3.0f / 7.0f // 4배 영역 - 전체 성공 영역의 3/7
-    //private val MULTIPLIER_3_ZONE_SIZE = SUCCESS_ZONE_SIZE * 5.0f / 7.0f // 3배 영역 - 전체 성공 영역의 5/7
-    
     private val runnable = object : Runnable {
         override fun run() {
             updatePointerPosition()
@@ -133,6 +127,12 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
             _lastSuccess.value = 1
             _rewardMultiplier.value = 5.0f // 퍼펙트 - 5배
             
+            // 성공 시 디버깅 정보
+            android.util.Log.d("TimingAlbaDebug", "퍼펙트 성공!")
+            android.util.Log.d("TimingAlbaDebug", "배율 설정: ${_rewardMultiplier.value}")
+            android.util.Log.d("TimingAlbaDebug", "레벨: ${_albaLevel.value}, 기본 보상: ${500 * (_albaLevel.value ?: 1)}")
+            android.util.Log.d("TimingAlbaDebug", "예상 보상: ${500 * (_albaLevel.value ?: 1) * 5.0f}")
+            
             // 성공했을 때 레벨업 로직 처리
             // 5번 성공할 때마다 레벨업
             val currentAttempts = sharedPreferences.getInt("successful_attempts", 0)
@@ -203,7 +203,14 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
     fun getRewardAmount(): Int {
         val baseReward = 500 * (_albaLevel.value ?: 1) // 100 -> 500으로 증가
         val multiplier = _rewardMultiplier.value ?: 0f
-        return (baseReward * multiplier).toInt()
+        val reward = (baseReward * multiplier).toInt()
+        
+        // 보상 계산 디버깅 로그
+        android.util.Log.d("TimingAlbaDebug", "보상 계산:")
+        android.util.Log.d("TimingAlbaDebug", "기본 보상: $baseReward, 현재 배율: $multiplier")
+        android.util.Log.d("TimingAlbaDebug", "최종 보상: $reward")
+        
+        return reward
     }
     
     private fun loadTimingAlbaData() {

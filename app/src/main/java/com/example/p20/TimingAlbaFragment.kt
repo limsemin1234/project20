@@ -87,16 +87,21 @@ class TimingAlbaFragment : Fragment() {
                     val position = timingViewModel.pointerPosition.value ?: 0.0f
                     val reward = timingViewModel.getRewardAmount().toLong()
                     
+                    // 직접 계산해본 보상 값
+                    val calculatedReward = (baseReward * 5.0f).toLong()
+                    
                     // 디버깅 정보 로그 출력 (개발 중에만 사용)
                     android.util.Log.d("TimingAlbaDebug", "성공 시 보상 계산 정보:")
                     android.util.Log.d("TimingAlbaDebug", "포인터 위치: $position (${position * 100}%)")
                     android.util.Log.d("TimingAlbaDebug", "기본 보상: $baseReward, 배율: $multiplier")
                     android.util.Log.d("TimingAlbaDebug", "최종 보상: $reward")
+                    android.util.Log.d("TimingAlbaDebug", "직접 계산한 보상: $calculatedReward (배율 5.0 적용)")
                     
-                    assetViewModel.increaseAsset(reward)
+                    // 실제 보상 금액 증가
+                    assetViewModel.increaseAsset(calculatedReward)
                     
                     // 보상 애니메이션 표시
-                    showRewardAnimation(reward, multiplier)
+                    showRewardAnimation(calculatedReward, 5.0f)
                 }
                 -1 -> { // 실패
                     showFailureMessage()
@@ -223,7 +228,7 @@ class TimingAlbaFragment : Fragment() {
         snackbarView.setBackgroundColor(backgroundColor)
         val textView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
         textView.setTextColor(Color.WHITE)
-        textView.textSize = 18f
+        textView.textSize = 16f
         textView.textAlignment = View.TEXT_ALIGNMENT_CENTER
         textView.maxLines = 3  // 라인 수 증가
         
