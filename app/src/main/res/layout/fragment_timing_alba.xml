@@ -82,13 +82,13 @@
                 <Space
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="0.42" />
+                    android:layout_weight="0.45" />
 
                 <!-- 퍼펙트 영역(5배) -->
                 <View
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="0.16"
+                    android:layout_weight="0.1"
                     android:background="#D32F2F"
                     android:alpha="0.8" />
 
@@ -96,7 +96,7 @@
                 <Space
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="0.42" />
+                    android:layout_weight="0.45" />
             </LinearLayout>
 
             <!-- 배율 표시 텍스트 -->
@@ -110,13 +110,13 @@
                 <Space
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="0.42" />
+                    android:layout_weight="0.45" />
 
                 <!-- 퍼펙트(5배) 표시 -->
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="0.16"
+                    android:layout_weight="0.1"
                     android:text="x5"
                     android:textSize="10sp"
                     android:gravity="center"
@@ -126,7 +126,7 @@
                 <Space
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="0.42" />
+                    android:layout_weight="0.45" />
             </LinearLayout>
 
             <!-- 중앙선 표시 (더 뚜렷하게) -->
@@ -148,7 +148,7 @@
             <!-- 눈금 표시 (게이지 위에 추가) -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="8dp"
+                android:layout_height="22dp"
                 android:orientation="horizontal"
                 android:weightSum="10">
 

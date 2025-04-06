@@ -81,11 +81,22 @@ class TimingAlbaFragment : Fragment() {
         timingViewModel.lastSuccess.observe(viewLifecycleOwner, Observer { result ->
             when (result) {
                 1 -> { // 성공
+                    // 보상 계산 과정을 로그로 확인
+                    val baseReward = 500 * (timingViewModel.albaLevel.value ?: 1)
+                    val multiplier = timingViewModel.rewardMultiplier.value ?: 1.0f
+                    val position = timingViewModel.pointerPosition.value ?: 0.0f
                     val reward = timingViewModel.getRewardAmount().toLong()
+                    
+                    // 디버깅 정보 로그 출력 (개발 중에만 사용)
+                    android.util.Log.d("TimingAlbaDebug", "성공 시 보상 계산 정보:")
+                    android.util.Log.d("TimingAlbaDebug", "포인터 위치: $position (${position * 100}%)")
+                    android.util.Log.d("TimingAlbaDebug", "기본 보상: $baseReward, 배율: $multiplier")
+                    android.util.Log.d("TimingAlbaDebug", "최종 보상: $reward")
+                    
                     assetViewModel.increaseAsset(reward)
                     
                     // 보상 애니메이션 표시
-                    showRewardAnimation(reward, timingViewModel.rewardMultiplier.value ?: 1.0f)
+                    showRewardAnimation(reward, multiplier)
                 }
                 -1 -> { // 실패
                     showFailureMessage()

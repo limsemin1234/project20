@@ -55,10 +55,10 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
     val successfulAttempts: LiveData<Int> get() = _successfulAttempts
     
     // 성공 시 중앙에서의 거리에 따른 보상 배율
-    private val SUCCESS_ZONE_SIZE = 0.2f // 중앙으로부터 20% 거리 내에서 성공으로 간주
-    private val PERFECT_ZONE_SIZE = 0.05f // 중앙으로부터 5% 거리 내에서 퍼펙트
-    private val MULTIPLIER_4_ZONE_SIZE = SUCCESS_ZONE_SIZE * 3.0f / 7.0f // 4배 영역 - 전체 성공 영역의 3/7
-    private val MULTIPLIER_3_ZONE_SIZE = SUCCESS_ZONE_SIZE * 5.0f / 7.0f // 3배 영역 - 전체 성공 영역의 5/7
+    //private val SUCCESS_ZONE_SIZE = 0.2f // 중앙으로부터 20% 거리 내에서 성공으로 간주
+    //private val PERFECT_ZONE_SIZE = 0.05f // 중앙으로부터 5% 거리 내에서 퍼펙트
+   // private val MULTIPLIER_4_ZONE_SIZE = SUCCESS_ZONE_SIZE * 3.0f / 7.0f // 4배 영역 - 전체 성공 영역의 3/7
+    //private val MULTIPLIER_3_ZONE_SIZE = SUCCESS_ZONE_SIZE * 5.0f / 7.0f // 3배 영역 - 전체 성공 영역의 5/7
     
     private val runnable = object : Runnable {
         override fun run() {
@@ -85,6 +85,9 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
         _pointerPosition.value = 0.0f  // 이렇게 하면 조정 후 0.3 위치에서 시작
         direction = 1
         speed = 0.012f + (_albaLevel.value ?: 1) * 0.002f // 레벨에 따라 속도 더 빠르게 증가
+        
+        // 게임 시작 시 배율 초기화 (이전 실패의 영향으로 0이 되었을 수 있음)
+        _rewardMultiplier.value = 1.0f
         
         handler.removeCallbacks(runnable)
         handler.post(runnable)
@@ -121,8 +124,8 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
         // 중앙 기준 거리 계산 (직접 계산)
         val centerDistance = Math.abs(position - 0.5f)
         
-        // 퍼펙트 영역 크기 증가 (더 넓게)
-        val perfectZoneSize = 0.08f // 8%로 증가
+        // 퍼펙트 영역 크기
+        val perfectZoneSize = 0.05f // 5%
         
         // 퍼펙트 영역에 있는지 확인 (중앙에서 perfectZoneSize 이내면 성공)
         if (centerDistance <= perfectZoneSize) {
@@ -159,6 +162,13 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
             // 실패 처리 (퍼펙트 영역 밖은 모두 실패)
             _lastSuccess.value = -1
             _rewardMultiplier.value = 0f
+            
+            // 디버깅 정보 (개발 중에만 사용)
+            android.util.Log.d("TimingAlbaDebug", "실패 처리:")
+            android.util.Log.d("TimingAlbaDebug", "포인터 위치: $position (${position * 100}%)")
+            android.util.Log.d("TimingAlbaDebug", "중앙 거리: $centerDistance")
+            android.util.Log.d("TimingAlbaDebug", "퍼펙트 영역 크기: $perfectZoneSize")
+            android.util.Log.d("TimingAlbaDebug", "판정: centerDistance($centerDistance) > perfectZoneSize($perfectZoneSize)")
         }
         
         // 쿨다운 시작
@@ -246,15 +256,13 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
         _isGameActive.value = false
         _lastSuccess.value = 0
         _pointerPosition.value = 0.0f
+        // 게임 상태 초기화 시 배율 초기화하지 않음 (_rewardMultiplier 값 유지)
     }
 
     // 배율에 따른 영역 크기를 반환하는 함수 (Fragment에서 사용)
     fun getMultiplierZoneSize(multiplier: Int): Float {
         return when (multiplier) {
-            5 -> 0.08f // 퍼펙트 영역 크기(8%)
-            4 -> MULTIPLIER_4_ZONE_SIZE // 사용하지 않음
-            3 -> MULTIPLIER_3_ZONE_SIZE // 사용하지 않음
-            2 -> SUCCESS_ZONE_SIZE // 사용하지 않음
+            5 -> 0.05f // 퍼펙트 영역 크기(5%)
             else -> 0f
         }
     }
