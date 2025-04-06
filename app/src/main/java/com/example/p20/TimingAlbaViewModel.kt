@@ -86,8 +86,6 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
         direction = 1
         speed = 0.012f + (_albaLevel.value ?: 1) * 0.002f // 레벨에 따라 속도 더 빠르게 증가
         
-        android.util.Log.e("TimingAlba", "게임 시작 - 초기 포인터 위치: ${_pointerPosition.value}, 방향: $direction, 속도: $speed")
-        
         handler.removeCallbacks(runnable)
         handler.post(runnable)
         
@@ -104,11 +102,9 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
         if (currentPosition >= 1.0f) {
             currentPosition = 1.0f
             direction = -1
-            android.util.Log.e("TimingAlba", "포인터 오른쪽 경계 도달 - 방향 전환: $direction")
         } else if (currentPosition <= 0.0f) {
             currentPosition = 0.0f
             direction = 1
-            android.util.Log.e("TimingAlba", "포인터 왼쪽 경계 도달 - 방향 전환: $direction")
         }
         
         _pointerPosition.value = currentPosition
@@ -128,27 +124,17 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
         // 퍼펙트 영역 크기 증가 (더 넓게)
         val perfectZoneSize = 0.08f // 8%로 증가
         
-        // 상세 로그 출력
-        android.util.Log.e("TimingAlba", "==========================================")
-        android.util.Log.e("TimingAlba", "포인터 위치: $position")
-        android.util.Log.e("TimingAlba", "중앙까지 거리: $centerDistance")
-        android.util.Log.e("TimingAlba", "성공 기준: centerDistance <= $perfectZoneSize (${centerDistance <= perfectZoneSize})")
-        android.util.Log.e("TimingAlba", "실패 영역 기준: centerDistance > $perfectZoneSize (${centerDistance > perfectZoneSize})")
-        
         // 퍼펙트 영역에 있는지 확인 (중앙에서 perfectZoneSize 이내면 성공)
         if (centerDistance <= perfectZoneSize) {
             // 성공 처리 (오직 퍼펙트만 성공)
             _lastSuccess.value = 1
-            
-            android.util.Log.e("TimingAlba", "5배 영역 판정 - 거리: $centerDistance, 기준: $perfectZoneSize")
             _rewardMultiplier.value = 5.0f // 퍼펙트 - 5배
-            android.util.Log.e("TimingAlba", "최종 배율 결정: 5.0")
             
             // 성공했을 때 레벨업 로직 처리
             // 5번 성공할 때마다 레벨업
             val currentAttempts = sharedPreferences.getInt("successful_attempts", 0)
             val newAttempts = (currentAttempts + 1) % 5
-            android.util.Log.e("TimingAlba", "성공 횟수 증가: $currentAttempts -> $newAttempts")
+            
             sharedPreferences.edit().putInt("successful_attempts", newAttempts).apply()
             
             // 남은 성공 횟수 업데이트
@@ -158,7 +144,6 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
                 val currentLevel = _albaLevel.value ?: 1
                 val newLevel = currentLevel + 1
                 _albaLevel.value = newLevel
-                android.util.Log.e("TimingAlba", "레벨업! $currentLevel -> $newLevel")
                 sharedPreferences.edit().putInt("timing_alba_level", newLevel).apply()
                 
                 // 레벨업 시 아이템 재고 증가 처리
@@ -172,7 +157,6 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
             }
         } else {
             // 실패 처리 (퍼펙트 영역 밖은 모두 실패)
-            android.util.Log.e("TimingAlba", "실패 판정 - 중앙 거리(${centerDistance})가 퍼펙트 기준($perfectZoneSize)을 초과함")
             _lastSuccess.value = -1
             _rewardMultiplier.value = 0f
         }
