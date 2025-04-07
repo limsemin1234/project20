@@ -13,6 +13,7 @@ import android.widget.Button
 import androidx.fragment.app.DialogFragment
 import android.widget.Switch
 import android.widget.Toast
+import android.widget.ImageButton
 
 class SettingsDialogFragment : DialogFragment() {
 
@@ -20,6 +21,10 @@ class SettingsDialogFragment : DialogFragment() {
         val dialog = super.onCreateDialog(savedInstanceState)
         dialog.window?.requestFeature(Window.FEATURE_NO_TITLE)
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        
+        // 다이얼로그 창 외부 배경을 어둡게 설정
+        dialog.window?.setDimAmount(0.8f)
+        
         return dialog
     }
 
@@ -74,8 +79,8 @@ class SettingsDialogFragment : DialogFragment() {
             Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
         }
 
-        // 닫기 버튼
-        view.findViewById<Button>(R.id.btnClose).setOnClickListener {
+        // X 닫기 버튼
+        view.findViewById<ImageButton>(R.id.btnCloseX).setOnClickListener {
             dismiss()
         }
         

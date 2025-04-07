@@ -6,16 +6,34 @@
     android:padding="16dp"
     android:background="@drawable/rounded_dialog_background">
 
-    <!-- 다이얼로그 제목 -->
-    <TextView
+    <!-- 상단 레이아웃 (제목과 X 버튼) -->
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="설정"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:gravity="center"
-        android:textColor="#333333"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="16dp">
+
+        <!-- 다이얼로그 제목 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="설정"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_centerInParent="true"
+            android:textColor="#FFFFFF"/>
+
+        <!-- X 닫기 버튼 -->
+        <ImageButton
+            android:id="@+id/btnCloseX"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="@android:color/transparent"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:tint="#FFFFFF"
+            android:contentDescription="닫기" />
+    </RelativeLayout>
 
     <!-- 설정 항목들 -->
     <LinearLayout
@@ -38,7 +56,7 @@
                 android:layout_weight="1"
                 android:text="소리"
                 android:textSize="16sp"
-                android:textColor="#333333"/>
+                android:textColor="#FFFFFF"/>
 
             <Switch
                 android:id="@+id/switchSound"
@@ -61,7 +79,7 @@
                 android:layout_weight="1"
                 android:text="진동"
                 android:textSize="16sp"
-                android:textColor="#333333"/>
+                android:textColor="#FFFFFF"/>
 
             <Switch
                 android:id="@+id/switchVibration"
@@ -83,20 +101,9 @@
             android:id="@+id/btnReset"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="초기화 화면으로 이동"
+            android:text="초기화"
             android:textSize="16sp"
-            android:backgroundTint="#4CAF50"
-            android:textColor="#FFFFFF"
-            android:layout_marginBottom="8dp"/>
-
-        <!-- 닫기 버튼 -->
-        <Button
-            android:id="@+id/btnClose"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="닫기"
-            android:textSize="16sp"
-            android:backgroundTint="#9E9E9E"
+            android:backgroundTint="#3F51B5"
             android:textColor="#FFFFFF"
             android:layout_marginBottom="8dp"/>
 
