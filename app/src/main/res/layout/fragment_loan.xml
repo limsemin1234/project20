@@ -20,6 +20,15 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:text="대출 상품"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#303F9F"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:text="이자율: 10% (60초마다 발생)"
                 android:textSize="16sp"
                 android:textColor="#333333"
@@ -31,31 +40,26 @@
                 android:layout_height="wrap_content"
                 android:hint="대출할 금액을 입력하세요"
                 android:inputType="number"
+                android:padding="8dp"
+                android:background="@android:drawable/edit_text"
                 android:layout_marginBottom="8dp"/>
 
-            <LinearLayout
+            <Button
+                android:id="@+id/loanButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center">
+                android:text="대출하기"
+                android:backgroundTint="#F44336"
+                android:textColor="@android:color/white"/>
 
-                <Button
-                    android:id="@+id/loanButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="대출하기"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/repayButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="상환하기"
-                    android:layout_marginStart="4dp"/>
-
-            </LinearLayout>
+            <Button
+                android:id="@+id/repayButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="상환하기"
+                android:backgroundTint="#F44336"
+                android:textColor="@android:color/white"
+                android:layout_marginTop="8dp"/>
 
         </LinearLayout>
 
