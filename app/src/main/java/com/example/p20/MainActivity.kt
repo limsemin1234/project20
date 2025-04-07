@@ -295,6 +295,13 @@ class MainActivity : AppCompatActivity() {
                 .setNegativeButton("아니오", null)
                 .show()
         }
+
+        // 설정 버튼 클릭 리스너 설정
+        val buttonSettings = findViewById<Button>(R.id.buttonSettings)
+        buttonSettings.setOnClickListener {
+            val settingsDialog = SettingsDialogFragment()
+            settingsDialog.show(supportFragmentManager, SettingsDialogFragment.TAG)
+        }
     }
 
     private fun showFragment(fragment: Fragment, tag: String) {
@@ -358,4 +365,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
     // --- 추가 끝 ---
+
+    // Fragment를 표시하는 메소드 추가 (없는 경우)
+    fun showFragment(fragment: Fragment) {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.contentFrame, fragment)
+            .commit()
+    }
 }
