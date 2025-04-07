@@ -51,6 +51,21 @@
             android:layout_weight="1"
             android:background="@drawable/main1">
 
+            <TextView
+                android:id="@+id/titleText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:alpha="0"
+                android:gravity="center"
+                android:padding="20dp"
+                android:background="#80000000"
+                android:text="🕒 시간과 돈의 게임 🪙\n\n게임 설명\n\n- 알바, 주식, 부동산 등 다양한 방법으로\n  돈을 벌 수 있습니다.\n\n- 번 돈으로 시간을 구매하여\n  수명을 늘릴 수 있습니다.\n\n- 아이템을 사용하여 게임을 더 유리하게\n  진행할 수 있습니다.\n\n최종 목표는 현재 개발 중입니다.\n더 많은 컨텐츠를 기대해 주세요!\n\n▼ 터치하여 시작하기 ▼"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:lineSpacingExtra="6dp"
+                android:elevation="4dp"
+                android:textStyle="normal" />
         </FrameLayout>
 
         <!-- 하단 버튼 -->
@@ -61,18 +76,6 @@
             android:orientation="horizontal"
             android:padding="5dp"
             android:background="@color/main_bottom_color">
-
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/buttonReset"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:text="초기화"
-                android:textStyle="bold"
-                android:layout_margin="3dp"
-                android:background="@drawable/main_button_selector"
-                android:backgroundTint="@null"
-                android:textColor="@android:color/white" />
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/buttonMyInfo"
@@ -108,18 +111,6 @@
                 android:textStyle="bold"
                 android:layout_margin="3dp"
                 android:background="@drawable/earn_money_card_selector"
-                android:backgroundTint="@null"
-                android:textColor="@android:color/white" />
-
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/buttonExit"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:text="종료"
-                android:textStyle="bold"
-                android:layout_margin="3dp"
-                android:background="@drawable/main_button_selector"
                 android:backgroundTint="@null"
                 android:textColor="@android:color/white" />
 
@@ -247,64 +238,5 @@
                 android:textColor="@android:color/white" />
 
         </LinearLayout>
-    </LinearLayout>
-
-    <!-- 게임 오버 뷰 (초기에는 숨김) -->
-    <LinearLayout
-        android:id="@+id/gameOverView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:background="#E6000000"
-        android:padding="32dp"
-        android:visibility="gone"
-        android:elevation="12dp"
-        android:saveEnabled="false">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Game Over!"
-            android:textSize="32sp"
-            android:textColor="@android:color/holo_red_light"
-            android:textStyle="bold"
-            android:layout_marginBottom="24dp"/>
-
-        <!-- 추가: 다시 시작 시 메시지 (gameOverView 내부, 초기에는 숨김) -->
-        <TextView
-            android:id="@+id/gameOverRestartMessageText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:layout_marginTop="16dp"
-            android:text="시간을 되돌립니다..."
-            android:textColor="@android:color/white"
-            android:textSize="18sp" />
-
-        <TextView
-            android:id="@+id/gameOverFinalAssetText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="최종 자산: 0원"
-            android:textSize="20sp"
-            android:textColor="@android:color/white"
-            android:layout_marginBottom="48dp"/>
-
-        <Button
-            android:id="@+id/gameOverRestartButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="다시 시작"
-            android:textSize="18sp"
-            android:layout_marginBottom="16dp"/>
-
-        <Button
-            android:id="@+id/gameOverExitButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="나가기"
-            android:textSize="18sp"/>
-
     </LinearLayout>
 </FrameLayout>

@@ -165,11 +165,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         /////////////////////////////버튼///////////////////////////////
-        val buttonReset = findViewById<Button>(R.id.buttonReset)
         val buttonAlba = findViewById<Button>(R.id.buttonAlba)
         val buttonStock = findViewById<Button>(R.id.buttonStock)
         val buttonRealEstate = findViewById<Button>(R.id.buttonRealEstate)
-        val buttonExit = findViewById<Button>(R.id.buttonExit)
         val buttonEarnMoney = findViewById<Button>(R.id.buttonEarnMoney)
         val buttonMyInfo = findViewById<Button>(R.id.buttonMyInfo)
         val buttonItem = findViewById<Button>(R.id.buttonItem)
@@ -195,14 +193,6 @@ class MainActivity : AppCompatActivity() {
                 override fun onAnimationRepeat(animation: Animation?) {}
             })
             slidePanel.startAnimation(slideDown)
-        }
-
-        buttonReset.setOnClickListener {
-            // --- 수정: titleText 숨김 제거, ExplanationFragment 제거 추가 ---
-            // titleText.visibility = View.GONE
-            removeExplanationFragment()
-            slidePanel.visibility = View.GONE
-            showFragment(ResetFragment(), "ResetFragment")
         }
 
         buttonAlba.setOnClickListener {
@@ -281,19 +271,6 @@ class MainActivity : AppCompatActivity() {
                 val slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up)
                 slidePanel.startAnimation(slideUp)
             }
-        }
-
-        buttonExit.setOnClickListener {
-            slidePanel.visibility = View.GONE
-            AlertDialog.Builder(this)
-                .setTitle("게임 종료")
-                .setMessage("정말 종료하시겠습니까?")
-                .setPositiveButton("예") { _, _ ->
-                    stockViewModel.saveStockData()
-                    saveDataAndExit()
-                }
-                .setNegativeButton("아니오", null)
-                .show()
         }
 
         // 설정 버튼 클릭 리스너 설정
