@@ -55,6 +55,10 @@ class AssetViewModel(private val context: Context) : ViewModel() {
                     _deposit.value = currentDeposit + interest
                     _asset.value = (_asset.value ?: 0L) + interest
                     _interestNotification.value = "예금 이자 ${formatNumber(interest)}원이 지급되었습니다"
+                } else {
+                    // 예금이 0원이면 타이머 중지
+                    cancel()
+                    depositTimer = null
                 }
             }
 
@@ -69,6 +73,10 @@ class AssetViewModel(private val context: Context) : ViewModel() {
                     val interest = (currentLoan * 0.10).toLong()
                     _loan.value = currentLoan + interest
                     _interestNotification.value = "대출 이자 ${formatNumber(interest)}원이 발생했습니다"
+                } else {
+                    // 대출이 0원이면 타이머 중지
+                    cancel()
+                    loanTimer = null
                 }
             }
 
@@ -130,29 +138,20 @@ class AssetViewModel(private val context: Context) : ViewModel() {
     }
 
     fun resetAssets() {
-        // --- 수정: 초기 자산 50만원으로 변경 ---
-        _asset.value = 500_000L // 초기 자산 50만원으로 변경
-        // --- 수정 끝 ---
-        _realEstateList.value = listOf( // 부동산 목록 초기화
-            RealEstate(1, "반지하 원룸", 30_000_000L),
-            RealEstate(2, "상가 건물", 50_000_000L),
-            RealEstate(3, "아파트", 80_000_000L),
-            RealEstate(4, "오피스텔", 120_000_000L),
-            RealEstate(5, "단독 주택", 200_000_000L),
-            RealEstate(6, "빌딩", 400_000_000L)
-        )
+        // 기존 타이머 취소
+        depositTimer?.cancel()
+        loanTimer?.cancel()
+        
+        // 값 초기화
+        _asset.value = 500_000L // 기본 자산 50만원으로 초기화
+        _deposit.value = 0L // 예금 초기화
+        _loan.value = 0L // 대출 초기화
+        
+        // 새로운 타이머 시작
+        startInterestTimers()
+        
+        // 변경사항 저장
         saveAssetToPreferences()
-        saveRealEstateToPreferences()
-
-        // --- 수정: 모든 아이템 보유 수량 초기화 ---
-        val itemPrefs = context.getSharedPreferences("item_prefs", Context.MODE_PRIVATE)
-        with(itemPrefs.edit()) {
-            putInt("time_amplifier_quantity", 0) // Time증폭(60초) 아이템 수량 0으로 초기화
-            putInt("time_amplifier2_quantity", 0) // Time증폭(120초) 아이템 수량 0으로 초기화
-            putInt("time_amplifier3_quantity", 0) // Time증폭(180초) 아이템 수량 0으로 초기화
-            apply()
-        }
-        // --- 수정 끝 ---
     }
 
     fun setAsset(value: Long) {
