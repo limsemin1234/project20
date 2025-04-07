@@ -23,9 +23,9 @@ import com.example.p20.BankFragment
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var assetViewModel: AssetViewModel // 자산 관리 뷰모델
+    lateinit var assetViewModel: AssetViewModel // 자산 관리 뷰모델
     private lateinit var assetTextView: TextView // 최상단 자산 표시
-    private lateinit var stockViewModel: StockViewModel
+    lateinit var stockViewModel: StockViewModel
     private lateinit var timeViewModel: TimeViewModel // 뷰모델 선언
     private lateinit var realEstateViewModel: RealEstateViewModel // 부동산 뷰모델 추가
     private lateinit var albaViewModel: AlbaViewModel // 알바 뷰모델 추가
@@ -282,6 +282,13 @@ class MainActivity : AppCompatActivity() {
         super.onStop()
         stockViewModel.saveStockData() // 기존 주식 데이터 저장
         assetViewModel.saveAssetToPreferences() // 추가: 자산 데이터 저장
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // 앱이 완전히 종료될 때 데이터 저장
+        stockViewModel.saveStockData()
+        assetViewModel.saveAssetToPreferences()
     }
 
     // ExplanationFragment 제거 함수

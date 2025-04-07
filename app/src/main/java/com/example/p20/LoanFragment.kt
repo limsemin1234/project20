@@ -44,6 +44,13 @@ class LoanFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         viewModel = ViewModelProvider(requireActivity())[AssetViewModel::class.java]
 
+        // 이자 알림 관찰
+        viewModel.interestNotification.observe(viewLifecycleOwner) { message ->
+            if (message.contains("대출 이자")) {
+                showSnackbar(message)
+            }
+        }
+
         loanAmountInput = view.findViewById(R.id.loanAmountInput)
         loanButton = view.findViewById(R.id.loanButton)
         repayButton = view.findViewById(R.id.repayButton)
@@ -156,9 +163,9 @@ class LoanFragment : Fragment() {
 
     private fun updateNumberButtons() {
         number1Button.text = "${selectedNumber1}\n(일의 자리)"
-        number10Button.text = "${selectedNumber10}\n(십의 자리)"
-        number100Button.text = "${selectedNumber100}\n(백의 자리)"
-        number1000Button.text = "${selectedNumber1000}\n(천의 자리)"
+        number10Button.text = "${selectedNumber10}0\n(십의 자리)"
+        number100Button.text = "${selectedNumber100}00\n(백의 자리)"
+        number1000Button.text = "${selectedNumber1000}000\n(천의 자리)"
     }
 
     private fun updateAmountInput() {

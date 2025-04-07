@@ -14,6 +14,7 @@ import androidx.fragment.app.DialogFragment
 import android.widget.Switch
 import android.widget.Toast
 import android.widget.ImageButton
+import androidx.appcompat.app.AlertDialog
 
 class SettingsDialogFragment : DialogFragment() {
 
@@ -101,24 +102,7 @@ class SettingsDialogFragment : DialogFragment() {
         
         // 종료 버튼
         view.findViewById<Button>(R.id.btnExit).setOnClickListener {
-            androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setTitle("게임 종료")
-                .setMessage("정말 종료하시겠습니까?")
-                .setPositiveButton("예") { _, _ ->
-                    // 주식 데이터 저장 등 필요한 저장 작업
-                    val mainActivity = activity as? MainActivity
-                    mainActivity?.let {
-                        // 액티비티가 있는 경우 종료 처리
-                        dismiss()
-                        // MainActivity에 추가한 public 메소드를 호출하여 데이터 저장 후 종료
-                        mainActivity.saveDataAndExit()
-                    } ?: run {
-                        // 액티비티 참조가 없는 경우 안전하게 종료
-                        requireActivity().finishAffinity()
-                    }
-                }
-                .setNegativeButton("아니오", null)
-                .show()
+            showExitConfirmationDialog()
         }
     }
 
@@ -130,6 +114,22 @@ class SettingsDialogFragment : DialogFragment() {
             ViewGroup.LayoutParams.WRAP_CONTENT,
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
+    }
+
+    private fun showExitConfirmationDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("게임 종료")
+            .setMessage("정말로 게임을 종료하시겠습니까?")
+            .setPositiveButton("예") { _, _ ->
+                // 데이터 저장 후 앱 종료
+                (activity as? MainActivity)?.let { mainActivity ->
+                    mainActivity.stockViewModel.saveStockData()
+                    mainActivity.assetViewModel.saveAssetToPreferences()
+                    mainActivity.finishAffinity()
+                }
+            }
+            .setNegativeButton("아니오", null)
+            .show()
     }
 
     companion object {
