@@ -94,9 +94,8 @@ class SettingsDialogFragment : DialogFragment() {
                     val mainActivity = activity as? MainActivity
                     mainActivity?.let {
                         // 액티비티가 있는 경우 종료 처리
-                        // stockViewModel이 MainActivity 내부 프로퍼티로 선언되어 있어 직접 접근 불가
                         dismiss()
-                        // MainActivty에 추가한 public 메소드를 호출하여 데이터 저장 후 종료
+                        // MainActivity에 추가한 public 메소드를 호출하여 데이터 저장 후 종료
                         mainActivity.saveDataAndExit()
                     } ?: run {
                         // 액티비티 참조가 없는 경우 안전하게 종료
