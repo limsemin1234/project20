@@ -97,6 +97,17 @@
             android:text="닫기"
             android:textSize="16sp"
             android:backgroundTint="#9E9E9E"
+            android:textColor="#FFFFFF"
+            android:layout_marginBottom="8dp"/>
+
+        <!-- 종료 버튼 -->
+        <Button
+            android:id="@+id/btnExit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="게임 종료"
+            android:textSize="16sp"
+            android:backgroundTint="#F44336"
             android:textColor="#FFFFFF"/>
     </LinearLayout>
 </LinearLayout> 

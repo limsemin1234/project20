@@ -290,7 +290,7 @@ class MainActivity : AppCompatActivity() {
                 .setMessage("정말 종료하시겠습니까?")
                 .setPositiveButton("예") { _, _ ->
                     stockViewModel.saveStockData()
-                    finishAffinity()
+                    saveDataAndExit()
                 }
                 .setNegativeButton("아니오", null)
                 .show()
@@ -371,5 +371,14 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.contentFrame, fragment)
             .commit()
+    }
+    
+    // 앱 데이터를 저장하고 종료하는 public 메소드 추가
+    fun saveDataAndExit() {
+        // 필요한 데이터 저장 로직 실행
+        // 예: 주식 데이터, 게임 상태 등 저장
+        
+        // 앱 종료
+        finishAffinity()
     }
 }
