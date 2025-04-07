@@ -1,68 +1,142 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:layout_height="match_parent">
 
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/loanCard"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp">
+        android:orientation="vertical"
+        android:padding="16dp">
 
-        <LinearLayout
+        <androidx.cardview.widget.CardView
+            android:id="@+id/loanCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:layout_marginBottom="16dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="대출 상품"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="#303F9F"
-                android:layout_marginBottom="8dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="이자율: 10% (60초마다 발생)"
-                android:textSize="16sp"
-                android:textColor="#333333"
-                android:layout_marginBottom="16dp"/>
-
-            <EditText
-                android:id="@+id/loanAmountInput"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="대출할 금액을 입력하세요"
-                android:inputType="number"
-                android:padding="8dp"
-                android:background="@android:drawable/edit_text"
-                android:layout_marginBottom="8dp"/>
+                android:orientation="vertical"
+                android:padding="16dp">
 
-            <Button
-                android:id="@+id/loanButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="대출하기"
-                android:backgroundTint="#F44336"
-                android:textColor="@android:color/white"/>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="대출 상품"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp"/>
 
-            <Button
-                android:id="@+id/repayButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="상환하기"
-                android:backgroundTint="#F44336"
-                android:textColor="@android:color/white"
-                android:layout_marginTop="8dp"/>
+                <TextView
+                    android:id="@+id/loanInfoText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="이자율: 10% (60초마다 발생)"
+                    android:layout_marginBottom="16dp"/>
 
-        </LinearLayout>
+                <TextView
+                    android:id="@+id/loanAmountInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:padding="8dp"
+                    android:background="@android:drawable/edit_text"
+                    android:layout_marginBottom="16dp"/>
 
-    </com.google.android.material.card.MaterialCardView>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
 
-</LinearLayout> 
+                    <Button
+                        android:id="@+id/unitManButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="만원"
+                        android:layout_marginEnd="4dp"/>
+
+                    <Button
+                        android:id="@+id/unitEokButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="억원"
+                        android:layout_marginEnd="4dp"/>
+
+                    <Button
+                        android:id="@+id/unitJoButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="조원"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="16dp">
+
+                    <Button
+                        android:id="@+id/number1Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="1\n(일의 자리)"
+                        android:gravity="center"
+                        android:layout_marginEnd="4dp"/>
+
+                    <Button
+                        android:id="@+id/number10Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="10\n(십의 자리)"
+                        android:gravity="center"
+                        android:layout_marginEnd="4dp"/>
+
+                    <Button
+                        android:id="@+id/number100Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="100\n(백의 자리)"
+                        android:gravity="center"
+                        android:layout_marginEnd="4dp"/>
+
+                    <Button
+                        android:id="@+id/number1000Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="1000\n(천의 자리)"
+                        android:gravity="center"/>
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/resetButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="금액 초기화"
+                    android:layout_marginBottom="8dp"/>
+
+                <Button
+                    android:id="@+id/loanButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="대출하기"
+                    android:layout_marginBottom="8dp"/>
+
+                <Button
+                    android:id="@+id/repayButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="상환하기"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+    </LinearLayout>
+</ScrollView> 

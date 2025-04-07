@@ -1,70 +1,173 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:fillViewport="true">
 
-    <androidx.cardview.widget.CardView
-        android:id="@+id/depositCard"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardCornerRadius="8dp"
-        app:cardElevation="4dp"
-        app:layout_constraintTop_toTopOf="parent">
+        android:orientation="vertical"
+        android:padding="16dp">
 
-        <LinearLayout
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/depositCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:layout_marginBottom="16dp">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="예금 상품"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="#303F9F"
-                android:layout_marginBottom="8dp"/>
+                android:orientation="vertical"
+                android:padding="16dp">
 
-            <TextView
-                android:id="@+id/depositInfoText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="이자율: 3% (60초마다 지급)"
-                android:textSize="14sp"
-                android:textColor="#4CAF50"
-                android:textStyle="bold"
-                android:layout_marginBottom="16dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="예금 상품"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#303F9F"
+                    android:layout_marginBottom="8dp"/>
 
-            <EditText
-                android:id="@+id/depositAmountInput"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="예금할 금액을 입력하세요"
-                android:inputType="number"
-                android:padding="8dp"
-                android:background="@android:drawable/edit_text"
-                android:layout_marginBottom="8dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="이자율: 3% (60초마다 지급)"
+                    android:textSize="16sp"
+                    android:textColor="#333333"
+                    android:layout_marginBottom="16dp"/>
 
-            <Button
-                android:id="@+id/depositButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="예금하기"
-                android:backgroundTint="#303F9F"
-                android:textColor="@android:color/white"/>
+                <TextView
+                    android:id="@+id/depositAmountInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:padding="8dp"
+                    android:background="@android:drawable/edit_text"
+                    android:layout_marginBottom="16dp"/>
 
-            <Button
-                android:id="@+id/withdrawButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="출금하기"
-                android:backgroundTint="#303F9F"
-                android:textColor="@android:color/white"
-                android:layout_marginTop="8dp"/>
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
+                <Button
+                    android:id="@+id/resetButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="금액 초기화"
+                    android:backgroundTint="#9E9E9E"
+                    android:textColor="@android:color/white"
+                    android:layout_marginBottom="16dp"/>
 
-</androidx.constraintlayout.widget.ConstraintLayout> 
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="단위 선택"
+                    android:textSize="14sp"
+                    android:textColor="#666666"
+                    android:layout_marginBottom="8dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="16dp">
+
+                    <Button
+                        android:id="@+id/unitManButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="만"
+                        android:layout_marginEnd="4dp"/>
+
+                    <Button
+                        android:id="@+id/unitEokButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="억"
+                        android:layout_marginEnd="4dp"/>
+
+                    <Button
+                        android:id="@+id/unitJoButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="조"/>
+
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="숫자 선택"
+                    android:textSize="14sp"
+                    android:textColor="#666666"
+                    android:layout_marginBottom="8dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="16dp">
+
+                    <Button
+                        android:id="@+id/number1Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="1\n(일의 자리)"
+                        android:gravity="center"
+                        android:layout_marginEnd="4dp"/>
+
+                    <Button
+                        android:id="@+id/number10Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="10\n(십의 자리)"
+                        android:gravity="center"
+                        android:layout_marginEnd="4dp"/>
+
+                    <Button
+                        android:id="@+id/number100Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="100\n(백의 자리)"
+                        android:gravity="center"
+                        android:layout_marginEnd="4dp"/>
+
+                    <Button
+                        android:id="@+id/number1000Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="1000\n(천의 자리)"
+                        android:gravity="center"/>
+
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/depositButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="예금하기"
+                    android:backgroundTint="#303F9F"
+                    android:textColor="@android:color/white"/>
+
+                <Button
+                    android:id="@+id/withdrawButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="출금하기"
+                    android:backgroundTint="#303F9F"
+                    android:textColor="@android:color/white"
+                    android:layout_marginTop="8dp"/>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+
+</ScrollView> 
