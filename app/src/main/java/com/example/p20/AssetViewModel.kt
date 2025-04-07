@@ -13,6 +13,12 @@ class AssetViewModel(private val context: Context) : ViewModel() {
     private val _realEstateList = MutableLiveData<List<RealEstate>>()
     val realEstateList: LiveData<List<RealEstate>> get() = _realEstateList
 
+    private val _deposit = MutableLiveData<Long>()
+    val deposit: LiveData<Long> = _deposit
+
+    private val _loan = MutableLiveData<Long>()
+    val loan: LiveData<Long> = _loan
+
     init {
         // --- 수정: SharedPreferences에서 자산 로드 활성화 ---
         val sharedPreferences = context.getSharedPreferences("game_preferences", Context.MODE_PRIVATE)
@@ -20,6 +26,8 @@ class AssetViewModel(private val context: Context) : ViewModel() {
         val savedAsset = sharedPreferences.getLong("asset", 500_000L) // 저장된 값 로드, 없으면 50만원
         // --- 수정 끝 ---
         _asset.value = savedAsset
+        _deposit.value = 0L
+        _loan.value = 0L
         // _asset.value = 40_000_000L // 항상 4천만원으로 시작하는 코드 삭제 또는 주석 처리
         // saveAssetToPreferences() // 시작 시 저장 로직은 필요 없음 (로드 실패 시 기본값 사용)
         // --- 수정 끝 ---
@@ -92,6 +100,27 @@ class AssetViewModel(private val context: Context) : ViewModel() {
             apply()
         }
         // --- 수정 끝 ---
+    }
+
+    fun setAsset(value: Long) {
+        _asset.value = value
+        saveAssetToPreferences()
+    }
+
+    fun addDeposit(amount: Long) {
+        _deposit.value = (_deposit.value ?: 0L) + amount
+    }
+
+    fun subtractDeposit(amount: Long) {
+        _deposit.value = (_deposit.value ?: 0L) - amount
+    }
+
+    fun addLoan(amount: Long) {
+        _loan.value = (_loan.value ?: 0L) + amount
+    }
+
+    fun subtractLoan(amount: Long) {
+        _loan.value = (_loan.value ?: 0L) - amount
     }
 
     // --- 추가: ViewModel 소멸 시 자산 저장 ---

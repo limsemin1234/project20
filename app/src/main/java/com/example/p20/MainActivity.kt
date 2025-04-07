@@ -19,6 +19,7 @@ import com.example.p20.RealInfoFragment
 import com.example.p20.ItemFragment
 import com.example.p20.CasinoFragment
 import com.example.p20.LottoFragment
+import com.example.p20.BankFragment
 
 class MainActivity : AppCompatActivity() {
 
@@ -147,6 +148,7 @@ class MainActivity : AppCompatActivity() {
         val buttonEarnMoney = findViewById<Button>(R.id.buttonEarnMoney)
         val buttonMyInfo = findViewById<Button>(R.id.buttonMyInfo)
         val buttonItem = findViewById<Button>(R.id.buttonItem)
+        val buttonBank = findViewById<Button>(R.id.buttonBank)
         val buttonCasino = findViewById<Button>(R.id.buttonCasino)
         val buttonLotto = findViewById<Button>(R.id.buttonLotto)
         val slidePanel = findViewById<LinearLayout>(R.id.slidePanel)
@@ -204,6 +206,12 @@ class MainActivity : AppCompatActivity() {
             removeExplanationFragment()
             slidePanel.visibility = View.GONE
             showFragment(RealInfoFragment(), "RealInfoFragment")
+        }
+
+        buttonBank.setOnClickListener {
+            removeExplanationFragment()
+            slidePanel.visibility = View.GONE
+            showFragment(BankFragment(), "BankFragment")
         }
 
         buttonItem.setOnClickListener {
