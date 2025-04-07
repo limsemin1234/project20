@@ -140,6 +140,18 @@
                 android:background="@drawable/main_button_selector"
                 android:backgroundTint="@null"
                 android:textColor="@android:color/white" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/buttonSettings"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="설정"
+                android:textStyle="bold"
+                android:layout_margin="3dp"
+                android:background="@drawable/main_button_selector"
+                android:backgroundTint="@null"
+                android:textColor="@android:color/white" />
         </LinearLayout>
     </LinearLayout>
 
