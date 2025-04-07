@@ -35,7 +35,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="이자율: 3% (60초마다 지급)"
-                    android:textSize="16sp"
+                    android:textSize="14sp"
                     android:textColor="#333333"
                     android:layout_marginBottom="16dp"/>
 
@@ -57,26 +57,19 @@
                     android:textColor="@android:color/white"
                     android:layout_marginBottom="16dp"/>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="단위 선택"
-                    android:textSize="14sp"
-                    android:textColor="#666666"
-                    android:layout_marginBottom="8dp"/>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginBottom="16dp">
+                    android:layout_marginBottom="10dp">
 
                     <Button
                         android:id="@+id/unitManButton"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="만"
+                        android:text="만원"
                         android:layout_marginEnd="4dp"/>
 
                     <Button
@@ -84,7 +77,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="억"
+                        android:text="억원"
                         android:layout_marginEnd="4dp"/>
 
                     <Button
@@ -92,17 +85,10 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="조"/>
+                        android:text="조원"/>
 
                 </LinearLayout>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="숫자 선택"
-                    android:textSize="14sp"
-                    android:textColor="#666666"
-                    android:layout_marginBottom="8dp"/>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -153,7 +139,8 @@
                     android:layout_height="wrap_content"
                     android:text="예금하기"
                     android:backgroundTint="#303F9F"
-                    android:textColor="@android:color/white"/>
+                    android:textColor="@android:color/white"
+                    android:layout_marginBottom="8dp"/>
 
                 <Button
                     android:id="@+id/withdrawButton"
@@ -165,9 +152,6 @@
                     android:layout_marginTop="8dp"/>
 
             </LinearLayout>
-
         </com.google.android.material.card.MaterialCardView>
-
     </LinearLayout>
-
 </ScrollView> 
