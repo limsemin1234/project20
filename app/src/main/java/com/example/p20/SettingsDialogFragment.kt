@@ -84,6 +84,21 @@ class SettingsDialogFragment : DialogFragment() {
             dismiss()
         }
         
+        // 설명 버튼
+        view.findViewById<Button>(R.id.btnExplanation).setOnClickListener {
+            val mainActivity = activity as? MainActivity
+            mainActivity?.let {
+                // 다이얼로그 닫기
+                dismiss()
+                
+                // ExplanationFragment 표시
+                val explanationFragment = ExplanationFragment()
+                it.supportFragmentManager.beginTransaction()
+                    .add(R.id.contentFrame, explanationFragment, "ExplanationFragment")
+                    .commit()
+            }
+        }
+        
         // 종료 버튼
         view.findViewById<Button>(R.id.btnExit).setOnClickListener {
             androidx.appcompat.app.AlertDialog.Builder(requireContext())
