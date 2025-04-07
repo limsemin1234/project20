@@ -24,6 +24,7 @@ class GameOverDialogFragment : DialogFragment() {
     private lateinit var stockViewModel: StockViewModel
     private lateinit var albaViewModel: AlbaViewModel
     private lateinit var realEstateViewModel: RealEstateViewModel
+    private lateinit var circleAlbaViewModel: CircleAlbaViewModel
     private val handler = Handler(Looper.getMainLooper())
 
     override fun onCreateView(
@@ -44,6 +45,7 @@ class GameOverDialogFragment : DialogFragment() {
         albaViewModel = ViewModelProvider(requireActivity()).get(AlbaViewModel::class.java)
         realEstateViewModel = ViewModelProvider(requireActivity()).get(RealEstateViewModel::class.java)
         val timingAlbaViewModel = ViewModelProvider(requireActivity()).get(TimingAlbaViewModel::class.java)
+        circleAlbaViewModel = ViewModelProvider(requireActivity()).get(CircleAlbaViewModel::class.java)
 
         // 뷰 참조
         val finalAssetText = view.findViewById<TextView>(R.id.dialogFinalAssetText)
@@ -102,6 +104,9 @@ class GameOverDialogFragment : DialogFragment() {
 
             // 3초 후 실행 (멤버 핸들러 사용)
             handler.postDelayed({
+                // 원 알바 초기화
+                circleAlbaViewModel.resetCircleAlba()
+                
                 // MainActivity에 다시 시작 요청 (리셋 및 ExplanationFragment 표시 트리거)
                 timeViewModel.requestRestart()
                 // 다이얼로그 닫기
@@ -117,6 +122,7 @@ class GameOverDialogFragment : DialogFragment() {
             stockViewModel.resetStocks()
             albaViewModel.resetAlba()
             timingAlbaViewModel.resetTimingAlba()
+            circleAlbaViewModel.resetCircleAlba()
             realEstateViewModel.resetRealEstatePrices()
             
             // 아이템 관련 SharedPreferences 초기화

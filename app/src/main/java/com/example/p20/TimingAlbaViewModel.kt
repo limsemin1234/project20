@@ -195,7 +195,7 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
 
     private fun startCooldown() {
         _isCooldown.value = true
-        _cooldownTime.value = 5 // 5초 쿨다운
+        _cooldownTime.value = 3 // 3초 쿨다운
         
         // 기존 콜백 제거 후 새로운 카운트다운 시작
         handler.removeCallbacks(cooldownRunnable)
