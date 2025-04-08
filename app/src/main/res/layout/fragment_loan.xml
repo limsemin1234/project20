@@ -48,6 +48,56 @@
                     android:background="@android:drawable/edit_text"
                     android:layout_marginBottom="16dp"/>
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="자산 기준 대출 금액 선택"
+                    android:textStyle="bold"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="8dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="16dp">
+
+                    <Button
+                        android:id="@+id/percent25Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="25%"
+                        android:backgroundTint="#FF9800"
+                        android:layout_marginEnd="4dp"/>
+
+                    <Button
+                        android:id="@+id/percent50Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="50%"
+                        android:backgroundTint="#FF9800"
+                        android:layout_marginEnd="4dp"/>
+
+                    <Button
+                        android:id="@+id/percent75Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="75%"
+                        android:backgroundTint="#FF9800"
+                        android:layout_marginEnd="4dp"/>
+                        
+                    <Button
+                        android:id="@+id/percent100Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="100%"
+                        android:backgroundTint="#FF9800"/>
+                </LinearLayout>
+
                 <Button
                     android:id="@+id/resetButton"
                     android:layout_width="match_parent"
@@ -61,7 +111,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginBottom="10dp">
+                    android:layout_marginBottom="10dp"
+                    android:visibility="gone">
 
                     <Button
                         android:id="@+id/unitManButton"
@@ -91,7 +142,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginBottom="16dp">
+                    android:layout_marginBottom="16dp"
+                    android:visibility="gone">
 
                     <Button
                         android:id="@+id/number1Button"

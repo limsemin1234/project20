@@ -20,6 +20,10 @@ class LoanFragment : Fragment() {
     private lateinit var loanButton: Button
     private lateinit var repayButton: Button
     private lateinit var resetButton: Button
+    private lateinit var percent25Button: Button
+    private lateinit var percent50Button: Button
+    private lateinit var percent75Button: Button
+    private lateinit var percent100Button: Button
     private lateinit var unitManButton: Button
     private lateinit var unitEokButton: Button
     private lateinit var unitJoButton: Button
@@ -56,6 +60,10 @@ class LoanFragment : Fragment() {
         loanButton = view.findViewById(R.id.loanButton)
         repayButton = view.findViewById(R.id.repayButton)
         resetButton = view.findViewById(R.id.resetButton)
+        percent25Button = view.findViewById(R.id.percent25Button)
+        percent50Button = view.findViewById(R.id.percent50Button)
+        percent75Button = view.findViewById(R.id.percent75Button)
+        percent100Button = view.findViewById(R.id.percent100Button)
         unitManButton = view.findViewById(R.id.unitManButton)
         unitEokButton = view.findViewById(R.id.unitEokButton)
         unitJoButton = view.findViewById(R.id.unitJoButton)
@@ -80,13 +88,31 @@ class LoanFragment : Fragment() {
 
         // 금액 초기화 버튼 클릭 이벤트
         resetButton.setOnClickListener {
-            selectedNumber1 = 0
-            selectedNumber10 = 0
-            selectedNumber100 = 0
-            selectedNumber1000 = 0
-            selectedUnit = 10000L
-            updateNumberButtons()
-            updateAmountInput()
+            updateAmountInput(0L)
+        }
+        
+        // 자산 퍼센트 버튼 이벤트
+        percent25Button.setOnClickListener {
+            val currentAsset = viewModel.asset.value ?: 0L
+            val amount = (currentAsset * 0.25).toLong()
+            updateAmountInput(amount)
+        }
+        
+        percent50Button.setOnClickListener {
+            val currentAsset = viewModel.asset.value ?: 0L
+            val amount = (currentAsset * 0.5).toLong()
+            updateAmountInput(amount)
+        }
+        
+        percent75Button.setOnClickListener {
+            val currentAsset = viewModel.asset.value ?: 0L
+            val amount = (currentAsset * 0.75).toLong()
+            updateAmountInput(amount)
+        }
+        
+        percent100Button.setOnClickListener {
+            val currentAsset = viewModel.asset.value ?: 0L
+            updateAmountInput(currentAsset)
         }
 
         // 단위 버튼 클릭 이벤트
@@ -131,7 +157,7 @@ class LoanFragment : Fragment() {
         }
 
         loanButton.setOnClickListener {
-            val amount = calculateAmount()
+            val amount = getSelectedAmount()
             if (amount <= 0) {
                 showSnackbar("올바른 금액을 입력해주세요")
                 return@setOnClickListener
@@ -206,6 +232,10 @@ class LoanFragment : Fragment() {
         loanAmountInput.text = formatNumber(amount)
     }
 
+    private fun updateAmountInput(amount: Long) {
+        loanAmountInput.text = formatNumber(amount)
+    }
+
     private fun showSnackbar(message: String) {
         MessageManager.showMessage(requireContext(), message)
     }
@@ -225,6 +255,16 @@ class LoanFragment : Fragment() {
             loanButton.text = "대출하기 (기존 대출 상환 필요)"
         } else {
             loanButton.text = "대출하기"
+        }
+    }
+
+    private fun getSelectedAmount(): Long {
+        try {
+            val amountText = loanAmountInput.text.toString()
+            // 쉼표 제거 후 숫자로 변환
+            return amountText.replace(",", "").toLong()
+        } catch (e: Exception) {
+            return 0L
         }
     }
 } 
