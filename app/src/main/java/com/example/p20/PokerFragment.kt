@@ -114,6 +114,11 @@ class PokerFragment : Fragment() {
         
         // 환영 메시지 표시
         showCustomSnackbar("배팅 후 1인발라트로 게임을 시작해주세요!")
+        
+        // 점수 배당률 설명 메시지 추가
+        Handler(Looper.getMainLooper()).postDelayed({
+            showCustomSnackbar("점수에 따른 배당률: 200점+ (1배), 300점+ (2배), 400점+ (3배), 600점+ (4배), 1000점+ (6배), 2000점+ (10배)")
+        }, 1500)
     }
     
     private fun setupButtonListeners() {
@@ -706,17 +711,15 @@ class PokerFragment : Fragment() {
         return false
     }
     
-    private fun getMultiplier(handRank: HandRank): Int {
-        return when(handRank) {
-            HandRank.ROYAL_STRAIGHT_FLUSH -> 100
-            HandRank.STRAIGHT_FLUSH -> 50
-            HandRank.FOUR_OF_A_KIND -> 20
-            HandRank.FULL_HOUSE -> 10
-            HandRank.FLUSH -> 5
-            HandRank.STRAIGHT -> 4
-            HandRank.THREE_OF_A_KIND -> 3
-            HandRank.TWO_PAIR -> 2
-            HandRank.ONE_PAIR -> 1
+    // 점수에 따른 배율 계산 함수
+    private fun getMultiplierByScore(score: Int): Int {
+        return when {
+            score >= 2000 -> 10
+            score >= 1000 -> 6
+            score >= 600 -> 4
+            score >= 400 -> 3
+            score >= 300 -> 2
+            score >= 200 -> 1
             else -> 0
         }
     }
@@ -740,8 +743,10 @@ class PokerFragment : Fragment() {
         newGameButton.isEnabled = false
         
         // 선택한 5장의 카드만 평가
+        val selectedCards = selectedCardIndices.map { playerCards[it] }
         val handRank = evaluateSelected5Cards()
-        val multiplier = getMultiplier(handRank)
+        val score = calculateScore(handRank, selectedCards)
+        val multiplier = getMultiplierByScore(score)
         
         // 배당금 계산
         val payout = currentBet * multiplier
@@ -752,17 +757,22 @@ class PokerFragment : Fragment() {
             // 승리
             assetViewModel.increaseAsset(payout)
             winCount++
-            resultMessage = "축하합니다! ${handRank.koreanName}으로 ${multiplier}배 획득! +${formatCurrency(payout - currentBet)}"
+            resultMessage = "축하합니다! ${score}점으로 ${multiplier}배 획득! (${handRank.koreanName}) +${formatCurrency(payout - currentBet)}"
             snackbarColor = Color.argb(200, 76, 175, 80) // 녹색
         } else {
             // 패배
             loseCount++
-            resultMessage = "아쉽습니다. 패가 없어 베팅금을 잃었습니다. -${formatCurrency(currentBet)}"
+            resultMessage = "아쉽습니다. ${score}점으로 배당을 받지 못했습니다. (${handRank.koreanName}) -${formatCurrency(currentBet)}"
             snackbarColor = Color.argb(200, 244, 67, 54) // 빨간색
         }
         
         // 결과 표시
         showResultSnackbar(resultMessage, snackbarColor)
+        
+        // 점수 배당률 설명 표시
+        Handler(Looper.getMainLooper()).postDelayed({
+            showCustomSnackbar("점수 배당률: 200점+ (1배), 300점+ (2배), 400점+ (3배), 600점+ (4배), 1000점+ (6배), 2000점+ (10배)")
+        }, 1500) // 1.5초 후에 배당률 설명 표시
         
         // 통계 업데이트
         updateBalanceText()
@@ -963,28 +973,40 @@ class PokerFragment : Fragment() {
 
         val selectedCards = selectedCardIndices.map { playerCards[it] }
         val handRank = evaluateSelected5Cards()
-        val totalScore = calculateScore(handRank, selectedCards)
+        val score = calculateScore(handRank, selectedCards)
         
         // 점수 계산식 생성
         val cardSum = selectedCards.sumOf { it.value() }
         val formula = when (handRank) {
-            HandRank.ROYAL_STRAIGHT_FLUSH -> "(150 + $cardSum) × 10 = $totalScore"
-            HandRank.STRAIGHT_FLUSH -> "(100 + $cardSum) × 8 = $totalScore"
-            HandRank.FOUR_OF_A_KIND -> "(60 + $cardSum) × 7 = $totalScore"
-            HandRank.FULL_HOUSE -> "(40 + $cardSum) × 4 = $totalScore"
-            HandRank.FLUSH -> "(35 + $cardSum) × 4 = $totalScore"
-            HandRank.STRAIGHT -> "(30 + $cardSum) × 4 = $totalScore"
-            HandRank.THREE_OF_A_KIND -> "(30 + $cardSum) × 3 = $totalScore"
-            HandRank.TWO_PAIR -> "(20 + $cardSum) × 2 = $totalScore"
-            HandRank.ONE_PAIR -> "(10 + $cardSum) × 2 = $totalScore"
-            HandRank.HIGH_CARD -> "$cardSum = $totalScore"
+            HandRank.ROYAL_STRAIGHT_FLUSH -> "(150 + $cardSum) × 10 = $score"
+            HandRank.STRAIGHT_FLUSH -> "(100 + $cardSum) × 8 = $score"
+            HandRank.FOUR_OF_A_KIND -> "(60 + $cardSum) × 7 = $score"
+            HandRank.FULL_HOUSE -> "(40 + $cardSum) × 4 = $score"
+            HandRank.FLUSH -> "(35 + $cardSum) × 4 = $score"
+            HandRank.STRAIGHT -> "(30 + $cardSum) × 4 = $score"
+            HandRank.THREE_OF_A_KIND -> "(30 + $cardSum) × 3 = $score"
+            HandRank.TWO_PAIR -> "(20 + $cardSum) × 2 = $score"
+            HandRank.ONE_PAIR -> "(10 + $cardSum) × 2 = $score"
+            HandRank.HIGH_CARD -> "$cardSum = $score"
             HandRank.NONE -> "0"
         }
         
         // 카드값 표시 (예: 10, 10, 10, 10, 2)
         val cardValues = selectedCards.joinToString(", ") { "${it.rank}" }
         
-        scoreText.text = "점수: $totalScore\n[$cardValues] $formula"
+        // 배당률 계산
+        val multiplier = getMultiplierByScore(score)
+        val multiplierInfo = when {
+            score >= 2000 -> "10배"
+            score >= 1000 -> "6배"
+            score >= 600 -> "4배"
+            score >= 400 -> "3배"
+            score >= 300 -> "2배"
+            score >= 200 -> "1배"
+            else -> "0배"
+        }
+        
+        scoreText.text = "점수: $score (배당: $multiplierInfo)\n[$cardValues] $formula"
     }
 
     // 점수 계산 함수
