@@ -25,7 +25,7 @@ import android.widget.FrameLayout
 object MessageManager {
     private const val ANIMATION_DURATION = 300L // 애니메이션 지속 시간 (ms)
     private const val MESSAGE_DISPLAY_DURATION = 5000L // 메시지 표시 기본 시간 (ms)
-    private const val MAX_MESSAGES = 3 // 동시에 표시할 최대 메시지 수
+    private const val MAX_MESSAGES = 5 // 동시에 표시할 최대 메시지 수
 
     private val messageQueue: Queue<String> = LinkedList()
     private val activeMessages = mutableMapOf<View, Runnable>()
