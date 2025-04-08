@@ -52,44 +52,6 @@ object ItemUtil {
     }
     
     /**
-     * 타이밍알바 레벨업 시 아이템 획득 처리
-     * @param context Context
-     * @param currentLevel 현재 레벨
-     * @return 획득한 아이템 정보 (없으면 null)
-     */
-    fun processTimingAlbaLevelUp(context: Context, currentLevel: Int): ItemReward? {
-        // 5레벨 단위로 체크
-        if (currentLevel % 5 != 0) {
-            return null
-        }
-        
-        return when (currentLevel) {
-            5, 10 -> increaseItemStock(context, 1, 1) // 레벨 5, 10 -> 60초 아이템 재고 1개 증가
-            15, 20 -> increaseItemStock(context, 2, 1) // 레벨 15, 20 -> 120초 아이템 재고 1개 증가
-            25, 30 -> increaseItemStock(context, 3, 1) // 레벨 25, 30 -> 180초 아이템 재고 1개 증가
-            else -> {
-                // 30레벨 이후 랜덤으로 2개 아이템 재고 증가
-                val randomItems = getRandomItems(2)
-                val rewards = mutableListOf<ItemReward>()
-                
-                randomItems.forEach { itemId ->
-                    increaseItemStock(context, itemId, 1)?.let {
-                        rewards.add(it)
-                    }
-                }
-                
-                if (rewards.isEmpty()) null
-                else ItemReward(
-                    itemId = 0, // 복합 보상이므로 0
-                    itemName = "랜덤 아이템 재고 2개",
-                    quantity = 2,
-                    isMultiple = true
-                )
-            }
-        }
-    }
-    
-    /**
      * 아이템 재고를 증가시킵니다.
      * @param context Context
      * @param itemId 아이템 ID
@@ -132,22 +94,6 @@ object ItemUtil {
         }
         return itemIds
     }
-
-    // 원 알바 레벨업 처리
-    fun processCircleAlbaLevelUp(context: Context, level: Int): ItemReward? {
-        // 레벨 5, 10, 15... 마다 아이템 재고 증가
-        return if (level % 5 == 0) {
-            val itemPreferences = context.getSharedPreferences("item_data", Context.MODE_PRIVATE)
-            val currentStock = itemPreferences.getInt("stock_circle_alba_boost", 0)
-            val editor = itemPreferences.edit()
-            editor.putInt("stock_circle_alba_boost", currentStock + 1)
-            editor.apply()
-            
-            ItemReward(4, "원 알바 부스트", 1, false)
-        } else {
-            null
-        }
-    }
 }
 
 /**
@@ -158,4 +104,4 @@ data class ItemReward(
     val itemName: String,   // 아이템 이름
     val quantity: Int,      // 수량
     val isMultiple: Boolean // 복합 보상 여부
-) 
+)

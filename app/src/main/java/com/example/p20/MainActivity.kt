@@ -94,8 +94,9 @@ class MainActivity : AppCompatActivity() {
                 
                 // ViewModelFactory 초기화 후 TimingAlbaViewModel 리셋 추가
                 if (::viewModelFactory.isInitialized) {
-                    val timingAlbaViewModel = ViewModelProvider(this, viewModelFactory).get(TimingAlbaViewModel::class.java)
-                    timingAlbaViewModel.resetTimingAlba()
+                    // 타이밍 알바 뷰모델 제거
+                    // 게임 리셋 시 알바 뷰모델만 리셋
+                    albaViewModel.resetAlba()
                 }
                 
                 // 게임 리셋 이벤트 발생
@@ -139,8 +140,7 @@ class MainActivity : AppCompatActivity() {
         
         // 알바 관련 ViewModel 초기화
         ViewModelProvider(this, viewModelFactory).get(AlbaViewModel::class.java)
-        ViewModelProvider(this, viewModelFactory).get(TimingAlbaViewModel::class.java)
-        val timingAlbaViewModel = ViewModelProvider(this, viewModelFactory).get(TimingAlbaViewModel::class.java)
+        // 타이밍 알바와 원 알바 뷰모델 초기화 제거
         
         assetTextView = findViewById(R.id.assetInfo)
 

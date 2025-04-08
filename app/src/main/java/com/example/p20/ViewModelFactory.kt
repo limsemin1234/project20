@@ -22,7 +22,6 @@ class ViewModelFactory(private val application: Application) : ViewModelProvider
                 viewModel as T
             }
             modelClass.isAssignableFrom(AlbaViewModel::class.java) -> AlbaViewModel(application) as T
-            modelClass.isAssignableFrom(TimingAlbaViewModel::class.java) -> TimingAlbaViewModel(application) as T
             modelClass.isAssignableFrom(TimeViewModel::class.java) -> TimeViewModel(application) as T
             modelClass.isAssignableFrom(RealEstateViewModel::class.java) -> RealEstateViewModel(application) as T
             modelClass.isAssignableFrom(StockViewModel::class.java) -> StockViewModel(application) as T

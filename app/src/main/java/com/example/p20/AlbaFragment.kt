@@ -46,32 +46,17 @@ class AlbaFragment : Fragment() {
         adapter = AlbaViewPagerAdapter(requireActivity())
         viewPager.adapter = adapter
 
-        // 탭과 뷰페이저 연결
-        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
-            tab.text = when (position) {
-                0 -> "☕클릭 알바"
-                1 -> "⏱️타이밍 알바"
-                2 -> "🔄원 알바"
-                else -> "알바"
-            }
-        }.attach()
+        // 타이밍 알바와 원 알바 제거로 인해 탭 레이아웃이 필요 없어졌으므로 숨김 처리
+        tabLayout.visibility = View.GONE
     }
 
-    // 뷰페이저 어댑터
+    // 뷰페이저 어댑터 - 타이밍 알바와 원 알바 탭 제거
     private inner class AlbaViewPagerAdapter(fa: FragmentActivity) : FragmentStateAdapter(fa) {
         
-        override fun getItemCount(): Int = 3 // 3개의 탭으로 변경
-        
-        // 프래그먼트 캐싱을 위한 리스트 추가
-        private val fragmentList = listOf(
-            ClickAlbaFragment(),
-            TimingAlbaFragment(),
-            CircleAlbaFragment()
-        )
+        override fun getItemCount(): Int = 1 // 클릭 알바만 남김
         
         override fun createFragment(position: Int): Fragment {
-            // 캐싱된 프래그먼트 반환
-            return fragmentList[position]
+            return ClickAlbaFragment()
         }
     }
 }
