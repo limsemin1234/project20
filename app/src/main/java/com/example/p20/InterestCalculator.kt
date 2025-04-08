@@ -30,6 +30,11 @@ class InterestCalculator(
         
         // 게임 내 시간 가속 계수 (현실의 1년을 게임에서 몇 초로 압축할지)
         private const val TIME_ACCELERATION = 2160.0 // 1년을 4시간(14400초)으로 압축
+
+        // SharedPreferences 키
+        private const val PREF_DEPOSIT_TIME_REMAINING = "deposit_time_remaining"
+        private const val PREF_LOAN_TIME_REMAINING = "loan_time_remaining"
+        private const val PREF_LAST_SAVE_TIME = "last_save_time"
     }
     
     // 메인 스레드 핸들러 (백그라운드 스레드에서 메인 스레드로 작업을 전달하기 위함)
@@ -60,6 +65,38 @@ class InterestCalculator(
     // 마지막 이자 발생 시간
     private var lastDepositInterestTime: Long = 0
     private var lastLoanInterestTime: Long = 0
+
+    init {
+        // SharedPreferences에서 이자 쿨타임 복원
+        restoreInterestTimes()
+    }
+    
+    /**
+     * SharedPreferences에서 이자 쿨타임 복원
+     */
+    private fun restoreInterestTimes() {
+        val prefs = context?.getSharedPreferences("interest_times", Context.MODE_PRIVATE)
+        
+        // 예금 쿨타임 복원
+        val savedDepositTime = prefs?.getLong(PREF_DEPOSIT_TIME_REMAINING, INTEREST_PERIOD_MS / 1000) ?: (INTEREST_PERIOD_MS / 1000)
+        _depositTimeRemaining.value = savedDepositTime
+        
+        // 대출 쿨타임 복원
+        val savedLoanTime = prefs?.getLong(PREF_LOAN_TIME_REMAINING, INTEREST_PERIOD_MS / 1000) ?: (INTEREST_PERIOD_MS / 1000)
+        _loanTimeRemaining.value = savedLoanTime
+    }
+    
+    /**
+     * 이자 쿨타임을 SharedPreferences에 저장
+     */
+    private fun saveInterestTimes() {
+        val prefs = context?.getSharedPreferences("interest_times", Context.MODE_PRIVATE)
+        prefs?.edit()?.apply {
+            putLong(PREF_DEPOSIT_TIME_REMAINING, _depositTimeRemaining.value ?: (INTEREST_PERIOD_MS / 1000))
+            putLong(PREF_LOAN_TIME_REMAINING, _loanTimeRemaining.value ?: (INTEREST_PERIOD_MS / 1000))
+            apply()
+        }
+    }
     
     /**
      * 이자 계산 타이머 시작
@@ -80,6 +117,8 @@ class InterestCalculator(
                 // 백그라운드 스레드에서 메인 스레드로 작업 전달
                 mainHandler.post {
                     updateTimers()
+                    // 매 초마다 쿨타임 저장
+                    saveInterestTimes()
                 }
             }
         }, 0, 1000)
@@ -314,5 +353,7 @@ class InterestCalculator(
      */
     fun cleanup() {
         stopInterestTimer()
+        // 마지막으로 쿨타임 저장
+        saveInterestTimes()
     }
 } 
