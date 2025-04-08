@@ -105,6 +105,8 @@ class AssetViewModel(
         // 자산에서 해당 금액 차감
         if (repository.decreaseAsset(amount)) {
             repository.addDeposit(amount)
+            // 예금 타이머 재설정
+            calculator.resetDepositTimer()
             showMessage("${formatNumber(amount)}원이 예금되었습니다")
         } else {
             showMessage("보유 자산이 부족합니다")
@@ -117,6 +119,8 @@ class AssetViewModel(
     fun subtractDeposit(amount: Long): Boolean {
         if (repository.subtractDeposit(amount)) {
             repository.increaseAsset(amount)
+            // 예금 타이머 재설정
+            calculator.resetDepositTimer()
             showMessage("${formatNumber(amount)}원이 출금되었습니다")
             return true
         }
@@ -129,6 +133,8 @@ class AssetViewModel(
      */
     fun addLoan(amount: Long) {
         repository.addLoan(amount)
+        // 대출 타이머 재설정
+        calculator.resetLoanTimer()
         showMessage("${formatNumber(amount)}원을 대출했습니다")
     }
 
@@ -141,6 +147,8 @@ class AssetViewModel(
         // 자산에서 대출금 + 수수료 차감
         if (repository.decreaseAsset(totalAmount)) {
             repository.subtractLoan(amount)
+            // 대출 타이머 재설정
+            calculator.resetLoanTimer()
             
             if (earlyRepaymentFee > 0) {
                 showMessage("${formatNumber(amount)}원 상환 완료 (조기상환 수수료: ${formatNumber(earlyRepaymentFee)}원)")

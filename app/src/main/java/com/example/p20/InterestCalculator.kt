@@ -46,7 +46,8 @@ class InterestCalculator(
     val loanTimeRemaining: LiveData<Long> get() = _loanTimeRemaining
     
     // 이자 발생 활성화 상태
-    private var isInterestTimerActive = false
+    private var isDepositTimerActive = false
+    private var isLoanTimerActive = false
     
     // 알림 메시지 관련 LiveData
     private val _interestNotification = MutableLiveData<String>()
@@ -64,12 +65,14 @@ class InterestCalculator(
      * 이자 계산 타이머 시작
      */
     fun startInterestTimer() {
-        if (isInterestTimerActive) return
+        if (interestTimer != null) return
         
         android.util.Log.d("InterestCalculator", "이자 계산 타이머 시작")
         
-        isInterestTimerActive = true
         interestTimer = Timer()
+        
+        // 현재 예금/대출 상태 확인
+        checkAndUpdateTimerStates()
         
         // 1초마다 타이머 업데이트
         interestTimer?.scheduleAtFixedRate(object : TimerTask() {
@@ -88,30 +91,114 @@ class InterestCalculator(
     fun stopInterestTimer() {
         interestTimer?.cancel()
         interestTimer = null
-        isInterestTimerActive = false
+        isDepositTimerActive = false
+        isLoanTimerActive = false
     }
     
     /**
      * 예금 및 대출 타이머 업데이트
      */
     private fun updateTimers() {
+        // 예금 금액 확인
+        val depositAmount = repository.deposit.value ?: 0L
+        if (depositAmount <= 0) {
+            isDepositTimerActive = false
+        }
+        
+        // 대출 금액 확인
+        val loanAmount = repository.loan.value ?: 0L
+        if (loanAmount <= 0) {
+            isLoanTimerActive = false
+        }
+        
+        // 둘 다 비활성화된 경우 타이머 정지
+        if (!isDepositTimerActive && !isLoanTimerActive) {
+            stopInterestTimer()
+            return
+        }
+        
         // 예금 타이머 업데이트 (초 단위)
-        val currentDepositTime = _depositTimeRemaining.value ?: (INTEREST_PERIOD_MS / 1000)
-        if (currentDepositTime > 0) {
-            _depositTimeRemaining.value = currentDepositTime - 1
-        } else {
-            applyDepositInterest()
-            _depositTimeRemaining.value = INTEREST_PERIOD_MS / 1000
+        if (isDepositTimerActive) {
+            val currentDepositTime = _depositTimeRemaining.value ?: (INTEREST_PERIOD_MS / 1000)
+            if (currentDepositTime > 0) {
+                _depositTimeRemaining.value = currentDepositTime - 1
+            } else {
+                applyDepositInterest()
+                _depositTimeRemaining.value = INTEREST_PERIOD_MS / 1000
+            }
         }
         
         // 대출 타이머 업데이트 (초 단위)
-        val currentLoanTime = _loanTimeRemaining.value ?: (INTEREST_PERIOD_MS / 1000)
-        if (currentLoanTime > 0) {
-            _loanTimeRemaining.value = currentLoanTime - 1
-        } else {
-            applyLoanInterest()
-            _loanTimeRemaining.value = INTEREST_PERIOD_MS / 1000
+        if (isLoanTimerActive) {
+            val currentLoanTime = _loanTimeRemaining.value ?: (INTEREST_PERIOD_MS / 1000)
+            if (currentLoanTime > 0) {
+                _loanTimeRemaining.value = currentLoanTime - 1
+            } else {
+                applyLoanInterest()
+                _loanTimeRemaining.value = INTEREST_PERIOD_MS / 1000
+            }
         }
+    }
+    
+    /**
+     * 예금 이벤트 발생 시 타이머 재설정
+     */
+    fun resetDepositTimer() {
+        val depositAmount = repository.deposit.value ?: 0L
+        if (depositAmount > 0) {
+            // 예금이 있으면 타이머 활성화 및 재설정
+            isDepositTimerActive = true
+            _depositTimeRemaining.value = INTEREST_PERIOD_MS / 1000
+            
+            // 필요한 경우 타이머 시작
+            if (interestTimer == null) {
+                startInterestTimer()
+            }
+        } else {
+            // 예금이 없으면 타이머 비활성화
+            isDepositTimerActive = false
+            
+            // 대출도 없으면 타이머 정지
+            if (!isLoanTimerActive) {
+                stopInterestTimer()
+            }
+        }
+    }
+    
+    /**
+     * 대출 이벤트 발생 시 타이머 재설정
+     */
+    fun resetLoanTimer() {
+        val loanAmount = repository.loan.value ?: 0L
+        if (loanAmount > 0) {
+            // 대출이 있으면 타이머 활성화 및 재설정
+            isLoanTimerActive = true
+            _loanTimeRemaining.value = INTEREST_PERIOD_MS / 1000
+            
+            // 필요한 경우 타이머 시작
+            if (interestTimer == null) {
+                startInterestTimer()
+            }
+        } else {
+            // 대출이 없으면 타이머 비활성화
+            isLoanTimerActive = false
+            
+            // 예금도 없으면 타이머 정지
+            if (!isDepositTimerActive) {
+                stopInterestTimer()
+            }
+        }
+    }
+    
+    /**
+     * 현재 예금/대출 상태를 확인하고 타이머 상태 업데이트
+     */
+    private fun checkAndUpdateTimerStates() {
+        val depositAmount = repository.deposit.value ?: 0L
+        val loanAmount = repository.loan.value ?: 0L
+        
+        isDepositTimerActive = depositAmount > 0
+        isLoanTimerActive = loanAmount > 0
     }
     
     /**
@@ -204,7 +291,7 @@ class InterestCalculator(
      */
     fun formatDepositRemainingTime(): String {
         val timeRemaining = _depositTimeRemaining.value ?: (INTEREST_PERIOD_MS / 1000)
-        return String.format("%02d초", timeRemaining)
+        return "$timeRemaining"
     }
     
     /**
@@ -212,7 +299,7 @@ class InterestCalculator(
      */
     fun formatLoanRemainingTime(): String {
         val timeRemaining = _loanTimeRemaining.value ?: (INTEREST_PERIOD_MS / 1000)
-        return String.format("%02d초", timeRemaining)
+        return "$timeRemaining"
     }
     
     /**

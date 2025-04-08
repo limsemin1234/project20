@@ -112,20 +112,28 @@ class BankFragment : Fragment() {
     }
 
     private fun updateDepositRemainingTime(remainingTime: Long) {
-        if (remainingTime > 0) {
-            depositRemainingTimeText.text = "(${remainingTime / 1000}초 후 이자)"
-            depositRemainingTimeText.visibility = View.VISIBLE
+        // 예금 이자 타이머 표시 수정
+        depositRemainingTimeText.text = "(${remainingTime}초 후 이자)"
+        depositRemainingTimeText.visibility = View.VISIBLE
+        
+        // 10초 이하일 때 텍스트 색상 변경
+        if (remainingTime <= 10) {
+            depositRemainingTimeText.setTextColor(Color.RED)
         } else {
-            depositRemainingTimeText.visibility = View.GONE
+            depositRemainingTimeText.setTextColor(Color.parseColor("#4CAF50")) // 녹색
         }
     }
 
     private fun updateLoanRemainingTime(remainingTime: Long) {
-        if (remainingTime > 0) {
-            loanRemainingTimeText.text = "(${remainingTime / 1000}초 후 이자)"
-            loanRemainingTimeText.visibility = View.VISIBLE
+        // 대출 이자 타이머 표시 수정
+        loanRemainingTimeText.text = "(${remainingTime}초 후 이자)"
+        loanRemainingTimeText.visibility = View.VISIBLE
+        
+        // 10초 이하일 때 텍스트 색상 변경
+        if (remainingTime <= 10) {
+            loanRemainingTimeText.setTextColor(Color.RED)
         } else {
-            loanRemainingTimeText.visibility = View.GONE
+            loanRemainingTimeText.setTextColor(Color.parseColor("#FF5722")) // 주황색
         }
     }
 } 

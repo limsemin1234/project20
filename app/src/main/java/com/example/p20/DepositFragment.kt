@@ -22,6 +22,8 @@ class DepositFragment : Fragment() {
     private lateinit var depositAmountInput: TextView
     private lateinit var depositButton: Button
     private lateinit var withdrawButton: Button
+    private lateinit var withdrawAllButton: Button
+    private lateinit var withdrawThousandsButton: Button
     private lateinit var resetButton: Button
     private lateinit var percent25Button: Button
     private lateinit var percent50Button: Button
@@ -68,6 +70,8 @@ class DepositFragment : Fragment() {
         depositAmountInput = view.findViewById(R.id.depositAmountInput)
         depositButton = view.findViewById(R.id.depositButton)
         withdrawButton = view.findViewById(R.id.withdrawButton)
+        withdrawAllButton = view.findViewById(R.id.withdrawAllButton)
+        withdrawThousandsButton = view.findViewById(R.id.withdrawThousandsButton)
         resetButton = view.findViewById(R.id.resetButton)
         
         // 숨겨진 컨트롤이므로 조건부로 초기화
@@ -279,6 +283,31 @@ class DepositFragment : Fragment() {
             }
 
             viewModel.subtractDeposit(amount)
+        }
+        
+        // 전체 출금 버튼
+        withdrawAllButton.setOnClickListener {
+            val currentDeposit = viewModel.deposit.value ?: 0L
+            if (currentDeposit > 0) {
+                viewModel.subtractDeposit(currentDeposit)
+            } else {
+                MessageManager.showMessage(requireContext(), "출금할 예금이 없습니다")
+            }
+        }
+        
+        // 천의 자리 이하 출금 버튼
+        withdrawThousandsButton.setOnClickListener {
+            val currentDeposit = viewModel.deposit.value ?: 0L
+            if (currentDeposit > 0) {
+                val thousandsAmount = currentDeposit % 10000 // 만원 미만 금액
+                if (thousandsAmount > 0) {
+                    viewModel.subtractDeposit(thousandsAmount)
+                } else {
+                    MessageManager.showMessage(requireContext(), "천의 자리 이하 금액이 없습니다")
+                }
+            } else {
+                MessageManager.showMessage(requireContext(), "출금할 예금이 없습니다")
+            }
         }
     }
     
