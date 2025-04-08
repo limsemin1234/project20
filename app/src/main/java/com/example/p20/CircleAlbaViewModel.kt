@@ -7,199 +7,197 @@ import android.os.Looper
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import kotlin.math.abs
 
 class CircleAlbaViewModel(application: Application) : AndroidViewModel(application) {
     private val context = application.applicationContext
     private val sharedPreferences = application.getSharedPreferences("circle_alba_data", Context.MODE_PRIVATE)
     private val handler = Handler(Looper.getMainLooper())
 
-    // 레벨 관련 데이터
-    private val _albaLevel = MutableLiveData<Int>()
-    val albaLevel: LiveData<Int> get() = _albaLevel
-
-    // 게임 진행 상태
-    private val _isGameActive = MutableLiveData<Boolean>()
-    val isGameActive: LiveData<Boolean> get() = _isGameActive
-
-    // 내부 원 크기 (0.0f ~ 1.0f)
-    private val _innerCircleScale = MutableLiveData<Float>()
+    // 내부 원 크기 (0.1 ~ 1.0)
+    private val _innerCircleScale = MutableLiveData(0.5f)
     val innerCircleScale: LiveData<Float> get() = _innerCircleScale
 
-    // 외부 원 크기 (0.0f ~ 1.0f)
-    private val _outerCircleScale = MutableLiveData<Float>()
+    // 외부 원 크기 (0.1 ~ 1.0)
+    private val _outerCircleScale = MutableLiveData(1.0f)
     val outerCircleScale: LiveData<Float> get() = _outerCircleScale
 
-    // 게임 결과 (1: 성공, 0: 초기, -1: 실패)
-    private val _lastSuccess = MutableLiveData<Int>()
+    // 내부 원 크기 변화 방향 (1: 커짐, -1: 작아짐)
+    private var innerDirection = 1
+    private var outerDirection = -1
+    
+    // 원 크기 변화 속도
+    private var innerSpeed = 0.01f
+    private var outerSpeed = 0.008f
+    
+    // 레벨
+    private val _albaLevel = MutableLiveData(1)
+    val albaLevel: LiveData<Int> get() = _albaLevel
+    
+    // 성공 여부
+    private val _lastSuccess = MutableLiveData<Int>(0) // 0: 기본, 1: 성공, -1: 실패
     val lastSuccess: LiveData<Int> get() = _lastSuccess
-
+    
     // 보상 배율
-    private val _rewardMultiplier = MutableLiveData<Float>()
+    private val _rewardMultiplier = MutableLiveData(1.0f)
     val rewardMultiplier: LiveData<Float> get() = _rewardMultiplier
-
-    // 레벨업까지 필요한 성공 횟수
-    private val _successfulAttempts = MutableLiveData<Int>()
-    val successfulAttempts: LiveData<Int> get() = _successfulAttempts
-
-    // 쿨다운 관련 데이터
-    private val _isCooldown = MutableLiveData<Boolean>()
+    
+    // 쿨다운 관련 
+    private val _isCooldown = MutableLiveData(false)
     val isCooldown: LiveData<Boolean> get() = _isCooldown
 
-    private val _cooldownTime = MutableLiveData<Int>()
+    private val _cooldownTime = MutableLiveData(0)
     val cooldownTime: LiveData<Int> get() = _cooldownTime
-
-    // 아이템 보상 이벤트
+    
+    // 게임 활성화 상태
+    private val _isGameActive = MutableLiveData(false)
+    val isGameActive: LiveData<Boolean> get() = _isGameActive
+    
+    // 아이템 획득 이벤트
     private val _itemRewardEvent = MutableLiveData<ItemReward?>()
     val itemRewardEvent: LiveData<ItemReward?> get() = _itemRewardEvent
-
-    // 원 이동 속도 (레벨에 따라 변화)
-    private var circleSpeed = 0.01f
-    private var innerCircleDirection = 1 // 1: 커짐, -1: 작아짐
-    private var outerCircleDirection = -1 // -1: 작아짐, 1: 커짐
-
+    
+    // 레벨업까지 남은 성공 횟수 추적
+    private val _successfulAttempts = MutableLiveData<Int>(0)
+    val successfulAttempts: LiveData<Int> get() = _successfulAttempts
+    
     private val runnable = object : Runnable {
         override fun run() {
-            updateCircleScales()
-            handler.postDelayed(this, 16) // 약 60fps
+            updateCircles()
+            if (_isGameActive.value == true) {
+                handler.postDelayed(this, 16) // 약 60fps로 부드럽게 업데이트
+            }
         }
     }
 
     init {
         loadCircleAlbaData()
-        resetGameState()
     }
-
+    
+    // 아이템 획득 이벤트를 소비합니다
+    fun consumeItemRewardEvent() {
+        _itemRewardEvent.value = null
+    }
+    
     fun startGame() {
         if (_isCooldown.value == true) return
-
+        
         _isGameActive.value = true
-        _lastSuccess.value = 0
-        _innerCircleScale.value = 0.2f
+        
+        // 시작 위치 및 방향 설정
+        _innerCircleScale.value = 0.5f
         _outerCircleScale.value = 1.0f
-
-        // 레벨에 따라 원 이동 속도 조정
-        circleSpeed = 0.005f + (_albaLevel.value?.toFloat() ?: 1f) * 0.001f
-        circleSpeed = minOf(circleSpeed, 0.02f) // 최대 속도 제한
-
-        // 원 애니메이션 시작
+        innerDirection = 1
+        outerDirection = -1
+        
+        // 레벨에 따라 속도 증가
+        val levelBonus = (_albaLevel.value ?: 1) * 0.001f
+        innerSpeed = 0.01f + levelBonus
+        outerSpeed = 0.008f + levelBonus
+        
+        // 게임 시작 시 배율 초기화
+        _rewardMultiplier.value = 1.0f
+        
+        handler.removeCallbacks(runnable)
         handler.post(runnable)
+        
+        _lastSuccess.value = 0
     }
-
-    private fun updateCircleScales() {
-        if (_isGameActive.value != true) return
-
+    
+    private fun updateCircles() {
         // 내부 원 크기 업데이트
-        var innerScale = _innerCircleScale.value ?: 0.2f
-        innerScale += circleSpeed * innerCircleDirection
+        var currentInnerScale = _innerCircleScale.value ?: 0.5f
+        currentInnerScale += innerDirection * innerSpeed
         
-        // 방향 전환 체크
-        if (innerScale >= 1.0f) {
-            innerScale = 1.0f
-            innerCircleDirection = -1
-        } else if (innerScale <= 0.2f) {
-            innerScale = 0.2f
-            innerCircleDirection = 1
+        // 내부 원 경계 체크 및 방향 전환
+        if (currentInnerScale >= 1.0f) {
+            currentInnerScale = 1.0f
+            innerDirection = -1
+        } else if (currentInnerScale <= 0.1f) {
+            currentInnerScale = 0.1f
+            innerDirection = 1
         }
+        _innerCircleScale.value = currentInnerScale
         
-        _innerCircleScale.value = innerScale
-
         // 외부 원 크기 업데이트
-        var outerScale = _outerCircleScale.value ?: 1.0f
-        outerScale += circleSpeed * outerCircleDirection
+        var currentOuterScale = _outerCircleScale.value ?: 1.0f
+        currentOuterScale += outerDirection * outerSpeed
         
-        // 방향 전환 체크
-        if (outerScale >= 1.0f) {
-            outerScale = 1.0f
-            outerCircleDirection = -1
-        } else if (outerScale <= 0.2f) {
-            outerScale = 0.2f
-            outerCircleDirection = 1
+        // 외부 원 경계 체크 및 방향 전환
+        if (currentOuterScale >= 1.0f) {
+            currentOuterScale = 1.0f
+            outerDirection = -1
+        } else if (currentOuterScale <= 0.1f) {
+            currentOuterScale = 0.1f
+            outerDirection = 1
         }
-        
-        _outerCircleScale.value = outerScale
+        _outerCircleScale.value = currentOuterScale
     }
-
-    /**
-     * 현재 두 원의 크기 차이에 따라 보상 배율을 계산합니다.
-     * @return 보상 배율 (퍼펙트: 5.0, 좋음: 2.0, 실패: 0.0)
-     */
-    private fun calculateRewardMultiplier(): Float {
-        val innerScale = _innerCircleScale.value ?: 0.0f
-        val outerScale = _outerCircleScale.value ?: 1.0f
-        val difference = Math.abs(innerScale - outerScale)
-        
-        return when {
-            difference <= 0.005f -> 5.0f  // 퍼펙트 (±0.5% - 두 원이 거의 완벽하게 겹칠 때)
-            difference <= 0.15f -> 2.0f   // 좋음 (±15%)
-            else -> 0.0f                  // 실패
-        }
-    }
-
+    
     fun checkTiming() {
         if (_isGameActive.value != true) return
         
         _isGameActive.value = false
         handler.removeCallbacks(runnable)
         
-        // 원의 크기 차이로 판정
-        val result = calculateRewardMultiplier()
+        val innerScale = _innerCircleScale.value ?: 0.5f
+        val outerScale = _outerCircleScale.value ?: 1.0f
+        val difference = abs(innerScale - outerScale)
         
-        // 로그 출력
-        android.util.Log.d("CircleAlbaDebug", "보상 배율: $result")
+        // 판정 결과 (5단계: 0=실패, 1=일반, 2=좋음, 3=매우좋음, 4=퍼펙트)
+        val result = when {
+            difference <= 0.005f -> 4 // 두 원이 거의 완벽하게 일치 (0.5% 이내)
+            difference <= 0.05f -> 3 // 두 원이 매우 비슷함 (5% 이내)
+            difference <= 0.15f -> 2 // 두 원이 비슷함 (15% 이내)
+            difference <= 0.3f -> 1 // 두 원의 차이가 일반적 (30% 이내)
+            else -> 0 // 두 원의 차이가 큼
+        }
         
-        // 판정 결과 저장
-        _rewardMultiplier.value = result
+        // 결과에 따라 보상 배율 설정
+        _rewardMultiplier.value = when (result) {
+            4 -> 5.0f // 퍼펙트 - 5배
+            3 -> 3.0f // 매우 좋음 - 3배
+            2 -> 2.0f // 좋음 - 2배
+            1 -> 1.0f // 일반 - 1배
+            else -> 0f // 실패 - 0배
+        }
         
-        // 결과에 따른 처리
-        when {
-            result >= 5.0f -> { // 퍼펙트
-                _lastSuccess.value = 1
-                android.util.Log.d("CircleAlbaDebug", "퍼펙트! 5배 보상")
-                processSucessResult()
+        // 성공 여부 설정 (2 이상이면 성공으로 간주)
+        if (result >= 2) {
+            _lastSuccess.value = 1 // 성공
+            
+            // 성공했을 때만 레벨업 로직 처리
+            val currentAttempts = sharedPreferences.getInt("successful_attempts", 0)
+            val newAttempts = (currentAttempts + 1) % 5
+            
+            sharedPreferences.edit().putInt("successful_attempts", newAttempts).apply()
+            
+            // 남은 성공 횟수 업데이트
+            _successfulAttempts.value = newAttempts
+            
+            if (newAttempts == 0) {
+                val currentLevel = _albaLevel.value ?: 1
+                val newLevel = currentLevel + 1
+                _albaLevel.value = newLevel
+                sharedPreferences.edit().putInt("circle_alba_level", newLevel).apply()
+                
+                // 레벨업 시 아이템 재고 증가 처리
+                val context = getApplication<Application>().applicationContext
+                val itemReward = ItemUtil.processCircleAlbaLevelUp(context, newLevel)
+                
+                // 아이템 재고 증가 이벤트 발생
+                if (itemReward != null) {
+                    _itemRewardEvent.value = itemReward
+                }
             }
-            result >= 2.0f -> { // 좋음
-                _lastSuccess.value = 1
-                android.util.Log.d("CircleAlbaDebug", "좋음! 2배 보상")
-                processSucessResult()
-            }
-            else -> { // 실패
-                _lastSuccess.value = -1
-                android.util.Log.d("CircleAlbaDebug", "실패...")
-            }
+        } else {
+            _lastSuccess.value = -1 // 실패
         }
         
         // 쿨다운 시작
         startCooldown()
     }
     
-    private fun processSucessResult() {
-        // 성공했을 때 레벨업 로직 처리
-        // 5번 성공할 때마다 레벨업
-        val currentAttempts = sharedPreferences.getInt("successful_attempts", 0)
-        val newAttempts = (currentAttempts + 1) % 5
-        
-        sharedPreferences.edit().putInt("successful_attempts", newAttempts).apply()
-        
-        // 남은 성공 횟수 업데이트
-        _successfulAttempts.value = newAttempts
-        
-        if (newAttempts == 0) {
-            val currentLevel = _albaLevel.value ?: 1
-            val newLevel = currentLevel + 1
-            _albaLevel.value = newLevel
-            sharedPreferences.edit().putInt("circle_alba_level", newLevel).apply()
-            
-            // 레벨업 시 아이템 재고 증가 처리
-            val context = getApplication<Application>().applicationContext
-            val itemReward = ItemUtil.processCircleAlbaLevelUp(context, newLevel)
-            
-            // 아이템 재고 증가 이벤트 발생
-            if (itemReward != null) {
-                _itemRewardEvent.value = itemReward
-            }
-        }
-    }
-
     private val cooldownRunnable = object : Runnable {
         override fun run() {
             val currentTime = _cooldownTime.value ?: 0
@@ -230,12 +228,12 @@ class CircleAlbaViewModel(application: Application) : AndroidViewModel(applicati
         val multiplier = _rewardMultiplier.value ?: 0f
         return (baseReward * multiplier).toInt()
     }
-
+    
     private fun loadCircleAlbaData() {
         _albaLevel.value = sharedPreferences.getInt("circle_alba_level", 1)
         _successfulAttempts.value = sharedPreferences.getInt("successful_attempts", 0)
     }
-
+    
     fun resetCircleAlba() {
         _albaLevel.value = 1
         _isGameActive.value = false
@@ -252,21 +250,19 @@ class CircleAlbaViewModel(application: Application) : AndroidViewModel(applicati
         handler.removeCallbacksAndMessages(null)
     }
     
-    // 게임 상태 초기화
-    fun resetGameState() {
-        _isGameActive.value = false
-        _lastSuccess.value = 0
-        _innerCircleScale.value = 0.5f
-        _outerCircleScale.value = 0.5f
+    override fun onCleared() {
+        super.onCleared()
+        handler.removeCallbacksAndMessages(null)
     }
-    
+
     // 게임 상태에 따른 버튼 동작 처리
     fun onGameButtonClicked() {
         val isActive = _isGameActive.value ?: false
         val isCooldown = _isCooldown.value ?: false
+        val cooldownTime = _cooldownTime.value ?: 0
         
-        // 쿨다운 중이면 아무 동작 안함
-        if (isCooldown) return
+        // 쿨다운 중이거나 쿨다운 시간이 남아있으면 아무 동작 안함
+        if (isCooldown || cooldownTime > 0) return
         
         // 게임 중이면 타이밍 체크
         if (isActive) {
@@ -276,15 +272,5 @@ class CircleAlbaViewModel(application: Application) : AndroidViewModel(applicati
         else {
             startGame()
         }
-    }
-    
-    // 아이템 획득 이벤트를 소비합니다
-    fun consumeItemRewardEvent() {
-        _itemRewardEvent.value = null
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        handler.removeCallbacksAndMessages(null)
     }
 } 

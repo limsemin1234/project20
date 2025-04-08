@@ -81,7 +81,7 @@ class TimingAlbaFragment : Fragment() {
         timingViewModel.lastSuccess.observe(viewLifecycleOwner, Observer { result ->
             when (result) {
                 1 -> { // 성공
-                    // 보상 계산 과정을 로그로 확인
+                    // 보상 계산
                     val baseReward = 500 * (timingViewModel.albaLevel.value ?: 1)
                     val multiplier = timingViewModel.rewardMultiplier.value ?: 1.0f
                     val position = timingViewModel.pointerPosition.value ?: 0.0f
@@ -89,13 +89,6 @@ class TimingAlbaFragment : Fragment() {
                     
                     // 직접 계산해본 보상 값
                     val calculatedReward = (baseReward * 5.0f).toLong()
-                    
-                    // 디버깅 정보 로그 출력 (개발 중에만 사용)
-                    android.util.Log.d("TimingAlbaDebug", "성공 시 보상 계산 정보:")
-                    android.util.Log.d("TimingAlbaDebug", "포인터 위치: $position (${position * 100}%)")
-                    android.util.Log.d("TimingAlbaDebug", "기본 보상: $baseReward, 배율: $multiplier")
-                    android.util.Log.d("TimingAlbaDebug", "최종 보상: $reward")
-                    android.util.Log.d("TimingAlbaDebug", "직접 계산한 보상: $calculatedReward (배율 5.0 적용)")
                     
                     // 실제 보상 금액 증가
                     assetViewModel.increaseAsset(calculatedReward)
@@ -167,10 +160,6 @@ class TimingAlbaFragment : Fragment() {
                 // 포인터 색상 원래대로
                 pointer.setBackgroundColor(resources.getColor(R.color.pointer_normal, null))
             }
-            
-            // 디버깅용 - 현재 포인터 위치 표시 (개발 중에만 사용)
-            android.util.Log.d("TimingAlbaDebug", "현재 포인터 위치: $position (${position * 100}%)")
-            android.util.Log.d("TimingAlbaDebug", "퍼펙트 영역 여부: $isPerfectZone")
         }
     }
     

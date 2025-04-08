@@ -126,15 +126,6 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
             _lastSuccess.value = 1
             _rewardMultiplier.value = 5.0f // 퍼펙트 - 5배
             
-            // 성공 시 디버깅 정보
-            android.util.Log.d("TimingAlbaDebug", "퍼펙트 성공!")
-            android.util.Log.d("TimingAlbaDebug", "포인터 위치: $position (${position * 100}%)")
-            android.util.Log.d("TimingAlbaDebug", "구간: ${Math.floor(position.toDouble() * 20).toInt() + 1}번째 칸")
-            android.util.Log.d("TimingAlbaDebug", "유효범위: 0.44 ~ 0.56 (44% ~ 56%)")
-            android.util.Log.d("TimingAlbaDebug", "배율 설정: ${_rewardMultiplier.value}")
-            android.util.Log.d("TimingAlbaDebug", "레벨: ${_albaLevel.value}, 기본 보상: ${500 * (_albaLevel.value ?: 1)}")
-            android.util.Log.d("TimingAlbaDebug", "예상 보상: ${500 * (_albaLevel.value ?: 1) * 5.0f}")
-            
             // 성공했을 때 레벨업 로직 처리
             // 5번 성공할 때마다 레벨업
             val currentAttempts = sharedPreferences.getInt("successful_attempts", 0)
@@ -164,13 +155,6 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
             // 실패 처리 (10, 11번째 칸 외의 위치)
             _lastSuccess.value = -1
             _rewardMultiplier.value = 0f
-            
-            // 디버깅 정보 (개발 중에만 사용)
-            android.util.Log.d("TimingAlbaDebug", "실패 처리:")
-            android.util.Log.d("TimingAlbaDebug", "포인터 위치: $position (${position * 100}%)")
-            android.util.Log.d("TimingAlbaDebug", "구간: ${Math.floor(position.toDouble() * 20).toInt() + 1}번째 칸")
-            android.util.Log.d("TimingAlbaDebug", "유효범위: 0.44 ~ 0.56 (44% ~ 56%)")
-            android.util.Log.d("TimingAlbaDebug", "판정: 구간이 퍼펙트 존(0.44~0.56)이 아님")
         }
         
         // 쿨다운 시작
@@ -205,14 +189,7 @@ class TimingAlbaViewModel(application: Application) : AndroidViewModel(applicati
     fun getRewardAmount(): Int {
         val baseReward = 500 * (_albaLevel.value ?: 1) // 100 -> 500으로 증가
         val multiplier = _rewardMultiplier.value ?: 0f
-        val reward = (baseReward * multiplier).toInt()
-        
-        // 보상 계산 디버깅 로그
-        android.util.Log.d("TimingAlbaDebug", "보상 계산:")
-        android.util.Log.d("TimingAlbaDebug", "기본 보상: $baseReward, 현재 배율: $multiplier")
-        android.util.Log.d("TimingAlbaDebug", "최종 보상: $reward")
-        
-        return reward
+        return (baseReward * multiplier).toInt()
     }
     
     private fun loadTimingAlbaData() {
