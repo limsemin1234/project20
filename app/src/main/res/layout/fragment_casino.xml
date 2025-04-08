@@ -47,7 +47,7 @@
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="1인포커" />
+            android:text="1인발라트로" />
 
     </com.google.android.material.tabs.TabLayout>
 

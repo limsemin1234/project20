@@ -18,7 +18,7 @@
             android:id="@+id/titleText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="1인포커"
+            android:text="1인발라트로"
             android:textSize="24sp"
             android:textStyle="bold"
             android:textColor="#333333"

@@ -113,7 +113,7 @@ class PokerFragment : Fragment() {
         setupButtonListeners()
         
         // 환영 메시지 표시
-        showCustomSnackbar("배팅 후 1인포커 게임을 시작해주세요!")
+        showCustomSnackbar("배팅 후 1인발라트로 게임을 시작해주세요!")
     }
     
     private fun setupButtonListeners() {
@@ -278,7 +278,7 @@ class PokerFragment : Fragment() {
     }
     
     private fun changeCards() {
-        // 카드 교체 비용 확인 (첫 번째는 무료)
+        // 카드 교체 비용 확인
         val changeCost = getChangeCost()
         
         // 교체 횟수 제한 확인
@@ -287,8 +287,8 @@ class PokerFragment : Fragment() {
             return
         }
         
-        // 교체 횟수가 0보다 크면 비용 지불
-        if (changeCount > 0) {
+        // 교체 비용이 있으면 비용 지불
+        if (changeCost > 0) {
             val currentAsset = assetViewModel.asset.value ?: 0L
             if (currentAsset < changeCost) {
                 showCustomSnackbar("카드 교체 비용(${formatCurrency(changeCost)})이 부족합니다.")
@@ -334,7 +334,12 @@ class PokerFragment : Fragment() {
         // 교체 완료 메시지
         if (changeCount < 5) { 
             val nextCost = getChangeCost()
-            showCustomSnackbar("카드 교체 완료. 다음 교체 비용: ${formatCurrency(nextCost)}")
+            val message = if (nextCost == 0L) {
+                "카드 교체 완료. 다음 교체: 무료 (${3 - changeCount}회 남음)"
+            } else {
+                "카드 교체 완료. 다음 교체 비용: ${formatCurrency(nextCost)}"
+            }
+            showCustomSnackbar(message)
         } else {
             showCustomSnackbar("최대 교체 횟수(5번)에 도달했습니다. 게임을 종료해주세요.")
             changeButton.isEnabled = false
@@ -932,7 +937,11 @@ class PokerFragment : Fragment() {
     
     // 카드 교체 비용 계산 함수
     private fun getChangeCost(): Long {
-        return if (changeCount == 0) 0L else baseCostForChange * changeCount
+        return when (changeCount) {
+            0, 1, 2 -> 0L  // 첫 3번은 무료
+            3, 4 -> currentBet  // 4번째, 5번째는 배팅금만큼
+            else -> currentBet  // 최대 5번까지만 가능하므로 이 경우는 발생하지 않음
+        }
     }
     
     // 교체 버튼 텍스트 업데이트
@@ -955,7 +964,27 @@ class PokerFragment : Fragment() {
         val selectedCards = selectedCardIndices.map { playerCards[it] }
         val handRank = evaluateSelected5Cards()
         val totalScore = calculateScore(handRank, selectedCards)
-        scoreText.text = "점수: $totalScore"
+        
+        // 점수 계산식 생성
+        val cardSum = selectedCards.sumOf { it.value() }
+        val formula = when (handRank) {
+            HandRank.ROYAL_STRAIGHT_FLUSH -> "(150 + $cardSum) × 10 = $totalScore"
+            HandRank.STRAIGHT_FLUSH -> "(100 + $cardSum) × 8 = $totalScore"
+            HandRank.FOUR_OF_A_KIND -> "(60 + $cardSum) × 7 = $totalScore"
+            HandRank.FULL_HOUSE -> "(40 + $cardSum) × 4 = $totalScore"
+            HandRank.FLUSH -> "(35 + $cardSum) × 4 = $totalScore"
+            HandRank.STRAIGHT -> "(30 + $cardSum) × 4 = $totalScore"
+            HandRank.THREE_OF_A_KIND -> "(30 + $cardSum) × 3 = $totalScore"
+            HandRank.TWO_PAIR -> "(20 + $cardSum) × 2 = $totalScore"
+            HandRank.ONE_PAIR -> "(10 + $cardSum) × 2 = $totalScore"
+            HandRank.HIGH_CARD -> "$cardSum = $totalScore"
+            HandRank.NONE -> "0"
+        }
+        
+        // 카드값 표시 (예: 10, 10, 10, 10, 2)
+        val cardValues = selectedCards.joinToString(", ") { "${it.rank}" }
+        
+        scoreText.text = "점수: $totalScore\n[$cardValues] $formula"
     }
 
     // 점수 계산 함수

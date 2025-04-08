@@ -39,7 +39,8 @@ class CasinoFragment : Fragment() {
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
             tab.text = when (position) {
                 0 -> "블랙잭"
-                1 -> "1인포커"
+                1 -> "1인발라트로"
+                2 -> "발라트로 포커"
                 else -> "게임"
             }
         }.attach()
