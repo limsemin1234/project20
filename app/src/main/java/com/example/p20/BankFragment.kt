@@ -83,15 +83,19 @@ class BankFragment : Fragment() {
             updateLoanRemainingTime(remainingTime)
         }
         
-        // 이자 알림 메시지 관찰
+        // 이자 알림 메시지 관찰 - 처음 진입할 때는 기존 알림 무시
+        lastProcessedNotificationTime = viewModel.lastNotificationTimestamp.value ?: 0L
+        
+        // 이자 알림 메시지 관찰 - 이후 알림만 처리
         viewModel.interestNotification.observe(viewLifecycleOwner) { message ->
             val currentNotificationTime = viewModel.lastNotificationTimestamp.value ?: 0L
-            if (currentNotificationTime > lastProcessedNotificationTime) {
+            if (message.isNotEmpty() && currentNotificationTime > lastProcessedNotificationTime) {
                 // 로그로 알림 확인
                 android.util.Log.d("BankFragment", "이자 알림: $message, 시간: $currentNotificationTime")
                 
-                // 예금 이자 또는 대출 이자 메시지 모두 표시
-                showSnackbar(message)
+                // 예금 이자 또는 대출 이자 메시지 표시 - MessageManager에서 이미 처리됨
+                // showSnackbar(message) - 이 코드는 제거하여 중복 메시지 방지
+                
                 lastProcessedNotificationTime = currentNotificationTime
             }
         }
@@ -123,11 +127,11 @@ class BankFragment : Fragment() {
         }
     }
     
-    private fun showSnackbar(message: String) {
-        MessageManager.showMessage(requireContext(), message)
-    }
-
     private fun formatNumber(number: Long): String {
         return NumberFormat.getNumberInstance(Locale.KOREA).format(number)
+    }
+    
+    private fun showSnackbar(message: String) {
+        MessageManager.showMessage(requireContext(), message)
     }
 } 

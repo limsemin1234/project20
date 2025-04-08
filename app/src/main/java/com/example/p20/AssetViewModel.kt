@@ -2,6 +2,8 @@ package com.example.p20
 
 import android.content.Context
 import android.os.CountDownTimer
+import android.os.Handler
+import android.os.Looper
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -34,13 +36,20 @@ class AssetViewModel(private val context: Context) : ViewModel() {
     // 알림이 이미 표시되었는지 추적하는 플래그
     private var _lastNotificationTimestamp = MutableLiveData<Long>()
     val lastNotificationTimestamp: LiveData<Long> = _lastNotificationTimestamp
-
+    
+    // 마지막 예금 이자 지급 시간과 대출 이자 발생 시간 추적
+    private var lastDepositInterestTime: Long = 0
+    private var lastLoanInterestTime: Long = 0
+    
     private var depositTimer: CountDownTimer? = null
     private var loanTimer: CountDownTimer? = null
     
     // 타이머가 활성화되어 있는지 추적
     private var isDepositTimerActive = false
     private var isLoanTimerActive = false
+    
+    // 핸들러 추가
+    private val handler = Handler(Looper.getMainLooper())
 
     init {
         val sharedPreferences = context.getSharedPreferences("game_preferences", Context.MODE_PRIVATE)
@@ -192,16 +201,15 @@ class AssetViewModel(private val context: Context) : ViewModel() {
     }
 
     private fun startDepositTimer() {
-        if (isDepositTimerActive) {
-            return  // 이미 활성화된 타이머가 있으면 중복 생성 방지
-        }
-        
-        stopDepositTimer() // 안전하게 기존 타이머 정리
+        // 기존 타이머 취소
+        stopDepositTimer()
         
         val currentDeposit = _deposit.value ?: 0L
         if (currentDeposit <= 0) {
             return  // 예금이 없으면 타이머 시작하지 않음
         }
+        
+        android.util.Log.d("AssetViewModel", "예금 타이머 시작: ${currentDeposit}원")
         
         isDepositTimerActive = true
         depositTimer = object : CountDownTimer(60000, 1000) {
@@ -216,19 +224,34 @@ class AssetViewModel(private val context: Context) : ViewModel() {
                     _deposit.value = deposit + interest
                     _asset.value = (_asset.value ?: 0L) + interest
                     
-                    // 알림 메시지와 타임스탬프 업데이트
-                    val message = "예금 이자 ${formatNumber(interest)}원이 지급되었습니다"
-                    _interestNotification.value = message
-                    _lastNotificationTimestamp.value = System.currentTimeMillis()
+                    // 현재 시간 기록
+                    val currentTime = System.currentTimeMillis()
                     
-                    // MessageManager로 메시지 표시
-                    MessageManager.showMessage(context, message)
-                    
-                    // 로그로 알림 확인
-                    android.util.Log.d("AssetViewModel", "예금 이자 알림: $message")
+                    // 마지막 이자 지급 시간과 충분한 차이가 있을 때만 알림 표시
+                    if (currentTime - lastDepositInterestTime > 10000) { // 10초 이상 차이가 있을 때만
+                        // 알림 메시지와 타임스탬프 업데이트
+                        val message = "예금 이자 ${formatNumber(interest)}원이 지급되었습니다"
+                        _interestNotification.value = message
+                        _lastNotificationTimestamp.value = currentTime
+                        
+                        // MessageManager로 메시지 표시
+                        MessageManager.showMessage(context, message)
+                        
+                        // 로그로 알림 확인
+                        android.util.Log.d("AssetViewModel", "예금 이자 지급: ${formatNumber(interest)}원")
+                        
+                        // 마지막 이자 지급 시간 업데이트
+                        lastDepositInterestTime = currentTime
+                    } else {
+                        android.util.Log.d("AssetViewModel", "예금 이자 발생 (알림 없음): ${formatNumber(interest)}원")
+                    }
                     
                     saveAssetToPreferences()
-                    startDepositTimer() // 다음 이자를 위해 타이머 재시작
+                    
+                    // 다음 이자 계산을 위해 새 타이머 시작
+                    handler.post {
+                        startDepositTimer()
+                    }
                 } else {
                     stopDepositTimer()
                 }
@@ -237,16 +260,15 @@ class AssetViewModel(private val context: Context) : ViewModel() {
     }
 
     private fun startLoanTimer() {
-        if (isLoanTimerActive) {
-            return  // 이미 활성화된 타이머가 있으면 중복 생성 방지
-        }
-        
-        stopLoanTimer() // 안전하게 기존 타이머 정리
+        // 기존 타이머 취소
+        stopLoanTimer()
         
         val currentLoan = _loan.value ?: 0L
         if (currentLoan <= 0) {
             return  // 대출이 없으면 타이머 시작하지 않음
         }
+        
+        android.util.Log.d("AssetViewModel", "대출 타이머 시작: ${currentLoan}원")
         
         isLoanTimerActive = true
         loanTimer = object : CountDownTimer(60000, 1000) {
@@ -260,19 +282,34 @@ class AssetViewModel(private val context: Context) : ViewModel() {
                     val interest = (loan * 0.10).toLong()
                     _loan.value = loan + interest
                     
-                    // 알림 메시지와 타임스탬프 업데이트
-                    val message = "대출 이자 ${formatNumber(interest)}원이 발생했습니다"
-                    _interestNotification.value = message
-                    _lastNotificationTimestamp.value = System.currentTimeMillis()
+                    // 현재 시간 기록
+                    val currentTime = System.currentTimeMillis()
                     
-                    // MessageManager로 메시지 표시
-                    MessageManager.showMessage(context, message)
-                    
-                    // 로그로 알림 확인
-                    android.util.Log.d("AssetViewModel", "대출 이자 알림: $message")
+                    // 마지막 이자 발생 시간과 충분한 차이가 있을 때만 알림 표시
+                    if (currentTime - lastLoanInterestTime > 10000) { // 10초 이상 차이가 있을 때만
+                        // 알림 메시지와 타임스탬프 업데이트
+                        val message = "대출 이자 ${formatNumber(interest)}원이 발생했습니다"
+                        _interestNotification.value = message
+                        _lastNotificationTimestamp.value = currentTime
+                        
+                        // MessageManager로 메시지 표시
+                        MessageManager.showMessage(context, message)
+                        
+                        // 로그로 알림 확인
+                        android.util.Log.d("AssetViewModel", "대출 이자 발생: ${formatNumber(interest)}원")
+                        
+                        // 마지막 이자 발생 시간 업데이트
+                        lastLoanInterestTime = currentTime
+                    } else {
+                        android.util.Log.d("AssetViewModel", "대출 이자 발생 (알림 없음): ${formatNumber(interest)}원")
+                    }
                     
                     saveAssetToPreferences()
-                    startLoanTimer() // 다음 이자를 위해 타이머 재시작
+                    
+                    // 다음 이자 계산을 위해 새 타이머 시작
+                    handler.post {
+                        startLoanTimer()
+                    }
                 } else {
                     stopLoanTimer()
                 }
