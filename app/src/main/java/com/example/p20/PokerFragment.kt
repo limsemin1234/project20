@@ -106,31 +106,11 @@ class PokerFragment : Fragment() {
         bet50kButton = view.findViewById(R.id.bet50kButton)
         bet100kButton = view.findViewById(R.id.bet100kButton)
         
-        // 게임 설명 버튼 추가
-        val constraintLayout = view.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.poker_constraint_layout)
-        val helpButton = Button(requireContext())
-        helpButton.text = "게임 설명"
-        helpButton.id = View.generateViewId() // 새로운 ID 생성
-        
-        // 레이아웃 파라미터 설정
-        val layoutParams = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams(
-            ViewGroup.LayoutParams.WRAP_CONTENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
-        
-        // 버튼 위치 설정 (rankInfo 위에 위치)
-        layoutParams.topToBottom = R.id.gameControls
-        layoutParams.startToStart = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.PARENT_ID
-        layoutParams.bottomToTop = R.id.rankInfo
-        layoutParams.topMargin = 16
-        
-        helpButton.layoutParams = layoutParams
+        // 게임 설명 버튼 설정
+        val helpButton = view.findViewById<Button>(R.id.helpButton)
         helpButton.setOnClickListener {
             showGameRules()
         }
-        
-        // ConstraintLayout에 버튼 추가
-        constraintLayout.addView(helpButton)
         
         // 잔액 업데이트
         updateBalanceText()
@@ -1075,13 +1055,19 @@ class PokerFragment : Fragment() {
             • 하이카드: 카드합
         """.trimIndent()
         
-        // 다이얼로그로 표시
+        // 다이얼로그 생성
         val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
             .setTitle("1인발라트로 게임 설명")
             .setMessage(message)
             .setPositiveButton("확인") { dialog, _ -> dialog.dismiss() }
             .create()
+            
+        // 다이얼로그 표시
         dialog.show()
+        
+        // 텍스트 크기 조절
+        val textView = dialog.findViewById<TextView>(android.R.id.message)
+        textView?.textSize = 13f // 텍스트 크기를 16sp로 설정
     }
     
     // 포커 패 족보 enum
