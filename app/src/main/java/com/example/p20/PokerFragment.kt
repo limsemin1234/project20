@@ -556,31 +556,12 @@ class PokerFragment : Fragment() {
     }
     
     private fun showCustomSnackbar(message: String) {
-        val activity = requireActivity()
-        val snackbar = Snackbar.make(activity.findViewById(android.R.id.content), message, Snackbar.LENGTH_SHORT)
-        val snackbarView = snackbar.view
-        snackbarView.setBackgroundColor(Color.argb(200, 33, 33, 33))
-        try {
-            val params = snackbarView.layoutParams as FrameLayout.LayoutParams
-            params.gravity = Gravity.CENTER
-            snackbarView.layoutParams = params
-        } catch (e: ClassCastException) {
-        }
-        snackbar.show()
+        MessageManager.showMessage(requireContext(), message)
     }
     
     private fun showResultSnackbar(message: String, backgroundColor: Int) {
-        val activity = requireActivity()
-        val snackbar = Snackbar.make(activity.findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG)
-        val snackbarView = snackbar.view
-        snackbarView.setBackgroundColor(backgroundColor)
-        try {
-            val params = snackbarView.layoutParams as FrameLayout.LayoutParams
-            params.gravity = Gravity.CENTER
-            snackbarView.layoutParams = params
-        } catch (e: ClassCastException) {
-        }
-        snackbar.show()
+        // 결과 메시지도 상단 메시지로 표시 (배경색 정보 무시)
+        MessageManager.showMessage(requireContext(), message)
     }
     
     // 카드 교체 비용 계산 함수
