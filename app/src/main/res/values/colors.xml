@@ -1,34 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#303F9F</color>
-    <color name="colorPrimaryDark">#1A237E</color>
-    <color name="colorAccent">#FF4081</color>
-    <color name="white">#FFFFFF</color>
-    <color name="black">#000000</color>
-    <color name="red">#FF5733</color> <!-- 예: 오를 때 (빨간색) -->
-    <color name="blue">#3385FF</color> <!-- 예: 내릴 때 (파란색) -->
+    <!-- 기본 색상 팔레트 -->
+    <color name="primary">#1976D2</color>
+    <color name="primary_dark">#1565C0</color>
+    <color name="primary_light">#BBDEFB</color>
+    <color name="accent">#FF5722</color>
+    <color name="accent_light">#FFAB91</color>
+    
+    <!-- 기능별 색상 -->
+    <color name="bank_color">#303F9F</color>
+    <color name="stock_color">#E91E63</color>
+    <color name="real_estate_color">#388E3C</color>
+    <color name="casino_color">#052e16</color>
+    <color name="alba_color">#F0F8FF</color>
+    <color name="lotto_color">#202040</color>
+    
+    <!-- 상태 색상 -->
+    <color name="success">#4CAF50</color>
+    <color name="warning">#FFC107</color>
+    <color name="error">#F44336</color>
+    <color name="info">#2196F3</color>
+    
+    <!-- 텍스트 색상 -->
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="text_on_dark">#FFFFFF</color>
+    <color name="text_on_light">#000000</color>
+    
+    <!-- 기존 색상 (기존 코드와의 호환성 유지) -->
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="main_top_color">#303030</color>
+    <color name="main_bottom_color">#202020</color>
+    <color name="alba_level">#FF5722</color>
+    <color name="alba_start_button">#4CAF50</color>
+    <color name="perfect_timing">#D32F2F</color>
+    <color name="good_timing">#FF9800</color>
+    <color name="normal_timing">#2196F3</color>
+    <color name="pointer_normal">#FF5722</color>
+    
+    <!-- 누락된 색상 추가 -->
     <color name="button_color">#212675</color>
     <color name="button_pressed">#00BCD4</color>
     <color name="reward_text">#FFFF00</color>
-    <!-- <color name="reward_text">#673AB7</color> -->
-    <color name="gray">#E0E0E0</color>
-    <color name="purple_500">#6200EE</color>
-    <color name="purple_700">#3700B3</color>
-    <color name="teal_200">#03DAC5</color>
-    <color name="main_top_color">#212C64</color>
-    <color name="main_bottom_color">#212C64</color>
     <color name="main_bottom_button">#212C64</color>
     <color name="fragment_lavel">#016666</color>
-    <color name="alba_level">#673AB7</color>
     <color name="realestate_reward">#F44336</color>
     <color name="stock_button">#616161</color>
     <color name="realestate_button">#616161</color>
-    
-    <!-- 타이밍 알바 색상 -->
-    <color name="alba_start_button">#3F51B5</color>
-    <color name="perfect_timing">#D32F2F</color>
-    <color name="good_timing">#FF5722</color>
-    <color name="normal_timing">#1E88E5</color>
     <color name="button_disabled">#9E9E9E</color>
-    <color name="pointer_normal">#FF5722</color>
+    <color name="red">#FF5733</color>
+    <color name="blue">#3385FF</color>
+    <color name="gray">#E0E0E0</color>
+    
+    <!-- 기존 Material 테마 호환성 색상 -->
+    <color name="colorPrimary">#303F9F</color>
+    <color name="colorPrimaryDark">#1A237E</color>
+    <color name="colorAccent">#FF4081</color>
 </resources>

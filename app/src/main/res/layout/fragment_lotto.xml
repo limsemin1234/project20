@@ -11,16 +11,8 @@
     <!-- 제목 추가 -->
     <TextView
         android:id="@+id/lottoTitleText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        style="@style/LottoHeader"
         android:text="🎫 행운의 복권 판매점"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:background="#303050"
-        android:padding="7dp"
-        android:gravity="center"
-        android:layout_marginTop="0dp"
-        android:textColor="#FFFFFF"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />

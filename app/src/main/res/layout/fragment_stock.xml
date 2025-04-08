@@ -15,16 +15,8 @@
         <!-- 제목 -->
         <TextView
             android:id="@+id/stockTitleTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            style="@style/StockHeader"
             android:text="📈 오늘의 주식 시장"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:background="#E91E63"
-            android:padding="7dp"
-            android:gravity="center"
-            android:layout_marginTop="0dp"
-            android:textColor="#FFFFFF"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />

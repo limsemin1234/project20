@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 기본 앱 테마 -->
+    <style name="AppTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorAccent">@color/accent</item>
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+    </style>
+
+    <!-- 헤더 텍스트 스타일 -->
+    <style name="HeaderText">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:padding">7dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/text_on_dark</item>
+    </style>
+    
+    <!-- 섹션 제목 스타일 -->
+    <style name="SectionTitle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:layout_marginTop">16dp</item>
+        <item name="android:layout_marginBottom">8dp</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+    
+    <!-- 기본 카드 스타일 -->
+    <style name="AppCard" parent="Widget.MaterialComponents.CardView">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginBottom">16dp</item>
+        <item name="cardCornerRadius">8dp</item>
+        <item name="cardElevation">4dp</item>
+    </style>
+    
+    <!-- 기본 버튼 스타일 -->
+    <style name="AppButton" parent="Widget.MaterialComponents.Button">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/text_on_dark</item>
+        <item name="android:layout_margin">3dp</item>
+    </style>
+    
+    <!-- 기능별 헤더 스타일 -->
+    <style name="BankHeader" parent="HeaderText">
+        <item name="android:background">@color/bank_color</item>
+    </style>
+    
+    <style name="StockHeader" parent="HeaderText">
+        <item name="android:background">@color/stock_color</item>
+    </style>
+    
+    <style name="RealEstateHeader" parent="HeaderText">
+        <item name="android:background">@color/real_estate_color</item>
+    </style>
+    
+    <style name="CasinoHeader" parent="HeaderText">
+        <item name="android:background">@color/casino_color</item>
+    </style>
+    
+    <style name="LottoHeader" parent="HeaderText">
+        <item name="android:background">@color/lotto_color</item>
+    </style>
+    
+    <!-- 상태 텍스트 스타일 -->
+    <style name="StatusText">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:padding">4dp</item>
+    </style>
+    
+    <style name="SuccessText" parent="StatusText">
+        <item name="android:textColor">@color/success</item>
+    </style>
+    
+    <style name="WarningText" parent="StatusText">
+        <item name="android:textColor">@color/warning</item>
+    </style>
+    
+    <style name="ErrorText" parent="StatusText">
+        <item name="android:textColor">@color/error</item>
+    </style>
+</resources> 

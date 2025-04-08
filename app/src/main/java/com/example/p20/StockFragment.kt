@@ -18,12 +18,11 @@ import com.google.android.material.snackbar.Snackbar
 import android.view.Gravity
 import android.widget.FrameLayout
 
-class StockFragment : Fragment() {
+class StockFragment : BaseFragment() {
 
     private lateinit var stockRecyclerView: RecyclerView
     private lateinit var stockAdapter: StockAdapter
     private lateinit var stockDetailsTextView: LinearLayout
-    private lateinit var assetViewModel: AssetViewModel
     private lateinit var featuresInfoText: TextView
 
     private var selectedStock: Stock? = null
@@ -46,29 +45,39 @@ class StockFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_stock, container, false)
+        return inflater.inflate(R.layout.fragment_stock, container, false)
+    }
 
-        stockViewModel = ViewModelProvider(requireActivity()).get(StockViewModel::class.java)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        stockViewModel = ViewModelProvider(requireActivity())[StockViewModel::class.java]
 
         stockViewModel.stockItems.observe(viewLifecycleOwner, Observer { updatedStockList ->
             updateStockList(updatedStockList)
-            selectedStock?.let { updateStockDetails(it) }
+            selectedStock?.let { 
+                updateStockDetails(it)
+                val updatedStock = updatedStockList.find { stock -> stock.name == it.name }
+                if (updatedStock != null) {
+                    stockAdapter.setSelectedStock(updatedStock)
+                }
+            }
         })
         
         // 호재 이벤트 콜백 설정
         stockViewModel.setPositiveNewsCallback { stockNames ->
             showPositiveNewsMessage(stockNames)
-            
-            // 호재 기능 설명은 이미 추가되어 있으므로 제거
         }
         
         // 악제 이벤트 콜백 설정
         stockViewModel.setNegativeNewsCallback { stockNames ->
             showNegativeNewsMessage(stockNames)
-            
-            // 악제 기능 설명은 이미 추가되어 있으므로 제거
         }
 
+        setupUI(view)
+    }
+    
+    private fun setupUI(view: View) {
         stockRecyclerView = view.findViewById(R.id.stockRecyclerView)
         stockDetailsTextView = view.findViewById(R.id.stockDetailsTextView)
         featuresInfoText = view.findViewById(R.id.stockFeaturesInfoText)
@@ -84,12 +93,9 @@ class StockFragment : Fragment() {
         stockQuantityData = view.findViewById(R.id.stockQuantityData)
         selectedStockName = view.findViewById(R.id.selectedStockName)
 
-        assetViewModel = ViewModelProvider(requireActivity()).get(AssetViewModel::class.java)
-
         stockRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         stockAdapter = StockAdapter(stockItems) { stock ->
             selectedStock = stock
-            showSnackbar("${stock.name}이(가) 선택되었습니다.")
             updateStockDetails(stock) // 주식 상세 정보 업데이트
         }
         stockRecyclerView.adapter = stockAdapter
@@ -100,13 +106,13 @@ class StockFragment : Fragment() {
                 if (currentAsset >= it.price.toLong()) {
                     assetViewModel.decreaseAsset(it.price.toLong())
                     stockViewModel.buyStock(it)
-                    showSnackbar("${it.name}을(를) 매수했습니다! 보유량: ${it.holding}주")
+                    showMessage("${it.name}을(를) 매수했습니다! 보유량: ${it.holding}주")
                     stockAdapter.notifyDataSetChanged()
                     updateStockDetails(it) // 주식 상세 정보 업데이트
                 } else {
-                    showSnackbar("자산이 부족합니다!")
+                    showErrorMessage("자산이 부족합니다!")
                 }
-            } ?: showSnackbar("주식을 선택하세요.")
+            } ?: showMessage("주식을 선택하세요.")
         }
 
         sellButton.setOnClickListener {
@@ -115,13 +121,13 @@ class StockFragment : Fragment() {
                     stockViewModel.sellStock(it)
                     assetViewModel.increaseAsset(it.price.toLong())
                     val profitLoss = it.getProfitLoss()
-                    showSnackbar("${it.name} 매도! 손익: ${profitLoss}원")
+                    showMessage("${it.name} 매도! 손익: ${profitLoss}원")
                     stockAdapter.notifyDataSetChanged()
                     updateStockDetails(it) // 주식 상세 정보 업데이트
                 } else {
-                    showSnackbar("보유한 주식이 없습니다!")
+                    showErrorMessage("보유한 주식이 없습니다!")
                 }
-            } ?: showSnackbar("주식을 선택하세요.")
+            } ?: showMessage("주식을 선택하세요.")
         }
 
         buyAllButton.setOnClickListener {
@@ -131,13 +137,13 @@ class StockFragment : Fragment() {
                     val buyCount = stockViewModel.buyAllStock(stock, currentAsset)
                     val usedAsset = stock.price.toLong() * buyCount
                     assetViewModel.decreaseAsset(usedAsset)
-                    showSnackbar("${stock.name}을(를) ${buyCount}주 전체 매수했습니다!")
+                    showMessage("${stock.name}을(를) ${buyCount}주 전체 매수했습니다!")
                     stockAdapter.notifyDataSetChanged()
                     updateStockDetails(stock) // 주식 상세 정보 업데이트
                 } else {
-                    showSnackbar("자산이 부족합니다!")
+                    showErrorMessage("자산이 부족합니다!")
                 }
-            } ?: showSnackbar("주식을 선택하세요.")
+            } ?: showMessage("주식을 선택하세요.")
         }
 
         sellAllButton.setOnClickListener {
@@ -146,226 +152,50 @@ class StockFragment : Fragment() {
                     val sellCount = stockViewModel.sellAllStock(stock)
                     val gain = stock.price.toLong() * sellCount
                     assetViewModel.increaseAsset(gain)
-                    showSnackbar("${stock.name} ${sellCount}주 전체 매도 완료!")
+                    showMessage("${stock.name} ${sellCount}주 전체 매도 완료!")
                     stockAdapter.notifyDataSetChanged()
                     updateStockDetails(stock) // 주식 상세 정보 업데이트
                 } else {
-                    showSnackbar("보유한 주식이 없습니다!")
+                    showErrorMessage("보유한 주식이 없습니다!")
                 }
-            } ?: showSnackbar("주식을 선택하세요.")
-        }
-
-        return view
-    }
-
-    /**
-     * 일반 메시지용 스낵바를 표시합니다.
-     */
-    private fun showSnackbar(message: String) {
-        try {
-            val view = view
-            if (view == null || !isAdded) {
-                // 프래그먼트가 더 이상 붙어있지 않은 경우
-                return
-            }
-            
-            val activity = activity
-            if (activity == null || activity.isFinishing) {
-                // 액티비티가 없거나 종료 중인 경우
-                return
-            }
-            
-            val snackbar = Snackbar.make(view, message, Snackbar.LENGTH_SHORT)
-            val snackbarView = snackbar.view
-            
-            // 안전하게 배경색 설정
-            snackbarView.setBackgroundColor(Color.argb(200, 33, 33, 33))
-            
-            // 텍스트 스타일 설정
-            try {
-                val textView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
-                if (textView != null) {
-                    textView.maxLines = 3
-                }
-            } catch (e: Exception) {
-                // 텍스트뷰 설정 중 오류 발생시 무시하고 기본 스낵바 표시
-            }
-            
-            // 중앙 배치 시도
-            try {
-                if (snackbarView.layoutParams is FrameLayout.LayoutParams) {
-                    val params = snackbarView.layoutParams as FrameLayout.LayoutParams
-                    params.gravity = Gravity.CENTER
-                    snackbarView.layoutParams = params
-                }
-            } catch (e: Exception) {
-                // 레이아웃 파라미터 설정 중 오류 발생시 무시
-            }
-            
-            // 스낵바 표시
-            snackbar.show()
-        } catch (e: Exception) {
-            // 스낵바 표시 중 발생한 모든 예외 처리
+            } ?: showMessage("주식을 선택하세요.")
         }
     }
 
-    private fun showPositiveNewsMessage(stockNames: List<String>) {
-        try {
-            val view = view
-            if (view == null || !isAdded) {
-                return
-            }
-            
-            val activity = activity
-            if (activity == null || activity.isFinishing) {
-                return
-            }
-            
-            val message = "🔥 호재 발생! ${stockNames.joinToString(", ")} 종목 상승중! (20초간)"
-            
-            val snackbar = Snackbar.make(view, message, Snackbar.LENGTH_LONG)
-            val snackbarView = snackbar.view
-            
-            // 안전하게 배경색 설정
-            snackbarView.setBackgroundColor(Color.argb(200, 76, 175, 80)) // 초록색 배경
-            
-            // 텍스트 스타일 설정
-            try {
-                val textView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
-                if (textView != null) {
-                    textView.setTextColor(Color.WHITE)
-                    textView.maxLines = 3
-                }
-            } catch (e: Exception) {
-                // 텍스트뷰 설정 중 오류 발생시 무시
-            }
-            
-            // 중앙 배치 시도
-            try {
-                if (snackbarView.layoutParams is FrameLayout.LayoutParams) {
-                    val params = snackbarView.layoutParams as FrameLayout.LayoutParams
-                    params.gravity = Gravity.CENTER
-                    snackbarView.layoutParams = params
-                }
-            } catch (e: Exception) {
-                // 레이아웃 파라미터 설정 중 오류 발생시 무시
-            }
-            
-            // 스낵바 표시
-            snackbar.show()
-        } catch (e: Exception) {
-            // 스낵바 표시 중 발생한 모든 예외 처리
-        }
-    }
-    
-    private fun showNegativeNewsMessage(stockNames: List<String>) {
-        try {
-            val view = view
-            if (view == null || !isAdded) {
-                return
-            }
-            
-            val activity = activity
-            if (activity == null || activity.isFinishing) {
-                return
-            }
-            
-            val message = "⚠️ 악제 발생! ${stockNames.joinToString(", ")} 종목 하락중! (20초간)"
-            
-            val snackbar = Snackbar.make(view, message, Snackbar.LENGTH_LONG)
-            val snackbarView = snackbar.view
-            
-            // 안전하게 배경색 설정
-            snackbarView.setBackgroundColor(Color.argb(200, 244, 67, 54)) // 빨간색 배경
-            
-            // 텍스트 스타일 설정
-            try {
-                val textView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
-                if (textView != null) {
-                    textView.setTextColor(Color.WHITE)
-                    textView.maxLines = 3
-                }
-            } catch (e: Exception) {
-                // 텍스트뷰 설정 중 오류 발생시 무시
-            }
-            
-            // 중앙 배치 시도
-            try {
-                if (snackbarView.layoutParams is FrameLayout.LayoutParams) {
-                    val params = snackbarView.layoutParams as FrameLayout.LayoutParams
-                    params.gravity = Gravity.CENTER
-                    snackbarView.layoutParams = params
-                }
-            } catch (e: Exception) {
-                // 레이아웃 파라미터 설정 중 오류 발생시 무시
-            }
-            
-            // 스낵바 표시
-            snackbar.show()
-        } catch (e: Exception) {
-            // 스낵바 표시 중 발생한 모든 예외 처리
-        }
-    }
-
-    private fun updateStockList(newStockItems: MutableList<Stock>?) {
-        // 기존 어댑터에 데이터 업데이트
-        newStockItems?.let {
-             stockAdapter.updateData(it)
-        }
-    }
-
-    private fun clearStockDetails() {
-        selectedStockName?.text = "-"
-        avgPurchasePriceData?.text = "0원"
-        profitLossData?.text = "0원"
-        profitRateData?.text = "0%"
-        stockQuantityData?.text = "0주"
-        profitLossData?.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.black))
-        profitRateData?.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.black))
+    private fun updateStockList(updatedStockList: List<Stock>) {
+        stockItems = updatedStockList
+        stockAdapter.updateData(updatedStockList)
     }
 
     private fun updateStockDetails(stock: Stock) {
         selectedStockName?.text = stock.name
+        avgPurchasePriceData?.text = formatCurrency(stock.getAvgPurchasePrice().toLong()) + "원"
+        
+        val profitLoss = stock.getProfitLoss()
+        profitLossData?.text = formatWithSign(profitLoss) + "원"
+        profitLossData?.setTextColor(getChangeColor(profitLoss))
+        
+        val profitRate = stock.getProfitRate()
+        profitRateData?.text = formatPercent(profitRate / 100)
+        profitRateData?.setTextColor(getChangeColor(profitLoss))
+        
+        stockQuantityData?.text = "${stock.holding}주"
+    }
 
-        if (stock.holding > 0) {
-            val avgPurchasePrice = stock.getAvgPurchasePrice()
-            val profitLoss = stock.getProfitLoss()
-            val profitRate = stock.getProfitRate()
+    /**
+     * 호재 메시지용 스낵바를 표시합니다.
+     */
+    private fun showPositiveNewsMessage(stockNames: List<String>) {
+        val message = "호재 발생! ${stockNames.joinToString(", ")} 주가 상승 예상!"
+        showSuccessMessage(message)
+    }
 
-            avgPurchasePriceData?.text = "${String.format("%,d", avgPurchasePrice)}원"
-            profitLossData?.text = "${String.format("%,d", profitLoss)}원"
-            profitRateData?.text = "${"%.2f".format(profitRate)}%"
-            stockQuantityData?.text = "${String.format("%,d", stock.holding)}주"
-
-
-            // 색상 처리
-            val red = ContextCompat.getColor(requireContext(), android.R.color.holo_red_dark)
-            val blue = ContextCompat.getColor(requireContext(), android.R.color.holo_blue_dark)
-            val black = ContextCompat.getColor(requireContext(), android.R.color.black)
-
-            val profitLossColor = when {
-                profitLoss > 0 -> red
-                profitLoss < 0 -> blue
-                else -> black
-            }
-            val profitRateColor = when {
-                profitRate > 0 -> red
-                profitRate < 0 -> blue
-                else -> black
-            }
-
-            profitLossData?.setTextColor(profitLossColor)
-            profitRateData?.setTextColor(profitRateColor)
-
-        } else {
-            avgPurchasePriceData?.text = "0원"
-            profitLossData?.text = "0원"
-            profitRateData?.text = "0%"
-            stockQuantityData?.text = "0주"
-
-            profitLossData?.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.black))
-            profitRateData?.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.black))
-        }
+    /**
+     * 악재 메시지용 스낵바를 표시합니다.
+     */
+    private fun showNegativeNewsMessage(stockNames: List<String>) {
+        val message = "악재 발생! ${stockNames.joinToString(", ")} 주가 하락 예상!"
+        showErrorMessage(message)
     }
 
     fun updateFeaturesInfo(newFeature: String) {

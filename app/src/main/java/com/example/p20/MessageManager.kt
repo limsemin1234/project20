@@ -18,6 +18,8 @@ import android.os.Looper
 import android.view.View
 import android.view.ViewGroup.LayoutParams
 import android.widget.FrameLayout
+import android.view.LayoutInflater
+import com.google.android.material.snackbar.Snackbar
 
 /**
  * 화면 상단에 메시지를 표시하는 관리자 클래스
@@ -33,6 +35,10 @@ object MessageManager {
     
     private var messageContainer: LinearLayout? = null
     private var initialized = false
+
+    // 새로 추가: Snackbar 관련 설정값
+    private const val SNACKBAR_DURATION_SHORT = 2000
+    private const val SNACKBAR_DURATION_LONG = 3500
 
     /**
      * MessageManager 초기화
@@ -182,5 +188,113 @@ object MessageManager {
         // 데이터 초기화
         activeMessages.clear()
         messageQueue.clear()
+    }
+
+    /**
+     * 표준화된 Snackbar 표시 메서드
+     * @param view 스낵바를 표시할 뷰
+     * @param message 표시할 메시지
+     * @param duration 표시 시간 (Snackbar.LENGTH_SHORT 또는 Snackbar.LENGTH_LONG)
+     * @param isError 오류 메시지 여부 (색상 결정)
+     * @param action 액션 텍스트 (null이면 액션 없음)
+     * @param actionCallback 액션 콜백 (null이면 콜백 없음)
+     */
+    fun showSnackbar(
+        view: View,
+        message: String,
+        duration: Int = Snackbar.LENGTH_SHORT,
+        isError: Boolean = false,
+        action: String? = null,
+        actionCallback: (() -> Unit)? = null
+    ) {
+        if (!isViewValid(view)) return
+        
+        try {
+            val snackbar = Snackbar.make(view, message, duration)
+            val snackbarView = snackbar.view
+            
+            // 배경색 설정
+            snackbarView.setBackgroundColor(Color.argb(200, 33, 33, 33))
+            
+            // 텍스트 스타일 설정
+            val textView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
+            textView?.let {
+                it.maxLines = 3
+                if (isError) {
+                    it.setTextColor(Color.parseColor("#FF5252"))
+                } else {
+                    it.setTextColor(Color.WHITE)
+                }
+            }
+            
+            // 액션 설정
+            if (action != null && actionCallback != null) {
+                snackbar.setAction(action) { actionCallback() }
+                snackbar.setActionTextColor(Color.parseColor("#8BC34A"))
+            }
+            
+            // 중앙 정렬 시도
+            if (snackbarView.layoutParams is FrameLayout.LayoutParams) {
+                val params = snackbarView.layoutParams as FrameLayout.LayoutParams
+                params.gravity = Gravity.CENTER_HORIZONTAL or Gravity.BOTTOM
+                snackbarView.layoutParams = params
+            }
+            
+            snackbar.show()
+        } catch (e: Exception) {
+            // 로그 출력
+            android.util.Log.e("MessageManager", "Snackbar 표시 오류: ${e.message}")
+        }
+    }
+    
+    /**
+     * 성공 Snackbar 표시
+     */
+    fun showSuccessSnackbar(view: View, message: String, duration: Int = Snackbar.LENGTH_SHORT) {
+        if (!isViewValid(view)) return
+        
+        try {
+            val snackbar = Snackbar.make(view, message, duration)
+            val snackbarView = snackbar.view
+            
+            // 성공 배경색
+            snackbarView.setBackgroundColor(Color.parseColor("#388E3C"))
+            
+            // 텍스트 스타일
+            val textView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
+            textView?.setTextColor(Color.WHITE)
+            
+            // 중앙 정렬
+            if (snackbarView.layoutParams is FrameLayout.LayoutParams) {
+                val params = snackbarView.layoutParams as FrameLayout.LayoutParams
+                params.gravity = Gravity.CENTER_HORIZONTAL or Gravity.BOTTOM
+                snackbarView.layoutParams = params
+            }
+            
+            snackbar.show()
+        } catch (e: Exception) {
+            android.util.Log.e("MessageManager", "Success Snackbar 표시 오류: ${e.message}")
+        }
+    }
+    
+    /**
+     * 오류 Snackbar 표시
+     */
+    fun showErrorSnackbar(view: View, message: String, duration: Int = Snackbar.LENGTH_SHORT) {
+        showSnackbar(view, message, duration, true)
+    }
+    
+    /**
+     * 뷰가 유효한지 확인
+     */
+    private fun isViewValid(view: View): Boolean {
+        return try {
+            // Activity가 파괴되었는지 확인
+            val context = view.context
+            context != null && !view.isAttachedToWindow.not()
+        } catch (e: Exception) {
+            android.util.Log.e("MessageManager", "View 유효성 확인 오류: ${e.message}")
+            false
+        }
     }
 } 

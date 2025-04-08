@@ -122,7 +122,7 @@ class AssetRepository(private val context: Context) {
     
     // 포맷팅 유틸리티
     fun formatNumber(number: Long): String {
-        return NumberFormat.getNumberInstance(Locale.KOREA).format(number)
+        return FormatUtils.formatCurrency(number)
     }
     
     fun getAssetText(): String {

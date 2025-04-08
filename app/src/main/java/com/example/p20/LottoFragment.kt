@@ -2,29 +2,20 @@ package com.example.p20
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.activityViewModels
 import com.example.p20.databinding.FragmentLottoBinding
-import com.google.android.material.snackbar.Snackbar
-import java.text.NumberFormat
-import java.util.Locale
-import kotlin.random.Random
 import android.graphics.Color
-import android.view.Gravity
-import android.widget.FrameLayout
 import android.os.Looper
 import android.os.Handler
+import kotlin.random.Random
 
-class LottoFragment : Fragment() {
+class LottoFragment : BaseFragment() {
 
     private var _binding: FragmentLottoBinding? = null
     private val binding get() = _binding!!
-
-    private val assetViewModel: AssetViewModel by activityViewModels()
 
     private val lottoPrice = 10000L
     private var currentPrize = 0L
@@ -71,7 +62,7 @@ class LottoFragment : Fragment() {
         binding.buyLottoButton.setOnClickListener {
             // 쿨타임 중이면 클릭 무시
             if (!isBuyButtonEnabled) {
-                showCustomSnackbar("잠시 후 다시 시도해주세요. 남은 시간: ${remainingCooldownTime / 1000}초")
+                showErrorMessage("잠시 후 다시 시도해주세요. 남은 시간: ${remainingCooldownTime / 1000}초")
                 return@setOnClickListener
             }
             buyLottoTicket()
@@ -92,7 +83,7 @@ class LottoFragment : Fragment() {
 
     private fun buyLottoTicket() {
         if (isLottoPurchased) {
-            showCustomSnackbar("이미 로또를 구매했습니다. 긁어주세요!")
+            showErrorMessage("이미 로또를 구매했습니다. 긁어주세요!")
             return
         }
 
@@ -113,12 +104,12 @@ class LottoFragment : Fragment() {
             binding.prizeText.visibility = View.GONE
             binding.scratchCoatingImage.visibility = View.VISIBLE
             binding.resultMessageText.visibility = View.INVISIBLE
-            showCustomSnackbar("로또 구매 완료! 긁어서 확인하세요.")
+            showMessage("로또 구매 완료! 긁어서 확인하세요.")
 
             // 구매 버튼 비활성화 및 쿨타임 시작
             disableBuyButtonTemporarily()
         } else {
-            showCustomSnackbar("자산이 부족합니다.")
+            showErrorMessage("자산이 부족합니다.")
         }
     }
 
@@ -130,19 +121,12 @@ class LottoFragment : Fragment() {
         if (currentPrize > 0) {
             binding.resultMessageText.text = "축하합니다! ${formatCurrency(currentPrize)} 당첨!"
             assetViewModel.increaseAsset(currentPrize)
+            showSuccessMessage("${formatCurrency(currentPrize)}원에 당첨되었습니다!")
         } else {
             binding.resultMessageText.text = "아쉽지만, 꽝입니다."
+            showMessage("아쉽지만 꽝입니다. 다음 기회에...")
         }
         isLottoPurchased = false
-    }
-
-    private fun formatCurrency(amount: Long): String {
-        val formatter = NumberFormat.getCurrencyInstance(Locale.KOREA)
-        return formatter.format(amount)
-    }
-
-    private fun showCustomSnackbar(message: String) {
-        MessageManager.showMessage(requireContext(), message)
     }
 
     // 구매 버튼 임시 비활성화 함수
