@@ -11,6 +11,7 @@ import android.graphics.Color
 import android.os.Looper
 import android.os.Handler
 import kotlin.random.Random
+import androidx.lifecycle.ViewModelProvider
 
 class LottoFragment : BaseFragment() {
 

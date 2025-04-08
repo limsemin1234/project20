@@ -64,6 +64,7 @@ class DepositFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         viewModel = ViewModelProvider(requireActivity())[AssetViewModel::class.java]
 
+        // 기본 UI 요소 초기화
         depositAmountInput = view.findViewById(R.id.depositAmountInput)
         depositButton = view.findViewById(R.id.depositButton)
         withdrawButton = view.findViewById(R.id.withdrawButton)
@@ -259,6 +260,7 @@ class DepositFragment : Fragment() {
     }
     
     private fun setupActionButtons() {
+        // 기본 버튼 설정
         depositButton.setOnClickListener {
             val amount = getSelectedAmount()
             if (amount <= 0) {
