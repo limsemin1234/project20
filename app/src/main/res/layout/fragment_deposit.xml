@@ -48,6 +48,108 @@
                     android:background="@android:drawable/edit_text"
                     android:layout_marginBottom="16dp"/>
 
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="금액 선택"
+                    android:textStyle="bold"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="8dp"/>
+
+                <!-- 만 단위 버튼 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <Button
+                        android:id="@+id/btn1Man"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="1만"
+                        android:textSize="12sp"
+                        android:backgroundTint="#4CAF50"
+                        android:layout_marginEnd="4dp"/>
+
+                    <Button
+                        android:id="@+id/btn10Man"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="10만"
+                        android:textSize="12sp"
+                        android:backgroundTint="#4CAF50"
+                        android:layout_marginEnd="4dp"/>
+
+                    <Button
+                        android:id="@+id/btn100Man"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="100만"
+                        android:textSize="12sp"
+                        android:backgroundTint="#4CAF50"
+                        android:layout_marginEnd="4dp"/>
+
+                    <Button
+                        android:id="@+id/btn1000Man"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="1000만"
+                        android:textSize="12sp"
+                        android:backgroundTint="#4CAF50"/>
+                </LinearLayout>
+
+                <!-- 억 단위 버튼 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="16dp">
+
+                    <Button
+                        android:id="@+id/btn1Eok"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="1억"
+                        android:textSize="12sp"
+                        android:backgroundTint="#FF9800"
+                        android:layout_marginEnd="4dp"/>
+
+                    <Button
+                        android:id="@+id/btn10Eok"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="10억"
+                        android:textSize="12sp"
+                        android:backgroundTint="#FF9800"
+                        android:layout_marginEnd="4dp"/>
+
+                    <Button
+                        android:id="@+id/btn100Eok"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="100억"
+                        android:textSize="12sp"
+                        android:backgroundTint="#FF9800"
+                        android:layout_marginEnd="4dp"/>
+
+                    <Button
+                        android:id="@+id/btn1000Eok"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="1000억"
+                        android:textSize="12sp"
+                        android:backgroundTint="#FF9800"/>
+                </LinearLayout>
+
                 <Button
                     android:id="@+id/resetButton"
                     android:layout_width="match_parent"
@@ -57,12 +159,13 @@
                     android:textColor="@android:color/white"
                     android:layout_marginBottom="16dp"/>
 
-
+                <!-- 기존 단위/숫자 버튼 (숨김 처리) -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginBottom="10dp">
+                    android:layout_marginBottom="10dp"
+                    android:visibility="gone">
 
                     <Button
                         android:id="@+id/unitManButton"
@@ -94,7 +197,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginBottom="16dp">
+                    android:layout_marginBottom="16dp"
+                    android:visibility="gone">
 
                     <Button
                         android:id="@+id/number1Button"
@@ -142,14 +246,40 @@
                     android:textColor="@android:color/white"
                     android:layout_marginBottom="8dp"/>
 
-                <Button
-                    android:id="@+id/withdrawButton"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="출금하기"
-                    android:backgroundTint="#303F9F"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <Button
+                        android:id="@+id/withdrawButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="출금하기"
+                        android:backgroundTint="#303F9F"
+                        android:textColor="@android:color/white"
+                        android:layout_marginEnd="4dp"/>
+
+                    <Button
+                        android:id="@+id/withdrawAllButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="전체출금"
+                        android:backgroundTint="#FF5722"
+                        android:textColor="@android:color/white"/>
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/withdrawThousandsButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="천의 자리 이하 출금"
+                    android:backgroundTint="#673AB7"
                     android:textColor="@android:color/white"
-                    android:layout_marginTop="8dp"/>
+                    android:layout_marginTop="4dp"/>
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
