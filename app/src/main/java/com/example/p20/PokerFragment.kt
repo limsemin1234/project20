@@ -19,6 +19,7 @@ import java.text.NumberFormat
 import java.util.Locale
 import android.os.Handler
 import android.os.Looper
+import android.graphics.drawable.GradientDrawable
 
 class PokerFragment : Fragment() {
 
@@ -26,6 +27,7 @@ class PokerFragment : Fragment() {
     private lateinit var playerCardsLayout: LinearLayout
     private lateinit var handRankText: TextView
     private lateinit var betAmountText: TextView
+    private lateinit var scoreText: TextView
     private lateinit var changeButton: Button
     private lateinit var endGameButton: Button
     private lateinit var newGameButton: Button
@@ -47,6 +49,9 @@ class PokerFragment : Fragment() {
     // 선택된 카드 추적
     private val selectedCardIndices = mutableSetOf<Int>()
     private val cardViews = mutableListOf<TextView>()
+    
+    // 족보에 포함된 카드 인덱스 저장
+    private val handRankCardIndices = mutableSetOf<Int>()
     
     // 카드 관련 변수
     private val suits = listOf("♠", "♥", "♦", "♣")
@@ -92,6 +97,7 @@ class PokerFragment : Fragment() {
         playerCardsLayout = view.findViewById(R.id.playerCardsLayout)
         handRankText = view.findViewById(R.id.handRankText)
         betAmountText = view.findViewById(R.id.betAmountText)
+        scoreText = view.findViewById(R.id.scoreText)
         changeButton = view.findViewById(R.id.changeButton)
         endGameButton = view.findViewById(R.id.endGameButton)
         newGameButton = view.findViewById(R.id.newGameButton)
@@ -182,8 +188,12 @@ class PokerFragment : Fragment() {
                 return@setOnClickListener
             }
             
-            // 족보 평가 후 게임 종료
-            evaluateHand()
+            if (selectedCardIndices.size != 5) {
+                showCustomSnackbar("게임을 종료하려면 정확히 5장의 카드를 선택해야 합니다.")
+                return@setOnClickListener
+            }
+            
+            // 선택한 5장만으로 게임 종료
             endGame()
         }
     }
@@ -223,6 +233,7 @@ class PokerFragment : Fragment() {
         playerCardsLayout.removeAllViews()
         cardViews.clear()
         selectedCardIndices.clear()
+        handRankCardIndices.clear()  // 족보 강조 초기화
         handRankText.text = "패 없음"
         
         // 덱 생성 및 섞기
@@ -247,13 +258,14 @@ class PokerFragment : Fragment() {
     }
     
     private fun dealCards() {
-        // 카드 초기 배포 (5장)
+        // 카드 초기 배포 (7장)
         playerCardsLayout.removeAllViews()
         playerCards.clear()
         cardViews.clear()
         selectedCardIndices.clear()
+        handRankCardIndices.clear()
         
-        for (i in 0 until 5) {
+        for (i in 0 until 7) {
             val card = drawCard()
             playerCards.add(card)
             addCardView(playerCardsLayout, card, i)
@@ -268,6 +280,12 @@ class PokerFragment : Fragment() {
     private fun changeCards() {
         // 카드 교체 비용 확인 (첫 번째는 무료)
         val changeCost = getChangeCost()
+        
+        // 교체 횟수 제한 확인
+        if (changeCount >= 5) {
+            showCustomSnackbar("최대 5번까지만 카드 교체가 가능합니다.")
+            return
+        }
         
         // 교체 횟수가 0보다 크면 비용 지불
         if (changeCount > 0) {
@@ -292,7 +310,7 @@ class PokerFragment : Fragment() {
         playerCardsLayout.removeAllViews()
         cardViews.clear()
         
-        for (i in 0 until 5) {
+        for (i in 0 until 7) {
             if (i in selectedCardIndices) {
                 val newCard = drawCard()
                 playerCards[i] = newCard
@@ -314,11 +332,11 @@ class PokerFragment : Fragment() {
         evaluateHand()
         
         // 교체 완료 메시지
-        if (changeCount < 10) { // 너무 많은 교체를 방지하기 위한 상한선
+        if (changeCount < 5) { 
             val nextCost = getChangeCost()
             showCustomSnackbar("카드 교체 완료. 다음 교체 비용: ${formatCurrency(nextCost)}")
         } else {
-            showCustomSnackbar("최대 교체 횟수에 도달했습니다. 게임을 종료해주세요.")
+            showCustomSnackbar("최대 교체 횟수(5번)에 도달했습니다. 게임을 종료해주세요.")
             changeButton.isEnabled = false
         }
     }
@@ -333,16 +351,22 @@ class PokerFragment : Fragment() {
     private fun addCardView(container: LinearLayout, card: Card, index: Int) {
         val cardView = TextView(requireContext())
         cardView.layoutParams = LinearLayout.LayoutParams(
-            (resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width) * 0.95f).toInt(),
+            (resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width) * 0.75f).toInt(),
             ViewGroup.LayoutParams.MATCH_PARENT
         ).apply {
-            marginEnd = resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width) / 20
+            marginEnd = resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width) / 25
         }
         
-        cardView.background = ContextCompat.getDrawable(requireContext(), android.R.drawable.btn_default)
+        // 기본 검정색 테두리 설정
+        val strokeDrawable = GradientDrawable()
+        strokeDrawable.setStroke(3, Color.BLACK)
+        strokeDrawable.cornerRadius = 8f
+        strokeDrawable.setColor(Color.WHITE)
+        cardView.background = strokeDrawable
+        
         cardView.gravity = Gravity.CENTER
-        cardView.textSize = 20f
-        cardView.setPadding(12, 12, 12, 12)
+        cardView.textSize = 18f
+        cardView.setPadding(8, 8, 8, 8)
         
         cardView.text = card.toString()
         // 하트/다이아는 빨간색, 스페이드/클럽은 검은색
@@ -369,13 +393,30 @@ class PokerFragment : Fragment() {
                 // 선택 해제
                 selectedCardIndices.remove(cardIndex)
                 cardView.alpha = 1.0f
-                cardView.setBackgroundResource(android.R.drawable.btn_default)
+                val strokeDrawable = GradientDrawable()
+                strokeDrawable.setStroke(3, Color.BLACK)
+                strokeDrawable.cornerRadius = 8f
+                strokeDrawable.setColor(Color.WHITE)
+                cardView.background = strokeDrawable
             } else {
+                // 최대 5장까지만 선택 가능
+                if (selectedCardIndices.size >= 5) {
+                    showCustomSnackbar("최대 5장까지만 교체할 수 있습니다.")
+                    return@setOnClickListener
+                }
+                
                 // 선택
                 selectedCardIndices.add(cardIndex)
                 cardView.alpha = 0.7f
-                cardView.setBackgroundResource(android.R.drawable.button_onoff_indicator_on)
+                val strokeDrawable = GradientDrawable()
+                strokeDrawable.setStroke(3, Color.BLACK)
+                strokeDrawable.cornerRadius = 8f
+                strokeDrawable.setColor(Color.argb(255, 200, 255, 200))  // 연한 초록색
+                cardView.background = strokeDrawable
             }
+            
+            // 선택된 카드들의 점수 합계 업데이트
+            updateScoreText()
         }
         
         container.addView(cardView)
@@ -383,6 +424,9 @@ class PokerFragment : Fragment() {
     
     private fun evaluateHand(): HandRank {
         if (playerCards.size < 5) return HandRank.NONE
+        
+        // 족보에 포함된 카드 인덱스 초기화
+        handRankCardIndices.clear()
         
         // 족보 순위
         val isFlush = isFlush()
@@ -416,55 +460,245 @@ class PokerFragment : Fragment() {
             HandRank.NONE -> "패 없음"
         }
         
+        // 만약 높은 패가 있다면 해당 카드들 강조
+        if (handRank != HandRank.HIGH_CARD && handRank != HandRank.NONE) {
+            highlightHandRankCards()
+        }
+        
         return handRank
     }
     
-    private fun isRoyalStraightFlush(): Boolean {
-        if (!isFlush() || !isStraight()) return false
+    private fun highlightHandRankCards() {
+        // 모든 카드 원래 배경으로 초기화
+        for (i in 0 until cardViews.size) {
+            if (!selectedCardIndices.contains(i)) {
+                val strokeDrawable = GradientDrawable()
+                strokeDrawable.setStroke(3, Color.BLACK)
+                strokeDrawable.cornerRadius = 8f
+                strokeDrawable.setColor(Color.WHITE)
+                cardViews[i].background = strokeDrawable
+                cardViews[i].setTypeface(cardViews[i].typeface, android.graphics.Typeface.NORMAL)
+            }
+        }
         
-        val values = playerCards.map { it.value() }.sorted()
-        return values == listOf(10, 11, 12, 13, 14)  // 10, J, Q, K, A
+        // 족보에 포함된 카드들 강조
+        for (index in handRankCardIndices) {
+            if (index < cardViews.size && !selectedCardIndices.contains(index)) {
+                // 회색 배경과 검정색 테두리 추가
+                val strokeDrawable = GradientDrawable()
+                strokeDrawable.setStroke(3, Color.BLACK)
+                strokeDrawable.cornerRadius = 8f
+                strokeDrawable.setColor(Color.LTGRAY)
+                cardViews[index].background = strokeDrawable
+                
+                // 텍스트 굵게 표시
+                cardViews[index].setTypeface(cardViews[index].typeface, android.graphics.Typeface.BOLD)
+            }
+        }
+    }
+    
+    private fun isRoyalStraightFlush(): Boolean {
+        // 먼저 같은 무늬가 5장 이상 있는지 확인
+        val suitGroups = playerCards.groupBy { it.suit }
+        val flushSuit = suitGroups.entries.find { it.value.size >= 5 }?.key ?: return false
+        
+        // 해당 무늬의 카드들만 추출
+        val sameSuitCards = playerCards.filter { it.suit == flushSuit }
+        
+        // 같은 무늬 중에서 10, J, Q, K, A가 있는지 확인
+        val royalValues = listOf(10, 11, 12, 13, 14)
+        val royalCards = sameSuitCards.filter { it.value() in royalValues }
+        
+        if (royalCards.size >= 5) {
+            // 로얄 스트레이트 플러시를 구성하는 카드들의 인덱스 저장
+            for (cardValue in royalValues) {
+                val card = royalCards.find { it.value() == cardValue } ?: continue
+                val index = playerCards.indexOf(card)
+                if (index != -1) {
+                    handRankCardIndices.add(index)
+                }
+            }
+            return true
+        }
+        return false
     }
     
     private fun isFlush(): Boolean {
-        val firstSuit = playerCards[0].suit
-        return playerCards.all { it.suit == firstSuit }
+        // 같은 무늬가 5장 이상 있는지 확인
+        val suitGroups = playerCards.groupBy { it.suit }
+        val flushSuit = suitGroups.entries.find { it.value.size >= 5 }?.key
+        
+        if (flushSuit != null) {
+            // 플러시를 구성하는 카드들의 인덱스만 저장 (5장)
+            val flushCards = playerCards.withIndex().filter { it.value.suit == flushSuit }
+                .sortedByDescending { it.value.value() }
+                .take(5)
+            
+            for (card in flushCards) {
+                handRankCardIndices.add(card.index)
+            }
+            return true
+        }
+        return false
     }
     
     private fun isStraight(): Boolean {
-        val values = playerCards.map { it.value() }.sorted()
+        // 중복 제거 후 값 정렬
+        val uniqueValues = playerCards.map { it.value() }.toSet().toList().sorted()
         
-        // 보통 스트레이트 (연속된 5개 숫자)
-        if (values[4] - values[0] == 4 && values.toSet().size == 5) return true
+        // 5개 이상의 연속된 값이 있는지 확인
+        if (uniqueValues.size >= 5) {
+            for (i in 0..uniqueValues.size - 5) {
+                if (uniqueValues[i + 4] - uniqueValues[i] == 4) {
+                    // 스트레이트를 구성하는 5개의 값 구하기
+                    val straightValues = (uniqueValues[i]..uniqueValues[i + 4]).toList()
+                    
+                    // 해당 값에 해당하는 카드 찾아서 인덱스 저장 (5장)
+                    val usedRanks = mutableSetOf<String>()
+                    
+                    for (value in straightValues) {
+                        val card = playerCards.withIndex().find { 
+                            it.value.value() == value && !usedRanks.contains(it.value.rank)
+                        }
+                        if (card != null) {
+                            handRankCardIndices.add(card.index)
+                            usedRanks.add(card.value.rank)
+                        }
+                    }
+                    return true
+                }
+            }
+        }
         
-        // A-2-3-4-5 스트레이트
-        return values == listOf(2, 3, 4, 5, 14)
+        // A-2-3-4-5 스트레이트 체크
+        if (uniqueValues.containsAll(listOf(2, 3, 4, 5)) && uniqueValues.contains(14)) {
+            val straightValues = listOf(14, 2, 3, 4, 5)
+            
+            // 해당 값에 해당하는 카드 찾아서 인덱스 저장 (5장)
+            val usedRanks = mutableSetOf<String>()
+            
+            for (value in straightValues) {
+                val card = playerCards.withIndex().find { 
+                    it.value.value() == value && !usedRanks.contains(it.value.rank)
+                }
+                if (card != null) {
+                    handRankCardIndices.add(card.index)
+                    usedRanks.add(card.value.rank)
+                }
+            }
+            return true
+        }
+        
+        return false
     }
     
     private fun isFourOfAKind(): Boolean {
         val rankGroups = playerCards.groupBy { it.rank }
-        return rankGroups.any { it.value.size >= 4 }
+        val fourOfKind = rankGroups.entries.find { it.value.size >= 4 }
+        
+        if (fourOfKind != null) {
+            // 포카드를 구성하는 카드들의 인덱스만 저장 (4장)
+            for (i in playerCards.indices) {
+                if (playerCards[i].rank == fourOfKind.key) {
+                    handRankCardIndices.add(i)
+                }
+            }
+            return true
+        }
+        return false
     }
     
     private fun isFullHouse(): Boolean {
         val rankGroups = playerCards.groupBy { it.rank }
-        return rankGroups.size == 2 && rankGroups.any { it.value.size == 3 }
+        
+        // 3장 이상 같은 카드가 있는지 확인
+        val threeOfKind = rankGroups.entries.find { it.value.size >= 3 }
+        
+        // 다른 2장 이상 같은 카드가 있는지 확인
+        val pair = rankGroups.entries.find { it.value.size >= 2 && it.key != threeOfKind?.key }
+        
+        if (threeOfKind != null && pair != null) {
+            // 풀하우스를 구성하는 카드들의 인덱스만 저장 (트리플 3장 + 페어 2장)
+            // 먼저 트리플 카드 추가
+            var tripleCount = 0
+            for (i in playerCards.indices) {
+                if (playerCards[i].rank == threeOfKind.key && tripleCount < 3) {
+                    handRankCardIndices.add(i)
+                    tripleCount++
+                }
+            }
+            
+            // 그 다음 페어 카드 추가
+            var pairCount = 0
+            for (i in playerCards.indices) {
+                if (playerCards[i].rank == pair.key && pairCount < 2) {
+                    handRankCardIndices.add(i)
+                    pairCount++
+                }
+            }
+            
+            return true
+        }
+        return false
     }
     
     private fun isThreeOfAKind(): Boolean {
         val rankGroups = playerCards.groupBy { it.rank }
-        return rankGroups.any { it.value.size >= 3 }
+        val threeOfKind = rankGroups.entries.find { it.value.size >= 3 }
+        
+        if (threeOfKind != null) {
+            // 트리플을 구성하는 카드들의 인덱스만 저장 (3장)
+            var count = 0
+            for (i in playerCards.indices) {
+                if (playerCards[i].rank == threeOfKind.key && count < 3) {
+                    handRankCardIndices.add(i)
+                    count++
+                }
+            }
+            return true
+        }
+        return false
     }
     
     private fun isTwoPair(): Boolean {
         val rankGroups = playerCards.groupBy { it.rank }
-        val pairCount = rankGroups.count { it.value.size >= 2 }
-        return pairCount >= 2
+        val pairs = rankGroups.entries.filter { it.value.size >= 2 }
+        
+        if (pairs.size >= 2) {
+            // 높은 두 페어 선택
+            val topTwoPairs = pairs.sortedByDescending { rankValues[it.key] ?: 0 }.take(2)
+            
+            // 두 페어를 구성하는 카드들의 인덱스만 저장 (각 2장씩)
+            for (pair in topTwoPairs) {
+                var count = 0
+                for (i in playerCards.indices) {
+                    if (playerCards[i].rank == pair.key && count < 2) {
+                        handRankCardIndices.add(i)
+                        count++
+                    }
+                }
+            }
+            return true
+        }
+        return false
     }
     
     private fun isPair(): Boolean {
         val rankGroups = playerCards.groupBy { it.rank }
-        return rankGroups.any { it.value.size >= 2 }
+        val pair = rankGroups.entries.find { it.value.size >= 2 }
+        
+        if (pair != null) {
+            // 페어를 구성하는 카드들의 인덱스만 저장 (2장)
+            var count = 0
+            for (i in playerCards.indices) {
+                if (playerCards[i].rank == pair.key && count < 2) {
+                    handRankCardIndices.add(i)
+                    count++
+                }
+            }
+            return true
+        }
+        return false
     }
     
     private fun getMultiplier(handRank: HandRank): Int {
@@ -483,6 +717,12 @@ class PokerFragment : Fragment() {
     }
     
     private fun endGame() {
+        // 5장의 카드를 선택했는지 확인
+        if (selectedCardIndices.size != 5) {
+            showCustomSnackbar("정확히 5장의 카드를 선택해야 합니다.")
+            return
+        }
+
         isGameActive = false
         isWaitingForCleanup = true
         changeButton.isEnabled = false
@@ -494,11 +734,8 @@ class PokerFragment : Fragment() {
         bet100kButton.isEnabled = false
         newGameButton.isEnabled = false
         
-        // 선택된 카드 초기화
-        selectedCardIndices.clear()
-        
-        // 족보 평가
-        val handRank = evaluateHand()
+        // 선택한 5장의 카드만 평가
+        val handRank = evaluateSelected5Cards()
         val multiplier = getMultiplier(handRank)
         
         // 배당금 계산
@@ -528,10 +765,15 @@ class PokerFragment : Fragment() {
         // 베팅 초기화
         currentBet = 0L
         
+        // 선택되지 않은 카드 흐리게 표시
+        highlightSelectedCards()
+        
         // 3초 후에 카드 지우기
         Handler(Looper.getMainLooper()).postDelayed({
             playerCardsLayout.removeAllViews()
             cardViews.clear()
+            handRankCardIndices.clear()  // 족보 강조 초기화
+            selectedCardIndices.clear()
             
             // 배팅 버튼 다시 활성화
             bet10kButton.isEnabled = true
@@ -544,6 +786,130 @@ class PokerFragment : Fragment() {
             
             showCustomSnackbar("새 게임을 위해 베팅해주세요")
         }, 3000) // 3초 지연
+    }
+    
+    // 선택한 5장의 카드만 평가
+    private fun evaluateSelected5Cards(): HandRank {
+        if (selectedCardIndices.size != 5) return HandRank.NONE
+        
+        // 족보에 포함된 카드 인덱스 초기화
+        handRankCardIndices.clear()
+        // 선택한 5장의 카드만 추출
+        val selectedCards = selectedCardIndices.map { playerCards[it] }
+        
+        // 족보 순위 평가 (선택한 5장으로만)
+        val isFlush = isFlushForSelected(selectedCards)
+        val isStraight = isStraightForSelected(selectedCards)
+        
+        val handRank = when {
+            isRoyalStraightFlushForSelected(selectedCards) -> HandRank.ROYAL_STRAIGHT_FLUSH
+            isFlush && isStraight -> HandRank.STRAIGHT_FLUSH
+            isFourOfAKindForSelected(selectedCards) -> HandRank.FOUR_OF_A_KIND
+            isFullHouseForSelected(selectedCards) -> HandRank.FULL_HOUSE
+            isFlush -> HandRank.FLUSH
+            isStraight -> HandRank.STRAIGHT
+            isThreeOfAKindForSelected(selectedCards) -> HandRank.THREE_OF_A_KIND
+            isTwoPairForSelected(selectedCards) -> HandRank.TWO_PAIR
+            isPairForSelected(selectedCards) -> HandRank.ONE_PAIR
+            else -> HandRank.HIGH_CARD
+        }
+        
+        // 족보 업데이트
+        handRankText.text = when(handRank) {
+            HandRank.ROYAL_STRAIGHT_FLUSH -> "로얄 스트레이트 플러시"
+            HandRank.STRAIGHT_FLUSH -> "스트레이트 플러시"
+            HandRank.FOUR_OF_A_KIND -> "포카드"
+            HandRank.FULL_HOUSE -> "풀하우스"
+            HandRank.FLUSH -> "플러시"
+            HandRank.STRAIGHT -> "스트레이트"
+            HandRank.THREE_OF_A_KIND -> "트리플"
+            HandRank.TWO_PAIR -> "투페어"
+            HandRank.ONE_PAIR -> "원페어"
+            HandRank.HIGH_CARD -> "하이카드"
+            HandRank.NONE -> "패 없음"
+        }
+        
+        // 모든 선택된 카드를 족보에 포함된 카드로 표시
+        handRankCardIndices.addAll(selectedCardIndices)
+        
+        return handRank
+    }
+    
+    // 선택된 카드 강조하고 선택되지 않은 카드 흐리게 표시
+    private fun highlightSelectedCards() {
+        // 모든 카드 흐리게 표시
+        for (i in 0 until cardViews.size) {
+            cardViews[i].alpha = 0.3f
+            cardViews[i].background = ContextCompat.getDrawable(requireContext(), android.R.drawable.btn_default)
+        }
+        
+        // 선택된 카드만 선명하게 표시
+        for (index in selectedCardIndices) {
+            if (index < cardViews.size) {
+                cardViews[index].alpha = 1.0f
+                val drawable = ContextCompat.getDrawable(requireContext(), android.R.drawable.btn_default)?.mutate()
+                drawable?.setTint(Color.argb(100, 0, 200, 0))  // 반투명 초록색
+                cardViews[index].background = drawable
+                cardViews[index].setTypeface(cardViews[index].typeface, android.graphics.Typeface.BOLD)
+            }
+        }
+    }
+    
+    // 선택한 카드만으로 패 평가 함수들
+    private fun isRoyalStraightFlushForSelected(cards: List<Card>): Boolean {
+        // 같은 무늬인지 확인
+        val suit = cards.groupBy { it.suit }.maxByOrNull { it.value.size }?.key ?: return false
+        if (cards.count { it.suit == suit } != 5) return false
+        
+        // 로얄 스트레이트인지 확인 (10, J, Q, K, A)
+        val values = cards.map { it.value() }.toSet()
+        return values.containsAll(listOf(10, 11, 12, 13, 14))
+    }
+    
+    private fun isFlushForSelected(cards: List<Card>): Boolean {
+        val suitGroup = cards.groupBy { it.suit }
+        return suitGroup.any { it.value.size == 5 }
+    }
+    
+    private fun isStraightForSelected(cards: List<Card>): Boolean {
+        // 값을 정렬
+        val sortedValues = cards.map { it.value() }.sorted()
+        
+        // 일반 스트레이트 체크
+        if (sortedValues[4] - sortedValues[0] == 4 && sortedValues.toSet().size == 5) {
+            return true
+        }
+        
+        // A-2-3-4-5 스트레이트 체크
+        return sortedValues.containsAll(listOf(2, 3, 4, 5, 14))
+    }
+    
+    private fun isFourOfAKindForSelected(cards: List<Card>): Boolean {
+        val rankGroups = cards.groupBy { it.rank }
+        return rankGroups.any { it.value.size == 4 }
+    }
+    
+    private fun isFullHouseForSelected(cards: List<Card>): Boolean {
+        val rankGroups = cards.groupBy { it.rank }
+        val hasThree = rankGroups.any { it.value.size == 3 }
+        val hasPair = rankGroups.any { it.value.size == 2 }
+        return hasThree && hasPair
+    }
+    
+    private fun isThreeOfAKindForSelected(cards: List<Card>): Boolean {
+        val rankGroups = cards.groupBy { it.rank }
+        return rankGroups.any { it.value.size == 3 }
+    }
+    
+    private fun isTwoPairForSelected(cards: List<Card>): Boolean {
+        val rankGroups = cards.groupBy { it.rank }
+        val pairCount = rankGroups.count { it.value.size == 2 }
+        return pairCount == 2
+    }
+    
+    private fun isPairForSelected(cards: List<Card>): Boolean {
+        val rankGroups = cards.groupBy { it.rank }
+        return rankGroups.any { it.value.size == 2 }
     }
     
     private fun updateBalanceText() {
@@ -576,6 +942,38 @@ class PokerFragment : Fragment() {
             "카드 교체\n(무료)"
         } else {
             "카드 교체\n(${formatCurrency(cost)})"
+        }
+    }
+    
+    // 점수 텍스트 업데이트 함수
+    private fun updateScoreText() {
+        if (selectedCardIndices.size != 5) {
+            scoreText.text = "점수: 0"
+            return
+        }
+
+        val selectedCards = selectedCardIndices.map { playerCards[it] }
+        val handRank = evaluateSelected5Cards()
+        val totalScore = calculateScore(handRank, selectedCards)
+        scoreText.text = "점수: $totalScore"
+    }
+
+    // 점수 계산 함수
+    private fun calculateScore(handRank: HandRank, cards: List<Card>): Int {
+        val cardSum = cards.sumOf { it.value() }
+        
+        return when (handRank) {
+            HandRank.ROYAL_STRAIGHT_FLUSH -> (150 + cardSum) * 10
+            HandRank.STRAIGHT_FLUSH -> (100 + cardSum) * 8
+            HandRank.FOUR_OF_A_KIND -> (60 + cardSum) * 7
+            HandRank.FULL_HOUSE -> (40 + cardSum) * 4
+            HandRank.FLUSH -> (35 + cardSum) * 4
+            HandRank.STRAIGHT -> (30 + cardSum) * 4
+            HandRank.THREE_OF_A_KIND -> (30 + cardSum) * 3
+            HandRank.TWO_PAIR -> (20 + cardSum) * 2
+            HandRank.ONE_PAIR -> (10 + cardSum) * 2
+            HandRank.HIGH_CARD -> cardSum
+            HandRank.NONE -> 0
         }
     }
     
