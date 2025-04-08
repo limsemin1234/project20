@@ -9,6 +9,7 @@
     tools:context=".PokerFragment">
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/poker_constraint_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp">

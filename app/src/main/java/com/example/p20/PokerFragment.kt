@@ -20,6 +20,7 @@ import java.util.Locale
 import android.os.Handler
 import android.os.Looper
 import android.graphics.drawable.GradientDrawable
+import androidx.appcompat.app.AlertDialog
 
 class PokerFragment : Fragment() {
 
@@ -105,6 +106,32 @@ class PokerFragment : Fragment() {
         bet50kButton = view.findViewById(R.id.bet50kButton)
         bet100kButton = view.findViewById(R.id.bet100kButton)
         
+        // 게임 설명 버튼 추가
+        val constraintLayout = view.findViewById<androidx.constraintlayout.widget.ConstraintLayout>(R.id.poker_constraint_layout)
+        val helpButton = Button(requireContext())
+        helpButton.text = "게임 설명"
+        helpButton.id = View.generateViewId() // 새로운 ID 생성
+        
+        // 레이아웃 파라미터 설정
+        val layoutParams = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        
+        // 버튼 위치 설정 (rankInfo 위에 위치)
+        layoutParams.topToBottom = R.id.gameControls
+        layoutParams.startToStart = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.PARENT_ID
+        layoutParams.bottomToTop = R.id.rankInfo
+        layoutParams.topMargin = 16
+        
+        helpButton.layoutParams = layoutParams
+        helpButton.setOnClickListener {
+            showGameRules()
+        }
+        
+        // ConstraintLayout에 버튼 추가
+        constraintLayout.addView(helpButton)
+        
         // 잔액 업데이트
         updateBalanceText()
         updateBetAmountText()
@@ -114,11 +141,6 @@ class PokerFragment : Fragment() {
         
         // 환영 메시지 표시
         showCustomSnackbar("배팅 후 1인발라트로 게임을 시작해주세요!")
-        
-        // 점수 배당률 설명 메시지 추가
-        Handler(Looper.getMainLooper()).postDelayed({
-            showCustomSnackbar("점수에 따른 배당률: 200점+ (1배), 300점+ (2배), 400점+ (3배), 600점+ (4배), 1000점+ (6배), 2000점+ (10배)")
-        }, 1500)
     }
     
     private fun setupButtonListeners() {
@@ -769,11 +791,6 @@ class PokerFragment : Fragment() {
         // 결과 표시
         showResultSnackbar(resultMessage, snackbarColor)
         
-        // 점수 배당률 설명 표시
-        Handler(Looper.getMainLooper()).postDelayed({
-            showCustomSnackbar("점수 배당률: 200점+ (1배), 300점+ (2배), 400점+ (3배), 600점+ (4배), 1000점+ (6배), 2000점+ (10배)")
-        }, 1500) // 1.5초 후에 배당률 설명 표시
-        
         // 통계 업데이트
         updateBalanceText()
         
@@ -1026,6 +1043,45 @@ class PokerFragment : Fragment() {
             HandRank.HIGH_CARD -> cardSum
             HandRank.NONE -> 0
         }
+    }
+    
+    // 게임 규칙 및 배당률 정보 표시 함수
+    private fun showGameRules() {
+        val message = """
+            [게임 규칙]
+            1. 7장의 카드 중 5장을 선택하여 최고의 패를 만드세요.
+            2. 카드 교체는 3회까지 무료, 이후는 배팅금만큼 비용이 듭니다.
+            3. 최대 5번까지 교체할 수 있습니다.
+            4. 게임 종료 시 정확히 5장을 선택해야 합니다.
+            
+            [점수 배당률]
+            • 200점 이상: 1배
+            • 300점 이상: 2배
+            • 400점 이상: 3배
+            • 600점 이상: 4배
+            • 1000점 이상: 6배
+            • 2000점 이상: 10배
+            
+            [패 계산 방식]
+            • 로얄 스트레이트 플러시: (150 + 카드합) × 10
+            • 스트레이트 플러시: (100 + 카드합) × 8
+            • 포카드: (60 + 카드합) × 7
+            • 풀하우스: (40 + 카드합) × 4
+            • 플러시: (35 + 카드합) × 4
+            • 스트레이트: (30 + 카드합) × 4
+            • 트리플: (30 + 카드합) × 3
+            • 투페어: (20 + 카드합) × 2
+            • 원페어: (10 + 카드합) × 2
+            • 하이카드: 카드합
+        """.trimIndent()
+        
+        // 다이얼로그로 표시
+        val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("1인발라트로 게임 설명")
+            .setMessage(message)
+            .setPositiveButton("확인") { dialog, _ -> dialog.dismiss() }
+            .create()
+        dialog.show()
     }
     
     // 포커 패 족보 enum
