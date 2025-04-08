@@ -273,4 +273,13 @@ class CircleAlbaViewModel(application: Application) : AndroidViewModel(applicati
             startGame()
         }
     }
+
+    // 게임 상태를 초기화하는 메소드
+    fun resetGameState() {
+        _isGameActive.value = false
+        _lastSuccess.value = 0
+        _innerCircleScale.value = 0.5f
+        _outerCircleScale.value = 1.0f
+        handler.removeCallbacks(runnable)
+    }
 } 

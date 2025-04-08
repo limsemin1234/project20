@@ -28,6 +28,9 @@ class CircleAlbaFragment : Fragment() {
     private lateinit var circleGameButton: Button
     private lateinit var circleSuccessCountText: TextView
     
+    // 이미 처리된 보상 결과를 추적하기 위한 변수
+    private var lastProcessedResult = 0
+    
     // 원 애니메이션 컨테이너
     private lateinit var animationContainer: FrameLayout
     
@@ -50,6 +53,9 @@ class CircleAlbaFragment : Fragment() {
         circleGameButton = view.findViewById(R.id.circleGameButton)
         circleSuccessCountText = view.findViewById(R.id.circleSuccessCountText)
         animationContainer = view.findViewById<FrameLayout>(R.id.root_frame_layout) ?: view.parent as FrameLayout
+        
+        // 버그 수정: 프래그먼트가 생성될 때마다 마지막 처리 결과 초기화
+        lastProcessedResult = 0
         
         // 통합된 게임 버튼 리스너
         circleGameButton.setOnClickListener {
@@ -86,20 +92,25 @@ class CircleAlbaFragment : Fragment() {
         
         // 성공 여부 관찰
         circleViewModel.lastSuccess.observe(viewLifecycleOwner, Observer { result ->
-            when (result) {
-                1 -> { // 성공
-                    // 보상 계산
-                    val reward = circleViewModel.getRewardAmount().toLong()
-                    val multiplier = circleViewModel.rewardMultiplier.value ?: 1.0f
-                    
-                    // 실제 보상 금액 증가
-                    assetViewModel.increaseAsset(reward)
-                    
-                    // 보상 애니메이션 표시
-                    showRewardAnimation(reward, multiplier)
-                }
-                -1 -> { // 실패
-                    showFailureMessage()
+            // 버그 수정: 이미 처리한 결과는 다시 처리하지 않음
+            if (result != 0 && lastProcessedResult != result) {
+                lastProcessedResult = result
+                
+                when (result) {
+                    1 -> { // 성공
+                        // 보상 계산
+                        val reward = circleViewModel.getRewardAmount().toLong()
+                        val multiplier = circleViewModel.rewardMultiplier.value ?: 1.0f
+                        
+                        // 실제 보상 금액 증가
+                        assetViewModel.increaseAsset(reward)
+                        
+                        // 보상 애니메이션 표시
+                        showRewardAnimation(reward, multiplier)
+                    }
+                    -1 -> { // 실패
+                        showFailureMessage()
+                    }
                 }
             }
         })
@@ -134,6 +145,14 @@ class CircleAlbaFragment : Fragment() {
         })
         
         return view
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        // 버그 수정: 프래그먼트가 일시 정지될 때 뷰모델 상태 재설정
+        circleViewModel.resetGameState()
+        // 버그 수정: 처리 결과 초기화
+        lastProcessedResult = 0
     }
     
     private fun updateInnerCircleScale(scale: Float) {
@@ -237,13 +256,19 @@ class CircleAlbaFragment : Fragment() {
             else -> "+${"%,d".format(reward)}원"
         }
         
-        // MessageManager를 사용하여 상단에 메시지 표시
-        MessageManager.showMessage(requireContext(), message)
+        // 메시지 중복 방지를 위해 getContext()가 null이 아닌 경우에만 메시지 표시
+        context?.let {
+            MessageManager.showMessage(it, message)
+        }
     }
     
     private fun showFailureMessage() {
         val message = "실패! 두 원이 일치할 때 탭하세요."
-        MessageManager.showMessage(requireContext(), message)
+        
+        // 메시지 중복 방지를 위해 getContext()가 null이 아닌 경우에만 메시지 표시
+        context?.let {
+            MessageManager.showMessage(it, message)
+        }
     }
     
     // 아이템 획득 애니메이션 표시
@@ -254,8 +279,10 @@ class CircleAlbaFragment : Fragment() {
             "${reward.itemName} 재고 ${reward.quantity}개 증가!"
         }
         
-        // MessageManager를 사용하여 상단에 메시지 표시
-        MessageManager.showMessage(requireContext(), message)
+        // 메시지 중복 방지를 위해 getContext()가 null이 아닌 경우에만 메시지 표시
+        context?.let {
+            MessageManager.showMessage(it, message)
+        }
     }
     
     // dp를 픽셀로 변환하는 유틸리티 함수

@@ -62,13 +62,16 @@ class AlbaFragment : Fragment() {
         
         override fun getItemCount(): Int = 3 // 3개의 탭으로 변경
         
+        // 프래그먼트 캐싱을 위한 리스트 추가
+        private val fragmentList = listOf(
+            ClickAlbaFragment(),
+            TimingAlbaFragment(),
+            CircleAlbaFragment()
+        )
+        
         override fun createFragment(position: Int): Fragment {
-            return when (position) {
-                0 -> ClickAlbaFragment()
-                1 -> TimingAlbaFragment()
-                2 -> CircleAlbaFragment() // 새로운 겹치는 원 알바 Fragment 추가
-                else -> ClickAlbaFragment()
-            }
+            // 캐싱된 프래그먼트 반환
+            return fragmentList[position]
         }
     }
 }
