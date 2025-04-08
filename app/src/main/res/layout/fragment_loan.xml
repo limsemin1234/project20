@@ -36,7 +36,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textSize="14sp"
-                    android:text="이자율: 10% (60초마다 발생)"
+                    android:text="이자율: 10% (30초마다 발생)\n조기상환 수수료: 5% (이자 발생 전 상환 시)"
                     android:layout_marginBottom="16dp"/>
 
                 <TextView

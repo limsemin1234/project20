@@ -37,6 +37,9 @@ class LoanFragment : Fragment() {
     // 마지막으로 처리한 알림의 타임스탬프
     private var lastProcessedNotificationTime: Long = 0
 
+    // 조기상환 수수료 비율 (5%)
+    private val EARLY_REPAYMENT_FEE_RATE = 0.05
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -154,16 +157,34 @@ class LoanFragment : Fragment() {
                 return@setOnClickListener
             }
             
+            // 조기상환 수수료 계산
+            val remainingTime = viewModel.loanRemainingTime.value ?: 0L
+            val earlyRepaymentFee = if (remainingTime > 0) {
+                // 이자 발생 전에 상환하는 경우 수수료 부과
+                (currentLoan * EARLY_REPAYMENT_FEE_RATE).toLong()
+            } else {
+                0L // 이자가 이미 발생한 후라면 수수료 없음
+            }
+            
+            // 상환할 총액 (대출금 + 수수료)
+            val totalRepaymentAmount = currentLoan + earlyRepaymentFee
+            
             val currentAsset = viewModel.asset.value ?: 0L
-            if (currentLoan > currentAsset) {
-                showSnackbar("보유 자산이 부족합니다 (필요: ${formatNumber(currentLoan)}원)")
+            if (totalRepaymentAmount > currentAsset) {
+                showSnackbar("보유 자산이 부족합니다 (필요: ${formatNumber(totalRepaymentAmount)}원)")
                 return@setOnClickListener
             }
 
-            // 전체 대출금 상환
-            viewModel.setAsset(currentAsset - currentLoan)
+            // 전체 대출금 상환 (수수료 포함)
+            viewModel.setAsset(currentAsset - totalRepaymentAmount)
             viewModel.subtractLoan(currentLoan)
-            showSnackbar("${formatNumber(currentLoan)}원을 전액 상환했습니다")
+            
+            // 수수료가 있는 경우 별도 메시지 표시
+            if (earlyRepaymentFee > 0) {
+                showSnackbar("${formatNumber(currentLoan)}원 상환 완료 (조기상환 수수료: ${formatNumber(earlyRepaymentFee)}원)")
+            } else {
+                showSnackbar("${formatNumber(currentLoan)}원을 전액 상환했습니다")
+            }
         }
     }
 

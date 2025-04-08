@@ -212,7 +212,7 @@ class AssetViewModel(private val context: Context) : ViewModel() {
         android.util.Log.d("AssetViewModel", "예금 타이머 시작: ${currentDeposit}원")
         
         isDepositTimerActive = true
-        depositTimer = object : CountDownTimer(60000, 1000) {
+        depositTimer = object : CountDownTimer(30000, 1000) {
             override fun onTick(millisUntilFinished: Long) {
                 _depositRemainingTime.value = millisUntilFinished / 1000
             }
@@ -271,7 +271,7 @@ class AssetViewModel(private val context: Context) : ViewModel() {
         android.util.Log.d("AssetViewModel", "대출 타이머 시작: ${currentLoan}원")
         
         isLoanTimerActive = true
-        loanTimer = object : CountDownTimer(60000, 1000) {
+        loanTimer = object : CountDownTimer(30000, 1000) {
             override fun onTick(millisUntilFinished: Long) {
                 _loanRemainingTime.value = millisUntilFinished / 1000
             }
