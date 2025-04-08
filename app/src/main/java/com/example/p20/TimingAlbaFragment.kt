@@ -212,137 +212,38 @@ class TimingAlbaFragment : Fragment() {
         val position = timingViewModel.pointerPosition.value ?: 0.0f
         val centerDistance = Math.abs(position - 0.5f)
         
-        // 배율에 따른 텍스트 색상 및 배경색 (항상 퍼펙트)
-        val backgroundColor = Color.argb(200, 211, 47, 47) // 5배 - 빨간색 (#D32F2F)
-        
-        // 배율 텍스트 (항상 퍼펙트)
+        // 배율에 따른 텍스트 생성 (항상 퍼펙트)
         val multiplierText = "퍼펙트! x5"
         
         // 위치 정보 텍스트 (백분율로 표시)
         val positionPercent = (position * 100).toInt()
         val centerDistancePercent = (centerDistance * 100).toInt()
-        val positionText = "위치: ${positionPercent}% (중앙에서 ${centerDistancePercent}% 차이)"
         
-        // 스낵바 메시지 생성 (위치 정보 추가)
-        val message = "+${"%,d".format(reward)}원\n$multiplierText\n$positionText"
+        // 메시지 생성
+        val message = "+${"%,d".format(reward)}원 ($multiplierText)"
         
         // 가이드 메시지로 되돌리기
         resultText.text = "중앙의 빨간색 영역에 정확히 탭하세요!"
         resultText.setTextColor(resources.getColor(R.color.perfect_timing, null))
         
-        // 카지노 스타일 스낵바 표시
-        val activity = requireActivity()
-        val snackbar = Snackbar.make(activity.findViewById(android.R.id.content), message, Snackbar.LENGTH_SHORT)
-        val snackbarView = snackbar.view
-        
-        // 스낵바 스타일 커스터마이징
-        snackbarView.setBackgroundColor(backgroundColor)
-        val textView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
-        textView.setTextColor(Color.WHITE)
-        textView.textSize = 16f
-        textView.textAlignment = View.TEXT_ALIGNMENT_CENTER
-        textView.maxLines = 3  // 라인 수 증가
-        
-        // 중앙 배치
-        try {
-            val params = snackbarView.layoutParams as FrameLayout.LayoutParams
-            params.gravity = Gravity.CENTER
-            snackbarView.layoutParams = params
-        } catch (e: ClassCastException) {
-            // 레이아웃 파라미터 설정 중 오류 발생시 무시
-        }
-        
-        snackbar.show()
-        
-        // 일정 시간 후 게임 상태 초기화
-        Handler(Looper.getMainLooper()).postDelayed({
-            resetGameUI()
-        }, 3000) // 3초로 늘려 정보를 더 오래 볼 수 있게 함
+        // MessageManager를 사용하여 상단에 메시지 표시
+        MessageManager.showMessage(requireContext(), message)
     }
     
-    // 게임 UI를 초기 상태로 재설정하는 메소드
-    private fun resetGameUI() {
-        // 가이드 메시지 초기화
-        resultText.text = "중앙의 빨간색 영역에 정확히 탭하세요!"
-        resultText.setTextColor(resources.getColor(R.color.perfect_timing, null))
-        
-        // 게임 상태만 초기화 (성공 횟수는 유지)
-        timingViewModel.resetGameState()
+    private fun showFailureMessage() {
+        val message = "실패! 정확한 타이밍에 탭하세요."
+        MessageManager.showMessage(requireContext(), message)
     }
     
-    // 아이템 획득 알림을 스낵바로 표시 (카지노 스타일)
+    // 아이템 획득 애니메이션 표시
     private fun showItemRewardAnimation(reward: ItemReward) {
-        // 아이템 획득 메시지 생성
         val message = if (reward.isMultiple) {
             "${reward.itemName} 재고 증가!"
         } else {
             "${reward.itemName} 재고 ${reward.quantity}개 증가!"
         }
         
-        // 카지노 스타일 스낵바 표시
-        val activity = requireActivity()
-        val snackbar = Snackbar.make(activity.findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG)
-        val snackbarView = snackbar.view
-        
-        // 스낵바 스타일 커스터마이징
-        snackbarView.setBackgroundColor(Color.argb(200, 33, 150, 243)) // 파란색
-        val textView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
-        textView.setTextColor(Color.WHITE)
-        textView.textSize = 16f
-        textView.textAlignment = View.TEXT_ALIGNMENT_CENTER
-        
-        // 중앙 배치
-        try {
-            val params = snackbarView.layoutParams as FrameLayout.LayoutParams
-            params.gravity = Gravity.CENTER
-            snackbarView.layoutParams = params
-        } catch (e: ClassCastException) {
-            // 레이아웃 파라미터 설정 중 오류 발생시 무시
-        }
-        
-        snackbar.show()
-    }
-    
-    private fun showFailureMessage() {
-        val position = timingViewModel.pointerPosition.value ?: 0.0f
-        val centerDistance = Math.abs(position - 0.5f)
-        
-        // 가이드 메시지로 되돌리기
-        resultText.text = "중앙의 빨간색 영역에 정확히 탭하세요!"
-        resultText.setTextColor(resources.getColor(R.color.perfect_timing, null))
-        
-        // 위치 정보 텍스트 (백분율로 표시)
-        val positionPercent = (position * 100).toInt()
-        val centerDistancePercent = (centerDistance * 100).toInt()
-        val positionText = "위치: ${positionPercent}% (중앙에서 ${centerDistancePercent}% 차이)"
-        
-        // 스낵바로 실패 메시지 표시 (위치 정보 추가)
-        val message = "실패! 다시 시도하세요.\n$positionText"
-        val snackbar = Snackbar.make(requireView(), message, Snackbar.LENGTH_LONG)
-        val snackbarView = snackbar.view
-        snackbarView.setBackgroundColor(Color.argb(200, 158, 158, 158)) // 회색
-        
-        // 스낵바 텍스트 스타일
-        val textView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
-        textView.setTextColor(Color.WHITE)
-        textView.textSize = 18f
-        textView.textAlignment = View.TEXT_ALIGNMENT_CENTER
-        textView.maxLines = 2  // 라인 수 증가
-        
-        // 중앙 배치
-        try {
-            val params = snackbarView.layoutParams as FrameLayout.LayoutParams
-            params.gravity = Gravity.CENTER
-            snackbarView.layoutParams = params
-        } catch (e: ClassCastException) {
-            // 레이아웃 파라미터 설정 중 오류 발생시 무시
-        }
-        
-        snackbar.show()
-        
-        // 일정 시간 후 메시지 초기화 및 게임 UI 재설정
-        Handler(Looper.getMainLooper()).postDelayed({
-            resetGameUI()
-        }, 3000) // 3초로 늘려 정보를 더 오래 볼 수 있게 함
+        // MessageManager를 사용하여 상단에 메시지 표시
+        MessageManager.showMessage(requireContext(), message)
     }
 } 

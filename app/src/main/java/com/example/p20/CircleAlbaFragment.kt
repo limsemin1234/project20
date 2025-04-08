@@ -237,104 +237,25 @@ class CircleAlbaFragment : Fragment() {
             else -> "+${"%,d".format(reward)}원"
         }
         
-        // 애니메이션 색상 설정
-        val textColor = when {
-            multiplier >= 5.0f -> resources.getColor(R.color.perfect_timing, null)
-            multiplier >= 2.0f -> resources.getColor(R.color.good_timing, null)
-            else -> resources.getColor(R.color.normal_timing, null)
-        }
-        
-        // 애니메이션 텍스트뷰 생성
-        val rewardTextView = TextView(requireContext()).apply {
-            text = message
-            textSize = 22f
-            setTextColor(textColor)
-            setShadowLayer(5f, 1f, 1f, android.graphics.Color.BLACK)
-            setPadding(10, 10, 10, 10)
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-        }
-        
-        // 애니메이션 컨테이너에 추가
-        animationContainer.addView(rewardTextView)
-        
-        // 초기 위치 설정 (원의 중앙)
-        rewardTextView.x = innerCircle.x + innerCircle.width / 2 - rewardTextView.width / 2
-        rewardTextView.y = innerCircle.y + innerCircle.height / 2 - rewardTextView.height / 2
-        
-        // 목표 위치 계산 (레벨 텍스트 쪽으로 이동)
-        val targetLocation = IntArray(2)
-        circleLevelText.getLocationOnScreen(targetLocation)
-        
-        val containerLocation = IntArray(2)
-        animationContainer.getLocationOnScreen(containerLocation)
-        
-        val targetX = targetLocation[0] - containerLocation[0] + circleLevelText.width / 2 - rewardTextView.width / 2
-        val targetY = targetLocation[1] - containerLocation[1] + circleLevelText.height / 2 - rewardTextView.height / 2
-        
-        // 애니메이션 생성 및 실행
-        val moveX = ObjectAnimator.ofFloat(rewardTextView, "x", rewardTextView.x, targetX.toFloat()).apply {
-            duration = moveDuration
-        }
-        val moveY = ObjectAnimator.ofFloat(rewardTextView, "y", rewardTextView.y, targetY.toFloat()).apply {
-            duration = moveDuration
-        }
-        val fadeOut = ObjectAnimator.ofFloat(rewardTextView, "alpha", 1f, 0f).apply {
-            duration = moveDuration
-        }
-        val scaleX = ObjectAnimator.ofFloat(rewardTextView, "scaleX", 1f, 0.5f).apply {
-            duration = moveDuration
-        }
-        val scaleY = ObjectAnimator.ofFloat(rewardTextView, "scaleY", 1f, 0.5f).apply {
-            duration = moveDuration
-        }
-        
-        // 애니메이션 종료 시 정리
-        fadeOut.addListener(object : AnimatorListenerAdapter() {
-            override fun onAnimationEnd(animation: Animator) {
-                animationContainer.removeView(rewardTextView)
-            }
-        })
-        
-        moveX.start()
-        moveY.start()
-        fadeOut.start()
-        scaleX.start()
-        scaleY.start()
+        // MessageManager를 사용하여 상단에 메시지 표시
+        MessageManager.showMessage(requireContext(), message)
     }
     
     private fun showFailureMessage() {
-        // 실패 메시지 표시
-        circleResultText.text = "실패! 두 원이 너무 달라요."
-        circleResultText.setTextColor(resources.getColor(android.R.color.holo_red_dark, null))
-        
-        // 잠시 후 다시 기본 메시지로 복귀
-        circleResultText.postDelayed({
-            if (isAdded) { // Fragment가 여전히 연결되어 있는지 확인
-                circleResultText.text = "두 원이 일치할 때 탭하세요!"
-                circleResultText.setTextColor(resources.getColor(R.color.normal_timing, null))
-            }
-        }, 2000)
+        val message = "실패! 두 원이 일치할 때 탭하세요."
+        MessageManager.showMessage(requireContext(), message)
     }
     
     // 아이템 획득 애니메이션 표시
     private fun showItemRewardAnimation(reward: ItemReward) {
-        val rewardMessage = if (reward.isMultiple) {
+        val message = if (reward.isMultiple) {
             "${reward.itemName} 재고 증가!"
         } else {
             "${reward.itemName} 재고 ${reward.quantity}개 증가!"
         }
         
-        // Snackbar로 아이템 획득 메시지 표시
-        Snackbar.make(
-            requireView(),
-            rewardMessage,
-            Snackbar.LENGTH_LONG
-        ).setAction("확인") {
-            // 아무것도 하지 않음
-        }.show()
+        // MessageManager를 사용하여 상단에 메시지 표시
+        MessageManager.showMessage(requireContext(), message)
     }
     
     // dp를 픽셀로 변환하는 유틸리티 함수
