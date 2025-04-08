@@ -51,7 +51,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="자산 기준 대출 금액 선택"
+                    android:text="자산 기준 대출 금액 선택 (백의 자리 올림)"
                     android:textStyle="bold"
                     android:textSize="14sp"
                     android:layout_marginBottom="8dp"/>

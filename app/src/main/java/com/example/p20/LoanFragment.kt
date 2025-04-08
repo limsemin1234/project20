@@ -95,24 +95,32 @@ class LoanFragment : Fragment() {
         percent25Button.setOnClickListener {
             val currentAsset = viewModel.asset.value ?: 0L
             val amount = (currentAsset * 0.25).toLong()
-            updateAmountInput(amount)
+            // 백의 자리로 올림 처리
+            val roundedAmount = roundToHundreds(amount)
+            updateAmountInput(roundedAmount)
         }
         
         percent50Button.setOnClickListener {
             val currentAsset = viewModel.asset.value ?: 0L
             val amount = (currentAsset * 0.5).toLong()
-            updateAmountInput(amount)
+            // 백의 자리로 올림 처리
+            val roundedAmount = roundToHundreds(amount)
+            updateAmountInput(roundedAmount)
         }
         
         percent75Button.setOnClickListener {
             val currentAsset = viewModel.asset.value ?: 0L
             val amount = (currentAsset * 0.75).toLong()
-            updateAmountInput(amount)
+            // 백의 자리로 올림 처리
+            val roundedAmount = roundToHundreds(amount)
+            updateAmountInput(roundedAmount)
         }
         
         percent100Button.setOnClickListener {
             val currentAsset = viewModel.asset.value ?: 0L
-            updateAmountInput(currentAsset)
+            // 백의 자리로 올림 처리
+            val roundedAmount = roundToHundreds(currentAsset)
+            updateAmountInput(roundedAmount)
         }
 
         // 단위 버튼 클릭 이벤트
@@ -265,6 +273,23 @@ class LoanFragment : Fragment() {
             return amountText.replace(",", "").toLong()
         } catch (e: Exception) {
             return 0L
+        }
+    }
+
+    /**
+     * 백의 자리에서 올림 처리 (1, 10, 100의 자리를 0으로 만듦)
+     * 예: 123456 -> 123500
+     */
+    private fun roundToHundreds(amount: Long): Long {
+        // 백 단위로 나누고 나머지가 있으면 올림
+        val hundreds = amount / 100
+        val remainder = amount % 100
+        
+        // 나머지가 있으면 올림
+        return if (remainder > 0) {
+            (hundreds + 1) * 100
+        } else {
+            hundreds * 100
         }
     }
 } 
