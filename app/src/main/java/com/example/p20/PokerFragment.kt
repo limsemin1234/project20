@@ -21,6 +21,7 @@ import android.os.Handler
 import android.os.Looper
 import android.graphics.drawable.GradientDrawable
 import androidx.appcompat.app.AlertDialog
+import android.graphics.Typeface
 
 class PokerFragment : Fragment() {
 
@@ -361,12 +362,31 @@ class PokerFragment : Fragment() {
     }
     
     private fun addCardView(container: LinearLayout, card: Card, index: Int) {
+        // 화면 너비에 맞게 카드 크기 계산
+        val displayMetrics = resources.displayMetrics
+        val screenWidth = displayMetrics.widthPixels
+        
+        // 카드 사이의 간격 (dp를 픽셀로 변환)
+        val cardMarginDp = 1
+        val cardMargin = (cardMarginDp * displayMetrics.density).toInt()
+        
+        // 화면 좌우 패딩 및 여백을 고려하여 조정
+        // 더 넉넉한 여백 확보
+        val totalHorizontalPadding = (48 * displayMetrics.density).toInt()
+        
+        // 카드 7장과 간격이 화면에 딱 맞도록 카드 너비 계산
+        // (전체 화면 너비 - 모든 간격 - 좌우 패딩) / 카드 개수
+        val cardWidth = (screenWidth - (6 * cardMargin) - totalHorizontalPadding) / 7
+        
+        // 카드 높이는 너비의 1.5배 (일반적인 카드 비율)
+        val cardHeight = (cardWidth * 1.5).toInt()
+        
         val cardView = TextView(requireContext())
         cardView.layoutParams = LinearLayout.LayoutParams(
-            (resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width) * 0.75f).toInt(),
-            ViewGroup.LayoutParams.MATCH_PARENT
+            cardWidth,
+            cardHeight
         ).apply {
-            marginEnd = resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width) / 25
+            marginEnd = cardMargin
         }
         
         // 기본 검정색 테두리 설정
@@ -377,8 +397,9 @@ class PokerFragment : Fragment() {
         cardView.background = strokeDrawable
         
         cardView.gravity = Gravity.CENTER
-        cardView.textSize = 18f
-        cardView.setPadding(8, 8, 8, 8)
+        cardView.textSize = (cardWidth * 0.25f) / displayMetrics.density // 텍스트 크기 증가 (15% → 25%)
+        cardView.setPadding(2, 2, 2, 2) // 패딩 더 줄임
+        cardView.setTypeface(null, Typeface.BOLD) // 텍스트를 굵게 설정
         
         cardView.text = card.toString()
         // 하트/다이아는 빨간색, 스페이드/클럽은 검은색

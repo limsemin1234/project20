@@ -12,7 +12,7 @@
         android:id="@+id/poker_constraint_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:padding="12dp">
 
         <!-- 게임 제목 표시 -->
         <TextView
@@ -62,13 +62,18 @@
             <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:scrollbars="none">
+                android:scrollbars="none"
+                android:fillViewport="true"
+                android:paddingStart="1dp"
+                android:paddingEnd="1dp"
+                android:clipToPadding="false">
 
                 <LinearLayout
                     android:id="@+id/playerCardsLayout"
                     android:layout_width="wrap_content"
-                    android:layout_height="120dp"
+                    android:layout_height="140dp"
                     android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
                     android:orientation="horizontal" />
             </HorizontalScrollView>
 
