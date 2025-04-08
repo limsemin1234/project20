@@ -1,14 +1,16 @@
 package com.example.p20
 
+import android.graphics.Color
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import com.google.android.material.snackbar.Snackbar
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -31,6 +33,9 @@ class DepositFragment : Fragment() {
     private var selectedNumber10: Int = 0 // 10의 자리
     private var selectedNumber100: Int = 0 // 100의 자리
     private var selectedNumber1000: Int = 0 // 1000의 자리
+    
+    // 마지막으로 처리한 알림의 타임스탬프
+    private var lastProcessedNotificationTime: Long = 0
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -43,13 +48,6 @@ class DepositFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         viewModel = ViewModelProvider(requireActivity())[AssetViewModel::class.java]
-
-        // 이자 알림 관찰
-        viewModel.interestNotification.observe(viewLifecycleOwner) { message ->
-            if (message.contains("예금 이자")) {
-                showSnackbar(message)
-            }
-        }
 
         depositAmountInput = view.findViewById(R.id.depositAmountInput)
         depositButton = view.findViewById(R.id.depositButton)
@@ -175,11 +173,7 @@ class DepositFragment : Fragment() {
     }
 
     private fun showSnackbar(message: String) {
-        view?.let {
-            Snackbar.make(it, message, Snackbar.LENGTH_SHORT)
-                .setAnchorView(R.id.depositCard)
-                .show()
-        }
+        MessageManager.showMessage(requireContext(), message)
     }
 
     private fun formatNumber(number: Long): String {

@@ -25,63 +25,45 @@ class AssetViewModel(private val context: Context) : ViewModel() {
     private val _interestNotification = MutableLiveData<String>()
     val interestNotification: LiveData<String> = _interestNotification
 
+    private val _depositRemainingTime = MutableLiveData<Long>()
+    val depositRemainingTime: LiveData<Long> = _depositRemainingTime
+
+    private val _loanRemainingTime = MutableLiveData<Long>()
+    val loanRemainingTime: LiveData<Long> = _loanRemainingTime
+
+    // 알림이 이미 표시되었는지 추적하는 플래그
+    private var _lastNotificationTimestamp = MutableLiveData<Long>()
+    val lastNotificationTimestamp: LiveData<Long> = _lastNotificationTimestamp
+
     private var depositTimer: CountDownTimer? = null
     private var loanTimer: CountDownTimer? = null
+    
+    // 타이머가 활성화되어 있는지 추적
+    private var isDepositTimerActive = false
+    private var isLoanTimerActive = false
 
     init {
-        // --- 수정: SharedPreferences에서 자산 로드 활성화 ---
         val sharedPreferences = context.getSharedPreferences("game_preferences", Context.MODE_PRIVATE)
-        // --- 수정: 기본 자산 50만원으로 변경 ---
-        val savedAsset = sharedPreferences.getLong("asset", 500_000L) // 저장된 값 로드, 없으면 50만원
+        val savedAsset = sharedPreferences.getLong("asset", 500_000L)
         val savedDeposit = sharedPreferences.getLong("deposit", 0L)
         val savedLoan = sharedPreferences.getLong("loan", 0L)
-        // --- 수정 끝 ---
+        
         _asset.value = savedAsset
         _deposit.value = savedDeposit
         _loan.value = savedLoan
-        // _asset.value = 40_000_000L // 항상 4천만원으로 시작하는 코드 삭제 또는 주석 처리
-        // saveAssetToPreferences() // 시작 시 저장 로직은 필요 없음 (로드 실패 시 기본값 사용)
-        // --- 수정 끝 ---
-        startInterestTimers()
-    }
-
-    private fun startInterestTimers() {
-        // 예금 이자 타이머 (3% 이자, 60초마다 지급)
-        depositTimer = object : CountDownTimer(Long.MAX_VALUE, 60000) {
-            override fun onTick(millisUntilFinished: Long) {
-                val currentDeposit = _deposit.value ?: 0L
-                if (currentDeposit > 0) {
-                    val interest = (currentDeposit * 0.03).toLong()
-                    _deposit.value = currentDeposit + interest
-                    _asset.value = (_asset.value ?: 0L) + interest
-                    _interestNotification.value = "예금 이자 ${formatNumber(interest)}원이 지급되었습니다"
-                } else {
-                    // 예금이 0원이면 타이머 중지
-                    cancel()
-                    depositTimer = null
-                }
-            }
-
-            override fun onFinish() {}
-        }.start()
-
-        // 대출 이자 타이머 (10% 이자, 60초마다 발생)
-        loanTimer = object : CountDownTimer(Long.MAX_VALUE, 60000) {
-            override fun onTick(millisUntilFinished: Long) {
-                val currentLoan = _loan.value ?: 0L
-                if (currentLoan > 0) {
-                    val interest = (currentLoan * 0.10).toLong()
-                    _loan.value = currentLoan + interest
-                    _interestNotification.value = "대출 이자 ${formatNumber(interest)}원이 발생했습니다"
-                } else {
-                    // 대출이 0원이면 타이머 중지
-                    cancel()
-                    loanTimer = null
-                }
-            }
-
-            override fun onFinish() {}
-        }.start()
+        
+        // 초기 타이머 설정 (필요한 경우에만)
+        if (savedDeposit > 0) {
+            startDepositTimer()
+        } else {
+            _depositRemainingTime.value = 0L
+        }
+        
+        if (savedLoan > 0) {
+            startLoanTimer()
+        } else {
+            _loanRemainingTime.value = 0L
+        }
     }
 
     fun increaseAsset(amount: Long) {
@@ -112,7 +94,7 @@ class AssetViewModel(private val context: Context) : ViewModel() {
 
     private fun loadAssetFromPreferences() {
         val sharedPreferences = context.getSharedPreferences("game_preferences", Context.MODE_PRIVATE)
-        _asset.value = sharedPreferences.getLong("asset", 500_000L) // 기본값 50만원
+        _asset.value = sharedPreferences.getLong("asset", 500_000L)
         _deposit.value = sharedPreferences.getLong("deposit", 0L)
         _loan.value = sharedPreferences.getLong("loan", 0L)
     }
@@ -123,7 +105,7 @@ class AssetViewModel(private val context: Context) : ViewModel() {
     }
 
     fun resetAsset() {
-        _asset.value = 500_000L // 초기 자산 50만원으로 변경
+        _asset.value = 500_000L
         saveAssetToPreferences()
     }
 
@@ -139,16 +121,13 @@ class AssetViewModel(private val context: Context) : ViewModel() {
 
     fun resetAssets() {
         // 기존 타이머 취소
-        depositTimer?.cancel()
-        loanTimer?.cancel()
+        stopDepositTimer()
+        stopLoanTimer()
         
         // 값 초기화
-        _asset.value = 500_000L // 기본 자산 50만원으로 초기화
-        _deposit.value = 0L // 예금 초기화
-        _loan.value = 0L // 대출 초기화
-        
-        // 새로운 타이머 시작
-        startInterestTimers()
+        _asset.value = 500_000L
+        _deposit.value = 0L
+        _loan.value = 0L
         
         // 변경사항 저장
         saveAssetToPreferences()
@@ -161,31 +140,153 @@ class AssetViewModel(private val context: Context) : ViewModel() {
 
     fun addDeposit(amount: Long) {
         _deposit.value = (_deposit.value ?: 0L) + amount
+        if (!isDepositTimerActive) {
+            startDepositTimer()
+        }
+        saveAssetToPreferences()
     }
 
     fun subtractDeposit(amount: Long) {
-        _deposit.value = (_deposit.value ?: 0L) - amount
+        val currentDeposit = _deposit.value ?: 0L
+        if (amount >= currentDeposit) {
+            _deposit.value = 0L
+            stopDepositTimer()
+        } else {
+            _deposit.value = currentDeposit - amount
+        }
+        saveAssetToPreferences()
     }
 
     fun addLoan(amount: Long) {
         _loan.value = (_loan.value ?: 0L) + amount
         _asset.value = (_asset.value ?: 0L) + amount
+        if (!isLoanTimerActive) {
+            startLoanTimer()
+        }
+        saveAssetToPreferences()
     }
 
     fun subtractLoan(amount: Long) {
-        _loan.value = (_loan.value ?: 0L) - amount
+        val currentLoan = _loan.value ?: 0L
+        if (amount >= currentLoan) {
+            _loan.value = 0L
+            stopLoanTimer()
+        } else {
+            _loan.value = currentLoan - amount
+        }
+        saveAssetToPreferences()
+    }
+
+    private fun stopDepositTimer() {
+        depositTimer?.cancel()
+        depositTimer = null
+        isDepositTimerActive = false
+        _depositRemainingTime.value = 0L
+    }
+
+    private fun stopLoanTimer() {
+        loanTimer?.cancel()
+        loanTimer = null
+        isLoanTimerActive = false
+        _loanRemainingTime.value = 0L
+    }
+
+    private fun startDepositTimer() {
+        if (isDepositTimerActive) {
+            return  // 이미 활성화된 타이머가 있으면 중복 생성 방지
+        }
+        
+        stopDepositTimer() // 안전하게 기존 타이머 정리
+        
+        val currentDeposit = _deposit.value ?: 0L
+        if (currentDeposit <= 0) {
+            return  // 예금이 없으면 타이머 시작하지 않음
+        }
+        
+        isDepositTimerActive = true
+        depositTimer = object : CountDownTimer(60000, 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                _depositRemainingTime.value = millisUntilFinished / 1000
+            }
+
+            override fun onFinish() {
+                val deposit = _deposit.value ?: 0L
+                if (deposit > 0) {
+                    val interest = (deposit * 0.03).toLong()
+                    _deposit.value = deposit + interest
+                    _asset.value = (_asset.value ?: 0L) + interest
+                    
+                    // 알림 메시지와 타임스탬프 업데이트
+                    val message = "예금 이자 ${formatNumber(interest)}원이 지급되었습니다"
+                    _interestNotification.value = message
+                    _lastNotificationTimestamp.value = System.currentTimeMillis()
+                    
+                    // MessageManager로 메시지 표시
+                    MessageManager.showMessage(context, message)
+                    
+                    // 로그로 알림 확인
+                    android.util.Log.d("AssetViewModel", "예금 이자 알림: $message")
+                    
+                    saveAssetToPreferences()
+                    startDepositTimer() // 다음 이자를 위해 타이머 재시작
+                } else {
+                    stopDepositTimer()
+                }
+            }
+        }.start()
+    }
+
+    private fun startLoanTimer() {
+        if (isLoanTimerActive) {
+            return  // 이미 활성화된 타이머가 있으면 중복 생성 방지
+        }
+        
+        stopLoanTimer() // 안전하게 기존 타이머 정리
+        
+        val currentLoan = _loan.value ?: 0L
+        if (currentLoan <= 0) {
+            return  // 대출이 없으면 타이머 시작하지 않음
+        }
+        
+        isLoanTimerActive = true
+        loanTimer = object : CountDownTimer(60000, 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                _loanRemainingTime.value = millisUntilFinished / 1000
+            }
+
+            override fun onFinish() {
+                val loan = _loan.value ?: 0L
+                if (loan > 0) {
+                    val interest = (loan * 0.10).toLong()
+                    _loan.value = loan + interest
+                    
+                    // 알림 메시지와 타임스탬프 업데이트
+                    val message = "대출 이자 ${formatNumber(interest)}원이 발생했습니다"
+                    _interestNotification.value = message
+                    _lastNotificationTimestamp.value = System.currentTimeMillis()
+                    
+                    // MessageManager로 메시지 표시
+                    MessageManager.showMessage(context, message)
+                    
+                    // 로그로 알림 확인
+                    android.util.Log.d("AssetViewModel", "대출 이자 알림: $message")
+                    
+                    saveAssetToPreferences()
+                    startLoanTimer() // 다음 이자를 위해 타이머 재시작
+                } else {
+                    stopLoanTimer()
+                }
+            }
+        }.start()
     }
 
     private fun formatNumber(number: Long): String {
         return NumberFormat.getNumberInstance(Locale.KOREA).format(number)
     }
 
-    // --- 추가: ViewModel 소멸 시 자산 저장 ---
     override fun onCleared() {
         super.onCleared()
-        saveAssetToPreferences() // ViewModel이 제거될 때 현재 자산 저장
-        depositTimer?.cancel()
-        loanTimer?.cancel()
+        stopDepositTimer()
+        stopLoanTimer()
     }
-    // --- 추가 끝 ---
 }

@@ -155,6 +155,17 @@
         android:textSize="12sp"
         android:textStyle="bold" />
 
+    <!-- 메시지 표시 영역 (최상단에 위치, 화면 오버레이) -->
+    <LinearLayout
+        android:id="@+id/messageContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="top"
+        android:layout_marginTop="45dp"
+        android:paddingHorizontal="8dp"
+        android:paddingTop="4dp" />
+
     <!-- 메인 화면 중앙 메시지 (초기에는 숨김) -->
     <TextView
         android:id="@+id/mainRestartMessageText"

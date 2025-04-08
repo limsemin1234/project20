@@ -1,9 +1,12 @@
 package com.example.p20
 
+import android.graphics.Color
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -15,8 +18,14 @@ import java.util.Locale
 
 class BankFragment : Fragment() {
     private lateinit var viewModel: AssetViewModel
-    private lateinit var depositAmountText: TextView
-    private lateinit var loanAmountText: TextView
+    private lateinit var depositInfoText: TextView
+    private lateinit var loanInfoText: TextView
+    private lateinit var depositRemainingTimeText: TextView
+    private lateinit var loanRemainingTimeText: TextView
+    private lateinit var tabLayout: TabLayout
+    
+    // 마지막으로 처리한 알림의 타임스탬프
+    private var lastProcessedNotificationTime: Long = 0
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -30,27 +39,18 @@ class BankFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         viewModel = ViewModelProvider(requireActivity())[AssetViewModel::class.java]
 
-        // 뷰 초기화
-        depositAmountText = view.findViewById(R.id.depositAmountText)
-        loanAmountText = view.findViewById(R.id.loanAmountText)
+        depositInfoText = view.findViewById(R.id.depositInfoText)
+        loanInfoText = view.findViewById(R.id.loanInfoText)
+        depositRemainingTimeText = view.findViewById(R.id.depositRemainingTimeText)
+        loanRemainingTimeText = view.findViewById(R.id.loanRemainingTimeText)
 
-        // 예금과 대출 금액 변경 감지
-        viewModel.deposit.observe(viewLifecycleOwner) { deposit ->
-            updateUI()
-        }
-        viewModel.loan.observe(viewLifecycleOwner) { loan ->
-            updateUI()
-        }
-
-        // 뷰페이저와 탭 레이아웃 설정
+        // ViewPager2와 TabLayout 설정
         val viewPager = view.findViewById<ViewPager2>(R.id.viewPager)
-        val tabLayout = view.findViewById<TabLayout>(R.id.tabLayout)
-
-        // 어댑터 설정
+        tabLayout = view.findViewById(R.id.tabLayout)
+        
         val adapter = BankPagerAdapter(requireActivity())
         viewPager.adapter = adapter
-
-        // 탭 레이아웃과 뷰페이저 연결
+        
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
             tab.text = when (position) {
                 0 -> "예금"
@@ -58,13 +58,73 @@ class BankFragment : Fragment() {
                 else -> null
             }
         }.attach()
+
+        setupObservers()
     }
 
-    private fun updateUI() {
-        val deposit = viewModel.deposit.value ?: 0L
-        val loan = viewModel.loan.value ?: 0L
-        depositAmountText.text = "예금: ${formatNumber(deposit)}원"
-        loanAmountText.text = "대출: ${formatNumber(loan)}원"
+    private fun setupObservers() {
+        // 예금 정보 관찰
+        viewModel.deposit.observe(viewLifecycleOwner) { deposit ->
+            updateDepositInfo(deposit)
+        }
+
+        // 대출 정보 관찰
+        viewModel.loan.observe(viewLifecycleOwner) { loan ->
+            updateLoanInfo(loan)
+        }
+
+        // 예금 남은 시간 관찰
+        viewModel.depositRemainingTime.observe(viewLifecycleOwner) { remainingTime ->
+            updateDepositRemainingTime(remainingTime)
+        }
+
+        // 대출 남은 시간 관찰
+        viewModel.loanRemainingTime.observe(viewLifecycleOwner) { remainingTime ->
+            updateLoanRemainingTime(remainingTime)
+        }
+        
+        // 이자 알림 메시지 관찰
+        viewModel.interestNotification.observe(viewLifecycleOwner) { message ->
+            val currentNotificationTime = viewModel.lastNotificationTimestamp.value ?: 0L
+            if (currentNotificationTime > lastProcessedNotificationTime) {
+                // 로그로 알림 확인
+                android.util.Log.d("BankFragment", "이자 알림: $message, 시간: $currentNotificationTime")
+                
+                // 예금 이자 또는 대출 이자 메시지 모두 표시
+                showSnackbar(message)
+                lastProcessedNotificationTime = currentNotificationTime
+            }
+        }
+    }
+
+    private fun updateDepositInfo(deposit: Long) {
+        depositInfoText.text = "예금: ${formatNumber(deposit)}원"
+    }
+
+    private fun updateLoanInfo(loan: Long) {
+        loanInfoText.text = "대출: ${formatNumber(loan)}원"
+    }
+
+    private fun updateDepositRemainingTime(remainingTime: Long) {
+        if (remainingTime > 0) {
+            depositRemainingTimeText.text = "(${remainingTime}초 후 이자)"
+            depositRemainingTimeText.visibility = View.VISIBLE
+        } else {
+            depositRemainingTimeText.visibility = View.GONE
+        }
+    }
+
+    private fun updateLoanRemainingTime(remainingTime: Long) {
+        if (remainingTime > 0) {
+            loanRemainingTimeText.text = "(${remainingTime}초 후 이자)"
+            loanRemainingTimeText.visibility = View.VISIBLE
+        } else {
+            loanRemainingTimeText.visibility = View.GONE
+        }
+    }
+    
+    private fun showSnackbar(message: String) {
+        MessageManager.showMessage(requireContext(), message)
     }
 
     private fun formatNumber(number: Long): String {

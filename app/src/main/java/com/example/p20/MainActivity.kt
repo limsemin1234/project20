@@ -38,6 +38,10 @@ class MainActivity : AppCompatActivity() {
 
         val contentFrame = findViewById<FrameLayout>(R.id.contentFrame)
         val timeInfo: TextView = findViewById(R.id.timeInfo)
+        
+        // 메시지 매니저 초기화
+        val messageContainer = findViewById<LinearLayout>(R.id.messageContainer)
+        MessageManager.initialize(messageContainer)
 
         // StockViewModel 초기화
         stockViewModel = ViewModelProvider(this).get(StockViewModel::class.java)
