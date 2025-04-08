@@ -193,70 +193,70 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="로얄 스트레이트 플러시: 100배\n(같은 무늬의 A, K, Q, J, 10 카드)\n점수: (150 + 카드총합) × 10"
+                android:text="로얄 스트레이트 플러시 (같은 무늬의 A, K, Q, J, 10 카드)\n점수: (150 + 카드총합) × 10"
                 android:textColor="#333333"
                 android:layout_marginBottom="4dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="스트레이트 플러시: 50배\n(같은 무늬의 연속된 숫자 5장)\n점수: (100 + 카드총합) × 8"
+                android:text="스트레이트 플러시 (같은 무늬의 연속된 숫자 5장)\n점수: (100 + 카드총합) × 8"
                 android:textColor="#333333"
                 android:layout_marginBottom="4dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="포카드(Four of a Kind): 20배\n(같은 숫자 4장을 포함한 패)\n점수: (60 + 카드총합) × 7"
+                android:text="포카드(Four of a Kind) (같은 숫자 4장을 포함한 패)\n점수: (60 + 카드총합) × 7"
                 android:textColor="#333333"
                 android:layout_marginBottom="4dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="풀하우스: 10배\n(같은 숫자 3장과 다른 같은 숫자 2장으로 구성)\n점수: (40 + 카드총합) × 4"
+                android:text="풀하우스 (같은 숫자 3장과 다른 같은 숫자 2장으로 구성)\n점수: (40 + 카드총합) × 4"
                 android:textColor="#333333"
                 android:layout_marginBottom="4dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="플러시: 5배\n(같은 무늬(스페이드, 하트, 다이아몬드, 클로버) 5장)\n점수: (35 + 카드총합) × 4"
+                android:text="플러시 (같은 무늬(스페이드, 하트, 다이아몬드, 클로버) 5장)\n점수: (35 + 카드총합) × 4"
                 android:textColor="#333333"
                 android:layout_marginBottom="4dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="스트레이트: 4배\n(연속된 숫자 5장, 예: 5, 6, 7, 8, 9)\n점수: (30 + 카드총합) × 4"
+                android:text="스트레이트 (연속된 숫자 5장, 예: 5, 6, 7, 8, 9)\n점수: (30 + 카드총합) × 4"
                 android:textColor="#333333"
                 android:layout_marginBottom="4dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="트리플(Three of a Kind): 3배\n(같은 숫자 3장을 포함한 패)\n점수: (30 + 카드총합) × 3"
+                android:text="트리플(Three of a Kind) (같은 숫자 3장을 포함한 패)\n점수: (30 + 카드총합) × 3"
                 android:textColor="#333333"
                 android:layout_marginBottom="4dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="투페어: 2배\n(서로 다른 두 쌍의 같은 숫자 카드)\n점수: (20 + 카드총합) × 2"
+                android:text="투페어 (서로 다른 두 쌍의 같은 숫자 카드)\n점수: (20 + 카드총합) × 2"
                 android:textColor="#333333"
                 android:layout_marginBottom="4dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="원페어: 1배\n(같은 숫자 2장을 포함한 패)\n점수: (10 + 카드총합) × 2"
+                android:text="원페어 (같은 숫자 2장을 포함한 패)\n점수: (10 + 카드총합) × 2"
                 android:textColor="#333333"
                 android:layout_marginBottom="4dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="하이카드: 패배\n(위의 어떤 족보에도 해당하지 않는 패)\n점수: 카드총합"
+                android:text="하이카드: 패배 (위의 어떤 족보에도 해당하지 않는 패)\n점수: 카드총합"
                 android:textColor="#333333" />
         </LinearLayout>
 
