@@ -14,6 +14,9 @@ import androidx.lifecycle.ViewModelProvider
 import java.text.NumberFormat
 import java.util.Locale
 
+/**
+ * 대출 기능을 담당하는 Fragment
+ */
 class LoanFragment : Fragment() {
     private lateinit var viewModel: AssetViewModel
     private lateinit var loanAmountInput: TextView
@@ -60,23 +63,44 @@ class LoanFragment : Fragment() {
         loanButton = view.findViewById(R.id.loanButton)
         repayButton = view.findViewById(R.id.repayButton)
         resetButton = view.findViewById(R.id.resetButton)
-        percent25Button = view.findViewById(R.id.percent25Button)
-        percent50Button = view.findViewById(R.id.percent50Button)
-        percent75Button = view.findViewById(R.id.percent75Button)
-        percent100Button = view.findViewById(R.id.percent100Button)
-        unitManButton = view.findViewById(R.id.unitManButton)
-        unitEokButton = view.findViewById(R.id.unitEokButton)
-        unitJoButton = view.findViewById(R.id.unitJoButton)
-        number1Button = view.findViewById(R.id.number1Button)
-        number10Button = view.findViewById(R.id.number10Button)
-        number100Button = view.findViewById(R.id.number100Button)
-        number1000Button = view.findViewById(R.id.number1000Button)
+        
+        try {
+            percent25Button = view.findViewById(R.id.percent25Button)
+            percent50Button = view.findViewById(R.id.percent50Button)
+            percent75Button = view.findViewById(R.id.percent75Button)
+            percent100Button = view.findViewById(R.id.percent100Button)
+            
+            // 퍼센트 버튼 이벤트 설정
+            setupPercentButtons()
+        } catch (e: Exception) {
+            // 버튼이 없으면 무시
+        }
+        
+        try {
+            unitManButton = view.findViewById(R.id.unitManButton)
+            unitEokButton = view.findViewById(R.id.unitEokButton)
+            unitJoButton = view.findViewById(R.id.unitJoButton)
+            
+            // 단위 버튼 이벤트 설정
+            setupUnitButtons()
+        } catch (e: Exception) {
+            // 버튼이 없으면 무시
+        }
+        
+        try {
+            number1Button = view.findViewById(R.id.number1Button)
+            number10Button = view.findViewById(R.id.number10Button)
+            number100Button = view.findViewById(R.id.number100Button)
+            number1000Button = view.findViewById(R.id.number1000Button)
+            
+            // 숫자 버튼 이벤트 및 텍스트 설정
+            setupNumberButtons()
+        } catch (e: Exception) {
+            // 버튼이 없으면 무시
+        }
         
         // 상환하기 버튼 텍스트 변경
         repayButton.text = "전체상환하기"
-
-        // 초기 버튼 텍스트 설정
-        updateNumberButtons()
 
         // 대출 금액에 따라 UI 업데이트
         updateLoanUI(viewModel.loan.value ?: 0L)
@@ -91,6 +115,14 @@ class LoanFragment : Fragment() {
             updateAmountInput(0L)
         }
         
+        // 대출 및 상환 버튼 이벤트 설정
+        setupActionButtons()
+    }
+    
+    /**
+     * 퍼센트 버튼 이벤트 설정
+     */
+    private fun setupPercentButtons() {
         // 자산 퍼센트 버튼 이벤트
         percent25Button.setOnClickListener {
             val currentAsset = viewModel.asset.value ?: 0L
@@ -122,7 +154,12 @@ class LoanFragment : Fragment() {
             val roundedAmount = roundToHundreds(currentAsset)
             updateAmountInput(roundedAmount)
         }
-
+    }
+    
+    /**
+     * 단위 버튼 이벤트 설정
+     */
+    private fun setupUnitButtons() {
         // 단위 버튼 클릭 이벤트
         unitManButton.setOnClickListener {
             selectedUnit = 10000L // 만원
@@ -138,7 +175,15 @@ class LoanFragment : Fragment() {
             selectedUnit = 1000000000000L // 조원
             updateAmountInput()
         }
-
+    }
+    
+    /**
+     * 숫자 버튼 이벤트 및 텍스트 설정
+     */
+    private fun setupNumberButtons() {
+        // 초기 버튼 텍스트 설정
+        updateNumberButtons()
+        
         // 숫자 버튼 클릭 이벤트
         number1Button.setOnClickListener {
             selectedNumber1 = (selectedNumber1 % 9) + 1
@@ -163,23 +208,27 @@ class LoanFragment : Fragment() {
             updateNumberButtons()
             updateAmountInput()
         }
-
+    }
+    
+    /**
+     * 대출 및 상환 버튼 이벤트 설정
+     */
+    private fun setupActionButtons() {
         loanButton.setOnClickListener {
             val amount = getSelectedAmount()
             if (amount <= 0) {
-                showSnackbar("올바른 금액을 입력해주세요")
+                MessageManager.showMessage(requireContext(), "올바른 금액을 입력해주세요")
                 return@setOnClickListener
             }
 
             val currentLoan = viewModel.loan.value ?: 0L
             // 이미 대출이 있는 경우 추가 대출 불가 (이미 버튼이 비활성화되어 있어야 함)
             if (currentLoan > 0) {
-                showSnackbar("기존 대출금을 전액 상환해야 새로운 대출이 가능합니다")
+                MessageManager.showMessage(requireContext(), "기존 대출금을 전액 상환해야 새로운 대출이 가능합니다")
                 return@setOnClickListener
             }
             
             viewModel.addLoan(amount)
-            showSnackbar("${formatNumber(amount)}원을 대출했습니다")
         }
 
         repayButton.setOnClickListener {
@@ -187,7 +236,7 @@ class LoanFragment : Fragment() {
             val currentLoan = viewModel.loan.value ?: 0L
             
             if (currentLoan <= 0) {
-                showSnackbar("상환할 대출이 없습니다")
+                MessageManager.showMessage(requireContext(), "상환할 대출이 없습니다")
                 return@setOnClickListener
             }
             
@@ -195,39 +244,35 @@ class LoanFragment : Fragment() {
             val remainingTime = viewModel.loanRemainingTime.value ?: 0L
             val earlyRepaymentFee = if (remainingTime > 0) {
                 // 이자 발생 전에 상환하는 경우 수수료 부과
-                (currentLoan * EARLY_REPAYMENT_FEE_RATE).toLong()
+                viewModel.calculateEarlyRepaymentFee(currentLoan)
             } else {
                 0L // 이자가 이미 발생한 후라면 수수료 없음
             }
             
-            // 상환할 총액 (대출금 + 수수료)
-            val totalRepaymentAmount = currentLoan + earlyRepaymentFee
-            
-            val currentAsset = viewModel.asset.value ?: 0L
-            if (totalRepaymentAmount > currentAsset) {
-                showSnackbar("보유 자산이 부족합니다 (필요: ${formatNumber(totalRepaymentAmount)}원)")
-                return@setOnClickListener
-            }
-
-            // 전체 대출금 상환 (수수료 포함)
-            viewModel.setAsset(currentAsset - totalRepaymentAmount)
-            viewModel.subtractLoan(currentLoan)
-            
-            // 수수료가 있는 경우 별도 메시지 표시
-            if (earlyRepaymentFee > 0) {
-                showSnackbar("${formatNumber(currentLoan)}원 상환 완료 (조기상환 수수료: ${formatNumber(earlyRepaymentFee)}원)")
-            } else {
-                showSnackbar("${formatNumber(currentLoan)}원을 전액 상환했습니다")
-            }
+            // 상환
+            viewModel.subtractLoan(currentLoan, earlyRepaymentFee)
         }
     }
 
+    /**
+     * 백의 자리로 금액 반올림
+     */
+    private fun roundToHundreds(amount: Long): Long {
+        return (amount / 100) * 100
+    }
+
+    /**
+     * 선택한 숫자에 따른 금액 계산
+     */
     private fun calculateAmount(): Long {
         val number = selectedNumber1000 * 1000L + selectedNumber100 * 100L + 
                     selectedNumber10 * 10L + selectedNumber1
         return number * selectedUnit
     }
 
+    /**
+     * 숫자 버튼 텍스트 업데이트
+     */
     private fun updateNumberButtons() {
         number1Button.text = "${selectedNumber1}\n(일의 자리)"
         number10Button.text = "${selectedNumber10}0\n(십의 자리)"
@@ -235,37 +280,24 @@ class LoanFragment : Fragment() {
         number1000Button.text = "${selectedNumber1000}000\n(천의 자리)"
     }
 
+    /**
+     * 금액 입력 필드 업데이트
+     */
     private fun updateAmountInput() {
         val amount = calculateAmount()
-        loanAmountInput.text = formatNumber(amount)
+        loanAmountInput.text = viewModel.formatNumber(amount)
     }
 
+    /**
+     * 금액 입력 필드에 특정 금액 설정
+     */
     private fun updateAmountInput(amount: Long) {
-        loanAmountInput.text = formatNumber(amount)
+        loanAmountInput.text = viewModel.formatNumber(amount)
     }
 
-    private fun showSnackbar(message: String) {
-        MessageManager.showMessage(requireContext(), message)
-    }
-
-    private fun formatNumber(number: Long): String {
-        return NumberFormat.getNumberInstance(Locale.KOREA).format(number)
-    }
-
-    private fun updateLoanUI(loanAmount: Long) {
-        // 대출금이 있으면 대출하기 버튼 비활성화, 전체상환하기 버튼 활성화
-        val hasLoan = loanAmount > 0
-        loanButton.isEnabled = !hasLoan
-        loanButton.alpha = if (hasLoan) 0.5f else 1.0f
-        
-        // 대출금이 있을 때 대출하기 버튼에 추가 텍스트 표시
-        if (hasLoan) {
-            loanButton.text = "대출하기 (기존 대출 상환 필요)"
-        } else {
-            loanButton.text = "대출하기"
-        }
-    }
-
+    /**
+     * 입력 필드에서 금액 가져오기
+     */
     private fun getSelectedAmount(): Long {
         try {
             val amountText = loanAmountInput.text.toString()
@@ -277,19 +309,19 @@ class LoanFragment : Fragment() {
     }
 
     /**
-     * 백의 자리에서 올림 처리 (1, 10, 100의 자리를 0으로 만듦)
-     * 예: 123456 -> 123500
+     * 대출 상태에 따른 UI 업데이트
      */
-    private fun roundToHundreds(amount: Long): Long {
-        // 백 단위로 나누고 나머지가 있으면 올림
-        val hundreds = amount / 100
-        val remainder = amount % 100
+    private fun updateLoanUI(loanAmount: Long) {
+        // 대출금이 있으면 대출하기 버튼 비활성화, 전체상환하기 버튼 활성화
+        val hasLoan = loanAmount > 0
+        loanButton.isEnabled = !hasLoan
+        loanButton.alpha = if (hasLoan) 0.5f else 1.0f
         
-        // 나머지가 있으면 올림
-        return if (remainder > 0) {
-            (hundreds + 1) * 100
+        // 대출금이 있을 때 대출하기 버튼에 추가 텍스트 표시
+        if (hasLoan) {
+            loanButton.text = "대출하기 (기존 대출 상환 필요)"
         } else {
-            hundreds * 100
+            loanButton.text = "대출하기"
         }
     }
 } 

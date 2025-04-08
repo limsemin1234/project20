@@ -142,16 +142,7 @@ class LottoFragment : Fragment() {
     }
 
     private fun showCustomSnackbar(message: String) {
-        val snackbar = Snackbar.make(requireView(), message, Snackbar.LENGTH_SHORT)
-        val snackbarView = snackbar.view
-        snackbarView.setBackgroundColor(Color.argb(150, 50, 50, 50))
-        try {
-            val params = snackbarView.layoutParams as FrameLayout.LayoutParams
-            params.gravity = Gravity.CENTER
-            snackbarView.layoutParams = params
-        } catch (e: ClassCastException) {
-        }
-        snackbar.show()
+        MessageManager.showMessage(requireContext(), message)
     }
 
     // 구매 버튼 임시 비활성화 함수

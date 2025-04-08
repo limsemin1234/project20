@@ -39,9 +39,13 @@ class MainActivity : AppCompatActivity() {
         val contentFrame = findViewById<FrameLayout>(R.id.contentFrame)
         val timeInfo: TextView = findViewById(R.id.timeInfo)
         
-        // 메시지 매니저 초기화
+        // 메시지 관리자 초기화
         val messageContainer = findViewById<LinearLayout>(R.id.messageContainer)
         MessageManager.initialize(messageContainer)
+        
+        // 시간 표시 설정
+        globalRemainingTimeTextView = findViewById(R.id.timeInfo)
+        assetTextView = findViewById(R.id.assetInfo)
 
         // StockViewModel 초기화
         stockViewModel = ViewModelProvider(this).get(StockViewModel::class.java)

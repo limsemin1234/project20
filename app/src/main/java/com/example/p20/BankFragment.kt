@@ -16,6 +16,10 @@ import com.google.android.material.tabs.TabLayoutMediator
 import java.text.NumberFormat
 import java.util.Locale
 
+/**
+ * 은행 기능을 담당하는 Fragment
+ * 예금과 대출 탭을 포함
+ */
 class BankFragment : Fragment() {
     private lateinit var viewModel: AssetViewModel
     private lateinit var depositInfoText: TextView
@@ -93,25 +97,23 @@ class BankFragment : Fragment() {
                 // 로그로 알림 확인
                 android.util.Log.d("BankFragment", "이자 알림: $message, 시간: $currentNotificationTime")
                 
-                // 예금 이자 또는 대출 이자 메시지 표시 - MessageManager에서 이미 처리됨
-                // showSnackbar(message) - 이 코드는 제거하여 중복 메시지 방지
-                
+                // 처리 타임스탬프 업데이트
                 lastProcessedNotificationTime = currentNotificationTime
             }
         }
     }
 
     private fun updateDepositInfo(deposit: Long) {
-        depositInfoText.text = "예금: ${formatNumber(deposit)}원"
+        depositInfoText.text = "예금: ${viewModel.formatNumber(deposit)}원"
     }
 
     private fun updateLoanInfo(loan: Long) {
-        loanInfoText.text = "대출: ${formatNumber(loan)}원"
+        loanInfoText.text = "대출: ${viewModel.formatNumber(loan)}원"
     }
 
     private fun updateDepositRemainingTime(remainingTime: Long) {
         if (remainingTime > 0) {
-            depositRemainingTimeText.text = "(${remainingTime}초 후 이자)"
+            depositRemainingTimeText.text = "(${remainingTime / 1000}초 후 이자)"
             depositRemainingTimeText.visibility = View.VISIBLE
         } else {
             depositRemainingTimeText.visibility = View.GONE
@@ -120,18 +122,10 @@ class BankFragment : Fragment() {
 
     private fun updateLoanRemainingTime(remainingTime: Long) {
         if (remainingTime > 0) {
-            loanRemainingTimeText.text = "(${remainingTime}초 후 이자)"
+            loanRemainingTimeText.text = "(${remainingTime / 1000}초 후 이자)"
             loanRemainingTimeText.visibility = View.VISIBLE
         } else {
             loanRemainingTimeText.visibility = View.GONE
         }
-    }
-    
-    private fun formatNumber(number: Long): String {
-        return NumberFormat.getNumberInstance(Locale.KOREA).format(number)
-    }
-    
-    private fun showSnackbar(message: String) {
-        MessageManager.showMessage(requireContext(), message)
     }
 } 

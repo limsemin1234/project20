@@ -329,21 +329,7 @@ class ItemFragment : Fragment() {
      * 커스텀 스낵바를 표시합니다.
      */
     private fun showCustomSnackbar(message: String) {
-        val snackbar = Snackbar.make(requireView(), message, Snackbar.LENGTH_SHORT)
-        val snackbarView = snackbar.view
-        // 배경 투명도 설정 (약 60% 불투명한 어두운 회색)
-        snackbarView.setBackgroundColor(Color.argb(150, 50, 50, 50))
-        
-        // 중앙으로 이동 시도
-        try {
-            val params = snackbarView.layoutParams as FrameLayout.LayoutParams
-            params.gravity = Gravity.CENTER
-            snackbarView.layoutParams = params
-        } catch (e: ClassCastException) {
-            // 부모 레이아웃이 FrameLayout이 아닐 경우 예외 발생 가능
-        }
-        
-        snackbar.show()
+        MessageManager.showMessage(requireContext(), message)
     }
 
     /**

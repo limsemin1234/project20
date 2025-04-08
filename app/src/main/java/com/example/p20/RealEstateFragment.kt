@@ -246,17 +246,7 @@ class RealEstateFragment : Fragment() {
     }
 
     private fun showCustomSnackbar(message: String) {
-        val snackbar = Snackbar.make(requireView(), message, Snackbar.LENGTH_SHORT)
-        val snackbarView = snackbar.view
-        snackbarView.setBackgroundColor(Color.argb(150, 50, 50, 50))
-        try {
-            val params = snackbarView.layoutParams as FrameLayout.LayoutParams
-            params.gravity = Gravity.CENTER
-            snackbarView.layoutParams = params
-        } catch (e: ClassCastException) {
-            // 부모 레이아웃이 FrameLayout이 아닐 경우 예외 발생 가능
-        }
-        snackbar.show()
+        MessageManager.showMessage(requireContext(), message)
     }
 
     override fun onDestroyView() {

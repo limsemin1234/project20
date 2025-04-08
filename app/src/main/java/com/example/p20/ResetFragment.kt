@@ -101,21 +101,9 @@ class ResetFragment : Fragment() {
         return binding.root // binding.root 반환
     }
 
-    // --- 수정: 상단 -> 중앙 스낵바 표시 함수, 투명도 조절 ---
+    // --- 수정: 메시지 매니저를 사용하는 함수로 변경 ---
     private fun showCustomSnackbar(message: String) { // 함수 이름 변경
-        val snackbar = Snackbar.make(requireView(), message, Snackbar.LENGTH_SHORT)
-        val snackbarView = snackbar.view
-        // 배경 투명도 설정 (약 60% 불투명한 어두운 회색)
-        snackbarView.setBackgroundColor(Color.argb(150, 50, 50, 50)) // alpha 값 150으로 변경
-        // 중앙으로 이동 시도
-        try {
-            val params = snackbarView.layoutParams as FrameLayout.LayoutParams
-            params.gravity = Gravity.CENTER // Gravity.TOP -> Gravity.CENTER
-            snackbarView.layoutParams = params
-        } catch (e: ClassCastException) {
-            // 부모 레이아웃이 FrameLayout이 아닐 경우 예외 발생 가능
-        }
-        snackbar.show()
+        MessageManager.showMessage(requireContext(), message)
     }
     // --- 수정 끝 ---
 
