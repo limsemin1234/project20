@@ -60,9 +60,20 @@ class LoanFragment : Fragment() {
         number10Button = view.findViewById(R.id.number10Button)
         number100Button = view.findViewById(R.id.number100Button)
         number1000Button = view.findViewById(R.id.number1000Button)
+        
+        // 상환하기 버튼 텍스트 변경
+        repayButton.text = "전체상환하기"
 
         // 초기 버튼 텍스트 설정
         updateNumberButtons()
+
+        // 대출 금액에 따라 UI 업데이트
+        updateLoanUI(viewModel.loan.value ?: 0L)
+        
+        // 대출 금액 변경 감지
+        viewModel.loan.observe(viewLifecycleOwner) { loanAmount ->
+            updateLoanUI(loanAmount)
+        }
 
         // 금액 초기화 버튼 클릭 이벤트
         resetButton.setOnClickListener {
@@ -124,32 +135,35 @@ class LoanFragment : Fragment() {
             }
 
             val currentLoan = viewModel.loan.value ?: 0L
+            // 이미 대출이 있는 경우 추가 대출 불가 (이미 버튼이 비활성화되어 있어야 함)
+            if (currentLoan > 0) {
+                showSnackbar("기존 대출금을 전액 상환해야 새로운 대출이 가능합니다")
+                return@setOnClickListener
+            }
+            
             viewModel.addLoan(amount)
             showSnackbar("${formatNumber(amount)}원을 대출했습니다")
         }
 
         repayButton.setOnClickListener {
-            val amount = calculateAmount()
-            if (amount <= 0) {
-                showSnackbar("올바른 금액을 입력해주세요")
-                return@setOnClickListener
-            }
-
+            // 전체 대출금 가져오기
             val currentLoan = viewModel.loan.value ?: 0L
-            if (amount > currentLoan) {
-                showSnackbar("대출 금액이 부족합니다")
+            
+            if (currentLoan <= 0) {
+                showSnackbar("상환할 대출이 없습니다")
                 return@setOnClickListener
             }
-
+            
             val currentAsset = viewModel.asset.value ?: 0L
-            if (amount > currentAsset) {
-                showSnackbar("보유 자산이 부족합니다")
+            if (currentLoan > currentAsset) {
+                showSnackbar("보유 자산이 부족합니다 (필요: ${formatNumber(currentLoan)}원)")
                 return@setOnClickListener
             }
 
-            viewModel.setAsset(currentAsset - amount)
-            viewModel.subtractLoan(amount)
-            showSnackbar("${formatNumber(amount)}원을 상환했습니다")
+            // 전체 대출금 상환
+            viewModel.setAsset(currentAsset - currentLoan)
+            viewModel.subtractLoan(currentLoan)
+            showSnackbar("${formatNumber(currentLoan)}원을 전액 상환했습니다")
         }
     }
 
@@ -177,5 +191,19 @@ class LoanFragment : Fragment() {
 
     private fun formatNumber(number: Long): String {
         return NumberFormat.getNumberInstance(Locale.KOREA).format(number)
+    }
+
+    private fun updateLoanUI(loanAmount: Long) {
+        // 대출금이 있으면 대출하기 버튼 비활성화, 전체상환하기 버튼 활성화
+        val hasLoan = loanAmount > 0
+        loanButton.isEnabled = !hasLoan
+        loanButton.alpha = if (hasLoan) 0.5f else 1.0f
+        
+        // 대출금이 있을 때 대출하기 버튼에 추가 텍스트 표시
+        if (hasLoan) {
+            loanButton.text = "대출하기 (기존 대출 상환 필요)"
+        } else {
+            loanButton.text = "대출하기"
+        }
     }
 } 
