@@ -119,13 +119,30 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
             val context = getApplication<Application>().applicationContext
             val itemReward = ItemUtil.processClickAlbaLevelUp(context, newLevel)
             
-            // 아이템 재고 증가 이벤트 발생
+            // 아이템 재고 증가 이벤트 발생 및 메시지 표시
             if (itemReward != null) {
                 _itemRewardEvent.value = itemReward
+                
+                // MessageManager를 통해 상단 알림창에 메시지 표시
+                showItemRewardMessage(itemReward, context)
             }
             
             saveAlbaData()
         }
+    }
+    
+    /**
+     * 아이템 보상 메시지를 MessageManager를 통해 표시
+     */
+    private fun showItemRewardMessage(reward: ItemReward, context: Context) {
+        val message = if (reward.isMultiple) {
+            "${reward.itemName} 재고 증가!"
+        } else {
+            "${reward.itemName} 재고 ${reward.quantity}개 증가!"
+        }
+        
+        // MessageManager를 사용하여 상단에 메시지 표시
+        MessageManager.showMessage(context, message)
     }
 
     private fun saveAlbaData() {

@@ -26,6 +26,8 @@ class RealInfoFragment : Fragment() {
     private var currentAsset: Long = 0
     private var stockAsset: Long = 0
     private var realEstateAsset: Long = 0
+    private var depositAsset: Long = 0    // 예금 자산 추가
+    private var loanAsset: Long = 0       // 대출 금액 추가
     private lateinit var totalAssetTextView: TextView
 
     override fun onCreateView(
@@ -51,6 +53,8 @@ class RealInfoFragment : Fragment() {
         val assetTextView = view.findViewById<TextView>(R.id.assetTextView)
         val stockTextView = view.findViewById<TextView>(R.id.stockTextView)
         val realEstateTextView = view.findViewById<TextView>(R.id.realEstateTextView)
+        val depositTextView = view.findViewById<TextView>(R.id.depositTextView)
+        val loanTextView = view.findViewById<TextView>(R.id.loanTextView)
         
         // 배경 이미지에 애니메이션 적용
         val backgroundImageView = view.findViewById<ImageView>(R.id.backgroundImageView)
@@ -94,11 +98,26 @@ class RealInfoFragment : Fragment() {
             realEstateTextView.text = formatCurrency(realEstateAsset)
             updateTotalAsset()
         }
+        
+        // 예금 정보 표시
+        assetViewModel.deposit.observe(viewLifecycleOwner) { deposit ->
+            depositAsset = deposit
+            depositTextView.text = formatCurrency(deposit)
+            updateTotalAsset()
+        }
+        
+        // 대출 정보 표시 (마이너스로 표시)
+        assetViewModel.loan.observe(viewLifecycleOwner) { loan ->
+            loanAsset = loan
+            loanTextView.text = formatCurrency(-loan) // 대출은 마이너스로 표시
+            updateTotalAsset()
+        }
     }
     
     // 총자산 업데이트 함수
     private fun updateTotalAsset() {
-        val totalAsset = currentAsset + stockAsset + realEstateAsset
+        // 총자산 = 현금 + 주식 + 부동산 + 예금 - 대출
+        val totalAsset = currentAsset + stockAsset + realEstateAsset + depositAsset - loanAsset
         totalAssetTextView.text = formatCurrency(totalAsset)
     }
     

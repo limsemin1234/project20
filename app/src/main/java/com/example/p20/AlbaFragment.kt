@@ -132,8 +132,7 @@ class ClickAlbaFragment : Fragment() {
         // 아이템 획득 이벤트 관찰
         albaViewModel.itemRewardEvent.observe(viewLifecycleOwner, Observer { reward ->
             if (reward != null) {
-                // 아이템 획득 애니메이션 표시
-                showItemRewardAnimation(reward)
+                // 아이템 획득 이벤트만 소비 (메시지는 ViewModel에서 표시)
                 albaViewModel.consumeItemRewardEvent() // 이벤트 소비
             }
         })
@@ -226,65 +225,9 @@ class ClickAlbaFragment : Fragment() {
         shake.start()
     }
 
-    // 아이템 획득 애니메이션 표시
+    // 아이템 획득 애니메이션 표시 - 더 이상 사용하지 않음
+    // MessageManager로 대체되어 제거할 수 있지만, 코드 호환성을 위해 빈 함수로 유지
     private fun showItemRewardAnimation(reward: ItemReward) {
-        val centerX = animationContainer.width / 2
-        val centerY = animationContainer.height / 2
-        
-        val rewardTextView = TextView(requireContext()).apply {
-            text = if (reward.isMultiple) {
-                "${reward.itemName} 재고 증가!"
-            } else {
-                "${reward.itemName} 재고 ${reward.quantity}개 증가!"
-            }
-            textSize = 24f
-            setTextColor(resources.getColor(android.R.color.holo_green_light, null))
-            setShadowLayer(5f, 1f, 1f, android.graphics.Color.BLACK)
-            setPadding(16, 16, 16, 16)
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-        }
-        
-        animationContainer.addView(rewardTextView)
-        
-        // 중앙에 배치
-        rewardTextView.post {
-            rewardTextView.x = (animationContainer.width - rewardTextView.width) / 2f
-            rewardTextView.y = (animationContainer.height - rewardTextView.height) / 2f
-            
-            // 애니메이션 시작
-            val fadeIn = ObjectAnimator.ofFloat(rewardTextView, "alpha", 0f, 1f).apply {
-                duration = 500
-            }
-            
-            val scaleX = ObjectAnimator.ofFloat(rewardTextView, "scaleX", 0.5f, 1.2f, 1f).apply {
-                duration = 1000
-            }
-            
-            val scaleY = ObjectAnimator.ofFloat(rewardTextView, "scaleY", 0.5f, 1.2f, 1f).apply {
-                duration = 1000
-            }
-            
-            // 2초 후 페이드 아웃
-            Handler(Looper.getMainLooper()).postDelayed({
-                val fadeOut = ObjectAnimator.ofFloat(rewardTextView, "alpha", 1f, 0f).apply {
-                    duration = 1000
-                }
-                
-                fadeOut.addListener(object : AnimatorListenerAdapter() {
-                    override fun onAnimationEnd(animation: Animator) {
-                        animationContainer.removeView(rewardTextView)
-                    }
-                })
-                
-                fadeOut.start()
-            }, 2000)
-            
-            fadeIn.start()
-            scaleX.start()
-            scaleY.start()
-        }
+        // 비워둠 - 이제 MessageManager를 통해 메시지가 표시됨
     }
 }

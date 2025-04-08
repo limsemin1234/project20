@@ -21,7 +21,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="16dp"
+        android:padding="12dp"
         android:gravity="center_vertical"
         android:background="#80000000"
         android:elevation="4dp">
@@ -31,7 +31,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="👤"
-            android:textSize="28sp"
+            android:textSize="24sp"
             android:layout_marginEnd="8dp"/>
 
         <!-- 제목 텍스트뷰 -->
@@ -39,7 +39,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="내정보"
-            android:textSize="24sp"
+            android:textSize="20sp"
             android:textStyle="bold"
             android:textColor="@android:color/white"
             android:fontFamily="sans-serif-medium"/>
@@ -48,9 +48,9 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="72dp"
-        android:paddingTop="16dp"
-        android:paddingBottom="16dp"
+        android:layout_marginTop="60dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
         android:clipToPadding="false">
 
         <LinearLayout
@@ -58,17 +58,17 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center_horizontal"
-            android:paddingLeft="16dp"
-            android:paddingRight="16dp"
-            android:paddingBottom="16dp">
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
+            android:paddingBottom="12dp">
 
             <!-- 총자산 정보 TextView -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="8dp"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="6dp"
                 app:cardBackgroundColor="@android:color/transparent">
 
                 <LinearLayout
@@ -76,22 +76,22 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:background="@drawable/total_asset_card_background"
-                    android:padding="24dp">
+                    android:padding="16dp">
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="🏆 총자산"
-                        android:textSize="18sp"
+                        android:textSize="16sp"
                         android:textColor="#FFFFFF"
                         android:fontFamily="sans-serif-light"
-                        android:layout_marginBottom="8dp"/>
+                        android:layout_marginBottom="4dp"/>
 
                     <TextView
                         android:id="@+id/totalAssetTextView"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textSize="32sp"
+                        android:textSize="28sp"
                         android:textColor="#FFFFFF"
                         android:textStyle="bold"
                         android:fontFamily="sans-serif-medium"/>
@@ -102,9 +102,9 @@
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp"
+                android:layout_marginBottom="10dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="3dp"
                 app:cardBackgroundColor="@android:color/transparent">
 
                 <LinearLayout
@@ -112,22 +112,22 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:background="@drawable/asset_card_background"
-                    android:padding="20dp">
+                    android:padding="12dp">
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="💰 현금 자산"
-                        android:textSize="16sp"
+                        android:textSize="14sp"
                         android:textColor="#E0E0E0"
                         android:fontFamily="sans-serif-light"
-                        android:layout_marginBottom="8dp"/>
+                        android:layout_marginBottom="4dp"/>
 
                     <TextView
                         android:id="@+id/assetTextView"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textSize="24sp"
+                        android:textSize="20sp"
                         android:textColor="#FFFFFF"
                         android:textStyle="bold"
                         android:fontFamily="sans-serif-medium"/>
@@ -138,9 +138,9 @@
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp"
+                android:layout_marginBottom="10dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="3dp"
                 app:cardBackgroundColor="@android:color/transparent">
 
                 <LinearLayout
@@ -148,22 +148,22 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:background="@drawable/asset_card_background"
-                    android:padding="20dp">
+                    android:padding="12dp">
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="📈 주식 자산"
-                        android:textSize="16sp"
+                        android:textSize="14sp"
                         android:textColor="#E0E0E0"
                         android:fontFamily="sans-serif-light"
-                        android:layout_marginBottom="8dp"/>
+                        android:layout_marginBottom="4dp"/>
 
                     <TextView
                         android:id="@+id/stockTextView"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textSize="24sp"
+                        android:textSize="20sp"
                         android:textColor="#FFFFFF"
                         android:textStyle="bold"
                         android:fontFamily="sans-serif-medium"/>
@@ -174,9 +174,9 @@
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp"
+                android:layout_marginBottom="10dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="3dp"
                 app:cardBackgroundColor="@android:color/transparent">
 
                 <LinearLayout
@@ -184,23 +184,95 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:background="@drawable/asset_card_background"
-                    android:padding="20dp">
+                    android:padding="12dp">
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="🏢 부동산 자산"
-                        android:textSize="16sp"
+                        android:textSize="14sp"
                         android:textColor="#E0E0E0"
                         android:fontFamily="sans-serif-light"
-                        android:layout_marginBottom="8dp"/>
+                        android:layout_marginBottom="4dp"/>
 
                     <TextView
                         android:id="@+id/realEstateTextView"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textSize="24sp"
+                        android:textSize="20sp"
                         android:textColor="#FFFFFF"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-medium"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+            
+            <!-- 예금 자산 정보 TextView -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="3dp"
+                app:cardBackgroundColor="@android:color/transparent">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/asset_card_background"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="🏦 예금 자산"
+                        android:textSize="14sp"
+                        android:textColor="#E0E0E0"
+                        android:fontFamily="sans-serif-light"
+                        android:layout_marginBottom="4dp"/>
+
+                    <TextView
+                        android:id="@+id/depositTextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="20sp"
+                        android:textColor="#FFFFFF"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-medium"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+            
+            <!-- 대출 정보 TextView -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="3dp"
+                app:cardBackgroundColor="@android:color/transparent">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@drawable/asset_card_background"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="💸 대출 금액"
+                        android:textSize="14sp"
+                        android:textColor="#E0E0E0"
+                        android:fontFamily="sans-serif-light"
+                        android:layout_marginBottom="4dp"/>
+
+                    <TextView
+                        android:id="@+id/loanTextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="20sp"
+                        android:textColor="#FF5252"
                         android:textStyle="bold"
                         android:fontFamily="sans-serif-medium"/>
                 </LinearLayout>
