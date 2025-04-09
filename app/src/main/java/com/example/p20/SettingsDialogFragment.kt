@@ -118,8 +118,8 @@ class SettingsDialogFragment : DialogFragment() {
 
     private fun showExitConfirmationDialog() {
         AlertDialog.Builder(requireContext())
-            .setTitle("게임 종료")
-            .setMessage("정말로 게임을 종료하시겠습니까?")
+            .setTitle("게임 나가기")
+            .setMessage("정말로 게임을 나가시겠습니까?")
             .setPositiveButton("예") { _, _ ->
                 // 데이터 저장 후 앱 종료
                 (activity as? MainActivity)?.let { mainActivity ->
