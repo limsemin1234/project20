@@ -43,25 +43,30 @@ class AssetViewModel(
 
     // Observer 저장용
     private val depositObserver = { newDeposit: Long ->
-        if (newDeposit > 0 && (repository.loan.value ?: 0L > 0)) {
-            calculator.startInterestTimer()
-        } else if (newDeposit == 0L && (repository.loan.value ?: 0L == 0L)) {
-            calculator.stopInterestTimer()
+        if (newDeposit > 0) {
+            calculator.resetDepositTimer()
+        } else {
+            calculator.stopDepositTimer()
         }
+        _depositActive.value = newDeposit > 0
     }
 
     private val loanObserver = { newLoan: Long ->
-        if (newLoan > 0 && (repository.deposit.value ?: 0L > 0)) {
-            calculator.startInterestTimer()
-        } else if (newLoan == 0L && (repository.deposit.value ?: 0L == 0L)) {
-            calculator.stopInterestTimer()
+        if (newLoan > 0) {
+            calculator.resetLoanTimer()
+        } else {
+            calculator.stopLoanTimer()
         }
+        _loanActive.value = newLoan > 0
     }
 
     init {
         // 예금 또는 대출이 있는 경우 이자 계산 타이머 시작
-        if (repository.deposit.value ?: 0L > 0 || repository.loan.value ?: 0L > 0) {
-            calculator.startInterestTimer()
+        if (repository.deposit.value ?: 0L > 0) {
+            calculator.resetDepositTimer()
+        }
+        if (repository.loan.value ?: 0L > 0) {
+            calculator.resetLoanTimer()
         }
         
         // 예금 이자가 발생하는 경우의 콜백 설정
@@ -105,8 +110,7 @@ class AssetViewModel(
      * 예금 추가
      */
     fun addDeposit(amount: Long) {
-        if (repository.decreaseAsset(amount)) {
-            repository.addDeposit(amount)
+        if (repository.addDeposit(amount)) {
             calculator.resetDepositTimer()
             showMessage("${formatNumber(amount)}원이 예금되었습니다")
         } else {
@@ -119,7 +123,6 @@ class AssetViewModel(
      */
     fun subtractDeposit(amount: Long): Boolean {
         if (repository.subtractDeposit(amount)) {
-            repository.increaseAsset(amount)
             calculator.resetDepositTimer()
             showMessage("${formatNumber(amount)}원이 출금되었습니다")
             return true
@@ -184,7 +187,7 @@ class AssetViewModel(
      * 전체 자산 초기화
      */
     fun resetAssets() {
-        calculator.stopInterestTimer()
+        calculator.cleanup()
         repository.resetAll()
     }
 
@@ -225,6 +228,6 @@ class AssetViewModel(
         repository.deposit.removeObserver(depositObserver)
         repository.loan.removeObserver(loanObserver)
         // 타이머 정지
-        calculator.stopInterestTimer()
+        calculator.cleanup()
     }
 }

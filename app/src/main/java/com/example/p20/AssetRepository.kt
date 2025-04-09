@@ -80,15 +80,20 @@ class AssetRepository(private val context: Context) {
     }
     
     // 예금 관련 메서드
-    fun addDeposit(amount: Long) {
-        _deposit.value = (_deposit.value ?: 0L) + amount
-        saveToPreferences()
+    fun addDeposit(amount: Long): Boolean {
+        if (decreaseAsset(amount)) {
+            _deposit.value = (_deposit.value ?: 0L) + amount
+            saveToPreferences()
+            return true
+        }
+        return false
     }
     
     fun subtractDeposit(amount: Long): Boolean {
         val currentDeposit = _deposit.value ?: 0L
         if (amount <= currentDeposit) {
             _deposit.value = if (amount >= currentDeposit) 0L else currentDeposit - amount
+            increaseAsset(amount)
             saveToPreferences()
             return true
         }
@@ -110,6 +115,12 @@ class AssetRepository(private val context: Context) {
             return true
         }
         return false
+    }
+    
+    // 이자 관련 메서드
+    fun addLoanInterest(interest: Long) {
+        _loan.value = (_loan.value ?: 0L) + interest
+        saveToPreferences()
     }
     
     // 리셋 메서드

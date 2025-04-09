@@ -42,8 +42,10 @@ class InterestCalculator(
     private val mainHandler = Handler(Looper.getMainLooper())
     
     // 이자 발생 타이머
-    private var timer: Timer? = null
-    private var timerTask: TimerTask? = null
+    private var depositTimer: Timer? = null
+    private var depositTimerTask: TimerTask? = null
+    private var loanTimer: Timer? = null
+    private var loanTimerTask: TimerTask? = null
     
     // 이자 발생 시간 관련 LiveData (초 단위로 변환)
     private val _depositTimeRemaining = MutableLiveData<Long>()
@@ -101,42 +103,70 @@ class InterestCalculator(
     }
     
     /**
-     * 이자 계산 타이머 시작
+     * 예금 이자 계산 타이머 시작
      */
-    fun startInterestTimer() {
-        stopInterestTimer() // 기존 타이머가 있다면 정지
+    private fun startDepositTimer() {
+        stopDepositTimer() // 기존 타이머가 있다면 정지
         
-        timer = Timer()
-        timerTask = object : TimerTask() {
+        depositTimer = Timer()
+        depositTimerTask = object : TimerTask() {
             override fun run() {
-                calculateInterest()
+                calculateDepositInterest()
             }
         }
         
-        timer?.scheduleAtFixedRate(timerTask, 0, 1000) // 1초마다 실행
+        depositTimer?.scheduleAtFixedRate(depositTimerTask, 0, 1000) // 1초마다 실행
     }
     
     /**
-     * 이자 계산 타이머 중지
+     * 대출 이자 계산 타이머 시작
      */
-    fun stopInterestTimer() {
-        timerTask?.cancel()
-        timerTask = null
+    private fun startLoanTimer() {
+        stopLoanTimer() // 기존 타이머가 있다면 정지
         
-        timer?.cancel()
-        timer?.purge()
-        timer = null
+        loanTimer = Timer()
+        loanTimerTask = object : TimerTask() {
+            override fun run() {
+                calculateLoanInterest()
+            }
+        }
+        
+        loanTimer?.scheduleAtFixedRate(loanTimerTask, 0, 1000) // 1초마다 실행
+    }
+    
+    /**
+     * 예금 이자 계산 타이머 중지
+     */
+    fun stopDepositTimer() {
+        depositTimerTask?.cancel()
+        depositTimerTask = null
+        
+        depositTimer?.cancel()
+        depositTimer?.purge()
+        depositTimer = null
         
         isDepositTimerActive = false
+    }
+    
+    /**
+     * 대출 이자 계산 타이머 중지
+     */
+    fun stopLoanTimer() {
+        loanTimerTask?.cancel()
+        loanTimerTask = null
+        
+        loanTimer?.cancel()
+        loanTimer?.purge()
+        loanTimer = null
+        
         isLoanTimerActive = false
     }
     
     /**
-     * 예금 및 대출 타이머 업데이트
+     * 예금 이자 계산
      */
-    private fun calculateInterest() {
+    private fun calculateDepositInterest() {
         val deposit = repository.deposit.value ?: 0L
-        val loan = repository.loan.value ?: 0L
         
         if (deposit > 0) {
             val remainingTime = (_depositTimeRemaining.value ?: 0L) - 1
@@ -144,12 +174,22 @@ class InterestCalculator(
             
             if (remainingTime <= 0) {
                 val interest = (deposit * DEPOSIT_INTEREST_RATE).roundToLong()
-                repository.addDeposit(interest)
-                _interestNotification.postValue("예금 이자 ${repository.formatNumber(interest)}원이 발생했습니다")
-                _lastNotificationTimestamp.postValue(System.currentTimeMillis())
+                mainHandler.post {
+                    repository.increaseAsset(interest)  // 이자를 자산에 추가
+                    repository.addDeposit(interest)     // 이자를 예금에 추가
+                    _interestNotification.postValue("예금 이자 ${repository.formatNumber(interest)}원이 발생했습니다")
+                    _lastNotificationTimestamp.postValue(System.currentTimeMillis())
+                }
                 resetDepositTimer()
             }
         }
+    }
+    
+    /**
+     * 대출 이자 계산
+     */
+    private fun calculateLoanInterest() {
+        val loan = repository.loan.value ?: 0L
         
         if (loan > 0) {
             val remainingTime = (_loanTimeRemaining.value ?: 0L) - 1
@@ -157,9 +197,12 @@ class InterestCalculator(
             
             if (remainingTime <= 0) {
                 val interest = (loan * LOAN_INTEREST_RATE).roundToLong()
-                repository.addLoan(interest)
-                _interestNotification.postValue("대출 이자 ${repository.formatNumber(interest)}원이 발생했습니다")
-                _lastNotificationTimestamp.postValue(System.currentTimeMillis())
+                mainHandler.post {
+                    repository.decreaseAsset(interest)  // 이자를 자산에서 차감
+                    repository.addLoan(interest)        // 이자를 대출에 추가
+                    _interestNotification.postValue("대출 이자 ${repository.formatNumber(interest)}원이 발생했습니다")
+                    _lastNotificationTimestamp.postValue(System.currentTimeMillis())
+                }
                 resetLoanTimer()
             }
         }
@@ -173,20 +216,13 @@ class InterestCalculator(
         if (depositAmount > 0) {
             // 예금이 있으면 타이머 활성화 및 재설정
             isDepositTimerActive = true
-            _depositTimeRemaining.value = INTEREST_PERIOD_MS / 1000
-            
-            // 필요한 경우 타이머 시작
-            if (timer == null) {
-                startInterestTimer()
+            _depositTimeRemaining.postValue(INTEREST_PERIOD_MS / 1000)
+            if (depositTimer == null) {
+                startDepositTimer()
             }
         } else {
             // 예금이 없으면 타이머 비활성화
-            isDepositTimerActive = false
-            
-            // 대출도 없으면 타이머 정지
-            if (!isLoanTimerActive) {
-                stopInterestTimer()
-            }
+            stopDepositTimer()
         }
     }
     
@@ -198,20 +234,13 @@ class InterestCalculator(
         if (loanAmount > 0) {
             // 대출이 있으면 타이머 활성화 및 재설정
             isLoanTimerActive = true
-            _loanTimeRemaining.value = INTEREST_PERIOD_MS / 1000
-            
-            // 필요한 경우 타이머 시작
-            if (timer == null) {
-                startInterestTimer()
+            _loanTimeRemaining.postValue(INTEREST_PERIOD_MS / 1000)
+            if (loanTimer == null) {
+                startLoanTimer()
             }
         } else {
             // 대출이 없으면 타이머 비활성화
-            isLoanTimerActive = false
-            
-            // 예금도 없으면 타이머 정지
-            if (!isDepositTimerActive) {
-                stopInterestTimer()
-            }
+            stopLoanTimer()
         }
     }
     
@@ -253,7 +282,8 @@ class InterestCalculator(
      * 리소스 해제
      */
     fun cleanup() {
-        stopInterestTimer()
+        stopDepositTimer()
+        stopLoanTimer()
         // 마지막으로 쿨타임 저장
         saveInterestTimes()
     }
