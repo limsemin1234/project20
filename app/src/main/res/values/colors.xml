@@ -62,4 +62,7 @@
     <color name="colorPrimary">#303F9F</color>
     <color name="colorPrimaryDark">#1A237E</color>
     <color name="colorAccent">#FF4081</color>
+    
+    <!-- 새로운 색상 추가 -->
+    <color name="background">#FF1A1A1A</color>
 </resources>
