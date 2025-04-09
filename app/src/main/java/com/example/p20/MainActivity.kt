@@ -6,7 +6,6 @@ import androidx.appcompat.app.AppCompatActivity
 import android.widget.FrameLayout
 import androidx.fragment.app.Fragment
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.ViewModelProvider
 import android.view.View
 import android.view.animation.Animation
@@ -14,12 +13,6 @@ import android.view.animation.AnimationUtils
 import android.widget.LinearLayout
 import android.view.animation.AlphaAnimation
 import androidx.fragment.app.DialogFragment
-import com.example.p20.ResetFragment
-import com.example.p20.RealInfoFragment
-import com.example.p20.ItemFragment
-import com.example.p20.CasinoFragment
-import com.example.p20.LottoFragment
-import com.example.p20.BankFragment
 
 class MainActivity : AppCompatActivity() {
 
@@ -213,7 +206,7 @@ class MainActivity : AppCompatActivity() {
         buttonMyInfo.setOnClickListener {
             removeExplanationFragment()
             slidePanel.visibility = View.GONE
-            showFragment(RealInfoFragment(), "RealInfoFragment")
+            showFragment(MyInfoFragment(), "`MyInfoFragment`")
         }
 
         buttonBank.setOnClickListener {

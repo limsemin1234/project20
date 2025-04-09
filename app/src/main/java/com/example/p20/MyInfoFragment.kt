@@ -1,8 +1,6 @@
 package com.example.p20
 
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,11 +10,10 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.Observer
 import java.text.NumberFormat
 import java.util.Locale
 
-class RealInfoFragment : Fragment() {
+class MyInfoFragment : Fragment() {
     private lateinit var viewModel: TimeViewModel
     private lateinit var assetViewModel: AssetViewModel
     private lateinit var stockViewModel: StockViewModel
@@ -35,7 +32,7 @@ class RealInfoFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_real_info, container, false)
+        val view = inflater.inflate(R.layout.fragment_myinfo, container, false)
         return view
     }
 
