@@ -71,6 +71,9 @@ class PokerFragment : Fragment() {
     private val assetViewModel: AssetViewModel by activityViewModels()
     private val timeViewModel: TimeViewModel by activityViewModels()
 
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var cleanupRunnable: Runnable? = null
+
     companion object {
         // 카드 랭크 값 매핑
         val rankValues = mapOf(
@@ -128,6 +131,27 @@ class PokerFragment : Fragment() {
         
         // 환영 메시지 표시
         showCustomSnackbar("배팅 후 1인발라트로 게임을 시작해주세요!")
+
+        // 정리 작업을 위한 Runnable 설정
+        cleanupRunnable = Runnable {
+            if (isWaitingForCleanup) {
+                cleanupGame()
+            }
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        // Handler 정리
+        mainHandler.removeCallbacksAndMessages(null)
+        cleanupRunnable = null
+        
+        // 카드 뷰 정리
+        cardViews.clear()
+        selectedCardIndices.clear()
+        handRankCardIndices.clear()
+        playerCards.clear()
+        deck.clear()
     }
     
     private fun setupButtonListeners() {
@@ -799,30 +823,12 @@ class PokerFragment : Fragment() {
         highlightSelectedCards()
         
         // 3초 후에 카드 지우기
-        Handler(Looper.getMainLooper()).postDelayed({
-            playerCardsLayout.removeAllViews()
-            cardViews.clear()
-            handRankCardIndices.clear()  // 족보 강조 초기화
-            selectedCardIndices.clear()
-            
-            // 배팅 버튼 다시 활성화
-            bet10kButton.isEnabled = true
-            bet50kButton.isEnabled = true
-            bet100kButton.isEnabled = true
-            bet500kButton.isEnabled = true
-            newGameButton.isEnabled = true
-            
-            // 정리 대기 상태 해제
-            isWaitingForCleanup = false
-            
-            // 베팅 금액 텍스트 업데이트
-            updateBetAmountText()
-            
-            showCustomSnackbar("새 게임을 위해 베팅해주세요")
-        }, 3000) // 3초 지연
+        cleanupRunnable?.let { runnable ->
+            mainHandler.postDelayed(runnable, 3000) // 3초 지연
+        }
     }
     
-    // 선택한 5장의 카드만 평가
+    // 선택한 5장의 카드만으로 패 평가 함수들
     private fun evaluateSelected5Cards(): HandRank {
         if (selectedCardIndices.size != 5) return HandRank.NONE
         
@@ -1167,5 +1173,42 @@ class PokerFragment : Fragment() {
         ONE_PAIR("원페어"),
         HIGH_CARD("하이카드"),
         NONE("패 없음")
+    }
+
+    private fun cleanupGame() {
+        // 게임 상태 초기화
+        isGameActive = false
+        isCardDealt = false
+        isCardChanged = false
+        changeCount = 0
+        currentBet = 0L
+        tempBetAmount = 0L
+        
+        // UI 초기화
+        playerCardsLayout.removeAllViews()
+        handRankText.text = ""
+        updateBetAmountText()
+        
+        // 선택된 카드 초기화
+        selectedCardIndices.clear()
+        handRankCardIndices.clear()
+        
+        // 카드 덱과 손패 초기화
+        deck.clear()
+        playerCards.clear()
+        
+        // 버튼 상태 업데이트
+        updateButtonStates()
+    }
+
+    private fun updateButtonStates() {
+        // 버튼 상태 업데이트
+        changeButton.isEnabled = false
+        endGameButton.isEnabled = false
+        bet10kButton.isEnabled = true
+        bet50kButton.isEnabled = true
+        bet100kButton.isEnabled = true
+        bet500kButton.isEnabled = true
+        newGameButton.isEnabled = true
     }
 } 

@@ -1,9 +1,9 @@
 package com.example.p20
 
-import android.content.Context
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
@@ -14,10 +14,10 @@ import kotlin.math.roundToLong
  * Repository 패턴과 계산 로직 분리를 통한 코드 구조화
  */
 class AssetViewModel(
-    private val context: Context,
-    private val repository: AssetRepository = AssetRepository(context),
-    private val calculator: InterestCalculator = InterestCalculator(repository, context)
-) : ViewModel() {
+    application: Application,
+    private val repository: AssetRepository = AssetRepository(application),
+    private val calculator: InterestCalculator = InterestCalculator(repository, application)
+) : AndroidViewModel(application) {
 
     // Repository에서 제공하는 LiveData
     val asset: LiveData<Long> = repository.asset
@@ -41,6 +41,23 @@ class AssetViewModel(
     private val _loanActive = MutableLiveData<Boolean>()
     val loanActive: LiveData<Boolean> get() = _loanActive
 
+    // Observer 저장용
+    private val depositObserver = { newDeposit: Long ->
+        if (newDeposit > 0 && (repository.loan.value ?: 0L > 0)) {
+            calculator.startInterestTimer()
+        } else if (newDeposit == 0L && (repository.loan.value ?: 0L == 0L)) {
+            calculator.stopInterestTimer()
+        }
+    }
+
+    private val loanObserver = { newLoan: Long ->
+        if (newLoan > 0 && (repository.deposit.value ?: 0L > 0)) {
+            calculator.startInterestTimer()
+        } else if (newLoan == 0L && (repository.deposit.value ?: 0L == 0L)) {
+            calculator.stopInterestTimer()
+        }
+    }
+
     init {
         // 예금 또는 대출이 있는 경우 이자 계산 타이머 시작
         if (repository.deposit.value ?: 0L > 0 || repository.loan.value ?: 0L > 0) {
@@ -59,22 +76,8 @@ class AssetViewModel(
      * Repository 변경사항을 관찰하여 필요한 작업 수행
      */
     private fun observeRepositoryChanges() {
-        // 예금 또는 대출 변화 감지
-        repository.deposit.observeForever { newDeposit ->
-            if (newDeposit > 0 && (repository.loan.value ?: 0L > 0)) {
-                calculator.startInterestTimer()
-            } else if (newDeposit == 0L && (repository.loan.value ?: 0L == 0L)) {
-                calculator.stopInterestTimer()
-            }
-        }
-        
-        repository.loan.observeForever { newLoan ->
-            if (newLoan > 0 && (repository.deposit.value ?: 0L > 0)) {
-                calculator.startInterestTimer()
-            } else if (newLoan == 0L && (repository.deposit.value ?: 0L == 0L)) {
-                calculator.stopInterestTimer()
-            }
-        }
+        repository.deposit.observeForever(depositObserver)
+        repository.loan.observeForever(loanObserver)
     }
 
     /**
@@ -102,10 +105,8 @@ class AssetViewModel(
      * 예금 추가
      */
     fun addDeposit(amount: Long) {
-        // 자산에서 해당 금액 차감
         if (repository.decreaseAsset(amount)) {
             repository.addDeposit(amount)
-            // 예금 타이머 재설정
             calculator.resetDepositTimer()
             showMessage("${formatNumber(amount)}원이 예금되었습니다")
         } else {
@@ -119,7 +120,6 @@ class AssetViewModel(
     fun subtractDeposit(amount: Long): Boolean {
         if (repository.subtractDeposit(amount)) {
             repository.increaseAsset(amount)
-            // 예금 타이머 재설정
             calculator.resetDepositTimer()
             showMessage("${formatNumber(amount)}원이 출금되었습니다")
             return true
@@ -133,7 +133,6 @@ class AssetViewModel(
      */
     fun addLoan(amount: Long) {
         repository.addLoan(amount)
-        // 대출 타이머 재설정
         calculator.resetLoanTimer()
         showMessage("${formatNumber(amount)}원을 대출했습니다")
     }
@@ -144,10 +143,8 @@ class AssetViewModel(
     fun subtractLoan(amount: Long, earlyRepaymentFee: Long = 0): Boolean {
         val totalAmount = amount + earlyRepaymentFee
         
-        // 자산에서 대출금 + 수수료 차감
         if (repository.decreaseAsset(totalAmount)) {
             repository.subtractLoan(amount)
-            // 대출 타이머 재설정
             calculator.resetLoanTimer()
             
             if (earlyRepaymentFee > 0) {
@@ -180,7 +177,7 @@ class AssetViewModel(
      * 메시지 표시 및 알림 설정
      */
     private fun showMessage(message: String) {
-        MessageManager.showMessage(context, message)
+        MessageManager.showMessage(getApplication(), message)
     }
 
     /**
@@ -224,6 +221,10 @@ class AssetViewModel(
      */
     override fun onCleared() {
         super.onCleared()
-        calculator.cleanup()
+        // Observer 해제
+        repository.deposit.removeObserver(depositObserver)
+        repository.loan.removeObserver(loanObserver)
+        // 타이머 정지
+        calculator.stopInterestTimer()
     }
 }
