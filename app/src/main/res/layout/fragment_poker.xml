@@ -120,24 +120,36 @@
                 android:id="@+id/bet10kButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="4dp"
                 android:layout_weight="1"
-                android:text="10,000원" />
+                android:text="1만원"
+                android:textSize="12sp" />
 
             <Button
                 android:id="@+id/bet50kButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="4dp"
                 android:layout_weight="1"
-                android:text="50,000원" />
+                android:text="5만원"
+                android:textSize="12sp" />
 
             <Button
                 android:id="@+id/bet100kButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="4dp"
                 android:layout_weight="1"
-                android:text="100,000원" />
+                android:text="10만원"
+                android:textSize="12sp" />
+                
+            <Button
+                android:id="@+id/bet500kButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="50만원"
+                android:textSize="12sp" />
         </LinearLayout>
 
         <!-- 게임 컨트롤 버튼 -->
@@ -145,46 +157,48 @@
             android:id="@+id/gameControls"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="8dp"
             android:gravity="center"
             android:orientation="horizontal"
             app:layout_constraintTop_toBottomOf="@+id/betButtons">
 
             <Button
+                android:id="@+id/helpButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1"
+                android:text="게임설명"
+                android:textSize="12sp" />
+
+            <Button
                 android:id="@+id/changeButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="4dp"
                 android:layout_weight="1"
-                android:text="카드 교체\n(무료)"
-                android:textSize="12sp" />
+                android:text="카드교체\n(무료)"
+                android:textSize="12sp"
+                android:enabled="false" />
 
             <Button
                 android:id="@+id/endGameButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="4dp"
                 android:layout_weight="1"
-                android:text="게임 종료"
-                android:textSize="12sp" />
+                android:text="게임종료"
+                android:textSize="12sp"
+                android:enabled="false" />
 
             <Button
                 android:id="@+id/newGameButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="새 게임" />
+                android:text="새게임"
+                android:textSize="12sp" />
         </LinearLayout>
-
-        <!-- 게임 설명 버튼 -->
-        <Button
-            android:id="@+id/helpButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="게임 설명"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/gameControls" />
 
         <!-- 족보 설명 -->
         <LinearLayout
@@ -195,7 +209,7 @@
             android:background="#F5F5F5"
             android:orientation="vertical"
             android:padding="12dp"
-            app:layout_constraintTop_toBottomOf="@+id/helpButton">
+            app:layout_constraintTop_toBottomOf="@+id/gameControls">
 
             <TextView
                 android:layout_width="match_parent"
