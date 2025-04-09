@@ -109,12 +109,14 @@ class AssetViewModel(
     /**
      * 예금 추가
      */
-    fun addDeposit(amount: Long) {
+    fun addDeposit(amount: Long): Boolean {
         if (repository.addDeposit(amount)) {
             calculator.resetDepositTimer()
             showMessage("${formatNumber(amount)}원이 예금되었습니다")
+            return true
         } else {
             showMessage("보유 자산이 부족합니다")
+            return false
         }
     }
 

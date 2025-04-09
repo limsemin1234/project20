@@ -44,9 +44,6 @@ class LoanFragment : Fragment() {
     // 마지막으로 처리한 알림의 타임스탬프
     private var lastProcessedNotificationTime: Long = 0
 
-    // 조기상환 수수료 비율 (5%)
-    private val EARLY_REPAYMENT_FEE_RATE = 0.05
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,

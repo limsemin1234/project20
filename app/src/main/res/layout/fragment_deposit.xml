@@ -159,84 +159,6 @@
                     android:textColor="@android:color/white"
                     android:layout_marginBottom="16dp"/>
 
-                <!-- 기존 단위/숫자 버튼 (숨김 처리) -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="10dp"
-                    android:visibility="gone">
-
-                    <Button
-                        android:id="@+id/unitManButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="만원"
-                        android:layout_marginEnd="4dp"/>
-
-                    <Button
-                        android:id="@+id/unitEokButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="억원"
-                        android:layout_marginEnd="4dp"/>
-
-                    <Button
-                        android:id="@+id/unitJoButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="조원"/>
-
-                </LinearLayout>
-
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="16dp"
-                    android:visibility="gone">
-
-                    <Button
-                        android:id="@+id/number1Button"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="1\n(일의 자리)"
-                        android:gravity="center"
-                        android:layout_marginEnd="4dp"/>
-
-                    <Button
-                        android:id="@+id/number10Button"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="10\n(십의 자리)"
-                        android:gravity="center"
-                        android:layout_marginEnd="4dp"/>
-
-                    <Button
-                        android:id="@+id/number100Button"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="100\n(백의 자리)"
-                        android:gravity="center"
-                        android:layout_marginEnd="4dp"/>
-
-                    <Button
-                        android:id="@+id/number1000Button"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="1000\n(천의 자리)"
-                        android:gravity="center"/>
-
-                </LinearLayout>
-
                 <Button
                     android:id="@+id/depositButton"
                     android:layout_width="match_parent"
@@ -249,8 +171,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginBottom="8dp">
+                    android:orientation="horizontal">
 
                     <Button
                         android:id="@+id/withdrawButton"
@@ -258,7 +179,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="출금하기"
-                        android:backgroundTint="#303F9F"
+                        android:backgroundTint="#F44336"
                         android:textColor="@android:color/white"
                         android:layout_marginEnd="4dp"/>
 
@@ -267,20 +188,20 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="전체출금"
-                        android:backgroundTint="#FF5722"
+                        android:text="전액출금"
+                        android:backgroundTint="#F44336"
+                        android:textColor="@android:color/white"
+                        android:layout_marginEnd="4dp"/>
+
+                    <Button
+                        android:id="@+id/withdrawThousandsButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="천단위출금"
+                        android:backgroundTint="#F44336"
                         android:textColor="@android:color/white"/>
                 </LinearLayout>
-
-                <Button
-                    android:id="@+id/withdrawThousandsButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="천의 자리 이하 출금"
-                    android:backgroundTint="#673AB7"
-                    android:textColor="@android:color/white"
-                    android:layout_marginTop="4dp"/>
-
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>

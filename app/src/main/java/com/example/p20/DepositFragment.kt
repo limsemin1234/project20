@@ -25,17 +25,6 @@ class DepositFragment : Fragment() {
     private lateinit var withdrawAllButton: Button
     private lateinit var withdrawThousandsButton: Button
     private lateinit var resetButton: Button
-    private lateinit var percent25Button: Button
-    private lateinit var percent50Button: Button
-    private lateinit var percent75Button: Button
-    private lateinit var percent100Button: Button
-    private lateinit var unitManButton: Button
-    private lateinit var unitEokButton: Button
-    private lateinit var unitJoButton: Button
-    private lateinit var number1Button: Button
-    private lateinit var number10Button: Button
-    private lateinit var number100Button: Button
-    private lateinit var number1000Button: Button
     private lateinit var btn1Man: Button
     private lateinit var btn10Man: Button
     private lateinit var btn100Man: Button
@@ -45,12 +34,6 @@ class DepositFragment : Fragment() {
     private lateinit var btn100Eok: Button
     private lateinit var btn1000Eok: Button
 
-    private var selectedUnit: Long = 10000 // 기본 단위는 만원
-    private var selectedNumber1: Int = 0 // 1의 자리
-    private var selectedNumber10: Int = 0 // 10의 자리
-    private var selectedNumber100: Int = 0 // 100의 자리
-    private var selectedNumber1000: Int = 0 // 1000의 자리
-    
     // 마지막으로 처리한 알림의 타임스탬프
     private var lastProcessedNotificationTime: Long = 0
 
@@ -74,45 +57,6 @@ class DepositFragment : Fragment() {
         withdrawThousandsButton = view.findViewById(R.id.withdrawThousandsButton)
         resetButton = view.findViewById(R.id.resetButton)
         
-        // 숨겨진 컨트롤이므로 조건부로 초기화
-        try {
-            // 퍼센트 버튼은 현재 레이아웃에 없을 수 있음
-            percent25Button = view.findViewById(R.id.percent25Button)
-            percent50Button = view.findViewById(R.id.percent50Button)
-            percent75Button = view.findViewById(R.id.percent75Button)
-            percent100Button = view.findViewById(R.id.percent100Button)
-            
-            // 퍼센트 버튼 이벤트 추가
-            setupPercentButtons()
-        } catch (e: Exception) {
-            // 버튼이 없으면 무시
-        }
-        
-        try {
-            // 단위 버튼도 현재 레이아웃에 없을 수 있음
-            unitManButton = view.findViewById(R.id.unitManButton)
-            unitEokButton = view.findViewById(R.id.unitEokButton)
-            unitJoButton = view.findViewById(R.id.unitJoButton)
-            
-            // 단위 버튼 이벤트 추가
-            setupUnitButtons()
-        } catch (e: Exception) {
-            // 버튼이 없으면 무시
-        }
-        
-        try {
-            // 숫자 버튼도 현재 레이아웃에 없을 수 있음
-            number1Button = view.findViewById(R.id.number1Button)
-            number10Button = view.findViewById(R.id.number10Button)
-            number100Button = view.findViewById(R.id.number100Button)
-            number1000Button = view.findViewById(R.id.number1000Button)
-            
-            // 숫자 버튼 이벤트 추가
-            setupNumberButtons()
-        } catch (e: Exception) {
-            // 버튼이 없으면 무시
-        }
-        
         btn1Man = view.findViewById(R.id.btn1Man)
         btn10Man = view.findViewById(R.id.btn10Man)
         btn100Man = view.findViewById(R.id.btn100Man)
@@ -132,101 +76,6 @@ class DepositFragment : Fragment() {
         
         // 예금 및 출금 버튼 이벤트
         setupActionButtons()
-    }
-    
-    private fun setupPercentButtons() {
-        // 퍼센트 버튼이 모두 초기화되었을 때만 실행
-        if (::percent25Button.isInitialized && ::percent50Button.isInitialized && 
-            ::percent75Button.isInitialized && ::percent100Button.isInitialized) {
-            
-            // 자산 퍼센트 버튼 이벤트
-            percent25Button.setOnClickListener {
-                val currentAsset = viewModel.asset.value ?: 0L
-                val amount = (currentAsset * 0.25).toLong()
-                // 백의 자리로 올림 처리
-                val roundedAmount = roundToHundreds(amount)
-                setAmount(roundedAmount)
-            }
-            
-            percent50Button.setOnClickListener {
-                val currentAsset = viewModel.asset.value ?: 0L
-                val amount = (currentAsset * 0.5).toLong()
-                // 백의 자리로 올림 처리
-                val roundedAmount = roundToHundreds(amount)
-                setAmount(roundedAmount)
-            }
-            
-            percent75Button.setOnClickListener {
-                val currentAsset = viewModel.asset.value ?: 0L
-                val amount = (currentAsset * 0.75).toLong()
-                // 백의 자리로 올림 처리
-                val roundedAmount = roundToHundreds(amount)
-                setAmount(roundedAmount)
-            }
-            
-            percent100Button.setOnClickListener {
-                val currentAsset = viewModel.asset.value ?: 0L
-                // 백의 자리로 올림 처리
-                val roundedAmount = roundToHundreds(currentAsset)
-                setAmount(roundedAmount)
-            }
-        }
-    }
-    
-    private fun setupUnitButtons() {
-        // 단위 버튼이 모두 초기화되었을 때만 실행
-        if (::unitManButton.isInitialized && ::unitEokButton.isInitialized && ::unitJoButton.isInitialized) {
-            // 단위 버튼 클릭 이벤트
-            unitManButton.setOnClickListener {
-                selectedUnit = 10000L // 만원
-                calculateAmount()
-            }
-
-            unitEokButton.setOnClickListener {
-                selectedUnit = 100000000L // 억원
-                calculateAmount()
-            }
-
-            unitJoButton.setOnClickListener {
-                selectedUnit = 1000000000000L // 조원
-                calculateAmount()
-            }
-        }
-    }
-    
-    private fun setupNumberButtons() {
-        // 숫자 버튼이 모두 초기화되었을 때만 실행
-        if (::number1Button.isInitialized && ::number10Button.isInitialized && 
-            ::number100Button.isInitialized && ::number1000Button.isInitialized) {
-            
-            // 초기 버튼 텍스트 설정
-            updateNumberButtons()
-            
-            // 숫자 버튼 클릭 이벤트
-            number1Button.setOnClickListener {
-                selectedNumber1 = (selectedNumber1 % 9) + 1
-                updateNumberButtons()
-                calculateAmount()
-            }
-
-            number10Button.setOnClickListener {
-                selectedNumber10 = (selectedNumber10 % 9) + 1
-                updateNumberButtons()
-                calculateAmount()
-            }
-
-            number100Button.setOnClickListener {
-                selectedNumber100 = (selectedNumber100 % 9) + 1
-                updateNumberButtons()
-                calculateAmount()
-            }
-
-            number1000Button.setOnClickListener {
-                selectedNumber1000 = (selectedNumber1000 % 9) + 1
-                updateNumberButtons()
-                calculateAmount()
-            }
-        }
     }
     
     private fun setupAmountButtons() {
@@ -264,106 +113,78 @@ class DepositFragment : Fragment() {
     }
     
     private fun setupActionButtons() {
-        // 기본 버튼 설정
+        // 예금하기 버튼 클릭 이벤트
         depositButton.setOnClickListener {
-            val amount = getSelectedAmount()
+            val amount = getAmount()
             if (amount <= 0) {
                 MessageManager.showMessage(requireContext(), "올바른 금액을 입력해주세요")
                 return@setOnClickListener
             }
-
-            viewModel.addDeposit(amount)
+            
+            if (viewModel.addDeposit(amount)) {
+                setAmount(0L)
+            }
         }
 
+        // 출금하기 버튼 클릭 이벤트
         withdrawButton.setOnClickListener {
-            val amount = getSelectedAmount()
+            val amount = getAmount()
             if (amount <= 0) {
                 MessageManager.showMessage(requireContext(), "올바른 금액을 입력해주세요")
                 return@setOnClickListener
             }
-
-            viewModel.subtractDeposit(amount)
+            
+            if (viewModel.subtractDeposit(amount)) {
+                setAmount(0L)
+            }
         }
-        
-        // 전체 출금 버튼
+
+        // 전액출금 버튼 클릭 이벤트
         withdrawAllButton.setOnClickListener {
             val currentDeposit = viewModel.deposit.value ?: 0L
-            if (currentDeposit > 0) {
-                viewModel.subtractDeposit(currentDeposit)
-            } else {
+            if (currentDeposit <= 0) {
                 MessageManager.showMessage(requireContext(), "출금할 예금이 없습니다")
+                return@setOnClickListener
+            }
+            
+            if (viewModel.subtractDeposit(currentDeposit)) {
+                setAmount(0L)
             }
         }
-        
-        // 천의 자리 이하 출금 버튼
+
+        // 천단위출금 버튼 클릭 이벤트
         withdrawThousandsButton.setOnClickListener {
             val currentDeposit = viewModel.deposit.value ?: 0L
-            if (currentDeposit > 0) {
-                val thousandsAmount = currentDeposit % 10000 // 만원 미만 금액
-                if (thousandsAmount > 0) {
-                    viewModel.subtractDeposit(thousandsAmount)
-                } else {
-                    MessageManager.showMessage(requireContext(), "천의 자리 이하 금액이 없습니다")
+            if (currentDeposit <= 0) {
+                MessageManager.showMessage(requireContext(), "출금할 예금이 없습니다")
+                return@setOnClickListener
+            }
+            
+            val thousandsAmount = (currentDeposit / 1000) * 1000
+            if (thousandsAmount > 0) {
+                if (viewModel.subtractDeposit(thousandsAmount)) {
+                    setAmount(0L)
                 }
             } else {
-                MessageManager.showMessage(requireContext(), "출금할 예금이 없습니다")
+                MessageManager.showMessage(requireContext(), "천 단위 이상의 예금이 없습니다")
             }
         }
     }
-    
-    /**
-     * 백의 자리로 금액 반올림
-     */
-    private fun roundToHundreds(amount: Long): Long {
-        return (amount / 100) * 100
-    }
 
-    /**
-     * 선택한 숫자 버튼에 따른 금액 계산
-     */
-    private fun calculateAmount() {
-        val number = selectedNumber1000 * 1000L + selectedNumber100 * 100L + 
-                    selectedNumber10 * 10L + selectedNumber1
-        val amount = number * selectedUnit
-        setAmount(amount)
-    }
-
-    /**
-     * 입력 필드에 금액 설정
-     */
-    private fun setAmount(amount: Long) {
-        depositAmountInput.text = viewModel.formatNumber(amount)
-    }
-    
-    /**
-     * 현재 입력된 금액 반환
-     */
-    private fun getSelectedAmount(): Long {
-        try {
-            val amountText = depositAmountInput.text.toString()
-            // 쉼표 제거 후 숫자로 변환
-            return amountText.replace(",", "").toLong()
-        } catch (e: Exception) {
-            return 0L
+    private fun getAmount(): Long {
+        return try {
+            depositAmountInput.text.toString().toLong()
+        } catch (e: NumberFormatException) {
+            0L
         }
     }
 
-    /**
-     * 숫자 버튼 텍스트 업데이트
-     */
-    private fun updateNumberButtons() {
-        number1Button.text = "${selectedNumber1}\n(일의 자리)"
-        number10Button.text = "${selectedNumber10}0\n(십의 자리)"
-        number100Button.text = "${selectedNumber100}00\n(백의 자리)"
-        number1000Button.text = "${selectedNumber1000}000\n(천의 자리)"
+    private fun setAmount(amount: Long) {
+        depositAmountInput.text = amount.toString()
     }
 
-    /**
-     * 금액 추가
-     */
     private fun addAmount(amount: Long) {
-        val currentAmount = getSelectedAmount()
-        val newAmount = currentAmount + amount
-        setAmount(newAmount)
+        val currentAmount = getAmount()
+        setAmount(currentAmount + amount)
     }
 } 
