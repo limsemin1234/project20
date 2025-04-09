@@ -177,8 +177,10 @@ class InterestCalculator(
                 mainHandler.post {
                     repository.increaseAsset(interest)  // 이자를 자산에 추가
                     repository.addDeposit(interest)     // 이자를 예금에 추가
-                    _interestNotification.postValue("예금 이자 ${repository.formatNumber(interest)}원이 발생했습니다")
+                    val message = "예금 이자 ${repository.formatNumber(interest)}원이 발생했습니다"
+                    _interestNotification.postValue(message)
                     _lastNotificationTimestamp.postValue(System.currentTimeMillis())
+                    MessageManager.showMessage(application, message)
                 }
                 resetDepositTimer()
             }
@@ -200,8 +202,10 @@ class InterestCalculator(
                 mainHandler.post {
                     repository.decreaseAsset(interest)  // 이자를 자산에서 차감
                     repository.addLoan(interest)        // 이자를 대출에 추가
-                    _interestNotification.postValue("대출 이자 ${repository.formatNumber(interest)}원이 발생했습니다")
+                    val message = "대출 이자 ${repository.formatNumber(interest)}원이 발생했습니다"
+                    _interestNotification.postValue(message)
                     _lastNotificationTimestamp.postValue(System.currentTimeMillis())
+                    MessageManager.showMessage(application, message)
                 }
                 resetLoanTimer()
             }
@@ -221,8 +225,9 @@ class InterestCalculator(
                 startDepositTimer()
             }
         } else {
-            // 예금이 없으면 타이머 비활성화
+            // 예금이 없으면 타이머 비활성화 및 쿨타임 초기화
             stopDepositTimer()
+            _depositTimeRemaining.postValue(INTEREST_PERIOD_MS / 1000)
         }
     }
     
@@ -239,8 +244,9 @@ class InterestCalculator(
                 startLoanTimer()
             }
         } else {
-            // 대출이 없으면 타이머 비활성화
+            // 대출이 없으면 타이머 비활성화 및 쿨타임 초기화
             stopLoanTimer()
+            _loanTimeRemaining.postValue(INTEREST_PERIOD_MS / 1000)
         }
     }
     
