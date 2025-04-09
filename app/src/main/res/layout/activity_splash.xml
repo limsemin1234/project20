@@ -17,7 +17,7 @@
             android:id="@+id/appNameText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="부자 되기 게임"
+            android:text="시간과 돈"
             android:textSize="36sp"
             android:textStyle="bold"
             android:textColor="#FFFFFF"
