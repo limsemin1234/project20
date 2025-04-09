@@ -69,6 +69,7 @@ class PokerFragment : Fragment() {
     
     // ViewModel 공유
     private val assetViewModel: AssetViewModel by activityViewModels()
+    private val timeViewModel: TimeViewModel by activityViewModels()
 
     companion object {
         // 카드 랭크 값 매핑
@@ -121,6 +122,9 @@ class PokerFragment : Fragment() {
         
         // 버튼 이벤트 리스너 설정
         setupButtonListeners()
+        
+        // 게임오버 이벤트 감지
+        observeGameState()
         
         // 환영 메시지 표시
         showCustomSnackbar("배팅 후 1인발라트로 게임을 시작해주세요!")
@@ -1086,6 +1090,68 @@ class PokerFragment : Fragment() {
         // 텍스트 크기 조절
         val textView = dialog.findViewById<TextView>(android.R.id.message)
         textView?.textSize = 13f // 텍스트 크기를 16sp로 설정
+    }
+    
+    // 게임 상태 감시 함수
+    private fun observeGameState() {
+        // 게임오버 이벤트 감지
+        timeViewModel.isGameOver.observe(viewLifecycleOwner) { isGameOver ->
+            if (isGameOver) {
+                // 게임 진행 중이라면 모든 상태 초기화
+                if (isGameActive) {
+                    resetGameState()
+                }
+            }
+        }
+        
+        // 게임 리셋 이벤트 감지
+        timeViewModel.restartRequested.observe(viewLifecycleOwner) { restart ->
+            if (restart) {
+                resetGameState()
+            }
+        }
+        
+        // 게임 리셋 이벤트 감지 (추가)
+        timeViewModel.gameResetEvent.observe(viewLifecycleOwner) { reset ->
+            if (reset) {
+                resetGameState()
+            }
+        }
+    }
+    
+    // 게임 상태 초기화 함수
+    private fun resetGameState() {
+        // 게임 상태 초기화
+        isGameActive = false
+        isCardDealt = false
+        isCardChanged = false
+        isWaitingForCleanup = false
+        changeCount = 0
+        currentBet = 0L
+        tempBetAmount = 0L
+        
+        // 카드 관련 데이터 초기화
+        playerCards.clear()
+        selectedCardIndices.clear()
+        handRankCardIndices.clear()
+        
+        // UI 초기화
+        playerCardsLayout.removeAllViews()
+        cardViews.clear()
+        handRankText.text = "패 없음"
+        scoreText.text = "점수: 0"
+        
+        // 버튼 상태 초기화
+        changeButton.isEnabled = false
+        endGameButton.isEnabled = false
+        bet10kButton.isEnabled = true
+        bet50kButton.isEnabled = true
+        bet100kButton.isEnabled = true
+        bet500kButton.isEnabled = true
+        newGameButton.isEnabled = true
+        
+        // 베팅 금액 텍스트 초기화
+        updateBetAmountText()
     }
     
     // 포커 패 족보 enum
