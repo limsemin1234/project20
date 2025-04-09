@@ -143,30 +143,16 @@ class AssetViewModel(
     /**
      * 대출 상환
      */
-    fun subtractLoan(amount: Long, earlyRepaymentFee: Long = 0): Boolean {
-        val totalAmount = amount + earlyRepaymentFee
-        
-        if (repository.decreaseAsset(totalAmount)) {
+    fun subtractLoan(amount: Long): Boolean {
+        if (repository.decreaseAsset(amount)) {
             repository.subtractLoan(amount)
             calculator.resetLoanTimer()
-            
-            if (earlyRepaymentFee > 0) {
-                showMessage("${formatNumber(amount)}원 상환 완료 (조기상환 수수료: ${formatNumber(earlyRepaymentFee)}원)")
-            } else {
-                showMessage("${formatNumber(amount)}원을 상환했습니다")
-            }
+            showMessage("${formatNumber(amount)}원을 상환했습니다")
             return true
         }
         
-        showMessage("보유 자산이 부족합니다 (필요: ${formatNumber(totalAmount)}원)")
+        showMessage("보유 자산이 부족합니다 (필요: ${formatNumber(amount)}원)")
         return false
-    }
-
-    /**
-     * 조기 상환 수수료 계산
-     */
-    fun calculateEarlyRepaymentFee(amount: Long): Long {
-        return calculator.calculateEarlyRepaymentFee(amount)
     }
 
     /**

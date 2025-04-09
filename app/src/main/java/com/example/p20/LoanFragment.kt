@@ -240,17 +240,10 @@ class LoanFragment : Fragment() {
                 return@setOnClickListener
             }
             
-            // 조기상환 수수료 계산
-            val remainingTime = viewModel.loanRemainingTime.value ?: 0L
-            val earlyRepaymentFee = if (remainingTime > 0) {
-                // 이자 발생 전에 상환하는 경우 수수료 부과
-                viewModel.calculateEarlyRepaymentFee(currentLoan)
-            } else {
-                0L // 이자가 이미 발생한 후라면 수수료 없음
+            // 대출 상환
+            if (viewModel.subtractLoan(currentLoan)) {
+                updateAmountInput(0L)
             }
-            
-            // 상환
-            viewModel.subtractLoan(currentLoan, earlyRepaymentFee)
         }
     }
 

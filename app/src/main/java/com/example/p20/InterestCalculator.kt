@@ -21,7 +21,6 @@ class InterestCalculator(
     companion object {
         const val DEPOSIT_INTEREST_RATE = 0.03 // 3%
         const val LOAN_INTEREST_RATE = 0.10 // 10%
-        const val EARLY_REPAYMENT_FEE_RATE = 0.05 // 5%
         
         // 이자 발생 주기 (밀리초)
         const val INTEREST_PERIOD_MS = 30_000L // 30초
@@ -275,13 +274,6 @@ class InterestCalculator(
     fun formatLoanRemainingTime(): String {
         val timeRemaining = _loanTimeRemaining.value ?: (INTEREST_PERIOD_MS / 1000)
         return "$timeRemaining"
-    }
-    
-    /**
-     * 대출 조기 상환 시 수수료 계산
-     */
-    fun calculateEarlyRepaymentFee(amount: Long): Long {
-        return (amount * EARLY_REPAYMENT_FEE_RATE).roundToLong()
     }
     
     /**
