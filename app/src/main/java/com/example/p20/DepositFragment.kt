@@ -7,8 +7,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import java.text.NumberFormat
@@ -23,7 +25,7 @@ class DepositFragment : Fragment() {
     private lateinit var depositButton: Button
     private lateinit var withdrawButton: Button
     private lateinit var withdrawAllButton: Button
-    private lateinit var withdrawThousandsButton: Button
+    private lateinit var withdrawThousandButton: Button
     private lateinit var resetButton: Button
     private lateinit var btn1Man: Button
     private lateinit var btn10Man: Button
@@ -54,7 +56,7 @@ class DepositFragment : Fragment() {
         depositButton = view.findViewById(R.id.depositButton)
         withdrawButton = view.findViewById(R.id.withdrawButton)
         withdrawAllButton = view.findViewById(R.id.withdrawAllButton)
-        withdrawThousandsButton = view.findViewById(R.id.withdrawThousandsButton)
+        withdrawThousandButton = view.findViewById(R.id.withdrawThousandButton)
         resetButton = view.findViewById(R.id.resetButton)
         
         btn1Man = view.findViewById(R.id.btn1Man)
@@ -65,6 +67,11 @@ class DepositFragment : Fragment() {
         btn10Eok = view.findViewById(R.id.btn10Eok)
         btn100Eok = view.findViewById(R.id.btn100Eok)
         btn1000Eok = view.findViewById(R.id.btn1000Eok)
+
+        // 예금 금액 변경 감지
+        viewModel.deposit.observe(viewLifecycleOwner) { amount ->
+            depositAmountInput.text = "예금: ${NumberFormat.getNumberInstance(Locale.KOREA).format(amount)}원"
+        }
 
         // 금액 초기화 버튼 클릭 이벤트
         resetButton.setOnClickListener {
@@ -115,27 +122,23 @@ class DepositFragment : Fragment() {
     private fun setupActionButtons() {
         // 예금하기 버튼 클릭 이벤트
         depositButton.setOnClickListener {
-            val amount = getAmount()
-            if (amount <= 0) {
-                MessageManager.showMessage(requireContext(), "올바른 금액을 입력해주세요")
-                return@setOnClickListener
-            }
-            
-            if (viewModel.addDeposit(amount)) {
-                setAmount(0L)
+            val amount = depositAmountInput.text.toString().toLongOrNull() ?: 0L
+            if (amount > 0) {
+                // 입금 처리
+                if (viewModel.addDeposit(amount)) {
+                    updateAmountInput(0L)
+                }
             }
         }
 
         // 출금하기 버튼 클릭 이벤트
         withdrawButton.setOnClickListener {
-            val amount = getAmount()
-            if (amount <= 0) {
-                MessageManager.showMessage(requireContext(), "올바른 금액을 입력해주세요")
-                return@setOnClickListener
-            }
-            
-            if (viewModel.subtractDeposit(amount)) {
-                setAmount(0L)
+            val amount = depositAmountInput.text.toString().toLongOrNull() ?: 0L
+            if (amount > 0) {
+                // 출금 처리
+                if (viewModel.subtractDeposit(amount)) {
+                    updateAmountInput(0L)
+                }
             }
         }
 
@@ -152,21 +155,21 @@ class DepositFragment : Fragment() {
             }
         }
 
-        // 천단위출금 버튼 클릭 이벤트
-        withdrawThousandsButton.setOnClickListener {
+        // 천단위 출금 버튼 클릭 이벤트
+        withdrawThousandButton.setOnClickListener {
             val currentDeposit = viewModel.deposit.value ?: 0L
-            if (currentDeposit <= 0) {
-                MessageManager.showMessage(requireContext(), "출금할 예금이 없습니다")
-                return@setOnClickListener
-            }
-            
-            val thousandsAmount = (currentDeposit / 1000) * 1000
-            if (thousandsAmount > 0) {
-                if (viewModel.subtractDeposit(thousandsAmount)) {
-                    setAmount(0L)
+            if (currentDeposit > 0) {
+                // 만단위 이하 금액 계산 (예: 12345 -> 2345)
+                val tenThousandRemainder = currentDeposit % 10000
+                if (tenThousandRemainder > 0) {
+                    // 만단위 이하 금액 출금
+                    if (viewModel.subtractDeposit(tenThousandRemainder)) {
+                        updateAmountInput(0L)
+                        Toast.makeText(context, "만단위 이하 ${NumberFormat.getNumberInstance(Locale.KOREA).format(tenThousandRemainder)}원을 출금했습니다.", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Toast.makeText(context, "출금할 만단위 이하 금액이 없습니다.", Toast.LENGTH_SHORT).show()
                 }
-            } else {
-                MessageManager.showMessage(requireContext(), "천 단위 이상의 예금이 없습니다")
             }
         }
     }
@@ -186,5 +189,10 @@ class DepositFragment : Fragment() {
     private fun addAmount(amount: Long) {
         val currentAmount = getAmount()
         setAmount(currentAmount + amount)
+    }
+
+    private fun updateAmountInput(amount: Long) {
+        depositAmountInput.text = amount.toString()
+        setAmount(amount)
     }
 } 
