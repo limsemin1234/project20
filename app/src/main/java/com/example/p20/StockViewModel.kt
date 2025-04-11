@@ -8,6 +8,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.Job
+import kotlin.math.roundToInt
 import kotlin.random.Random
 
 class StockViewModel(application: Application) : AndroidViewModel(application) {
@@ -18,23 +19,134 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     private val handler = Handler(Looper.getMainLooper())
     private val updateInterval = 3000L // 주식 가격 업데이트 간격 (3초)
     
-    // 호재 이벤트 설정
+    // 기존 호재 이벤트 설정 (호환성 유지)
     private val positiveNewsInterval = 30000L // 호재 이벤트 체크 간격 (30초)
     private val positiveNewsChance = 0.3 // 호재 발생 확률 (30%)
     private val positiveNewsDuration = 20000L // 호재 지속 시간 (20초)
     
-    // 악제 이벤트 설정
+    // 기존 악제 이벤트 설정 (호환성 유지)
     private val negativeNewsInterval = 30000L // 악제 이벤트 체크 간격 (30초)
     private val negativeNewsChance = 0.3 // 악제 발생 확률 (30%)
     private val negativeNewsDuration = 20000L // 악제 지속 시간 (20초)
     
+    // 새 이벤트 시스템 설정
+    // 이벤트 설정 상수
+    private val EVENT_SETTINGS = mapOf(
+        // 소형 호재
+        StockEventType.POSITIVE_SMALL to EventSettings(
+            minRate = 0.01, maxRate = 0.02,
+            duration = 15000L, interval = 30000L, 
+            chance = 0.25, stockCount = 2
+        ),
+        // 중형 호재
+        StockEventType.POSITIVE_MEDIUM to EventSettings(
+            minRate = 0.02, maxRate = 0.04,
+            duration = 15000L, interval = 45000L, 
+            chance = 0.15, stockCount = 1
+        ),
+        // 대형 호재
+        StockEventType.POSITIVE_LARGE to EventSettings(
+            minRate = 0.04, maxRate = 0.07,
+            duration = 18000L, interval = 60000L, 
+            chance = 0.05, stockCount = 1
+        ),
+        // 소형 악재
+        StockEventType.NEGATIVE_SMALL to EventSettings(
+            minRate = -0.02, maxRate = -0.01,
+            duration = 15000L, interval = 30000L, 
+            chance = 0.25, stockCount = 2
+        ),
+        // 중형 악재
+        StockEventType.NEGATIVE_MEDIUM to EventSettings(
+            minRate = -0.04, maxRate = -0.02,
+            duration = 15000L, interval = 45000L, 
+            chance = 0.15, stockCount = 1
+        ),
+        // 대형 악재
+        StockEventType.NEGATIVE_LARGE to EventSettings(
+            minRate = -0.07, maxRate = -0.04,
+            duration = 18000L, interval = 60000L, 
+            chance = 0.05, stockCount = 1
+        ),
+        // 경기 부양
+        StockEventType.MARKET_BOOM to EventSettings(
+            minRate = 0.02, maxRate = 0.03,
+            duration = 24000L, interval = 180000L, 
+            chance = 0.03, stockCount = 0  // 0은 모든 종목 영향
+        ),
+        // 경기 침체
+        StockEventType.MARKET_RECESSION to EventSettings(
+            minRate = -0.03, maxRate = -0.02,
+            duration = 24000L, interval = 180000L, 
+            chance = 0.03, stockCount = 0
+        ),
+        // 시장 폭등
+        StockEventType.MARKET_SURGE to EventSettings(
+            minRate = 0.05, maxRate = 0.08,
+            duration = 12000L, interval = 300000L, 
+            chance = 0.01, stockCount = 0
+        ),
+        // 시장 폭락
+        StockEventType.MARKET_CRASH to EventSettings(
+            minRate = -0.08, maxRate = -0.05,
+            duration = 12000L, interval = 300000L, 
+            chance = 0.01, stockCount = 0
+        )
+    )
+    
+    // 일회성 이벤트 설정
+    private val ONE_TIME_EVENT_SETTINGS = mapOf(
+        // 대박 종목
+        StockEventType.STOCK_SURGE to EventSettings(
+            minRate = 0.2, maxRate = 0.3,
+            duration = 0L, interval = 600000L, 
+            chance = 0.01, stockCount = 1
+        ),
+        // 대폭락 종목
+        StockEventType.STOCK_CRASH to EventSettings(
+            minRate = -0.3, maxRate = -0.2,
+            duration = 0L, interval = 600000L, 
+            chance = 0.01, stockCount = 1
+        )
+    )
+    
+    // 변동성 이벤트 설정
+    private val VOLATILITY_EVENT_SETTINGS = mapOf(
+        // 변동성 증가
+        StockEventType.VOLATILITY_UP to EventSettings(
+            minRate = 0.0, maxRate = 0.0,
+            duration = 21000L, interval = 420000L, 
+            chance = 0.02, stockCount = 0,
+            volatilityMultiplier = 1.5
+        ),
+        // 변동성 감소
+        StockEventType.VOLATILITY_DOWN to EventSettings(
+            minRate = 0.0, maxRate = 0.0,
+            duration = 21000L, interval = 420000L, 
+            chance = 0.02, stockCount = 0,
+            volatilityMultiplier = 0.7
+        )
+    )
+    
+    // 이벤트 설정 데이터 클래스
+    data class EventSettings(
+        val minRate: Double,           // 최소 변동률
+        val maxRate: Double,           // 최대 변동률
+        val duration: Long,            // 지속 시간(ms)
+        val interval: Long,            // 체크 간격(ms)
+        val chance: Double,            // 발생 확률
+        val stockCount: Int,           // 영향받는 종목 수 (0=전체)
+        val volatilityMultiplier: Double = 1.0  // 변동성 승수
+    )
+    
     private val sharedPreferences = application.getSharedPreferences("stock_data", Context.MODE_PRIVATE)
     
-    // 호재 이벤트 콜백
+    // 기존 호재/악제 이벤트 콜백 (호환성 유지)
     private var positiveNewsCallback: ((List<String>) -> Unit)? = null
-    
-    // 악제 이벤트 콜백
     private var negativeNewsCallback: ((List<String>) -> Unit)? = null
+    
+    // 새 이벤트 시스템 콜백
+    private var eventCallback: ((StockEvent) -> Unit)? = null
 
     init {
         _stockItems.value = mutableListOf(
@@ -46,17 +158,33 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         )
 
         loadStockData()
-        startStockPriceUpdates()
-        startPositiveNewsCheck()
-        startNegativeNewsCheck()
+        initializeEventSystem()
     }
     
+    // 기존 콜백 메서드 (호환성 유지)
     fun setPositiveNewsCallback(callback: (List<String>) -> Unit) {
         positiveNewsCallback = callback
     }
     
     fun setNegativeNewsCallback(callback: (List<String>) -> Unit) {
         negativeNewsCallback = callback
+    }
+    
+    // 새 이벤트 콜백 설정
+    fun setEventCallback(callback: (StockEvent) -> Unit) {
+        eventCallback = callback
+    }
+    
+    // 시스템 초기화
+    private fun initializeEventSystem() {
+        startStockPriceUpdates()
+        
+        // 새 이벤트 시스템 시작
+        startAllEventChecks()
+        
+        // 기존 호재/악제 시스템은 일단 유지 (호환성)
+        startPositiveNewsCheck()
+        startNegativeNewsCheck()
     }
 
     private fun startStockPriceUpdates() {
@@ -69,6 +197,7 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         handler.post(updateRunnable)
     }
     
+    // 기존 호재/악제 이벤트 메서드 (호환성 유지)
     private fun startPositiveNewsCheck() {
         val positiveNewsRunnable = object : Runnable {
             override fun run() {
@@ -89,6 +218,52 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         handler.postDelayed(negativeNewsRunnable, positiveNewsInterval) // 호재 이벤트와 시간차를 두기 위한 지연
     }
     
+    // 새 이벤트 시스템 시작
+    private fun startAllEventChecks() {
+        // 개별 종목 & 시장 전체 이벤트
+        for (eventType in EVENT_SETTINGS.keys) {
+            startEventCheck(eventType, EVENT_SETTINGS)
+        }
+        
+        // 일회성 이벤트
+        for (eventType in ONE_TIME_EVENT_SETTINGS.keys) {
+            startEventCheck(eventType, ONE_TIME_EVENT_SETTINGS, true)
+        }
+        
+        // 변동성 이벤트
+        for (eventType in VOLATILITY_EVENT_SETTINGS.keys) {
+            startEventCheck(eventType, VOLATILITY_EVENT_SETTINGS)
+        }
+    }
+    
+    // 특정 이벤트 체크 시작
+    private fun startEventCheck(
+        eventType: StockEventType, 
+        settingsMap: Map<StockEventType, EventSettings>,
+        isOneTime: Boolean = false
+    ) {
+        val settings = settingsMap[eventType] ?: return
+        
+        val eventRunnable = object : Runnable {
+            override fun run() {
+                if (Random.nextDouble() < settings.chance) {
+                    if (isOneTime) {
+                        applyOneTimeEvent(eventType, settingsMap)
+                    } else {
+                        applyEvent(eventType, settingsMap)
+                    }
+                }
+                // 다음 체크 예약
+                handler.postDelayed(this, settings.interval)
+            }
+        }
+        
+        // 시작 시간 랜덤화 (모든 이벤트가 동시에 체크되지 않도록)
+        val initialDelay = Random.nextLong(settings.interval / 2)
+        handler.postDelayed(eventRunnable, initialDelay)
+    }
+    
+    // 기존 호재/악제 체크 메서드 (호환성 유지)
     private fun checkForPositiveNews() {
         if (Random.nextDouble() < positiveNewsChance) {
             // 30% 확률로 호재 발생
@@ -102,7 +277,135 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
             applyNegativeNews()
         }
     }
+
+    // 일회성 이벤트 적용 (대박/대폭락)
+    private fun applyOneTimeEvent(
+        eventType: StockEventType,
+        settingsMap: Map<StockEventType, EventSettings>
+    ) {
+        _stockItems.value?.let { stocks ->
+            val settings = settingsMap[eventType] ?: return
+            
+            // 영향 받을 종목 선택 (1개만)
+            val stock = stocks.random()
+            
+            // 변동률 계산
+            val changeRate = (settings.minRate..settings.maxRate).random()
+            
+            // 변동액 계산
+            val changeValue = (stock.price * changeRate).roundToInt() * 100
+            
+            // 직접 가격 변경
+            stock.price += changeValue
+            stock.changeValue = changeValue
+            stock.changeRate = changeRate * 100 // 퍼센트 표시를 위해
+            
+            // 영향받는 종목 이름 목록
+            val affectedStockNames = listOf(stock.name)
+            
+            // 이벤트 메시지 생성
+            val message = generateEventMessage(eventType, affectedStockNames)
+            
+            // 이벤트 객체 생성 (알림용)
+            val event = StockEvent(
+                type = eventType,
+                minChangeRate = settings.minRate,
+                maxChangeRate = settings.maxRate,
+                duration = 0, // 일회성
+                message = message,
+                affectedStockNames = affectedStockNames
+            )
+            
+            // 콜백 호출 (알림 표시)
+            eventCallback?.invoke(event)
+            
+            // UI 업데이트
+            _stockItems.value = stocks
+        }
+    }
     
+    // 이벤트 적용 (지속성 이벤트)
+    private fun applyEvent(
+        eventType: StockEventType,
+        settingsMap: Map<StockEventType, EventSettings>
+    ) {
+        _stockItems.value?.let { stocks ->
+            val settings = settingsMap[eventType] ?: return
+            
+            // 이벤트 영향을 받을 종목 선택
+            val affectedStocks = when {
+                // 전체 시장 이벤트는 모든 종목 영향
+                settings.stockCount <= 0 -> stocks
+                
+                // 특정 수의 종목에만 영향
+                else -> stocks.shuffled().take(settings.stockCount)
+            }
+            
+            // 영향받는 종목 이름 목록
+            val affectedStockNames = affectedStocks.map { it.name }
+            
+            // 이벤트 메시지 생성
+            val message = generateEventMessage(eventType, affectedStockNames)
+            
+            // 이벤트 객체 생성
+            val event = StockEvent(
+                type = eventType,
+                minChangeRate = settings.minRate,
+                maxChangeRate = settings.maxRate,
+                duration = settings.duration,
+                volatilityMultiplier = settings.volatilityMultiplier,
+                message = message,
+                affectedStockNames = affectedStockNames
+            )
+            
+            // 이벤트를 종목에 적용
+            affectedStocks.forEach { stock ->
+                stock.addEvent(event)
+            }
+            
+            // 콜백 호출
+            eventCallback?.invoke(event)
+            
+            // 이벤트 지속 시간 후 자동 제거
+            handler.postDelayed({
+                affectedStocks.forEach { stock ->
+                    stock.removeEvent(eventType)
+                }
+                // UI 업데이트
+                _stockItems.value = stocks
+            }, settings.duration)
+            
+            // UI 업데이트
+            _stockItems.value = stocks
+        }
+    }
+    
+    // 이벤트 메시지 생성
+    private fun generateEventMessage(eventType: StockEventType, stockNames: List<String>): String {
+        val stockNamesText = stockNames.joinToString(", ")
+        
+        return when (eventType) {
+            StockEventType.POSITIVE_SMALL -> "소형 호재 발생! $stockNamesText 주가 상승 예상!"
+            StockEventType.POSITIVE_MEDIUM -> "중형 호재 발생! $stockNamesText 주가 크게 상승 예상!"
+            StockEventType.POSITIVE_LARGE -> "대형 호재 발생! $stockNamesText 주가 급등 예상!"
+            
+            StockEventType.NEGATIVE_SMALL -> "소형 악재 발생! $stockNamesText 주가 하락 예상!"
+            StockEventType.NEGATIVE_MEDIUM -> "중형 악재 발생! $stockNamesText 주가 크게 하락 예상!"
+            StockEventType.NEGATIVE_LARGE -> "대형 악재 발생! $stockNamesText 주가 급락 예상!"
+            
+            StockEventType.MARKET_BOOM -> "⭐ 경기 부양 정책 발표! 전체 주가 상승 예상!"
+            StockEventType.MARKET_RECESSION -> "⚠️ 경기 침체 조짐! 전체 주가 하락 예상!"
+            StockEventType.MARKET_SURGE -> "⭐⭐ 시장 폭등! 모든 종목이 크게 상승합니다!"
+            StockEventType.MARKET_CRASH -> "⚠️⚠️ 시장 폭락! 모든 종목이 크게 하락합니다!"
+            
+            StockEventType.STOCK_SURGE -> "💥 대박 종목 발생! $stockNamesText 주가가 폭등합니다!"
+            StockEventType.STOCK_CRASH -> "💥 대폭락 종목 발생! $stockNamesText 주가가 폭락합니다!"
+            StockEventType.VOLATILITY_UP -> "📈 시장 변동성 확대! 가격 변동이 더 커집니다!"
+            StockEventType.VOLATILITY_DOWN -> "📉 시장 안정화! 가격 변동이 줄어듭니다!"
+        }
+    }
+    
+    // 기존 호재/악제 메서드 (호환성 유지)
     private fun applyPositiveNews() {
         _stockItems.value?.let { stocks ->
             // 기존의 호재 영향 초기화
@@ -169,6 +472,12 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
+    // 모든 이벤트 정리 (앱 종료 또는 뷰모델 클리어 시)
+    fun clearAllEvents() {
+        _stockItems.value?.forEach { it.clearAllEvents() }
+    }
+    
+    // 이하 기존 메서드들 유지...
     private fun removePositiveNews() {
         _stockItems.value?.let { stocks ->
             // 호재 영향 제거
@@ -362,5 +671,6 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     override fun onCleared() {
         super.onCleared()
         handler.removeCallbacksAndMessages(null)
+        clearAllEvents()
     }
 }

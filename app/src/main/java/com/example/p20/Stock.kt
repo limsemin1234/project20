@@ -18,7 +18,10 @@ data class Stock(
     // 향상된 가격 변동 알고리즘을 위한 추가 필드
     val priceHistory: MutableList<Int> = mutableListOf(), // 가격 변동 이력
     var trendStrength: Double = 0.0,     // 현재 추세 강도 (-1.0 ~ 1.0)
-    var volatility: Double = 1.0         // 기본 변동성 계수
+    var volatility: Double = 1.0,         // 기본 변동성 계수
+    
+    // 새 이벤트 시스템을 위한 필드
+    val activeEvents: MutableMap<StockEventType, StockEvent> = mutableMapOf() // 활성화된 이벤트 맵
 ) {
     // 이력 최대 크기
     private val MAX_HISTORY_SIZE = 30
@@ -54,23 +57,45 @@ data class Stock(
         // 현재 추세 계산
         calculateTrend()
         
-        val minChangePercent: Double
-        val maxChangePercent: Double
+        var minChangePercent = -0.02  // 기본 최소 변동률 (-0.02%)
+        var maxChangePercent = 0.025  // 기본 최대 변동률 (0.025%)
+        var currentVolatility = volatility  // 기본 변동성
         
-        // 호재/악제 영향 받는 종목은 각각 상승/하락만 하도록
+        // 기존 호재/악재 이벤트 처리 (이전 버전과의 호환성)
         when {
             isPositiveNews -> {
                 minChangePercent = 0.01 // 최소 0.01% 상승
-                maxChangePercent = 0.05 // 최대 0.05% 상승 (기존 0.10%에서 수정)
+                maxChangePercent = 0.05 // 최대 0.05% 상승
             }
             isNegativeNews -> {
-                minChangePercent = -0.05 // 최소 0.05% 하락 (기존 -0.10%에서 수정)
+                minChangePercent = -0.05 // 최소 0.05% 하락
                 maxChangePercent = -0.01 // 최대 0.01% 하락
             }
-            else -> {
-                // 기본 변동 범위 (-0.02% ~ 0.025%) (기존 -0.04% ~ 0.045%에서 수정)
-                minChangePercent = -0.02
-                maxChangePercent = 0.025
+        }
+        
+        // 새 이벤트 시스템 - 활성화된 이벤트들의 효과 적용
+        if (activeEvents.isNotEmpty()) {
+            // 변동성 이벤트 처리 (VOLATILITY_UP, VOLATILITY_DOWN)
+            for (event in activeEvents.values) {
+                if (event.type == StockEventType.VOLATILITY_UP || 
+                    event.type == StockEventType.VOLATILITY_DOWN) {
+                    currentVolatility *= event.volatilityMultiplier
+                }
+            }
+            
+            // 가장 우선순위 높은 가격 변동 이벤트 찾기
+            val priceEvent = activeEvents.values.filter { 
+                it.type != StockEventType.VOLATILITY_UP && 
+                it.type != StockEventType.VOLATILITY_DOWN 
+            }.maxByOrNull { 
+                // 변동폭이 클수록 우선순위 높음
+                (it.maxChangeRate - it.minChangeRate).absoluteValue
+            }
+            
+            // 가격 변동 이벤트 적용
+            priceEvent?.let {
+                minChangePercent = it.minChangeRate
+                maxChangePercent = it.maxChangeRate
             }
         }
         
@@ -85,17 +110,17 @@ data class Stock(
         val finalChangePercent = (randomPercent * RANDOM_WEIGHT) + (trendPercent * TREND_WEIGHT)
         
         // 변동성 적용
-        val adjustedChangePercent = finalChangePercent * volatility
+        val adjustedChangePercent = finalChangePercent * currentVolatility
         
         // 변동값 계산
         val calculatedChange = (price * adjustedChangePercent / 100.0).roundToInt() * 100
         changeValue = calculatedChange
 
         if (changeValue == 0 && price >= 1000) {
-            // 호재/악제 영향을 받는 종목은 각각 무조건 상승/하락만 하도록
+            // 호재/악재 영향을 받는 종목은 각각 무조건 상승/하락만 하도록
             changeValue = when {
-                isPositiveNews -> 100
-                isNegativeNews -> -100
+                isPositiveNews || activeEvents.values.any { it.minChangeRate > 0 } -> 100
+                isNegativeNews || activeEvents.values.any { it.maxChangeRate < 0 } -> -100
                 else -> if (Random.nextBoolean()) 100 else -100
             }
         }
@@ -267,6 +292,31 @@ data class Stock(
         holding = 0
         purchasePrices.clear()  // 모든 매입 내역 삭제
         return sellCount
+    }
+
+    /**
+     * 이벤트를 추가합니다.
+     */
+    fun addEvent(event: StockEvent) {
+        activeEvents[event.type] = event
+    }
+    
+    /**
+     * 특정 타입의 이벤트를 제거합니다.
+     */
+    fun removeEvent(eventType: StockEventType) {
+        activeEvents.remove(eventType)
+    }
+    
+    /**
+     * 모든 이벤트를 제거합니다.
+     */
+    fun clearAllEvents() {
+        activeEvents.clear()
+        
+        // 이전 버전 호환성 유지
+        isPositiveNews = false
+        isNegativeNews = false
     }
 }
 
