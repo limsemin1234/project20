@@ -200,6 +200,9 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         val category: String
     )
 
+    // 직전에 UI 업데이트에 사용된 주식 가격 보관 (중복 업데이트 방지)
+    private val lastStockPrices = mutableMapOf<String, Int>()
+
     init {
         // 저장된 데이터가 있는지 확인 후 초기화 진행
         if (hasStockData()) {
@@ -246,6 +249,9 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     
     // 재시작시 새로운 주식 종목 생성
     fun resetStocksWithNewCompanies() {
+        // 가격 추적 초기화
+        clearPriceTracking()
+        
         // 새로운 랜덤 종목 생성
         generateRandomStocks()
         
@@ -588,6 +594,7 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     // 모든 이벤트 정리 (앱 종료 또는 뷰모델 클리어 시)
     fun clearAllEvents() {
         _stockItems.value?.forEach { it.clearAllEvents() }
+        clearPriceTracking()
     }
     
     // 이하 기존 메서드들 유지...
@@ -613,9 +620,36 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
 
     fun updateStockPrices() {
         _stockItems.value?.let { stocks ->
-            stocks.forEach { it.updateChangeValue() }
-            _stockItems.value = stocks
+            // 각 주식의 가격 변동 업데이트
+            var anyStockChanged = false
+            
+            // 각 주식마다 가격 변동 계산 및 적용
+            stocks.forEach { stock ->
+                // 현재 가격 저장
+                val currentPrice = stock.price
+                
+                // 변동값 계산 및 가격 업데이트
+                stock.updateChangeValue()
+                
+                // 이전 가격과 비교하여 변경 여부 확인
+                val lastPrice = lastStockPrices[stock.name]
+                if (lastPrice == null || lastPrice != stock.price) {
+                    anyStockChanged = true
+                    lastStockPrices[stock.name] = stock.price
+                }
+            }
+            
+            // 가격이 변경된 경우에만 UI 업데이트 (불필요한 옵저버 트리거 방지)
+            if (anyStockChanged) {
+                // 기존 리스트와 다른 새 인스턴스를 생성하여 할당
+                _stockItems.value = stocks.toMutableList()
+            }
         }
+    }
+
+    // 가격 이력 추적 맵 초기화 (앱 종료 또는 재시작 시)
+    fun clearPriceTracking() {
+        lastStockPrices.clear()
     }
 
     fun buyStock(stock: Stock) {

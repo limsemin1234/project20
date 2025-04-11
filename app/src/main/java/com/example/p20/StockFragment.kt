@@ -408,12 +408,67 @@ class StockFragment : BaseFragment() {
         
         // 그래프 설정
         val lineChart = dialog.findViewById<LineChart>(R.id.stockLineChart)
-        setupStockGraph(lineChart, stock)
+        
+        // 초기 그래프 설정
+        setupStockGraph(lineChart, stock, true)
+        
+        // 그래프 데이터 상태 추적 객체
+        val graphState = GraphUpdateState(stock.name, stock.price)
         
         // 닫기 버튼
         val closeButton = dialog.findViewById<Button>(R.id.btnCloseGraph)
         closeButton.setOnClickListener {
             dialog.dismiss()
+        }
+        
+        // 그래프 실시간 업데이트를 위한 옵저버
+        // LiveData는 값이 변경될 때만 알림을 보냄 (효율적)
+        val graphUpdateObserver = Observer<MutableList<Stock>> { updatedStockList ->
+            updatedStockList.find { it.name == stock.name }?.let { updatedStock ->
+                // 이미 타이머가 처리 중인지 확인
+                if (!graphState.isTimerProcessing && updatedStock.price != graphState.lastPrice) {
+                    updateGraph(lineChart, updatedStock, graphState)
+                }
+            }
+        }
+        
+        // 백업 타이머 - LiveData 이벤트를 놓치는 경우를 대비
+        val graphUpdateHandler = android.os.Handler(android.os.Looper.getMainLooper())
+        val graphUpdateRunnable = object : Runnable {
+            override fun run() {
+                try {
+                    // 처리 중 표시 (Observer와 충돌 방지)
+                    graphState.isTimerProcessing = true
+                    
+                    // 최신 데이터 가져오기
+                    stockViewModel.stockItems.value?.find { it.name == stock.name }?.let { currentStock ->
+                        // 데이터가 변경된 경우에만 업데이트
+                        if (currentStock.price != graphState.lastPrice) {
+                            updateGraph(lineChart, currentStock, graphState)
+                        }
+                    }
+                } finally {
+                    // 처리 완료 표시
+                    graphState.isTimerProcessing = false
+                    
+                    // 다이얼로그가 아직 표시 중이면 다음 업데이트 예약
+                    if (dialog.isShowing) {
+                        graphUpdateHandler.postDelayed(this, 5000)
+                    }
+                }
+            }
+        }
+        
+        // 주식 데이터 변경 감지를 위한 옵저버 등록
+        stockViewModel.stockItems.observe(viewLifecycleOwner, graphUpdateObserver)
+        
+        // 첫 타이머 예약
+        graphUpdateHandler.postDelayed(graphUpdateRunnable, 5000)
+        
+        // 다이얼로그가 닫힐 때 옵저버 및 핸들러 제거
+        dialog.setOnDismissListener {
+            stockViewModel.stockItems.removeObserver(graphUpdateObserver)
+            graphUpdateHandler.removeCallbacksAndMessages(null)
         }
         
         // 다이얼로그 표시
@@ -428,43 +483,116 @@ class StockFragment : BaseFragment() {
     }
     
     /**
-     * 주식 가격 변동 그래프를 설정합니다.
+     * 그래프 업데이트 상태를 추적하기 위한 클래스
      */
-    private fun setupStockGraph(lineChart: LineChart, stock: Stock) {
-        // 그래프 기본 설정
-        lineChart.description.isEnabled = false  // 설명 비활성화
-        lineChart.legend.isEnabled = true        // 범례 활성화
-        lineChart.setTouchEnabled(true)          // 터치 활성화
-        lineChart.isDragEnabled = true           // 드래그 활성화
-        lineChart.setScaleEnabled(true)          // 확대/축소 활성화
+    private class GraphUpdateState(
+        val stockName: String,
+        var lastPrice: Int,
+        var isTimerProcessing: Boolean = false
+    )
+    
+    /**
+     * 그래프 업데이트 공통 로직
+     */
+    private fun updateGraph(lineChart: LineChart, stock: Stock, state: GraphUpdateState) {
+        // 데이터 세트가 있는지 확인
+        val data = lineChart.data ?: return
+        if (data.dataSetCount == 0) return
         
-        // X축 설정
-        val xAxis = lineChart.xAxis
-        xAxis.granularity = 1f                   // 최소 간격
-        xAxis.isGranularityEnabled = true        // 간격 강제 적용
+        // 기존 데이터 세트 가져오기
+        val dataSet = data.getDataSetByIndex(0) as? LineDataSet ?: return
         
-        // Y축 설정
-        val leftAxis = lineChart.axisLeft
-        leftAxis.setDrawGridLines(true)          // 그리드 라인 표시
+        // 최신 가격 확인
+        val newPrice = stock.price
         
-        lineChart.axisRight.isEnabled = false    // 오른쪽 Y축 비활성화
+        // 같은 가격이면 아무것도 하지 않음
+        if (newPrice == state.lastPrice) return
         
-        // 가격 이력 데이터 준비
-        val entries = ArrayList<Entry>()
+        // 새 데이터 포인트 추가
+        val newIndex = dataSet.entryCount.toFloat()
+        dataSet.addEntry(Entry(newIndex, newPrice.toFloat()))
         
-        // 최대 30개의 이력 데이터를 사용 (MAX_HISTORY_SIZE 기준)
-        stock.priceHistory.forEachIndexed { index, price ->
-            entries.add(Entry(index.toFloat(), price.toFloat()))
+        // 스타일 업데이트
+        setupDataSetStyle(dataSet, stock)
+        
+        // 데이터 업데이트
+        data.notifyDataChanged()
+        lineChart.notifyDataSetChanged()
+        
+        // 필요한 경우 그래프 범위 업데이트
+        lineChart.setVisibleXRangeMaximum(30f)  // 최대 30개 표시
+        
+        // 가장 최근 항목으로 스크롤
+        lineChart.moveViewToX(newIndex)
+        
+        // 그래프 갱신
+        lineChart.invalidate()
+        
+        // 마지막 가격 업데이트
+        state.lastPrice = newPrice
+    }
+    
+    /**
+     * 주식 가격 변동 그래프를 설정합니다.
+     * @param isInitialSetup 초기 설정인지 여부
+     */
+    private fun setupStockGraph(lineChart: LineChart, stock: Stock, isInitialSetup: Boolean = true) {
+        if (isInitialSetup) {
+            // 처음 그래프를 설정할 때만 기본 설정 변경
+            lineChart.description.isEnabled = false  // 설명 비활성화
+            lineChart.legend.isEnabled = true        // 범례 활성화
+            lineChart.setTouchEnabled(true)          // 터치 활성화
+            lineChart.isDragEnabled = true           // 드래그 활성화
+            lineChart.setScaleEnabled(true)          // 확대/축소 활성화
+            
+            // X축 설정
+            val xAxis = lineChart.xAxis
+            xAxis.granularity = 1f                   // 최소 간격
+            xAxis.isGranularityEnabled = true        // 간격 강제 적용
+            
+            // Y축 설정
+            val leftAxis = lineChart.axisLeft
+            leftAxis.setDrawGridLines(true)          // 그리드 라인 표시
+            
+            lineChart.axisRight.isEnabled = false    // 오른쪽 Y축 비활성화
+            
+            // 데이터 세트 초기화
+            val entries = ArrayList<Entry>()
+            
+            // 가격 이력 데이터를 그래프에 추가 (최대 30개까지만)
+            val historySize = stock.priceHistory.size
+            val startIdx = if (historySize > 30) historySize - 30 else 0
+            
+            for (i in startIdx until historySize) {
+                val price = stock.priceHistory[i]
+                entries.add(Entry((i - startIdx).toFloat(), price.toFloat()))
+            }
+            
+            // 이력에 현재 가격이 없다면 현재 가격 추가
+            if (entries.isEmpty() || entries.last().y != stock.price.toFloat()) {
+                entries.add(Entry(entries.size.toFloat(), stock.price.toFloat()))
+            }
+            
+            // 데이터 세트 생성 및 설정
+            val dataSet = LineDataSet(entries, "${stock.name} 가격 추이")
+            setupDataSetStyle(dataSet, stock)
+            
+            // 그래프에 데이터 설정
+            val lineData = LineData(dataSet)
+            lineChart.data = lineData
+            
+            // 애니메이션 추가 (부드러운 표시)
+            lineChart.animateX(500)
+            
+            // 그래프 갱신
+            lineChart.invalidate()
         }
-        
-        // 엔트리가 비어있는지 확인
-        if (entries.isEmpty()) {
-            // 현재 가격만 추가
-            entries.add(Entry(0f, stock.price.toFloat()))
-        }
-        
-        // 데이터 세트 생성 및 설정
-        val dataSet = LineDataSet(entries, "${stock.name} 가격 추이")
+    }
+    
+    /**
+     * 데이터 세트 스타일 설정
+     */
+    private fun setupDataSetStyle(dataSet: LineDataSet, stock: Stock) {
         dataSet.color = if (stock.changeValue >= 0) Color.RED else Color.BLUE
         dataSet.valueTextColor = Color.BLACK
         dataSet.lineWidth = 2f                   // 선 두께
@@ -477,16 +605,6 @@ class StockFragment : BaseFragment() {
         if (stock.volatility > 1.0) {
             dataSet.color = ContextCompat.getColor(requireContext(), R.color.purple_500)
         }
-        
-        // 그래프에 데이터 설정
-        val lineData = LineData(dataSet)
-        lineChart.data = lineData
-        
-        // 애니메이션 추가
-        lineChart.animateX(1000)
-        
-        // 그래프 갱신
-        lineChart.invalidate()
     }
     
     override fun onDestroy() {

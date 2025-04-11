@@ -46,10 +46,15 @@ data class Stock(
     }
     
     fun updateChangeValue() {
-        // 가격을 이력에 추가
-        priceHistory.add(price)
-        if (priceHistory.size > MAX_HISTORY_SIZE) {
-            priceHistory.removeAt(0)
+        // 현재 가격이 이미 이력에 있는지 확인
+        val shouldAddToHistory = priceHistory.isEmpty() || priceHistory.last() != price
+        
+        // 가격이 다를 때만 이력에 추가
+        if (shouldAddToHistory) {
+            priceHistory.add(price)
+            if (priceHistory.size > MAX_HISTORY_SIZE) {
+                priceHistory.removeAt(0)
+            }
         }
         
         // 현재 추세 계산
@@ -160,6 +165,8 @@ data class Stock(
         price = maxOf(price, 10)
         // 0으로 나누기 방지
         changeRate = if (oldPrice > 0) ((changeValue.toDouble() / oldPrice) * 100) else 0.0
+        
+        // 새 가격을 즉시 이력에 추가하지 않음 - updateChangeValue()에서 처리
     }
 
     /**
