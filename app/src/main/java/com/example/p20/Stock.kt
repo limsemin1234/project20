@@ -38,11 +38,11 @@ data class Stock(
         
         // 주식별 기본 변동성 설정
         volatility = when(name) {
-            "만원" -> 0.8    // 안정적
-            "이만" -> 0.9    // 약간 안정적
+            "만원" -> 0.9    // 안정적
+            "이만" -> 0.9    // 안정적
             "오만" -> 1.0    // 보통
-            "십만" -> 1.1    // 약간 변동이 큼
-            "이십만" -> 1.3  // 변동이 매우 큼
+            "십만" -> 1.0    // 보통
+            "이십만" -> 1.1  // 약간 변동이 큼
             else -> 1.0
         }
     }
@@ -57,8 +57,8 @@ data class Stock(
         // 현재 추세 계산
         calculateTrend()
         
-        var minChangePercent = -0.02  // 기본 최소 변동률 (-0.02%)
-        var maxChangePercent = 0.025  // 기본 최대 변동률 (0.025%)
+        var minChangePercent = -0.03  // 기본 최소 변동률 (-0.03%)
+        var maxChangePercent = 0.03   // 기본 최대 변동률 (0.03%)
         var currentVolatility = volatility  // 기본 변동성
         
         // 기존 호재/악재 이벤트 처리 (이전 버전과의 호환성)
@@ -103,8 +103,7 @@ data class Stock(
         val randomPercent = (minChangePercent..maxChangePercent).random()
         
         // 추세 요소 (trendStrength는 -1.0 ~ 1.0 사이)
-        // 양수면 상승 추세, 음수면 하락 추세, 0에 가까울수록 약한 추세
-        val trendPercent = trendStrength * 0.04 // 추세 크기 조정
+        val trendPercent = trendStrength * 0.05 // 추세 크기 조정
         
         // 최종 변동률 계산 (랜덤 요소 + 추세 요소)
         val finalChangePercent = (randomPercent * RANDOM_WEIGHT) + (trendPercent * TREND_WEIGHT)
@@ -112,7 +111,7 @@ data class Stock(
         // 변동성 적용
         val adjustedChangePercent = finalChangePercent * currentVolatility
         
-        // 변동값 계산
+        // 변동값 계산 (100원 단위로 반올림)
         val calculatedChange = (price * adjustedChangePercent / 100.0).roundToInt() * 100
         changeValue = calculatedChange
 
