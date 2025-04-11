@@ -10,6 +10,10 @@ import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.Job
 import kotlin.math.roundToInt
 import kotlin.random.Random
+import java.util.Timer
+import java.util.TimerTask
+import android.util.Log
+import com.example.p20.MessageManager
 
 class StockViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -214,11 +218,30 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
                 Stock("주식4", 100000, 0, 0.0, 0),
                 Stock("주식5", 200000, 0, 0.0, 0)
             )
+            
+            // 반동 관련 필드 명시적 초기화
+            _stockItems.value?.forEach { stock ->
+                stock.reversionActive = false
+                stock.reversionDirection = 0
+                stock.reversionRemainingMs = 0
+                stock.consecutiveMovesInSameDirection = 0
+                stock.lastMoveDirection = 0
+            }
+            
             // 저장된 데이터 로드
             loadStockData()
         } else {
             // 처음 실행 시 랜덤 종목 생성
             generateRandomStocks()
+            
+            // 반동 관련 필드 명시적 초기화
+            _stockItems.value?.forEach { stock ->
+                stock.reversionActive = false
+                stock.reversionDirection = 0
+                stock.reversionRemainingMs = 0
+                stock.consecutiveMovesInSameDirection = 0
+                stock.lastMoveDirection = 0
+            }
         }
         
         initializeEventSystem()
@@ -238,13 +261,22 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         // 가격 중복 방지를 위해 5개의 서로 다른 가격 선택
         val randomPrices = availablePrices.shuffled().take(5)
         
-        _stockItems.value = mutableListOf(
-            Stock(randomStocks[0].name, randomPrices[0], 0, 0.0, 0),
-            Stock(randomStocks[1].name, randomPrices[1], 0, 0.0, 0),
-            Stock(randomStocks[2].name, randomPrices[2], 0, 0.0, 0),
-            Stock(randomStocks[3].name, randomPrices[3], 0, 0.0, 0),
-            Stock(randomStocks[4].name, randomPrices[4], 0, 0.0, 0)
-        )
+        // 주식 객체 생성
+        val stockList = mutableListOf<Stock>()
+        for (i in 0 until 5) {
+            val stock = Stock(randomStocks[i].name, randomPrices[i], 0, 0.0, 0)
+            
+            // 반동 관련 필드 초기화
+            stock.reversionActive = false
+            stock.reversionDirection = 0
+            stock.reversionRemainingMs = 0
+            stock.consecutiveMovesInSameDirection = 0
+            stock.lastMoveDirection = 0
+            
+            stockList.add(stock)
+        }
+        
+        _stockItems.value = stockList
     }
     
     // 재시작시 새로운 주식 종목 생성
@@ -258,6 +290,13 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         // 기존 데이터 초기화
         _stockItems.value?.forEach { stock ->
             stock.resetHoldings()
+            
+            // 반동 관련 필드 명시적 초기화
+            stock.reversionActive = false
+            stock.reversionDirection = 0
+            stock.reversionRemainingMs = 0
+            stock.consecutiveMovesInSameDirection = 0
+            stock.lastMoveDirection = 0
         }
         
         // 저장된 데이터 삭제 - 종목 데이터를 모두 삭제
@@ -593,7 +632,15 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     
     // 모든 이벤트 정리 (앱 종료 또는 뷰모델 클리어 시)
     fun clearAllEvents() {
-        _stockItems.value?.forEach { it.clearAllEvents() }
+        _stockItems.value?.forEach { stock ->
+            stock.clearAllEvents()
+            // 반동 관련 필드도 초기화
+            stock.reversionActive = false
+            stock.reversionDirection = 0
+            stock.reversionRemainingMs = 0
+            stock.consecutiveMovesInSameDirection = 0
+            stock.lastMoveDirection = 0
+        }
         clearPriceTracking()
     }
     
@@ -628,8 +675,17 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
                 // 현재 가격 저장
                 val currentPrice = stock.price
                 
-                // 변동값 계산 및 가격 업데이트
-                stock.updateChangeValue()
+                // 변동값 계산 및 가격 업데이트 - 반동 메시지 받기
+                val reversionMessage = stock.updateChangeValue()
+                
+                // 반동 메시지가 있다면 이벤트 알림 표시
+                if (reversionMessage.isNotEmpty()) {
+                    // 상태 기록
+                    val context = getApplication<Application>()
+                    
+                    // 반동 이벤트 발생을 알림
+                    MessageManager.showMessage(context, "${stock.name}: $reversionMessage")
+                }
                 
                 // 이전 가격과 비교하여 변경 여부 확인
                 val lastPrice = lastStockPrices[stock.name]
@@ -705,33 +761,47 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun saveStockData() {
+        // 종목 데이터 저장
         val editor = sharedPreferences.edit()
+        
         _stockItems.value?.forEachIndexed { index, stock ->
-            // 종목명 저장 (추가)
+            // 주식 기본 정보 저장
             editor.putString("stockName_$index", stock.name)
-            
             editor.putInt("price_$index", stock.price)
             editor.putInt("holding_$index", stock.holding)
-            editor.putInt("purchasePrice_$index", stock.getAvgPurchasePrice())
             
-            // 호재/악제 상태 저장
+            // 호재/악재 상태 저장
             editor.putBoolean("isPositiveNews_$index", stock.isPositiveNews)
             editor.putBoolean("isNegativeNews_$index", stock.isNegativeNews)
             
-            // 추세 관련 데이터 저장
+            // 추세 정보 저장
             editor.putFloat("trendStrength_$index", stock.trendStrength.toFloat())
             editor.putFloat("volatility_$index", stock.volatility.toFloat())
             
-            // 가격 이력은 최대 5개만 저장 (효율성을 위해)
-            val historySize = minOf(5, stock.priceHistory.size)
+            // 반동 관련 필드는 앱 재시작 시 항상 초기화하도록 함
+            // 그러나 데이터 일관성을 위해 저장은 함
+            editor.putBoolean("reversionActive_$index", false)
+            editor.putInt("reversionDirection_$index", 0)
+            editor.putLong("reversionRemainingMs_$index", 0)
+            editor.putInt("consecutiveMovesInSameDirection_$index", 0)
+            editor.putInt("lastMoveDirection_$index", 0)
+            
+            // 가격 이력 저장 (최대 10개까지)
+            val historySize = minOf(stock.priceHistory.size, 10)
             editor.putInt("historySize_$index", historySize)
+            
             for (i in 0 until historySize) {
                 val historyIdx = stock.priceHistory.size - historySize + i
                 if (historyIdx >= 0 && historyIdx < stock.priceHistory.size) {
                     editor.putInt("priceHistory_${index}_$i", stock.priceHistory[historyIdx])
                 }
             }
+            
+            // 매입가 평균 저장 (간소화)
+            val avgPurchasePrice = stock.getAvgPurchasePrice()
+            editor.putInt("purchasePrice_$index", avgPurchasePrice)
         }
+        
         editor.apply()
     }
 
@@ -740,6 +810,13 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         val hasStockNames = sharedPreferences.contains("stockName_0")
         
         _stockItems.value?.forEachIndexed { index, stock ->
+            // 중요: 반동 관련 필드 초기화 - 앱 재시작 시 필요
+            stock.reversionActive = false
+            stock.reversionDirection = 0
+            stock.reversionRemainingMs = 0
+            stock.consecutiveMovesInSameDirection = 0
+            stock.lastMoveDirection = 0
+            
             // 종목명 로드 (이름이 저장되어 있을 경우만)
             if (hasStockNames) {
                 val savedName = sharedPreferences.getString("stockName_$index", stock.name) ?: stock.name
@@ -749,7 +826,7 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
             stock.price = sharedPreferences.getInt("price_$index", stock.price)
             stock.holding = sharedPreferences.getInt("holding_$index", stock.holding)
             
-            // 호재/악제 상태 로드
+            // 호재/악재 상태 로드
             stock.isPositiveNews = sharedPreferences.getBoolean("isPositiveNews_$index", false)
             stock.isNegativeNews = sharedPreferences.getBoolean("isNegativeNews_$index", false)
             
