@@ -17,7 +17,7 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     val stockItems: LiveData<MutableList<Stock>> get() = _stockItems
 
     private val handler = Handler(Looper.getMainLooper())
-    private val updateInterval = 3000L // 주식 가격 업데이트 간격 (3초)
+    private val updateInterval = 5000L // 주식 가격 업데이트 간격 (5초)
     
     // 기존 호재 이벤트 설정 (호환성 유지)
     private val positiveNewsInterval = 30000L // 호재 이벤트 체크 간격 (30초)
@@ -283,6 +283,10 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     
     // 시스템 초기화
     private fun initializeEventSystem() {
+        // 이전에 예약된 모든 작업 제거 (중복 방지)
+        handler.removeCallbacksAndMessages(null)
+        
+        // 주식 가격 업데이트 시스템 시작
         startStockPriceUpdates()
         
         // 새 이벤트 시스템 시작
@@ -293,6 +297,7 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         startNegativeNewsCheck()
     }
 
+    // 주식 가격 변동 시스템 시작
     private fun startStockPriceUpdates() {
         val updateRunnable = object : Runnable {
             override fun run() {
@@ -300,7 +305,9 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
                 handler.postDelayed(this, updateInterval)
             }
         }
-        handler.post(updateRunnable)
+        
+        // 첫 번째 업데이트는 지정된 간격 후에 시작
+        handler.postDelayed(updateRunnable, updateInterval)
     }
     
     // 기존 호재/악제 이벤트 메서드 (호환성 유지)

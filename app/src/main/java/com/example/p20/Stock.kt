@@ -55,8 +55,8 @@ data class Stock(
         // 현재 추세 계산
         calculateTrend()
         
-        var minChangePercent = -0.03  // 기본 최소 변동률 (-0.03%)
-        var maxChangePercent = 0.03   // 기본 최대 변동률 (0.03%)
+        var minChangePercent = -0.01  // 기본 최소 변동률 (-0.01%)
+        var maxChangePercent = 0.01   // 기본 최대 변동률 (0.01%)
         var currentVolatility = volatility  // 기본 변동성
         
         // 기존 호재/악재 이벤트 처리 (이전 버전과의 호환성)
