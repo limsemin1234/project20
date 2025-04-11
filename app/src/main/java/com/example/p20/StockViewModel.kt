@@ -202,8 +202,21 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         // 저장된 데이터가 있는지 확인 후 초기화 진행
-        // 사용자 요청에 따라 이전 종목은 무시하고 항상 새로운 종목 생성
-        generateRandomStocks()
+        if (hasStockData()) {
+            // 임시로 빈 리스트로 초기화
+            _stockItems.value = mutableListOf(
+                Stock("주식1", 10000, 0, 0.0, 0),
+                Stock("주식2", 20000, 0, 0.0, 0),
+                Stock("주식3", 50000, 0, 0.0, 0),
+                Stock("주식4", 100000, 0, 0.0, 0),
+                Stock("주식5", 200000, 0, 0.0, 0)
+            )
+            // 저장된 데이터 로드
+            loadStockData()
+        } else {
+            // 처음 실행 시 랜덤 종목 생성
+            generateRandomStocks()
+        }
         
         initializeEventSystem()
     }
@@ -216,14 +229,18 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     
     // 랜덤 주식 종목 생성
     private fun generateRandomStocks() {
+        // 종목명 중복 방지를 위해 랜덤하게 5개 선택
         val randomStocks = availableStocks.shuffled().take(5)
         
+        // 가격 중복 방지를 위해 5개의 서로 다른 가격 선택
+        val randomPrices = availablePrices.shuffled().take(5)
+        
         _stockItems.value = mutableListOf(
-            Stock(randomStocks[0].name, availablePrices.random(), 0, 0.0, 0),
-            Stock(randomStocks[1].name, availablePrices.random(), 0, 0.0, 0),
-            Stock(randomStocks[2].name, availablePrices.random(), 0, 0.0, 0),
-            Stock(randomStocks[3].name, availablePrices.random(), 0, 0.0, 0),
-            Stock(randomStocks[4].name, availablePrices.random(), 0, 0.0, 0)
+            Stock(randomStocks[0].name, randomPrices[0], 0, 0.0, 0),
+            Stock(randomStocks[1].name, randomPrices[1], 0, 0.0, 0),
+            Stock(randomStocks[2].name, randomPrices[2], 0, 0.0, 0),
+            Stock(randomStocks[3].name, randomPrices[3], 0, 0.0, 0),
+            Stock(randomStocks[4].name, randomPrices[4], 0, 0.0, 0)
         )
     }
     
@@ -726,9 +743,12 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun resetStockPrices() {
-        _stockItems.value?.forEach { stock ->
-            // 초기 가격 정보를 사용자 지정 가격 중에서 랜덤하게 선택
-            val initialPrice = availablePrices.random()
+        // 가격 중복 방지를 위해 5개의 서로 다른 가격 선택
+        val randomPrices = availablePrices.shuffled().take(5)
+        
+        _stockItems.value?.forEachIndexed { index, stock ->
+            // 선택된 가격으로 리셋
+            val initialPrice = randomPrices[index]
             
             // 가격 리셋
             stock.resetPrice(initialPrice)
