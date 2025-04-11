@@ -431,6 +431,16 @@
                 android:textSize="16sp"/>
         </LinearLayout>
         
+        <!-- 그래프 버튼 -->
+        <Button
+            android:id="@+id/btnShowGraph"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:backgroundTint="@color/purple_500"
+            android:text="📊 주가 변동 그래프 보기"
+            android:textSize="16sp"/>
+        
         <!-- 구현 기능 설명 영역 - 하단으로 이동 -->
         <TextView
             android:id="@+id/stockFeaturesInfoText"

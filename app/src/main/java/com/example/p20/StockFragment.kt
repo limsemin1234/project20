@@ -17,6 +17,12 @@ import androidx.lifecycle.Observer
 import com.google.android.material.snackbar.Snackbar
 import android.view.Gravity
 import android.widget.FrameLayout
+import android.app.Dialog
+import android.view.Window
+import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
 
 class StockFragment : BaseFragment() {
 
@@ -24,6 +30,7 @@ class StockFragment : BaseFragment() {
     private lateinit var stockAdapter: StockAdapter
     private lateinit var stockDetailsTextView: LinearLayout
     private lateinit var featuresInfoText: TextView
+    private lateinit var showGraphButton: Button
 
     private var selectedStock: Stock? = null
     private var selectedQuantity: Int = 0  // 기본 수량을 0으로 설정
@@ -109,6 +116,14 @@ class StockFragment : BaseFragment() {
         val sellButton: Button = view.findViewById(R.id.sellButton)
         val buyAllButton: Button = view.findViewById(R.id.buyAllButton)
         val sellAllButton: Button = view.findViewById(R.id.sellAllButton)
+
+        // 그래프 버튼 추가
+        showGraphButton = view.findViewById(R.id.btnShowGraph)
+        showGraphButton.setOnClickListener {
+            selectedStock?.let { stock ->
+                showStockGraphDialog(stock)
+            } ?: showMessage("주식을 먼저 선택해주세요.")
+        }
 
         // 수량 버튼 찾기
         quantityBtn1 = view.findViewById(R.id.quantityBtn1)
@@ -376,6 +391,102 @@ class StockFragment : BaseFragment() {
             • 최종 변동률 = (기본 변동률 × 종목별 변동성) × 이벤트 변동성
         """.trimIndent()
         featuresInfoText.text = featuresText
+    }
+    
+    /**
+     * 주식 가격 변동 그래프를 다이얼로그로 표시합니다.
+     */
+    private fun showStockGraphDialog(stock: Stock) {
+        // 커스텀 다이얼로그 생성
+        val dialog = Dialog(requireContext())
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_stock_graph)
+        
+        // 다이얼로그 제목 설정
+        val titleTextView = dialog.findViewById<TextView>(R.id.graphTitleText)
+        titleTextView.text = "${stock.name} 가격 변동 그래프"
+        
+        // 그래프 설정
+        val lineChart = dialog.findViewById<LineChart>(R.id.stockLineChart)
+        setupStockGraph(lineChart, stock)
+        
+        // 닫기 버튼
+        val closeButton = dialog.findViewById<Button>(R.id.btnCloseGraph)
+        closeButton.setOnClickListener {
+            dialog.dismiss()
+        }
+        
+        // 다이얼로그 표시
+        dialog.show()
+        
+        // 다이얼로그 크기 조정
+        val window = dialog.window
+        window?.setLayout(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+    }
+    
+    /**
+     * 주식 가격 변동 그래프를 설정합니다.
+     */
+    private fun setupStockGraph(lineChart: LineChart, stock: Stock) {
+        // 그래프 기본 설정
+        lineChart.description.isEnabled = false  // 설명 비활성화
+        lineChart.legend.isEnabled = true        // 범례 활성화
+        lineChart.setTouchEnabled(true)          // 터치 활성화
+        lineChart.isDragEnabled = true           // 드래그 활성화
+        lineChart.setScaleEnabled(true)          // 확대/축소 활성화
+        
+        // X축 설정
+        val xAxis = lineChart.xAxis
+        xAxis.granularity = 1f                   // 최소 간격
+        xAxis.isGranularityEnabled = true        // 간격 강제 적용
+        
+        // Y축 설정
+        val leftAxis = lineChart.axisLeft
+        leftAxis.setDrawGridLines(true)          // 그리드 라인 표시
+        
+        lineChart.axisRight.isEnabled = false    // 오른쪽 Y축 비활성화
+        
+        // 가격 이력 데이터 준비
+        val entries = ArrayList<Entry>()
+        
+        // 최대 30개의 이력 데이터를 사용 (MAX_HISTORY_SIZE 기준)
+        stock.priceHistory.forEachIndexed { index, price ->
+            entries.add(Entry(index.toFloat(), price.toFloat()))
+        }
+        
+        // 엔트리가 비어있는지 확인
+        if (entries.isEmpty()) {
+            // 현재 가격만 추가
+            entries.add(Entry(0f, stock.price.toFloat()))
+        }
+        
+        // 데이터 세트 생성 및 설정
+        val dataSet = LineDataSet(entries, "${stock.name} 가격 추이")
+        dataSet.color = if (stock.changeValue >= 0) Color.RED else Color.BLUE
+        dataSet.valueTextColor = Color.BLACK
+        dataSet.lineWidth = 2f                   // 선 두께
+        dataSet.setDrawCircles(true)             // 데이터 포인트 표시
+        dataSet.setCircleColor(dataSet.color)    // 데이터 포인트 색상
+        dataSet.circleRadius = 4f                // 데이터 포인트 크기
+        dataSet.setDrawValues(true)              // 값 표시
+        
+        // 변동성이 큰 경우 색상 변경
+        if (stock.volatility > 1.0) {
+            dataSet.color = ContextCompat.getColor(requireContext(), R.color.purple_500)
+        }
+        
+        // 그래프에 데이터 설정
+        val lineData = LineData(dataSet)
+        lineChart.data = lineData
+        
+        // 애니메이션 추가
+        lineChart.animateX(1000)
+        
+        // 그래프 갱신
+        lineChart.invalidate()
     }
     
     override fun onDestroy() {
