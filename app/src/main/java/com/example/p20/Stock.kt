@@ -21,7 +21,16 @@ data class Stock(
     var volatility: Double = 1.0,         // 기본 변동성 계수
     
     // 새 이벤트 시스템을 위한 필드
-    val activeEvents: MutableMap<StockEventType, StockEvent> = mutableMapOf() // 활성화된 이벤트 맵
+    val activeEvents: MutableMap<StockEventType, StockEvent> = mutableMapOf(), // 활성화된 이벤트 맵
+
+    // 반동 메커니즘을 위한 필드
+    var consecutiveMovesInSameDirection: Int = 0, // 같은 방향으로 연속 변동 횟수
+    var lastMoveDirection: Int = 0,              // 마지막 변동 방향 (1: 상승, -1: 하락, 0: 변동 없음)
+    
+    // 반동 효과의 지속 시간을 위한 필드
+    var reversionActive: Boolean = false,        // 현재 반동 효과가 활성화되어 있는지
+    var reversionDirection: Int = 0,             // 반동의 방향 (1: 상승 유도, -1: 하락 유도)
+    var reversionRemainingTicks: Int = 0         // 반동 효과 남은 지속 시간 (틱 단위)
 ) {
     // 이력 최대 크기
     private val MAX_HISTORY_SIZE = 30
@@ -31,6 +40,25 @@ data class Stock(
     
     // 랜덤 변동 가중치
     private val RANDOM_WEIGHT = 0.6
+    
+    // 반동 확률 기본값
+    private val BASE_REVERSION_PROBABILITY = 0.3
+    
+    // 반동 강도 가중치 (연속 변동 횟수에 따라 증가)
+    private val REVERSION_STRENGTH_MULTIPLIER = 0.15
+    
+    // 반동 효과 지속 시간 (틱 단위, 1틱 = 1회 가격 갱신)
+    private val REVERSION_DURATION_TICKS = 4
+    
+    // 반동 효과 세기 (배수)
+    private val REVERSION_UP_MULTIPLIER = 2.5    // 상승 강화 계수
+    private val REVERSION_DOWN_MULTIPLIER = 0.2  // 하락 약화 계수
+    
+    // 가격 이상치 감지 비율 (초기 가격의 몇 배 이상이면 강제 반동 발생)
+    private val PRICE_ANOMALY_THRESHOLD = 2.0  // 초기 가격의 2배 이상
+    
+    // 초기 가격 저장 (이상치 감지용)
+    private var initialPrice: Int = 0
     
     init {
         // 초기 가격을 이력에 추가
@@ -43,6 +71,9 @@ data class Stock(
             price > 100000 -> 1.1   // 고가주는 변동성 큼
             else -> 1.0   // 기본값
         }
+        
+        // 초기 가격 저장 (이상치 감지용)
+        initialPrice = price
     }
     
     fun updateChangeValue() {
@@ -102,6 +133,26 @@ data class Stock(
             }
         }
         
+        // 반동 메커니즘 처리
+        if (reversionActive) {
+            // 이미 반동 효과가 활성화되어 있는 경우 - 적용 후 카운트다운
+            val (adjustedMin, adjustedMax) = applyActiveReversion(minChangePercent, maxChangePercent)
+            minChangePercent = adjustedMin
+            maxChangePercent = adjustedMax
+            
+            // 남은 지속 시간 감소
+            reversionRemainingTicks--
+            
+            // 지속 시간이 끝났으면 반동 효과 종료
+            if (reversionRemainingTicks <= 0) {
+                reversionActive = false
+                reversionDirection = 0
+            }
+        } else {
+            // 반동 효과가 활성화되어 있지 않은 경우 - 새로운 반동 효과 발생 여부 체크
+            checkAndStartReversion()
+        }
+        
         // 랜덤 변동 요소 계산
         val randomPercent = (minChangePercent..maxChangePercent).random()
         
@@ -127,7 +178,112 @@ data class Stock(
             }
         }
 
+        // 변동 방향 저장
+        val currentDirection = changeValue.sign
+        
+        // 반동 효과가 활성화되어 있지 않을 때만 연속 변동 카운터 업데이트
+        if (!reversionActive) {
+            if (currentDirection == lastMoveDirection && currentDirection != 0) {
+                consecutiveMovesInSameDirection++
+            } else if (currentDirection != 0) {
+                // 방향이 바뀌었거나 처음 변동
+                consecutiveMovesInSameDirection = 1
+                lastMoveDirection = currentDirection
+            }
+        }
+
         updatePriceAndChangeValue()
+    }
+
+    /**
+     * 반동 메커니즘 발생 조건을 확인하고, 조건이 만족되면 반동 효과 활성화
+     */
+    private fun checkAndStartReversion() {
+        // 가격 이상치 검사 - 초기 가격의 일정 비율을 넘어가면 강제 반동 적용
+        val priceRatio = price.toDouble() / initialPrice.toDouble()
+        
+        // 가격이 초기 가격의 PRICE_ANOMALY_THRESHOLD 배 이상이면 강제 하락 반동
+        if (priceRatio >= PRICE_ANOMALY_THRESHOLD) {
+            applyForcedReversion(-1)  // 하락 반동 강제 적용
+            return
+        }
+        
+        // 가격이 초기 가격의 1/PRICE_ANOMALY_THRESHOLD 이하면 강제 상승 반동
+        if (initialPrice > 0 && price.toDouble() / initialPrice.toDouble() <= 1.0 / PRICE_ANOMALY_THRESHOLD) {
+            applyForcedReversion(1)  // 상승 반동 강제 적용
+            return
+        }
+        
+        // 연속 변동이 3회 미만이면 반동 효과 적용하지 않음
+        if (consecutiveMovesInSameDirection < 3 || lastMoveDirection == 0) {
+            return
+        }
+
+        // 연속 상승/하락 횟수에 따라 반동 확률 증가
+        val reversionProbability = BASE_REVERSION_PROBABILITY + 
+                                 (consecutiveMovesInSameDirection - 2) * REVERSION_STRENGTH_MULTIPLIER
+        
+        // 최대 85%로 제한 (기존 80%에서 증가)
+        val cappedProbability = minOf(reversionProbability, 0.85)
+        
+        // 반동 확률에 따라 반동 효과 활성화
+        if (Random.nextDouble() < cappedProbability) {
+            applyReversion(-lastMoveDirection)
+        }
+    }
+    
+    /**
+     * 반동 효과를 활성화합니다.
+     * @param direction 반동 방향 (1: 상승 유도, -1: 하락 유도)
+     */
+    private fun applyReversion(direction: Int) {
+        reversionActive = true
+        reversionDirection = direction
+        reversionRemainingTicks = REVERSION_DURATION_TICKS
+        
+        // 연속 변동 카운터만 초기화 (lastMoveDirection은 유지)
+        consecutiveMovesInSameDirection = 0
+    }
+    
+    /**
+     * 강제 반동 효과를 적용합니다 (이상치 감지시)
+     * @param direction 반동 방향 (1: 상승 유도, -1: 하락 유도)
+     */
+    private fun applyForcedReversion(direction: Int) {
+        reversionActive = true
+        reversionDirection = direction
+        // 강제 반동은 더 오래 지속
+        reversionRemainingTicks = REVERSION_DURATION_TICKS * 2
+        
+        // 연속 변동 카운터 초기화
+        consecutiveMovesInSameDirection = 0
+    }
+
+    /**
+     * 활성화된 반동 효과를 적용하여 변동률을 조정합니다.
+     */
+    private fun applyActiveReversion(minChangePercent: Double, maxChangePercent: Double): Pair<Double, Double> {
+        when (reversionDirection) {
+            1 -> { // 상승 유도 (연속 하락 후)
+                // 상승 강화, 하락 약화 전략 적용
+                // 음수인 최소값(하락)은 절대값을 줄임
+                val newMin = if (minChangePercent < 0) minChangePercent * REVERSION_DOWN_MULTIPLIER else minChangePercent
+                // 양수인 최대값(상승)은 증가
+                val newMax = if (maxChangePercent > 0) maxChangePercent * REVERSION_UP_MULTIPLIER else maxChangePercent
+                
+                return Pair(minOf(newMin, newMax), maxOf(newMin, newMax))  // 크기 순서 보장
+            }
+            -1 -> { // 하락 유도 (연속 상승 후)
+                // 하락 강화, 상승 약화 전략 적용
+                // 음수인 최소값(하락)은 절대값을 키움
+                val newMin = if (minChangePercent < 0) minChangePercent * REVERSION_UP_MULTIPLIER else minChangePercent
+                // 양수인 최대값(상승)은 줄임
+                val newMax = if (maxChangePercent > 0) maxChangePercent * REVERSION_DOWN_MULTIPLIER else maxChangePercent
+                
+                return Pair(minOf(newMin, newMax), maxOf(newMin, newMax))  // 크기 순서 보장
+            }
+            else -> return Pair(minChangePercent, maxChangePercent)
+        }
     }
 
     /**
@@ -327,11 +483,19 @@ data class Stock(
      */
     fun resetPrice(initialPrice: Int) {
         price = initialPrice
+        this.initialPrice = initialPrice  // 기준 가격 업데이트
         changeValue = 0
         changeRate = 0.0
         priceHistory.clear()
         priceHistory.add(price)
         trendStrength = 0.0  // 추세 초기화
+        
+        // 반동 관련 필드 초기화
+        reversionActive = false
+        reversionDirection = 0
+        reversionRemainingTicks = 0
+        consecutiveMovesInSameDirection = 0
+        lastMoveDirection = 0
         
         // 가격에 따른 변동성 재설정
         volatility = when {
