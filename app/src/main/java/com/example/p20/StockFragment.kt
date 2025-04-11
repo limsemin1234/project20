@@ -89,6 +89,9 @@ class StockFragment : BaseFragment() {
         
         // 화면 전환 후 다시 돌아왔을 때 수량 초기화
         resetSelectedQuantity()
+        
+        // 기능 설명 업데이트
+        updateImplementedFeatures()
     }
     
     override fun onResume() {
@@ -311,6 +314,21 @@ class StockFragment : BaseFragment() {
         
         val updatedText = "$baseText\n- ${features.joinToString("\n- ")}"
         featuresInfoText.text = updatedText
+    }
+    
+    /**
+     * 구현된 기능 목록을 업데이트합니다.
+     */
+    private fun updateImplementedFeatures() {
+        // 기존 기능 텍스트 업데이트
+        featuresInfoText.text = "📌 구현 기능:\n" +
+            "- 주식 가격 변동: 랜덤 변동과 추세 기반 알고리즘 조합으로 더 현실적인 가격 변화\n" +
+            "- 종목별 특성: 종목마다 다른 변동성 특성 (안정형 ~ 투기형)\n" +
+            "- 추세 분석: 최근 가격 이력 기반 상승/하락 추세 반영\n" +
+            "- 종목별 대비/등락률 표시: 오늘 시작가 대비 가격 변동 표시\n" +
+            "- 호재 이벤트: 30초마다 30% 확률로 2개 주식에 호재 발생 (20초간 상승만 함)\n" +
+            "- 악제 이벤트: 30초마다 30% 확률로 2개 주식에 악제 발생 (20초간 하락만 함)\n" +
+            "- 주식 거래 수량 선택: 버튼을 여러 번 눌러 주식 수량 추가 선택 가능"
     }
     
     override fun onDestroy() {

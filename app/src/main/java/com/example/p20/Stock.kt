@@ -1,6 +1,8 @@
 package com.example.p20
 
+import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
+import kotlin.math.sign
 import kotlin.random.Random
 
 data class Stock(
@@ -11,9 +13,47 @@ data class Stock(
     var holding: Int,        // 보유량
     val purchasePrices: MutableList<Int> = mutableListOf(), // 매입 가격 리스트
     var isPositiveNews: Boolean = false, // 호재 영향 여부
-    var isNegativeNews: Boolean = false  // 악제 영향 여부
+    var isNegativeNews: Boolean = false, // 악제 영향 여부
+    
+    // 향상된 가격 변동 알고리즘을 위한 추가 필드
+    val priceHistory: MutableList<Int> = mutableListOf(), // 가격 변동 이력
+    var trendStrength: Double = 0.0,     // 현재 추세 강도 (-1.0 ~ 1.0)
+    var volatility: Double = 1.0         // 기본 변동성 계수
 ) {
+    // 이력 최대 크기
+    private val MAX_HISTORY_SIZE = 30
+    
+    // 추세 영향력 가중치 (0.0 ~ 1.0)
+    private val TREND_WEIGHT = 0.4
+    
+    // 랜덤 변동 가중치
+    private val RANDOM_WEIGHT = 0.6
+    
+    init {
+        // 초기 가격을 이력에 추가
+        priceHistory.add(price)
+        
+        // 주식별 기본 변동성 설정
+        volatility = when(name) {
+            "만원" -> 0.8    // 안정적
+            "이만" -> 0.9    // 약간 안정적
+            "오만" -> 1.0    // 보통
+            "십만" -> 1.1    // 약간 변동이 큼
+            "이십만" -> 1.3  // 변동이 매우 큼
+            else -> 1.0
+        }
+    }
+    
     fun updateChangeValue() {
+        // 가격을 이력에 추가
+        priceHistory.add(price)
+        if (priceHistory.size > MAX_HISTORY_SIZE) {
+            priceHistory.removeAt(0)
+        }
+        
+        // 현재 추세 계산
+        calculateTrend()
+        
         val minChangePercent: Double
         val maxChangePercent: Double
         
@@ -21,20 +61,34 @@ data class Stock(
         when {
             isPositiveNews -> {
                 minChangePercent = 0.01 // 최소 0.01% 상승
-                maxChangePercent = 0.10 // 최대 0.10% 상승
+                maxChangePercent = 0.05 // 최대 0.05% 상승 (기존 0.10%에서 수정)
             }
             isNegativeNews -> {
-                minChangePercent = -0.10 // 최소 0.10% 하락
+                minChangePercent = -0.05 // 최소 0.05% 하락 (기존 -0.10%에서 수정)
                 maxChangePercent = -0.01 // 최대 0.01% 하락
             }
             else -> {
-                minChangePercent = -0.04
-                maxChangePercent = 0.045
+                // 기본 변동 범위 (-0.02% ~ 0.025%) (기존 -0.04% ~ 0.045%에서 수정)
+                minChangePercent = -0.02
+                maxChangePercent = 0.025
             }
         }
         
+        // 랜덤 변동 요소 계산
         val randomPercent = (minChangePercent..maxChangePercent).random()
-        val calculatedChange = (price * randomPercent / 100.0).roundToInt() * 100
+        
+        // 추세 요소 (trendStrength는 -1.0 ~ 1.0 사이)
+        // 양수면 상승 추세, 음수면 하락 추세, 0에 가까울수록 약한 추세
+        val trendPercent = trendStrength * 0.04 // 추세 크기 조정
+        
+        // 최종 변동률 계산 (랜덤 요소 + 추세 요소)
+        val finalChangePercent = (randomPercent * RANDOM_WEIGHT) + (trendPercent * TREND_WEIGHT)
+        
+        // 변동성 적용
+        val adjustedChangePercent = finalChangePercent * volatility
+        
+        // 변동값 계산
+        val calculatedChange = (price * adjustedChangePercent / 100.0).roundToInt() * 100
         changeValue = calculatedChange
 
         if (changeValue == 0 && price >= 1000) {
@@ -47,6 +101,35 @@ data class Stock(
         }
 
         updatePriceAndChangeValue()
+    }
+
+    /**
+     * 과거 가격 이력을 기반으로 현재 추세 강도와 방향을 계산합니다.
+     * trendStrength 값은 -1.0 (강한 하락 추세) ~ 1.0 (강한 상승 추세) 범위입니다.
+     */
+    private fun calculateTrend() {
+        if (priceHistory.size < 3) return
+        
+        // 단기 추세 (최근 5개 또는 전체 이력)
+        val shortTermSize = minOf(5, priceHistory.size - 1)
+        var shortTermTrend = 0.0
+        
+        // 최근 변동들에 가중치를 부여 (최근 변동에 더 높은 가중치)
+        for (i in 1..shortTermSize) {
+            val idx = priceHistory.size - i
+            val prevIdx = priceHistory.size - i - 1
+            val change = priceHistory[idx] - priceHistory[prevIdx]
+            
+            // 변동의 방향(sign)과 크기를 고려, 최근 변동에 더 높은 가중치 부여
+            val weight = (shortTermSize - i + 1.0) / shortTermSize
+            shortTermTrend += change.sign * weight * (change.absoluteValue / 1000.0)
+        }
+        
+        // 추세 강도 정규화 (-1.0 ~ 1.0 범위로)
+        shortTermTrend = shortTermTrend.coerceIn(-1.0, 1.0)
+        
+        // 추세 강도를 업데이트 (기존 추세에 약간의 관성 부여)
+        trendStrength = (trendStrength * 0.7) + (shortTermTrend * 0.3)
     }
 
     private fun updatePriceAndChangeValue() {

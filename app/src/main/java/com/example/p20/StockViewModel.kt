@@ -254,8 +254,24 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
             editor.putInt("price_$index", stock.price)
             editor.putInt("holding_$index", stock.holding)
             editor.putInt("purchasePrice_$index", stock.getAvgPurchasePrice())
-            editor.putInt("profitLoss_$index", stock.getProfitLoss())
-            editor.putFloat("profitRate_$index", stock.getProfitRate().toFloat())
+            
+            // 호재/악제 상태 저장
+            editor.putBoolean("isPositiveNews_$index", stock.isPositiveNews)
+            editor.putBoolean("isNegativeNews_$index", stock.isNegativeNews)
+            
+            // 추세 관련 데이터 저장
+            editor.putFloat("trendStrength_$index", stock.trendStrength.toFloat())
+            editor.putFloat("volatility_$index", stock.volatility.toFloat())
+            
+            // 가격 이력은 최대 5개만 저장 (효율성을 위해)
+            val historySize = minOf(5, stock.priceHistory.size)
+            editor.putInt("historySize_$index", historySize)
+            for (i in 0 until historySize) {
+                val historyIdx = stock.priceHistory.size - historySize + i
+                if (historyIdx >= 0 && historyIdx < stock.priceHistory.size) {
+                    editor.putInt("priceHistory_${index}_$i", stock.priceHistory[historyIdx])
+                }
+            }
         }
         editor.apply()
     }
@@ -264,10 +280,36 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         _stockItems.value?.forEachIndexed { index, stock ->
             stock.price = sharedPreferences.getInt("price_$index", stock.price)
             stock.holding = sharedPreferences.getInt("holding_$index", stock.holding)
+            
+            // 호재/악제 상태 로드
+            stock.isPositiveNews = sharedPreferences.getBoolean("isPositiveNews_$index", false)
+            stock.isNegativeNews = sharedPreferences.getBoolean("isNegativeNews_$index", false)
+            
+            // 추세 관련 데이터 로드
+            stock.trendStrength = sharedPreferences.getFloat("trendStrength_$index", 0f).toDouble()
+            stock.volatility = sharedPreferences.getFloat("volatility_$index", stock.volatility.toFloat()).toDouble()
+            
+            // 가격 이력 로드
+            val historySize = sharedPreferences.getInt("historySize_$index", 0)
+            stock.priceHistory.clear()
+            // 항상 현재 가격은 이력에 포함
+            stock.priceHistory.add(stock.price)
+            
+            // 저장된 이력 로드
+            for (i in 0 until historySize) {
+                val historyPrice = sharedPreferences.getInt("priceHistory_${index}_$i", 0)
+                if (historyPrice > 0 && historyPrice != stock.price) {
+                    stock.priceHistory.add(historyPrice)
+                }
+            }
+            
+            // 보유량이 있는 경우 매입가격 설정
             stock.purchasePrices.clear()
             val savedPurchasePrice = sharedPreferences.getInt("purchasePrice_$index", 0)
-            if (savedPurchasePrice > 0) {
-                stock.purchasePrices.add(savedPurchasePrice)
+            if (savedPurchasePrice > 0 && stock.holding > 0) {
+                repeat(stock.holding) {
+                    stock.purchasePrices.add(savedPurchasePrice)
+                }
             }
         }
         _stockItems.value = _stockItems.value
@@ -286,6 +328,21 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
             stock.purchasePrices.clear()
             stock.isPositiveNews = false
             stock.isNegativeNews = false
+            
+            // 추세 관련 데이터 초기화
+            stock.trendStrength = 0.0
+            stock.priceHistory.clear()
+            stock.priceHistory.add(stock.price)
+            
+            // 주식별 기본 변동성 재설정
+            stock.volatility = when(stock.name) {
+                "만원" -> 0.8
+                "이만" -> 0.9
+                "오만" -> 1.0
+                "십만" -> 1.1
+                "이십만" -> 1.3
+                else -> 1.0
+            }
         }
         saveStockData()
         _stockItems.value = _stockItems.value
