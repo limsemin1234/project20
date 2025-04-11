@@ -7,6 +7,7 @@ import android.os.Looper
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import kotlinx.coroutines.Job
 import kotlin.random.Random
 
 class StockViewModel(application: Application) : AndroidViewModel(application) {
@@ -59,31 +60,33 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun startStockPriceUpdates() {
-        handler.post(object : Runnable {
+        val updateRunnable = object : Runnable {
             override fun run() {
                 updateStockPrices()
                 handler.postDelayed(this, updateInterval)
             }
-        })
+        }
+        handler.post(updateRunnable)
     }
     
     private fun startPositiveNewsCheck() {
-        handler.postDelayed(object : Runnable {
+        val positiveNewsRunnable = object : Runnable {
             override fun run() {
                 checkForPositiveNews()
                 handler.postDelayed(this, positiveNewsInterval)
             }
-        }, positiveNewsInterval)
+        }
+        handler.postDelayed(positiveNewsRunnable, positiveNewsInterval / 2) // 처음 시작 시 지연
     }
     
     private fun startNegativeNewsCheck() {
-        // 호재 이벤트와 시간차를 두고 체크하기 위해 15초 딜레이 후 시작
-        handler.postDelayed(object : Runnable {
+        val negativeNewsRunnable = object : Runnable {
             override fun run() {
                 checkForNegativeNews()
                 handler.postDelayed(this, negativeNewsInterval)
             }
-        }, negativeNewsInterval / 2) // 15초 후 시작하여 30초마다 체크
+        }
+        handler.postDelayed(negativeNewsRunnable, positiveNewsInterval) // 호재 이벤트와 시간차를 두기 위한 지연
     }
     
     private fun checkForPositiveNews() {
@@ -201,6 +204,34 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     fun sellStock(stock: Stock) {
         stock.sellStock()
         saveStockData()
+    }
+
+    /**
+     * 지정된 수량만큼 주식을 매수합니다.
+     * @param stock 매수할 주식
+     * @param quantity 매수할 수량
+     * @return 실제로 매수한 수량
+     */
+    fun buyStocks(stock: Stock, quantity: Int): Int {
+        val buyCount = stock.buyStocks(quantity)
+        if (buyCount > 0) {
+            saveStockData()
+        }
+        return buyCount
+    }
+
+    /**
+     * 지정된 수량만큼 주식을 매도합니다.
+     * @param stock 매도할 주식
+     * @param quantity 매도할 수량
+     * @return 실제로 매도한 수량
+     */
+    fun sellStocks(stock: Stock, quantity: Int): Int {
+        val sellCount = stock.sellStocks(quantity)
+        if (sellCount > 0) {
+            saveStockData()
+        }
+        return sellCount
     }
 
     fun buyAllStock(stock: Stock, currentAsset: Long): Int {

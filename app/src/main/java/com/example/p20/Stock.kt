@@ -53,7 +53,8 @@ data class Stock(
         val oldPrice = price
         price += changeValue
         price = maxOf(price, 10)
-        changeRate = ((changeValue.toDouble() / oldPrice) * 100)
+        // 0으로 나누기 방지
+        changeRate = if (oldPrice > 0) ((changeValue.toDouble() / oldPrice) * 100) else 0.0
     }
 
     fun getAvgPurchasePrice(): Int {
@@ -83,6 +84,21 @@ data class Stock(
         updateAveragePurchasePrice()
     }
 
+    /**
+     * 지정된 수량만큼 주식을 매수합니다.
+     * @param quantity 매수할 주식의 수량
+     * @return 실제로 매수한 주식의 수량
+     */
+    fun buyStocks(quantity: Int): Int {
+        if (quantity <= 0) return 0
+        repeat(quantity) {
+            purchasePrices.add(price)
+        }
+        holding += quantity
+        updateAveragePurchasePrice()
+        return quantity
+    }
+
     fun sellStock(): Int {
         if (holding > 0) {
             holding -= 1
@@ -93,6 +109,31 @@ data class Stock(
             return price - avgPurchasePrice
         }
         return 0
+    }
+
+    /**
+     * 지정된 수량만큼 주식을 매도합니다.
+     * @param quantity 매도할 주식의 수량
+     * @return 실제로 매도한 주식의 수량
+     */
+    fun sellStocks(quantity: Int): Int {
+        if (quantity <= 0) return 0
+        
+        // 보유량보다 많이 매도할 수 없음
+        val sellCount = minOf(quantity, holding)
+        
+        // 평균 매입가 계산
+        val avgPurchasePrice = getAvgPurchasePrice()
+        
+        // 보유량 감소
+        holding -= sellCount
+        
+        // 보유량이 0이 되면 매입 이력 초기화
+        if (holding == 0) {
+            purchasePrices.clear()
+        }
+        
+        return sellCount
     }
 
     fun buyAllStock(currentAsset: Long): Int {

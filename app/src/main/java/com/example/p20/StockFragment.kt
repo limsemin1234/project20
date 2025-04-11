@@ -26,6 +26,7 @@ class StockFragment : BaseFragment() {
     private lateinit var featuresInfoText: TextView
 
     private var selectedStock: Stock? = null
+    private var selectedQuantity: Int = 1  // 기본 수량을 1로 설정
 
     private lateinit var stockViewModel: StockViewModel
     private var stockItems: List<Stock> = listOf()
@@ -35,11 +36,21 @@ class StockFragment : BaseFragment() {
     private var profitRateData: TextView? = null
     private var stockQuantityData: TextView? = null
     private var selectedStockName: TextView? = null
+    private var selectedQuantityText: TextView? = null  // 선택된 수량을 표시할 TextView
 
     private var isPositiveNewsFeatureAdded = false
     private var isNegativeNewsFeatureAdded = false
 
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+
+    // 수량 버튼 참조 변수
+    private lateinit var quantityBtn1: Button
+    private lateinit var quantityBtn5: Button
+    private lateinit var quantityBtn10: Button
+    private lateinit var quantityBtn20: Button
+    private lateinit var quantityBtn50: Button
+    private lateinit var quantityBtn100: Button
+    private lateinit var resetQuantityBtn: Button
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -87,6 +98,19 @@ class StockFragment : BaseFragment() {
         val buyAllButton: Button = view.findViewById(R.id.buyAllButton)
         val sellAllButton: Button = view.findViewById(R.id.sellAllButton)
 
+        // 수량 버튼 찾기
+        quantityBtn1 = view.findViewById(R.id.quantityBtn1)
+        quantityBtn5 = view.findViewById(R.id.quantityBtn5)
+        quantityBtn10 = view.findViewById(R.id.quantityBtn10)
+        quantityBtn20 = view.findViewById(R.id.quantityBtn20)
+        quantityBtn50 = view.findViewById(R.id.quantityBtn50)
+        quantityBtn100 = view.findViewById(R.id.quantityBtn100)
+        resetQuantityBtn = view.findViewById(R.id.resetQuantityBtn)
+        selectedQuantityText = view.findViewById(R.id.selectedQuantityText)
+
+        // 수량 텍스트 초기화
+        updateSelectedQuantityText()
+
         avgPurchasePriceData = view.findViewById(R.id.avgPurchasePriceData)
         profitLossData = view.findViewById(R.id.profitLossData)
         profitRateData = view.findViewById(R.id.profitRateData)
@@ -100,32 +124,39 @@ class StockFragment : BaseFragment() {
         }
         stockRecyclerView.adapter = stockAdapter
 
+        // 수량 버튼 클릭 리스너 설정
+        setupQuantityButtons()
+
         buyButton.setOnClickListener {
             selectedStock?.let {
                 val currentAsset = assetViewModel.asset.value ?: 0L
-                if (currentAsset >= it.price.toLong()) {
-                    assetViewModel.decreaseAsset(it.price.toLong())
-                    stockViewModel.buyStock(it)
-                    showMessage("${it.name}을(를) 매수했습니다! 보유량: ${it.holding}주")
+                val totalCost = it.price.toLong() * selectedQuantity
+                
+                if (currentAsset >= totalCost) {
+                    // 다수의 주식 매수 메소드 사용
+                    val buyCount = stockViewModel.buyStocks(it, selectedQuantity)
+                    assetViewModel.decreaseAsset(totalCost)
+                    showMessage("${it.name}을(를) ${buyCount}주 매수했습니다! 보유량: ${it.holding}주")
                     stockAdapter.notifyDataSetChanged()
                     updateStockDetails(it) // 주식 상세 정보 업데이트
                 } else {
-                    showErrorMessage("자산이 부족합니다!")
+                    showErrorMessage("자산이 부족합니다! 필요 금액: ${formatCurrency(totalCost)}")
                 }
             } ?: showMessage("주식을 선택하세요.")
         }
 
         sellButton.setOnClickListener {
             selectedStock?.let {
-                if (it.holding > 0) {
-                    stockViewModel.sellStock(it)
-                    assetViewModel.increaseAsset(it.price.toLong())
-                    val profitLoss = it.getProfitLoss()
-                    showMessage("${it.name} 매도! 손익: ${profitLoss}원")
+                if (it.holding >= selectedQuantity) {
+                    // 다수의 주식 매도 메소드 사용
+                    val sellCount = stockViewModel.sellStocks(it, selectedQuantity)
+                    val totalGain = it.price.toLong() * sellCount
+                    assetViewModel.increaseAsset(totalGain)
+                    showMessage("${it.name} ${sellCount}주 매도! 총액: ${formatCurrency(totalGain)}원")
                     stockAdapter.notifyDataSetChanged()
                     updateStockDetails(it) // 주식 상세 정보 업데이트
                 } else {
-                    showErrorMessage("보유한 주식이 없습니다!")
+                    showErrorMessage("보유한 주식이 부족합니다! 현재 보유량: ${it.holding}주")
                 }
             } ?: showMessage("주식을 선택하세요.")
         }
@@ -160,6 +191,49 @@ class StockFragment : BaseFragment() {
                 }
             } ?: showMessage("주식을 선택하세요.")
         }
+    }
+
+    // 수량 버튼 설정
+    private fun setupQuantityButtons() {
+        quantityBtn1.setOnClickListener { 
+            selectedQuantity += 1
+            updateSelectedQuantityText()
+        }
+        
+        quantityBtn5.setOnClickListener { 
+            selectedQuantity += 5
+            updateSelectedQuantityText()
+        }
+        
+        quantityBtn10.setOnClickListener { 
+            selectedQuantity += 10
+            updateSelectedQuantityText()
+        }
+        
+        quantityBtn20.setOnClickListener { 
+            selectedQuantity += 20
+            updateSelectedQuantityText()
+        }
+        
+        quantityBtn50.setOnClickListener { 
+            selectedQuantity += 50
+            updateSelectedQuantityText()
+        }
+        
+        quantityBtn100.setOnClickListener { 
+            selectedQuantity += 100
+            updateSelectedQuantityText()
+        }
+        
+        resetQuantityBtn.setOnClickListener {
+            selectedQuantity = 0
+            updateSelectedQuantityText()
+        }
+    }
+
+    // 선택된 수량 텍스트 업데이트
+    private fun updateSelectedQuantityText() {
+        selectedQuantityText?.text = "$selectedQuantity 주"
     }
 
     private fun updateStockList(updatedStockList: List<Stock>) {

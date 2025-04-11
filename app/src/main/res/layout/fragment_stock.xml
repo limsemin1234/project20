@@ -243,6 +243,136 @@
 
         </LinearLayout>
 
+        <!-- 거래 수량 선택 섹션 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/stock_details_border"
+            android:padding="8dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp">
+
+            <!-- 수량 선택 제목 및 선택된 수량 표시 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔢 거래 수량 선택"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/black" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/selectedQuantityText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="1 주"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#FF5722"
+                    android:background="@drawable/stock_details_border"
+                    android:padding="5dp"
+                    android:layout_marginEnd="5dp" />
+
+                <Button
+                    android:id="@+id/resetQuantityBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:text="초기화"
+                    android:textSize="12sp"
+                    android:backgroundTint="@color/stock_button" />
+            </LinearLayout>
+
+            <!-- 수량 버튼 첫 번째 줄 (1, 5, 10) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <Button
+                    android:id="@+id/quantityBtn1"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:layout_margin="2dp"
+                    android:text="+1주"
+                    android:textSize="12sp"
+                    android:backgroundTint="@color/stock_button" />
+
+                <Button
+                    android:id="@+id/quantityBtn5"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:layout_margin="2dp"
+                    android:text="+5주"
+                    android:textSize="12sp"
+                    android:backgroundTint="@color/stock_button" />
+
+                <Button
+                    android:id="@+id/quantityBtn10"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:layout_margin="2dp"
+                    android:text="+10주"
+                    android:textSize="12sp"
+                    android:backgroundTint="@color/stock_button" />
+            </LinearLayout>
+
+            <!-- 수량 버튼 두 번째 줄 (20, 50, 100) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="4dp">
+
+                <Button
+                    android:id="@+id/quantityBtn20"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:layout_margin="2dp"
+                    android:text="+20주"
+                    android:textSize="12sp"
+                    android:backgroundTint="@color/stock_button" />
+
+                <Button
+                    android:id="@+id/quantityBtn50"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:layout_margin="2dp"
+                    android:text="+50주"
+                    android:textSize="12sp"
+                    android:backgroundTint="@color/stock_button" />
+
+                <Button
+                    android:id="@+id/quantityBtn100"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:layout_margin="2dp"
+                    android:text="+100주"
+                    android:textSize="12sp"
+                    android:backgroundTint="@color/stock_button" />
+            </LinearLayout>
+        </LinearLayout>
+
         <!-- 매수 및 매도 버튼 -->
         <LinearLayout
             android:layout_width="match_parent"
@@ -310,7 +440,7 @@
             android:layout_marginBottom="8dp"
             android:background="#CC000000"
             android:padding="8dp"
-            android:text="📌 구현 기능:\n- 주식 가격 변동: 3초마다 -0.04%~+0.045% 범위에서 랜덤하게 변경\n- 종목별 대비/등락률 표시: 오늘 시작가 대비 가격 변동 표시\n- 호재 이벤트: 30초마다 30% 확률로 2개 주식에 호재 발생 (20초간 상승만 함)\n- 악제 이벤트: 30초마다 30% 확률로 2개 주식에 악제 발생 (20초간 하락만 함)"
+            android:text="📌 구현 기능:\n- 주식 가격 변동: 3초마다 -0.04%~+0.045% 범위에서 랜덤하게 변경\n- 종목별 대비/등락률 표시: 오늘 시작가 대비 가격 변동 표시\n- 호재 이벤트: 30초마다 30% 확률로 2개 주식에 호재 발생 (20초간 상승만 함)\n- 악제 이벤트: 30초마다 30% 확률로 2개 주식에 악제 발생 (20초간 하락만 함)\n- 주식 거래 수량 선택: 버튼을 여러 번 눌러 주식 수량 추가 선택 가능"
             android:textColor="#E0E0E0"
             android:textSize="12sp" />
     </LinearLayout>
