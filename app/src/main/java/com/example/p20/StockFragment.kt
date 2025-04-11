@@ -26,7 +26,7 @@ class StockFragment : BaseFragment() {
     private lateinit var featuresInfoText: TextView
 
     private var selectedStock: Stock? = null
-    private var selectedQuantity: Int = 1  // 기본 수량을 1로 설정
+    private var selectedQuantity: Int = 0  // 기본 수량을 0으로 설정
 
     private lateinit var stockViewModel: StockViewModel
     private var stockItems: List<Stock> = listOf()
@@ -86,6 +86,15 @@ class StockFragment : BaseFragment() {
         }
 
         setupUI(view)
+        
+        // 화면 전환 후 다시 돌아왔을 때 수량 초기화
+        resetSelectedQuantity()
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        // 화면으로 돌아올 때 수량 초기화
+        resetSelectedQuantity()
     }
     
     private fun setupUI(view: View) {
@@ -132,6 +141,11 @@ class StockFragment : BaseFragment() {
                 val currentAsset = assetViewModel.asset.value ?: 0L
                 val totalCost = it.price.toLong() * selectedQuantity
                 
+                if (selectedQuantity <= 0) {
+                    showErrorMessage("거래 수량을 선택해주세요.")
+                    return@setOnClickListener
+                }
+                
                 if (currentAsset >= totalCost) {
                     // 다수의 주식 매수 메소드 사용
                     val buyCount = stockViewModel.buyStocks(it, selectedQuantity)
@@ -139,6 +153,7 @@ class StockFragment : BaseFragment() {
                     showMessage("${it.name}을(를) ${buyCount}주 매수했습니다! 보유량: ${it.holding}주")
                     stockAdapter.notifyDataSetChanged()
                     updateStockDetails(it) // 주식 상세 정보 업데이트
+                    resetSelectedQuantity() // 거래 후 수량 초기화
                 } else {
                     showErrorMessage("자산이 부족합니다! 필요 금액: ${formatCurrency(totalCost)}")
                 }
@@ -147,6 +162,11 @@ class StockFragment : BaseFragment() {
 
         sellButton.setOnClickListener {
             selectedStock?.let {
+                if (selectedQuantity <= 0) {
+                    showErrorMessage("거래 수량을 선택해주세요.")
+                    return@setOnClickListener
+                }
+                
                 if (it.holding >= selectedQuantity) {
                     // 다수의 주식 매도 메소드 사용
                     val sellCount = stockViewModel.sellStocks(it, selectedQuantity)
@@ -155,6 +175,7 @@ class StockFragment : BaseFragment() {
                     showMessage("${it.name} ${sellCount}주 매도! 총액: ${formatCurrency(totalGain)}원")
                     stockAdapter.notifyDataSetChanged()
                     updateStockDetails(it) // 주식 상세 정보 업데이트
+                    resetSelectedQuantity() // 거래 후 수량 초기화
                 } else {
                     showErrorMessage("보유한 주식이 부족합니다! 현재 보유량: ${it.holding}주")
                 }
@@ -171,6 +192,7 @@ class StockFragment : BaseFragment() {
                     showMessage("${stock.name}을(를) ${buyCount}주 전체 매수했습니다!")
                     stockAdapter.notifyDataSetChanged()
                     updateStockDetails(stock) // 주식 상세 정보 업데이트
+                    resetSelectedQuantity() // 거래 후 수량 초기화
                 } else {
                     showErrorMessage("자산이 부족합니다!")
                 }
@@ -186,6 +208,7 @@ class StockFragment : BaseFragment() {
                     showMessage("${stock.name} ${sellCount}주 전체 매도 완료!")
                     stockAdapter.notifyDataSetChanged()
                     updateStockDetails(stock) // 주식 상세 정보 업데이트
+                    resetSelectedQuantity() // 거래 후 수량 초기화
                 } else {
                     showErrorMessage("보유한 주식이 없습니다!")
                 }
@@ -226,14 +249,19 @@ class StockFragment : BaseFragment() {
         }
         
         resetQuantityBtn.setOnClickListener {
-            selectedQuantity = 0
-            updateSelectedQuantityText()
+            resetSelectedQuantity()
         }
     }
 
     // 선택된 수량 텍스트 업데이트
     private fun updateSelectedQuantityText() {
         selectedQuantityText?.text = "$selectedQuantity 주"
+    }
+    
+    // 선택된 수량을 0으로 초기화
+    private fun resetSelectedQuantity() {
+        selectedQuantity = 0
+        updateSelectedQuantityText()
     }
 
     private fun updateStockList(updatedStockList: List<Stock>) {
@@ -250,7 +278,7 @@ class StockFragment : BaseFragment() {
         profitLossData?.setTextColor(getChangeColor(profitLoss))
         
         val profitRate = stock.getProfitRate()
-        profitRateData?.text = formatPercent(profitRate / 100)
+        profitRateData?.text = formatPercent(profitRate)
         profitRateData?.setTextColor(getChangeColor(profitLoss))
         
         stockQuantityData?.text = "${stock.holding}주"

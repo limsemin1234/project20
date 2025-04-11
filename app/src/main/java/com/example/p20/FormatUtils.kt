@@ -78,7 +78,7 @@ object FormatUtils {
      */
     fun formatPercent(value: Double): String {
         val sign = if (value >= 0) "+" else ""
-        return "$sign${(value * 100).roundToInt() / 10.0}%"
+        return "$sign${Math.round(value * 10) / 10.0}%"
     }
     
     /**

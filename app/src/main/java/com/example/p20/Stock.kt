@@ -57,31 +57,45 @@ data class Stock(
         changeRate = if (oldPrice > 0) ((changeValue.toDouble() / oldPrice) * 100) else 0.0
     }
 
+    /**
+     * 매입 평균 가격을 계산합니다.
+     * @return 평균 매입 가격, 매입 내역이 없을 경우 0 반환
+     */
     fun getAvgPurchasePrice(): Int {
         return if (purchasePrices.isNotEmpty()) purchasePrices.average().toInt() else 0
     }
 
+    /**
+     * 전체 손익을 계산합니다.
+     * @return 손익 금액 (현재가 - 매입가) × 보유량
+     */
     fun getProfitLoss(): Int {
         val avgPurchasePrice = getAvgPurchasePrice()
         return if (holding > 0) (price - avgPurchasePrice) * holding else 0
     }
 
+    /**
+     * 수익률을 계산합니다.
+     * @return 수익률(%) = (손익 / 총 투자금액) × 100
+     */
     fun getProfitRate(): Double {
-        return if (purchasePrices.isNotEmpty()) {
-            (getProfitLoss().toDouble() / (getAvgPurchasePrice() * holding)) * 100
-        } else 0.0
-    }
-
-    private fun updateAveragePurchasePrice() {
-        if (purchasePrices.isNotEmpty()) {
-            val avgPrice = purchasePrices.average().toInt()
+        val avgPrice = getAvgPurchasePrice()
+        val totalInvestment = avgPrice * holding
+        
+        // 0으로 나누기 방지 및 보유량이 0인 경우 체크
+        return if (holding > 0 && avgPrice > 0 && totalInvestment > 0) {
+            (getProfitLoss().toDouble() / totalInvestment) * 100
+        } else {
+            0.0
         }
     }
 
+    /**
+     * 1주 매수합니다.
+     */
     fun buyStock() {
         holding += 1
         purchasePrices.add(price)
-        updateAveragePurchasePrice()
     }
 
     /**
@@ -95,20 +109,26 @@ data class Stock(
             purchasePrices.add(price)
         }
         holding += quantity
-        updateAveragePurchasePrice()
         return quantity
     }
 
+    /**
+     * 1주 매도합니다.
+     * @return 매도 손익 (현재가 - 평균 매입가)
+     */
     fun sellStock(): Int {
-        if (holding > 0) {
-            holding -= 1
-            val avgPurchasePrice = getAvgPurchasePrice()
-            if (holding == 0) {
-                purchasePrices.clear()
-            }
-            return price - avgPurchasePrice
+        if (holding <= 0) return 0
+        
+        val avgPurchasePrice = getAvgPurchasePrice()
+        
+        // 보유량이 감소하면 매입 내역에서 가장 오래된 매입 기록을 제거
+        if (purchasePrices.isNotEmpty()) {
+            purchasePrices.removeAt(0)
         }
-        return 0
+        
+        holding -= 1
+        
+        return price - avgPurchasePrice
     }
 
     /**
@@ -125,30 +145,44 @@ data class Stock(
         // 평균 매입가 계산
         val avgPurchasePrice = getAvgPurchasePrice()
         
+        // 매도 시 매입 내역에서 가장 오래된 것부터 제거
+        repeat(sellCount) {
+            if (purchasePrices.isNotEmpty()) {
+                purchasePrices.removeAt(0)
+            }
+        }
+        
         // 보유량 감소
         holding -= sellCount
-        
-        // 보유량이 0이 되면 매입 이력 초기화
-        if (holding == 0) {
-            purchasePrices.clear()
-        }
         
         return sellCount
     }
 
+    /**
+     * 가능한 모든 주식을 현재 자산으로 매수합니다.
+     * @param currentAsset 현재 가용 자산
+     * @return 매수한 주식의 수량
+     */
     fun buyAllStock(currentAsset: Long): Int {
         val maxBuyCount = (currentAsset / price).toInt()
-        repeat(maxBuyCount) {
-            buyStock()
-        }
+        if (maxBuyCount <= 0) return 0
+        
+        // 효율성을 위해 반복문 대신 한 번에 처리
+        val newPurchases = List(maxBuyCount) { price }
+        purchasePrices.addAll(newPurchases)
+        holding += maxBuyCount
+        
         return maxBuyCount
     }
 
+    /**
+     * 보유한 모든 주식을 매도합니다.
+     * @return 매도한 주식의 수량
+     */
     fun sellAllStock(): Int {
         val sellCount = holding
-        repeat(sellCount) {
-            sellStock()
-        }
+        holding = 0
+        purchasePrices.clear()  // 모든 매입 내역 삭제
         return sellCount
     }
 }
