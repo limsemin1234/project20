@@ -278,7 +278,7 @@
                     android:id="@+id/selectedQuantityText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="1 주"
+                    android:text="0 주"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:textColor="#FF5722"
