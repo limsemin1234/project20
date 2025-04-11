@@ -147,17 +147,106 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     
     // 새 이벤트 시스템 콜백
     private var eventCallback: ((StockEvent) -> Unit)? = null
+    
+    // 가능한 주식 종목 리스트
+    private val availableStocks = listOf(
+        // 대형주
+        StockInfo("강룡전자", 65000, "대형주"),
+        StockInfo("천마반도", 120000, "대형주"),
+        StockInfo("용마에너지", 450000, "대형주"),
+        StockInfo("청룡바이오", 50000, "대형주"),
+        StockInfo("봉황통신", 180000, "대형주"),
+        StockInfo("백호전기", 180000, "대형주"),
+        StockInfo("청솔모바일", 80000, "대형주"),
+        StockInfo("태양기술", 300000, "대형주"),
+        StockInfo("명월금융", 54000, "대형주"),
+        StockInfo("천일건설", 38000, "대형주"),
+        
+        // 중형주
+        StockInfo("금강철강", 28000, "중형주"),
+        StockInfo("비단소재", 72000, "중형주"),
+        StockInfo("해룡조선", 150000, "중형주"),
+        StockInfo("동해화학", 220000, "중형주"),
+        StockInfo("호랑바이오", 780000, "중형주"),
+        StockInfo("산맥물산", 34000, "중형주"),
+        StockInfo("푸른에너지", 42000, "중형주"),
+        StockInfo("초록제약", 68000, "중형주"),
+        StockInfo("자연식품", 93000, "중형주"),
+        StockInfo("미래모빌", 55000, "중형주"),
+        
+        // 소형주
+        StockInfo("샛별정밀", 23000, "소형주"),
+        StockInfo("새솔기술", 48000, "소형주"),
+        StockInfo("달빛전자", 370000, "소형주"),
+        StockInfo("별빛반도", 520000, "소형주"),
+        StockInfo("바다물산", 140000, "소형주"),
+        StockInfo("구름소프트", 15000, "소형주"),
+        StockInfo("소나정보", 19000, "소형주"),
+        StockInfo("하늘통신", 27000, "소형주"),
+        StockInfo("나무소재", 32000, "소형주"),
+        StockInfo("푸름제약", 41000, "소형주")
+    )
+    
+    // 사용자가 지정한 10개의 현재가 목록
+    private val availablePrices = listOf(
+        10000, 20000, 30000, 40000, 50000, 
+        70000, 90000, 100000, 150000, 200000
+    )
+    
+    // 주식 정보 데이터 클래스
+    data class StockInfo(
+        val name: String,
+        val initialPrice: Int,
+        val category: String
+    )
 
     init {
+        // 저장된 데이터가 있는지 확인 후 초기화 진행
+        // 사용자 요청에 따라 이전 종목은 무시하고 항상 새로운 종목 생성
+        generateRandomStocks()
+        
+        initializeEventSystem()
+    }
+    
+    // 저장된 주식 데이터가 있는지 확인하는 메서드
+    private fun hasStockData(): Boolean {
+        // 첫 번째 주식의 가격과 이름 데이터가 있는지 확인
+        return sharedPreferences.contains("price_0") && sharedPreferences.contains("stockName_0")
+    }
+    
+    // 랜덤 주식 종목 생성
+    private fun generateRandomStocks() {
+        val randomStocks = availableStocks.shuffled().take(5)
+        
         _stockItems.value = mutableListOf(
-            Stock("만원", 10000, 0, 0.0, 0),
-            Stock("이만", 20000, 0, 0.0, 0),
-            Stock("오만", 50000, 0, 0.0, 0),
-            Stock("십만", 100000, 0, 0.0, 0),
-            Stock("이십만", 200000, 0, 0.0, 0)
+            Stock(randomStocks[0].name, availablePrices.random(), 0, 0.0, 0),
+            Stock(randomStocks[1].name, availablePrices.random(), 0, 0.0, 0),
+            Stock(randomStocks[2].name, availablePrices.random(), 0, 0.0, 0),
+            Stock(randomStocks[3].name, availablePrices.random(), 0, 0.0, 0),
+            Stock(randomStocks[4].name, availablePrices.random(), 0, 0.0, 0)
         )
-
-        loadStockData()
+    }
+    
+    // 재시작시 새로운 주식 종목 생성
+    fun resetStocksWithNewCompanies() {
+        // 새로운 랜덤 종목 생성
+        generateRandomStocks()
+        
+        // 기존 데이터 초기화
+        _stockItems.value?.forEach { stock ->
+            stock.resetHoldings()
+        }
+        
+        // 저장된 데이터 삭제 - 종목 데이터를 모두 삭제
+        val editor = sharedPreferences.edit()
+        editor.clear()
+        editor.apply()
+        
+        // 현재 상태 저장 (새로 생성된 종목 저장)
+        saveStockData()
+        
+        // 이벤트 시스템 재초기화
+        clearAllEvents()
         initializeEventSystem()
     }
     
@@ -560,6 +649,9 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     fun saveStockData() {
         val editor = sharedPreferences.edit()
         _stockItems.value?.forEachIndexed { index, stock ->
+            // 종목명 저장 (추가)
+            editor.putString("stockName_$index", stock.name)
+            
             editor.putInt("price_$index", stock.price)
             editor.putInt("holding_$index", stock.holding)
             editor.putInt("purchasePrice_$index", stock.getAvgPurchasePrice())
@@ -586,7 +678,16 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun loadStockData() {
+        // 주식 이름이 저장되어 있지 않은 경우 (이전 버전 호환성)
+        val hasStockNames = sharedPreferences.contains("stockName_0")
+        
         _stockItems.value?.forEachIndexed { index, stock ->
+            // 종목명 로드 (이름이 저장되어 있을 경우만)
+            if (hasStockNames) {
+                val savedName = sharedPreferences.getString("stockName_$index", stock.name) ?: stock.name
+                stock.name = savedName
+            }
+            
             stock.price = sharedPreferences.getInt("price_$index", stock.price)
             stock.holding = sharedPreferences.getInt("holding_$index", stock.holding)
             
@@ -626,46 +727,23 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
 
     fun resetStockPrices() {
         _stockItems.value?.forEach { stock ->
-            when (stock.name) {
-                "만원" -> stock.price = 10000
-                "이만" -> stock.price = 20000
-                "오만" -> stock.price = 50000
-                "십만" -> stock.price = 100000
-                "이십만" -> stock.price = 200000
-            }
-            stock.holding = 0
-            stock.purchasePrices.clear()
-            stock.isPositiveNews = false
-            stock.isNegativeNews = false
+            // 초기 가격 정보를 사용자 지정 가격 중에서 랜덤하게 선택
+            val initialPrice = availablePrices.random()
             
-            // 추세 관련 데이터 초기화
-            stock.trendStrength = 0.0
-            stock.priceHistory.clear()
-            stock.priceHistory.add(stock.price)
-            
-            // 주식별 기본 변동성 재설정
-            stock.volatility = when(stock.name) {
-                "만원" -> 0.8
-                "이만" -> 0.9
-                "오만" -> 1.0
-                "십만" -> 1.1
-                "이십만" -> 1.3
-                else -> 1.0
-            }
+            // 가격 리셋
+            stock.resetPrice(initialPrice)
         }
-        saveStockData()
+        
+        // 저장된 데이터 초기화
+        sharedPreferences.edit().clear().apply()
+        
+        // UI 업데이트
         _stockItems.value = _stockItems.value
     }
 
+    // 모든 주식 데이터 초기화 (ResetFragment에서 호출)
     fun resetStocks() {
-        _stockItems.value = mutableListOf(
-            Stock("만원", 10000, 0, 0.0, 0),
-            Stock("이만", 20000, 0, 0.0, 0),
-            Stock("오만", 50000, 0, 0.0, 0),
-            Stock("십만", 100000, 0, 0.0, 0),
-            Stock("이십만", 200000, 0, 0.0, 0)
-        )
-        saveStockData()
+        resetStocksWithNewCompanies()
     }
 
     override fun onCleared() {

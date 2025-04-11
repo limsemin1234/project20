@@ -21,19 +21,21 @@
             android:id="@+id/stockName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="0.8"
+            android:layout_weight="1.2"
             android:text="주식명"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:layout_marginEnd="8dp"
             android:textColor="@android:color/black"
-            android:gravity="start"/>
+            android:gravity="start"
+            android:maxLines="1"
+            android:ellipsize="end"/>
 
         <!-- 주식 가격 -->
         <TextView
             android:id="@+id/stockPrice"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1.4"
+            android:layout_weight="1.3"
             android:text="가격"
             android:textSize="13sp"
             android:layout_marginEnd="8dp"
@@ -45,7 +47,7 @@
             android:id="@+id/stockChangeValue"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_weight="0.9"
             android:text="변동값"
             android:textSize="13sp"
             android:layout_marginEnd="8dp"
@@ -57,7 +59,7 @@
             android:id="@+id/stockChangeRate"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_weight="0.8"
             android:text="변동률"
             android:textSize="13sp"
             android:textColor="@android:color/black"

@@ -102,6 +102,7 @@ class GameOverDialogFragment : DialogFragment() {
             // 3초 후 실행 (멤버 핸들러 사용)
             handler.postDelayed({
                 // MainActivity에 다시 시작 요청 (리셋 및 ExplanationFragment 표시 트리거)
+                resetGame()
                 timeViewModel.requestRestart()
                 // 다이얼로그 닫기
                 dismiss()
@@ -111,30 +112,7 @@ class GameOverDialogFragment : DialogFragment() {
         // 나가기 버튼 리스너
         exitButton.setOnClickListener {
             // 종료 전 데이터 리셋
-            timeViewModel.resetTimer()
-            assetViewModel.resetAssets()
-            stockViewModel.resetStocks()
-            albaViewModel.resetAlba()
-            realEstateViewModel.resetRealEstatePrices()
-            
-            // 아이템 관련 SharedPreferences 초기화
-            val itemPrefs = requireContext().getSharedPreferences("item_prefs", Context.MODE_PRIVATE)
-            val itemEditor = itemPrefs.edit()
-            
-            // 기존 데이터 모두 삭제
-            itemEditor.clear()
-            
-            // 초기 아이템 재고 설정: 각 아이템 재고는 1, 보유량은 0으로 설정
-            for (itemId in 1..3) {
-                // 아이템 재고 = 1
-                itemEditor.putInt("item_stock_$itemId", 1)
-                // 아이템 보유량 = 0
-                itemEditor.putInt("item_quantity_$itemId", 0)
-            }
-            
-            // 아이템 초기화 완료 표시
-            itemEditor.putBoolean("has_initialized_stocks", true)
-            itemEditor.apply()
+            resetGame()
             
             // 앱 종료
             requireActivity().finishAffinity()
@@ -162,5 +140,47 @@ class GameOverDialogFragment : DialogFragment() {
         // --- 수정 끝 ---
         // 배경 투명하게 설정 (선택 사항 - 레이아웃 배경 사용)
         dialog?.window?.setBackgroundDrawableResource(android.R.color.transparent)
+    }
+
+    // 게임 리셋 함수
+    private fun resetGame() {
+        // 시간 초기화
+        timeViewModel.resetTimer()
+        
+        // 자산 초기화
+        assetViewModel.resetAssets()
+        
+        // 주식 종목 새로 생성 및 초기화
+        stockViewModel.resetStocksWithNewCompanies()
+        
+        // 알바 초기화
+        albaViewModel.resetAlba()
+        
+        // 부동산 초기화
+        realEstateViewModel.resetRealEstatePrices()
+        
+        // 아이템 초기화
+        resetItems()
+    }
+    
+    // 아이템 초기화 함수
+    private fun resetItems() {
+        val itemPrefs = requireContext().getSharedPreferences("item_prefs", Context.MODE_PRIVATE)
+        val itemEditor = itemPrefs.edit()
+        
+        // 기존 데이터 모두 삭제
+        itemEditor.clear()
+        
+        // 초기 아이템 재고 설정: 각 아이템 재고는 1, 보유량은 0으로 설정
+        for (itemId in 1..3) {
+            // 아이템 재고 = 1
+            itemEditor.putInt("item_stock_$itemId", 1)
+            // 아이템 보유량 = 0
+            itemEditor.putInt("item_quantity_$itemId", 0)
+        }
+        
+        // 아이템 초기화 완료 표시
+        itemEditor.putBoolean("has_initialized_stocks", true)
+        itemEditor.apply()
     }
 } 

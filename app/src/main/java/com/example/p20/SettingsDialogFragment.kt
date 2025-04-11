@@ -121,8 +121,9 @@ class SettingsDialogFragment : DialogFragment() {
             .setTitle("게임 나가기")
             .setMessage("정말로 게임을 나가시겠습니까?")
             .setPositiveButton("예") { _, _ ->
-                // 데이터 저장 후 앱 종료
+                // 데이터 저장 후 앱 종료 (주식 데이터 초기화하지 않음)
                 (activity as? MainActivity)?.let { mainActivity ->
+                    // 현재 상태 저장만 하고 초기화하지 않음
                     mainActivity.stockViewModel.saveStockData()
                     mainActivity.assetViewModel.saveAssetToPreferences()
                     mainActivity.finishAffinity()

@@ -67,7 +67,7 @@ class ResetFragment : Fragment() {
         // 자산 초기화 버튼
         binding.resetAssetButton.setOnClickListener { // binding. 사용
             assetViewModel.resetAssets()
-            stockViewModel.resetStocks()
+            stockViewModel.resetStocksWithNewCompanies()
             albaViewModel.resetAlba()
             realEstateViewModel.resetRealEstatePrices()
             showCustomSnackbar("초기화되었습니다.")
@@ -75,8 +75,8 @@ class ResetFragment : Fragment() {
 
         // 주식 가격 초기화 버튼
         binding.resetStockButton.setOnClickListener { // binding. 사용
-            stockViewModel.resetStockPrices()
-            showCustomSnackbar("주식 가격이 초기화되었습니다.")
+            stockViewModel.resetStocksWithNewCompanies()
+            showCustomSnackbar("주식이 새로운 종목으로 변경되었습니다.")
         }
 
         // 알바 초기화 버튼

@@ -6,7 +6,7 @@ import kotlin.math.sign
 import kotlin.random.Random
 
 data class Stock(
-    val name: String,        // 주식 이름
+    var name: String,        // 주식 이름
     var price: Int,          // 주식 가격
     var changeValue: Int,    // 변동값
     var changeRate: Double,  // 변동률
@@ -36,14 +36,12 @@ data class Stock(
         // 초기 가격을 이력에 추가
         priceHistory.add(price)
         
-        // 주식별 기본 변동성 설정
-        volatility = when(name) {
-            "만원" -> 0.9    // 안정적
-            "이만" -> 0.9    // 안정적
-            "오만" -> 1.0    // 보통
-            "십만" -> 1.0    // 보통
-            "이십만" -> 1.1  // 약간 변동이 큼
-            else -> 1.0
+        // 주식별 기본 변동성 설정 - 사용자 지정 가격 범위에 맞게 조정
+        volatility = when {
+            price <= 30000 -> 0.9    // 저가주는 안정적
+            price <= 100000 -> 1.0   // 중간 가격은 보통
+            price > 100000 -> 1.1   // 고가주는 변동성 큼
+            else -> 1.0   // 기본값
         }
     }
     
@@ -308,12 +306,42 @@ data class Stock(
     }
     
     /**
+     * 보유량을 초기화합니다.
+     */
+    fun resetHoldings() {
+        holding = 0
+        purchasePrices.clear()
+        clearAllEvents()
+    }
+    
+    /**
+     * 가격을 초기 가격으로 리셋합니다.
+     * @param initialPrice 초기 가격
+     */
+    fun resetPrice(initialPrice: Int) {
+        price = initialPrice
+        changeValue = 0
+        changeRate = 0.0
+        priceHistory.clear()
+        priceHistory.add(price)
+        trendStrength = 0.0  // 추세 초기화
+        
+        // 가격에 따른 변동성 재설정
+        volatility = when {
+            price <= 30000 -> 0.9    // 저가주는 안정적
+            price <= 100000 -> 1.0   // 중간 가격은 보통
+            price > 100000 -> 1.1   // 고가주는 변동성 큼
+            else -> 1.0   // 기본값
+        }
+        
+        clearAllEvents()
+    }
+
+    /**
      * 모든 이벤트를 제거합니다.
      */
     fun clearAllEvents() {
         activeEvents.clear()
-        
-        // 이전 버전 호환성 유지
         isPositiveNews = false
         isNegativeNews = false
     }
