@@ -228,7 +228,7 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
                 stock.lastMoveDirection = 0
                 // 이벤트 초기화
                 stock.clearAllEvents()
-                // 초기 가격으로 초기화
+                // 초기 가격 저장
                 if (stock.priceHistory.isNotEmpty()) {
                     stock.initialPrice = stock.priceHistory[0]
                 } else {
@@ -251,7 +251,7 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
                 stock.lastMoveDirection = 0
                 // 이벤트 초기화
                 stock.clearAllEvents()
-                // 초기 가격으로 초기화
+                // 초기 가격 저장
                 if (stock.priceHistory.isNotEmpty()) {
                     stock.initialPrice = stock.priceHistory[0]
                 } else {
@@ -328,7 +328,7 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
             // 이벤트 초기화
             stock.clearAllEvents()
             
-            // 초기 가격으로 초기화
+            // 초기 가격 저장
             if (stock.priceHistory.isNotEmpty()) {
                 stock.initialPrice = stock.priceHistory[0]
             } else {

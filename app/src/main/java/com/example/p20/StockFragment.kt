@@ -339,17 +339,17 @@ class StockFragment : BaseFragment() {
         
         // 반동 메커니즘 설명
         infoBuilder.append("[반동 메커니즘]\n")
-        infoBuilder.append("• 같은 방향으로 3회 이상 연속 변동 시 반동 확률 발생 (기본 30%)\n")
-        infoBuilder.append("• 연속 변동 횟수가 증가할수록 반동 확률 증가\n")
-        infoBuilder.append("• 8회 이상 연속 변동 또는 가격이 초기가의 2배/1/2 도달 시 강제 반동\n")
-        infoBuilder.append("• 반동 효과 지속: 소형 15초, 중형 15초, 대형 18초\n")
-        infoBuilder.append("• 반동 효과 변동률: 최소 0.05%의 가격 변동 보장\n\n")
+        infoBuilder.append("• 같은 방향으로 5회 이상 연속 변동 시 반동 확률 발동\n")
+        infoBuilder.append("• 연속 변동 횟수별 반동 확률: 5회 50%, 6회 60%, 7회 70%, 8회 80%, 9회 90%, 10회 이상 95%\n")
+        infoBuilder.append("• 반동 효과 지속: 3~6회 가격 변동(15~30초) 랜덤 적용\n")
+        infoBuilder.append("• 상승 반동 변동률: +0.02% ~ +0.09% 범위로 가격 상승\n")
+        infoBuilder.append("• 하락 반동 변동률: -0.09% ~ -0.02% 범위로 가격 하락\n\n")
         
         infoBuilder.append("[주의사항]\n")
         infoBuilder.append("• 현재 이벤트 시스템은 비활성화되어 있습니다.\n")
         infoBuilder.append("• 추세 기능이 제거되어 가격 변동이 100% 랜덤으로 이루어집니다.\n")
         infoBuilder.append("• 주식마다 기본 변동성(0.8~1.2)이 다르게 적용됩니다.\n")
-        infoBuilder.append("• 기본 변동 범위: -0.02% ~ +0.02%")
+        infoBuilder.append("• 기본 변동 범위: -0.04% ~ +0.04%")
         
         featuresInfoText.text = infoBuilder.toString()
     }
@@ -466,10 +466,7 @@ class StockFragment : BaseFragment() {
         // 최신 가격 확인
         val newPrice = stock.price
         
-        // 같은 가격이면 아무것도 하지 않음
-        if (newPrice == state.lastPrice) return
-        
-        // 새 데이터 포인트 추가
+        // 새 데이터 포인트 추가 (가격이 같더라도 항상 추가)
         val newIndex = dataSet.entryCount.toFloat()
         dataSet.addEntry(Entry(newIndex, newPrice.toFloat()))
         

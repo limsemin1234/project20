@@ -37,34 +37,24 @@ data class Stock(
     // 랜덤 변동 가중치 (추세 제거로 인해 100%로 설정)
     private val RANDOM_WEIGHT = 1.0
     
-    // 반동 확률 기본값
-    private val BASE_REVERSION_PROBABILITY = 0.3
-    
-    // 반동 강도 가중치 (연속 변동 횟수에 따라 증가)
-    private val REVERSION_STRENGTH_MULTIPLIER = 0.15
-    
-    // 반동 확률 최대치 (기존 0.85에서 1.0으로 변경)
-    private val MAX_REVERSION_PROBABILITY = 1.0
-    
-    // 반동 효과 지속 시간 (ms 단위)
-    private val REVERSION_DURATION_SMALL = 15000L  // 소형 호재/악재 지속 시간 (15초)
-    private val REVERSION_DURATION_MEDIUM = 15000L // 중형 호재/악재 지속 시간 (15초)
-    private val REVERSION_DURATION_LARGE = 18000L  // 대형 호재/악재 지속 시간 (18초)
+    // 반동 확률 최대치 
+    private val MAX_REVERSION_PROBABILITY = 0.95
     
     // 가격 업데이트 간격 (ms 단위)
     private val UPDATE_INTERVAL = 5000L   // 가격 업데이트 간격 (5초)
     
-    // 가격 이상치 감지 비율 (초기 가격의 몇 배 이상이면 강제 반동 발생)
-    private val PRICE_ANOMALY_THRESHOLD = 2.0  // 초기 가격의 2배 이상
+    // 반동 지속 시간 배수 (가격 업데이트 간격 단위)
+    private val REVERSION_TICKS_MIN = 3   // 최소 3회 가격 변동
+    private val REVERSION_TICKS_MAX = 6   // 최대 6회 가격 변동
     
-    // 초기 가격 저장 (이상치 감지용) - private에서 public으로 변경
+    // 초기 가격 저장 (이력용)
     var initialPrice: Int = 0
     
     init {
         // 초기 가격을 이력에 추가
         priceHistory.add(price)
         
-        // 초기 가격 저장 (이상치 감지용)
+        // 초기 가격 저장
         initialPrice = price
     }
     
@@ -84,8 +74,8 @@ data class Stock(
             }
         }
         
-        var minChangePercent = -0.02  // 기본 최소 변동률 (-0.02%)
-        var maxChangePercent = 0.02   // 기본 최대 변동률 (0.02%)
+        var minChangePercent = -0.04  // 기본 최소 변동률 (-0.04%)
+        var maxChangePercent = 0.04   // 기본 최대 변동률 (0.04%)
         var currentVolatility = volatility  // 기본 변동성
         
         // 반동 메시지를 저장할 변수
@@ -134,11 +124,7 @@ data class Stock(
         
         // 반동 메커니즘 처리
         if (reversionActive) {
-            // 이미 반동 효과가 활성화되어 있는 경우 - 적용 후 카운트다운
-            val (adjustedMin, adjustedMax) = applyActiveReversion(minChangePercent, maxChangePercent)
-            minChangePercent = adjustedMin
-            maxChangePercent = adjustedMax
-            
+            // 이미 반동 효과가 활성화되어 있는 경우 - 카운트다운
             // 남은 지속 시간 감소 (5000ms = 5초마다 호출되므로)
             reversionRemainingMs -= UPDATE_INTERVAL
             
@@ -164,45 +150,8 @@ data class Stock(
         // 변동값 계산 (100원 단위로 반올림)
         val calculatedChange = (price * adjustedChangePercent / 100.0).roundToInt() * 100
         
-        // 반동이 활성화된 경우 변동 방향 보정
-        changeValue = if (reversionActive) {
-            when (reversionDirection) {
-                1 -> { // 상승 유도
-                    // 반동 중인 호재 이벤트는 최소 주가의 0.05% 이상 상승하도록 보정 (0.5%에서 0.05%로 변경)
-                    val minReversionChange = (price * 0.0005).roundToInt() * 100
-                    // 실제 계산된 변화량과 최소 변화량 중 큰 값 선택 (최소 100원)
-                    maxOf(calculatedChange, minReversionChange, 100)
-                }
-                -1 -> { // 하락 유도
-                    // 반동 중인 악재 이벤트는 최소 주가의 0.05% 이상 하락하도록 보정 (0.5%에서 0.05%로 변경)
-                    val minReversionChange = -((price * 0.0005).roundToInt() * 100)
-                    // 실제 계산된 변화량과 최소 변화량 중 작은 값 선택 (하락이므로 더 작은 값이 더 큰 하락폭, 최소 -100원)
-                    minOf(calculatedChange, minReversionChange, -100)
-                }
-                else -> calculatedChange
-            }
-        } else {
-            calculatedChange
-        }
-
-        // 변동값이 0인 경우에 최소 변동 보장
-        if (changeValue == 0 && price >= 1000) {
-            changeValue = if (reversionActive) {
-                // 반동 중에는 반동 방향에 따라 변동
-                when (reversionDirection) {
-                    1 -> 100  // 상승 유도
-                    -1 -> -100 // 하락 유도
-                    else -> if (Random.nextBoolean()) 100 else -100
-                }
-            } else {
-                // 일반적인 경우 - 호재/악재에 따라 변동
-                when {
-                    isPositiveNews || activeEvents.values.any { it.minChangeRate > 0 } -> 100
-                    isNegativeNews || activeEvents.values.any { it.maxChangeRate < 0 } -> -100
-                    else -> if (Random.nextBoolean()) 100 else -100
-                }
-            }
-        }
+        // 계산된 변동값 사용
+        changeValue = calculatedChange
 
         // 변동 방향 저장
         val currentDirection = changeValue.sign
@@ -218,6 +167,7 @@ data class Stock(
             }
         }
 
+        // 변동값과 상관없이 항상 가격 처리 수행
         updatePriceAndChangeValue()
         
         return reversionMessage
@@ -227,40 +177,25 @@ data class Stock(
      * 반동 메커니즘 발생 조건을 확인하고, 조건이 만족되면 반동 효과 활성화
      * @return 반동 이벤트 메시지 (반동이 발생하지 않으면 빈 문자열)
      */
-    private fun checkAndStartReversion(): String {
-        // 가격 이상치 검사 - 초기 가격의 일정 비율을 넘어가면 강제 반동 적용
-        val priceRatio = price.toDouble() / initialPrice.toDouble()
-        
-        // 가격이 초기 가격의 PRICE_ANOMALY_THRESHOLD 배 이상이면 강제 하락 반동
-        if (priceRatio >= PRICE_ANOMALY_THRESHOLD) {
-            return applyForcedReversion(-1)  // 하락 반동 강제 적용
-        }
-        
-        // 가격이 초기 가격의 1/PRICE_ANOMALY_THRESHOLD 이하면 강제 상승 반동
-        if (initialPrice > 0 && price.toDouble() / initialPrice.toDouble() <= 1.0 / PRICE_ANOMALY_THRESHOLD) {
-            return applyForcedReversion(1)  // 상승 반동 강제 적용
-        }
-        
-        // 연속 변동이 3회 미만이면 반동 효과 적용하지 않음
-        // 추가 조건: 가격 이력이 최소 4개 이상 있어야 함 (초기 가격 + 3번의 변동)
-        if (consecutiveMovesInSameDirection < 3 || lastMoveDirection == 0 || priceHistory.size < 4) {
+    private fun checkAndStartReversion(): String {       
+        // 연속 변동이 5회 미만이면 반동 효과 적용하지 않음
+        // 추가 조건: 가격 이력이 최소 6개 이상 있어야 함 (초기 가격 + 5번의 변동)
+        if (consecutiveMovesInSameDirection < 5 || lastMoveDirection == 0 || priceHistory.size < 6) {
             return ""
         }
 
-        // 연속 상승/하락 횟수에 따라 반동 확률 증가
-        val reversionProbability = BASE_REVERSION_PROBABILITY + 
-                                 (consecutiveMovesInSameDirection - 2) * REVERSION_STRENGTH_MULTIPLIER
-        
-        // 최대 100%로 제한
-        val cappedProbability = minOf(reversionProbability, MAX_REVERSION_PROBABILITY)
-        
-        // 특별 조건: 8회 이상 연속 변동 시 100% 반동 발생
-        if (consecutiveMovesInSameDirection >= 8) {
-            return applyForcedReversion(-lastMoveDirection)
+        // 연속 변동 횟수에 따른 반동 확률 결정
+        val reversionProbability = when (consecutiveMovesInSameDirection) {
+            5 -> 0.5   // 5번 연속 변동 시 50% 확률
+            6 -> 0.6   // 6번 연속 변동 시 60% 확률
+            7 -> 0.7   // 7번 연속 변동 시 70% 확률
+            8 -> 0.8   // 8번 연속 변동 시 80% 확률
+            9 -> 0.9   // 9번 연속 변동 시 90% 확률
+            else -> MAX_REVERSION_PROBABILITY // 10번 이상 연속 변동 시 95% 확률
         }
         
         // 반동 확률에 따라 반동 효과 활성화
-        if (Random.nextDouble() < cappedProbability) {
+        if (Random.nextDouble() < reversionProbability) {
             return applyReversion(-lastMoveDirection)
         }
         
@@ -276,31 +211,9 @@ data class Stock(
         reversionActive = true
         reversionDirection = direction
         
-        // 반동 효과는 호재/악재 이벤트 지속 시간과 동일하게 설정
-        // 소형/중형/대형 호재/악재 랜덤 선택 시 해당 이벤트의 지속 시간 적용
-        val eventType = if (direction == 1) {
-            // 상승 반동일 때 호재 이벤트 적용
-            when (Random.nextInt(3)) {
-                0 -> StockEventType.POSITIVE_SMALL
-                1 -> StockEventType.POSITIVE_MEDIUM
-                else -> StockEventType.POSITIVE_LARGE
-            }
-        } else {
-            // 하락 반동일 때 악재 이벤트 적용
-            when (Random.nextInt(3)) {
-                0 -> StockEventType.NEGATIVE_SMALL
-                1 -> StockEventType.NEGATIVE_MEDIUM
-                else -> StockEventType.NEGATIVE_LARGE
-            }
-        }
-        
-        // 이벤트 타입에 따른 지속 시간 설정
-        reversionRemainingMs = when (eventType) {
-            StockEventType.POSITIVE_SMALL, StockEventType.NEGATIVE_SMALL -> REVERSION_DURATION_SMALL
-            StockEventType.POSITIVE_MEDIUM, StockEventType.NEGATIVE_MEDIUM -> REVERSION_DURATION_MEDIUM
-            StockEventType.POSITIVE_LARGE, StockEventType.NEGATIVE_LARGE -> REVERSION_DURATION_LARGE
-            else -> REVERSION_DURATION_MEDIUM // 기본값
-        }
+        // 반동 지속 시간을 3~6회 가격 변동 중 랜덤하게 설정
+        val randomTicks = (REVERSION_TICKS_MIN..REVERSION_TICKS_MAX).random()
+        reversionRemainingMs = randomTicks * UPDATE_INTERVAL
         
         // 연속 변동 카운터만 초기화 (lastMoveDirection은 유지)
         consecutiveMovesInSameDirection = 0
@@ -308,58 +221,21 @@ data class Stock(
         // 반동 방향에 따라 이벤트 추가
         return if (direction == 1) {
             // 상승 반동일 때 호재 이벤트 적용
-            applyPositiveEventForReversion(eventType = eventType)
+            applyCustomPositiveReversionEvent(randomTicks)
         } else if (direction == -1) {
             // 하락 반동일 때 악재 이벤트 적용
-            applyNegativeEventForReversion(eventType = eventType)
+            applyCustomNegativeReversionEvent(randomTicks)
         } else {
             "반동 효과 발생"
         }
     }
     
     /**
-     * 강제 반동 효과를 적용합니다 (이상치 감지시)
-     * @param direction 반동 방향 (1: 상승 유도, -1: 하락 유도)
+     * 상승 반동에 대한 커스텀 호재 이벤트 적용 (+0.02% ~ +0.09%)
+     * @param ticks 반동 지속 틱 수
      * @return 반동 이벤트 메시지
      */
-    private fun applyForcedReversion(direction: Int): String {
-        reversionActive = true
-        reversionDirection = direction
-        
-        // 강제 반동은 대형 호재/악재 지속 시간의 2배로 설정
-        reversionRemainingMs = REVERSION_DURATION_LARGE * 2
-        
-        // 연속 변동 카운터 초기화
-        consecutiveMovesInSameDirection = 0
-        
-        // 반동 방향에 따라 이벤트 추가 (강제 반동은 더 강한 이벤트 적용)
-        return if (direction == 1) {
-            // 상승 반동일 때 대형 호재 이벤트 적용
-            applyPositiveEventForReversion(
-                isForced = true, 
-                eventType = StockEventType.POSITIVE_LARGE
-            )
-        } else if (direction == -1) {
-            // 하락 반동일 때 대형 악재 이벤트 적용
-            applyNegativeEventForReversion(
-                isForced = true,
-                eventType = StockEventType.NEGATIVE_LARGE
-            )
-        } else {
-            "강제 반동 효과 발생"
-        }
-    }
-    
-    /**
-     * 상승 반동에 대한 호재 이벤트 적용
-     * @param isForced 강제 반동 여부 (true일 경우 더 강한 이벤트 적용)
-     * @param eventType 적용할 이벤트 타입 (지정되지 않으면 랜덤 선택)
-     * @return 반동 이벤트 메시지
-     */
-    private fun applyPositiveEventForReversion(
-        isForced: Boolean = false,
-        eventType: StockEventType? = null
-    ): String {
+    private fun applyCustomPositiveReversionEvent(ticks: Int = REVERSION_TICKS_MIN): String {
         // 기존 호재/악재 효과 제거
         isPositiveNews = false
         isNegativeNews = false
@@ -367,107 +243,71 @@ data class Stock(
         // 기존 이벤트 제거 (반동 이벤트와 충돌 방지)
         clearAllEvents()
         
-        // 호재 타입 선택
-        val finalEventType = eventType ?: if (isForced) {
-            StockEventType.POSITIVE_LARGE
-        } else {
-            // 무작위로 호재 타입 선택
-            when (Random.nextInt(3)) {
-                0 -> StockEventType.POSITIVE_SMALL
-                1 -> StockEventType.POSITIVE_MEDIUM
-                else -> StockEventType.POSITIVE_LARGE
-            }
-        }
+        // 상승 반동을 위한 커스텀 이벤트 생성
+        val minRate = 0.0002  // +0.02%
+        val maxRate = 0.0009  // +0.09%
         
-        // 호재 이벤트 생성 및 적용
-        val event = createReversionEvent(finalEventType)
-        addEvent(event)
+        // 지속 시간 설정
+        val durationMs = ticks * UPDATE_INTERVAL
         
-        return event.message
-    }
-    
-    /**
-     * 하락 반동에 대한 악재 이벤트 적용
-     * @param isForced 강제 반동 여부 (true일 경우 더 강한 이벤트 적용)
-     * @param eventType 적용할 이벤트 타입 (지정되지 않으면 랜덤 선택)
-     * @return 반동 이벤트 메시지
-     */
-    private fun applyNegativeEventForReversion(
-        isForced: Boolean = false,
-        eventType: StockEventType? = null
-    ): String {
-        // 기존 호재/악재 효과 제거
-        isPositiveNews = false
-        isNegativeNews = false
+        // 이벤트 메시지
+        val message = "반동 효과: 상승 유도 (0.02%~0.09%) - ${ticks}회 적용"
         
-        // 기존 이벤트 제거 (반동 이벤트와 충돌 방지)
-        clearAllEvents()
-        
-        // 악재 타입 선택
-        val finalEventType = eventType ?: if (isForced) {
-            StockEventType.NEGATIVE_LARGE
-        } else {
-            // 무작위로 악재 타입 선택
-            when (Random.nextInt(3)) {
-                0 -> StockEventType.NEGATIVE_SMALL
-                1 -> StockEventType.NEGATIVE_MEDIUM
-                else -> StockEventType.NEGATIVE_LARGE
-            }
-        }
-        
-        // 악재 이벤트 생성 및 적용
-        val event = createReversionEvent(finalEventType)
-        addEvent(event)
-        
-        return event.message
-    }
-    
-    /**
-     * 반동에 대한 이벤트 생성
-     * @param eventType 이벤트 타입
-     * @return 생성된 이벤트
-     */
-    private fun createReversionEvent(eventType: StockEventType): StockEvent {
-        // 이벤트 타입에 따라 변동률 범위 설정
-        val (minRate, maxRate) = when (eventType) {
-            StockEventType.POSITIVE_SMALL -> Pair(0.0002, 0.0004)   // 0.02% ~ 0.04%
-            StockEventType.POSITIVE_MEDIUM -> Pair(0.0003, 0.0006)  // 0.03% ~ 0.06%
-            StockEventType.POSITIVE_LARGE -> Pair(0.0005, 0.0009)   // 0.05% ~ 0.09%
-            StockEventType.NEGATIVE_SMALL -> Pair(-0.0004, -0.0002) // -0.04% ~ -0.02%
-            StockEventType.NEGATIVE_MEDIUM -> Pair(-0.0006, -0.0003) // -0.06% ~ -0.03%
-            StockEventType.NEGATIVE_LARGE -> Pair(-0.0009, -0.0005) // -0.09% ~ -0.05%
-            else -> Pair(0.0, 0.0) // 기본값
-        }
-        
-        // 반동 이벤트 지속 시간 설정 (기존에 계산한 반동 효과 지속 시간과 동일하게)
-        val durationMs = when (eventType) {
-            StockEventType.POSITIVE_SMALL, StockEventType.NEGATIVE_SMALL -> REVERSION_DURATION_SMALL
-            StockEventType.POSITIVE_MEDIUM, StockEventType.NEGATIVE_MEDIUM -> REVERSION_DURATION_MEDIUM
-            StockEventType.POSITIVE_LARGE, StockEventType.NEGATIVE_LARGE -> REVERSION_DURATION_LARGE
-            else -> reversionRemainingMs // 기타 이벤트 타입의 경우 현재 설정된 반동 지속 시간 사용
-        }
-        
-        // 이벤트 메시지 생성
-        val eventMessage = when (eventType) {
-            StockEventType.POSITIVE_SMALL -> "반동 효과: 소형 호재 발생!"
-            StockEventType.POSITIVE_MEDIUM -> "반동 효과: 중형 호재 발생!"
-            StockEventType.POSITIVE_LARGE -> "반동 효과: 대형 호재 발생!"
-            StockEventType.NEGATIVE_SMALL -> "반동 효과: 소형 악재 발생!"
-            StockEventType.NEGATIVE_MEDIUM -> "반동 효과: 중형 악재 발생!"
-            StockEventType.NEGATIVE_LARGE -> "반동 효과: 대형 악재 발생!"
-            else -> "반동 효과 발생"
-        }
-        
-        // 이벤트 생성 및 반환
-        return StockEvent(
-            type = eventType,
+        // 이벤트 생성
+        val event = StockEvent(
+            type = StockEventType.POSITIVE_LARGE,  // 타입은 큰 의미 없으나 대형 호재로 설정
             minChangeRate = minRate,
             maxChangeRate = maxRate,
             duration = durationMs,
-            message = eventMessage,
+            message = message,
             affectedStockNames = listOf(name),
-            volatilityMultiplier = 1.0 // 변동성 변화 없음
+            volatilityMultiplier = 1.0
         )
+        
+        // 이벤트 적용
+        addEvent(event)
+        
+        return event.message
+    }
+    
+    /**
+     * 하락 반동에 대한 커스텀 악재 이벤트 적용 (-0.09% ~ -0.02%)
+     * @param ticks 반동 지속 틱 수
+     * @return 반동 이벤트 메시지
+     */
+    private fun applyCustomNegativeReversionEvent(ticks: Int = REVERSION_TICKS_MIN): String {
+        // 기존 호재/악재 효과 제거
+        isPositiveNews = false
+        isNegativeNews = false
+        
+        // 기존 이벤트 제거 (반동 이벤트와 충돌 방지)
+        clearAllEvents()
+        
+        // 하락 반동을 위한 커스텀 이벤트 생성
+        val minRate = -0.0009  // -0.09%
+        val maxRate = -0.0002  // -0.02%
+        
+        // 지속 시간 설정
+        val durationMs = ticks * UPDATE_INTERVAL
+        
+        // 이벤트 메시지
+        val message = "반동 효과: 하락 유도 (-0.09%~-0.02%) - ${ticks}회 적용"
+        
+        // 이벤트 생성
+        val event = StockEvent(
+            type = StockEventType.NEGATIVE_LARGE,  // 타입은 큰 의미 없으나 대형 악재로 설정
+            minChangeRate = minRate,
+            maxChangeRate = maxRate,
+            duration = durationMs,
+            message = message,
+            affectedStockNames = listOf(name),
+            volatilityMultiplier = 1.0
+        )
+        
+        // 이벤트 적용
+        addEvent(event)
+        
+        return event.message
     }
 
     /**
@@ -671,24 +511,6 @@ data class Stock(
         activeEvents.clear()
         isPositiveNews = false
         isNegativeNews = false
-    }
-
-    /**
-     * 활성화된 반동 효과를 적용하여 변동률을 조정합니다.
-     */
-    private fun applyActiveReversion(minChangePercent: Double, maxChangePercent: Double): Pair<Double, Double> {
-        // 반동 방향에 따라 변동률 범위 조정 기능 추가 (단순화된 버전)
-        return when (reversionDirection) {
-            1 -> { // 상승 반동 (연속 하락 후)
-                // 최소값을 0 이상으로 설정하여 하락을 방지
-                Pair(0.01, maxOf(maxChangePercent, 0.02))
-            }
-            -1 -> { // 하락 반동 (연속 상승 후)
-                // 최대값을 0 이하로 설정하여 상승을 방지
-                Pair(minOf(minChangePercent, -0.01), -0.01)
-            }
-            else -> Pair(minChangePercent, maxChangePercent)
-        }
     }
 }
 
