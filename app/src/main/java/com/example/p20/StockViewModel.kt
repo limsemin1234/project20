@@ -25,12 +25,12 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     
     // 기존 호재 이벤트 설정 (호환성 유지)
     private val positiveNewsInterval = 30000L // 호재 이벤트 체크 간격 (30초)
-    private val positiveNewsChance = 0.0 // 호재 발생 확률 (0%로 비활성화)
+    private val positiveNewsChance = 0.2 // 호재 발생 확률 (20%로 활성화)
     private val positiveNewsDuration = 20000L // 호재 지속 시간 (20초)
     
     // 기존 악제 이벤트 설정 (호환성 유지)
     private val negativeNewsInterval = 30000L // 악제 이벤트 체크 간격 (30초)
-    private val negativeNewsChance = 0.0 // 악제 발생 확률 (0%로 비활성화)
+    private val negativeNewsChance = 0.2 // 악제 발생 확률 (20%로 활성화)
     private val negativeNewsDuration = 20000L // 악제 지속 시간 (20초)
     
     // 새 이벤트 시스템 설정
@@ -40,61 +40,61 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         StockEventType.POSITIVE_SMALL to EventSettings(
             minRate = 0.02, maxRate = 0.04,
             duration = 15000L, interval = 30000L, 
-            chance = 0.0, stockCount = 2     // 이벤트 발생 확률 0으로 설정
+            chance = 0.25, stockCount = 2     // 이벤트 발생 확률 25%로 설정
         ),
         // 중형 호재
         StockEventType.POSITIVE_MEDIUM to EventSettings(
             minRate = 0.03, maxRate = 0.06,
             duration = 15000L, interval = 45000L, 
-            chance = 0.0, stockCount = 1     // 이벤트 발생 확률 0으로 설정
+            chance = 0.18, stockCount = 1     // 이벤트 발생 확률 18%로 설정
         ),
         // 대형 호재
         StockEventType.POSITIVE_LARGE to EventSettings(
             minRate = 0.05, maxRate = 0.09,
             duration = 18000L, interval = 60000L, 
-            chance = 0.0, stockCount = 1     // 이벤트 발생 확률 0으로 설정
+            chance = 0.12, stockCount = 1     // 이벤트 발생 확률 12%로 설정
         ),
         // 소형 악재
         StockEventType.NEGATIVE_SMALL to EventSettings(
             minRate = -0.04, maxRate = -0.02,
             duration = 15000L, interval = 30000L, 
-            chance = 0.0, stockCount = 2     // 이벤트 발생 확률 0으로 설정
+            chance = 0.25, stockCount = 2     // 이벤트 발생 확률 25%로 설정
         ),
         // 중형 악재
         StockEventType.NEGATIVE_MEDIUM to EventSettings(
             minRate = -0.06, maxRate = -0.03,
             duration = 15000L, interval = 45000L, 
-            chance = 0.0, stockCount = 1     // 이벤트 발생 확률 0으로 설정
+            chance = 0.18, stockCount = 1     // 이벤트 발생 확률 18%로 설정
         ),
         // 대형 악재
         StockEventType.NEGATIVE_LARGE to EventSettings(
             minRate = -0.09, maxRate = -0.05,
             duration = 18000L, interval = 60000L, 
-            chance = 0.0, stockCount = 1     // 이벤트 발생 확률 0으로 설정
+            chance = 0.12, stockCount = 1     // 이벤트 발생 확률 12%로 설정
         ),
         // 경기 부양
         StockEventType.MARKET_BOOM to EventSettings(
             minRate = 0.02, maxRate = 0.05,
             duration = 24000L, interval = 180000L, 
-            chance = 0.0, stockCount = 0     // 이벤트 발생 확률 0으로 설정
+            chance = 0.10, stockCount = 0     // 이벤트 발생 확률 10%로 설정
         ),
         // 경기 침체
         StockEventType.MARKET_RECESSION to EventSettings(
             minRate = -0.05, maxRate = -0.02,
             duration = 24000L, interval = 180000L, 
-            chance = 0.0, stockCount = 0     // 이벤트 발생 확률 0으로 설정
+            chance = 0.10, stockCount = 0     // 이벤트 발생 확률 10%로 설정
         ),
         // 시장 폭등
         StockEventType.MARKET_SURGE to EventSettings(
             minRate = 0.04, maxRate = 0.08,
             duration = 12000L, interval = 300000L, 
-            chance = 0.0, stockCount = 0     // 이벤트 발생 확률 0으로 설정
+            chance = 0.05, stockCount = 0     // 이벤트 발생 확률 5%로 설정
         ),
         // 시장 폭락
         StockEventType.MARKET_CRASH to EventSettings(
             minRate = -0.08, maxRate = -0.04,
             duration = 12000L, interval = 300000L, 
-            chance = 0.0, stockCount = 0     // 이벤트 발생 확률 0으로 설정
+            chance = 0.05, stockCount = 0     // 이벤트 발생 확률 5%로 설정
         )
     )
     
@@ -104,31 +104,13 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         StockEventType.STOCK_SURGE to EventSettings(
             minRate = 0.1, maxRate = 0.2,
             duration = 0L, interval = 600000L, 
-            chance = 0.0, stockCount = 1     // 이벤트 발생 확률 0으로 설정
+            chance = 0.08, stockCount = 1     // 이벤트 발생 확률 8%로 설정
         ),
         // 대폭락 종목
         StockEventType.STOCK_CRASH to EventSettings(
             minRate = -0.2, maxRate = -0.1,
             duration = 0L, interval = 600000L, 
-            chance = 0.0, stockCount = 1     // 이벤트 발생 확률 0으로 설정
-        )
-    )
-    
-    // 변동성 이벤트 설정
-    private val VOLATILITY_EVENT_SETTINGS = mapOf(
-        // 변동성 증가
-        StockEventType.VOLATILITY_UP to EventSettings(
-            minRate = 0.0, maxRate = 0.0,
-            duration = 21000L, interval = 420000L, 
-            chance = 0.0, stockCount = 0,    // 이벤트 발생 확률 0으로 설정
-            volatilityMultiplier = 1.5
-        ),
-        // 변동성 감소
-        StockEventType.VOLATILITY_DOWN to EventSettings(
-            minRate = 0.0, maxRate = 0.0,
-            duration = 21000L, interval = 420000L, 
-            chance = 0.0, stockCount = 0,    // 이벤트 발생 확률 0으로 설정
-            volatilityMultiplier = 0.7
+            chance = 0.08, stockCount = 1     // 이벤트 발생 확률 8%로 설정
         )
     )
     
@@ -421,49 +403,46 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         handler.postDelayed(negativeNewsRunnable, positiveNewsInterval) // 호재 이벤트와 시간차를 두기 위한 지연
     }
     
-    // 새 이벤트 시스템 시작
+    // 모든 이벤트 체크 시작
     private fun startAllEventChecks() {
-        // 개별 종목 & 시장 전체 이벤트
-        for (eventType in EVENT_SETTINGS.keys) {
-            startEventCheck(eventType, EVENT_SETTINGS)
+        // 일반 주식 이벤트 체크 스케줄링
+        EVENT_SETTINGS.forEach { (eventType, settings) ->
+            scheduleEventCheck(eventType, settings)
         }
         
-        // 일회성 이벤트
-        for (eventType in ONE_TIME_EVENT_SETTINGS.keys) {
-            startEventCheck(eventType, ONE_TIME_EVENT_SETTINGS, true)
-        }
-        
-        // 변동성 이벤트
-        for (eventType in VOLATILITY_EVENT_SETTINGS.keys) {
-            startEventCheck(eventType, VOLATILITY_EVENT_SETTINGS)
+        // 일회성 이벤트 체크 스케줄링
+        ONE_TIME_EVENT_SETTINGS.forEach { (eventType, settings) ->
+            scheduleEventCheck(eventType, settings)
         }
     }
     
-    // 특정 이벤트 체크 시작
-    private fun startEventCheck(
-        eventType: StockEventType, 
-        settingsMap: Map<StockEventType, EventSettings>,
-        isOneTime: Boolean = false
+    // 이벤트 체크 스케줄링
+    private fun scheduleEventCheck(
+        eventType: StockEventType,
+        settings: EventSettings
     ) {
-        val settings = settingsMap[eventType] ?: return
-        
-        val eventRunnable = object : Runnable {
+        // 이벤트 체크 Runnable 생성
+        val eventCheckRunnable = object : Runnable {
             override fun run() {
+                // 확률에 따라 이벤트 발생
                 if (Random.nextDouble() < settings.chance) {
-                    if (isOneTime) {
-                        applyOneTimeEvent(eventType, settingsMap)
-                    } else {
-                        applyEvent(eventType, settingsMap)
-                    }
+                    applyEvent(eventType, when (eventType) {
+                        // 일회성 이벤트인 경우
+                        StockEventType.STOCK_SURGE, StockEventType.STOCK_CRASH -> 
+                            ONE_TIME_EVENT_SETTINGS
+                        // 변동성 이벤트 케이스 제거
+                        // 일반 이벤트인 경우
+                        else -> EVENT_SETTINGS
+                    })
                 }
+                
                 // 다음 체크 예약
                 handler.postDelayed(this, settings.interval)
             }
         }
         
-        // 시작 시간 랜덤화 (모든 이벤트가 동시에 체크되지 않도록)
-        val initialDelay = Random.nextLong(settings.interval / 2)
-        handler.postDelayed(eventRunnable, initialDelay)
+        // 초기 체크 예약 (체크 간격의 절반 이후에 첫 체크)
+        handler.postDelayed(eventCheckRunnable, settings.interval / 2)
     }
     
     // 기존 호재/악제 체크 메서드 (호환성 유지)
@@ -603,8 +582,6 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
             
             StockEventType.STOCK_SURGE -> "💥 대박 종목 발생! $stockNamesText 주가가 폭등합니다!"
             StockEventType.STOCK_CRASH -> "💥 대폭락 종목 발생! $stockNamesText 주가가 폭락합니다!"
-            StockEventType.VOLATILITY_UP -> "📈 시장 변동성 확대! 가격 변동이 더 커집니다!"
-            StockEventType.VOLATILITY_DOWN -> "📉 시장 안정화! 가격 변동이 줄어듭니다!"
         }
     }
     
@@ -947,5 +924,18 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         super.onCleared()
         handler.removeCallbacksAndMessages(null)
         clearAllEvents()
+    }
+
+    /**
+     * 이벤트 시스템이 저장된 상태를 로드합니다.
+     */
+    private fun loadEventSystem() {
+        // 이벤트 시스템 구성이 필요한 경우 구현
+
+        // 참고: 이벤트 시스템과 반동 메커니즘의 상호작용
+        // 1. 활성화된 이벤트가 있는 경우 반동 메커니즘이 작동하여도 즉시 반동을 적용하지 않음
+        // 2. 대신 반동 조건이 만족될 경우 pendingReversion에 방향을 저장
+        // 3. 이벤트가 모두 종료되면 저장된 반동 방향으로 반동 효과를 적용
+        // 4. 이렇게 함으로써 이벤트의 효과가 중간에 중단되지 않음
     }
 }

@@ -32,6 +32,10 @@ data class Stock(
     var reversionDirection: Int = 0,             // 반동의 방향 (1: 상승 유도, -1: 하락 유도)
     var reversionRemainingMs: Long = 0         // 반동 효과 남은 지속 시간 (ms 단위)
 ) {
+    // 반동 대기 필드 추가 - data class 생성자에서 private으로 선언할 수 없어 여기로 이동
+    var pendingReversion: Int = 0  // 대기 중인 반동 방향 (0이면 없음)
+    var pendingReversionChecked = false // 반동 체크 여부 플래그
+    
     // 이력 최대 크기
     private val MAX_HISTORY_SIZE = 30
     
@@ -77,6 +81,13 @@ data class Stock(
         // 반동 메시지를 저장할 변수
         var reversionMessage = ""
         
+        // 예약된 반동 효과가 있고, 활성 이벤트가 없는 경우 반동 효과 적용
+        if (pendingReversion != 0 && activeEvents.isEmpty() && !reversionActive) {
+            reversionMessage = applyReversion(pendingReversion)
+            pendingReversion = 0  // 반동 효과를 적용했으므로 대기 중인 반동 제거
+            pendingReversionChecked = false
+        }
+        
         // 반동 메커니즘이 활성화되어 있지 않을 때만 이벤트 효과 적용
         if (!reversionActive) {
             // 기존 호재/악재 이벤트 처리 (이전 버전과의 호환성)
@@ -93,19 +104,8 @@ data class Stock(
             
             // 새 이벤트 시스템 - 활성화된 이벤트들의 효과 적용
             if (activeEvents.isNotEmpty()) {
-                // 변동성 이벤트 처리 (VOLATILITY_UP, VOLATILITY_DOWN)
-                for (event in activeEvents.values) {
-                    if (event.type == StockEventType.VOLATILITY_UP || 
-                        event.type == StockEventType.VOLATILITY_DOWN) {
-                        currentVolatility *= event.volatilityMultiplier
-                    }
-                }
-                
                 // 가장 우선순위 높은 가격 변동 이벤트 찾기
-                val priceEvent = activeEvents.values.filter { 
-                    it.type != StockEventType.VOLATILITY_UP && 
-                    it.type != StockEventType.VOLATILITY_DOWN 
-                }.maxByOrNull { 
+                val priceEvent = activeEvents.values.maxByOrNull { 
                     // 변동폭이 클수록 우선순위 높음
                     (it.maxChangeRate - it.minChangeRate).absoluteValue
                 }
@@ -114,6 +114,21 @@ data class Stock(
                 priceEvent?.let {
                     minChangePercent = it.minChangeRate
                     maxChangePercent = it.maxChangeRate
+                }
+            }
+            
+            // 반동 효과 체크 (이벤트가 활성화되어 있으면 체크만 하고 적용은 나중에)
+            if (!pendingReversionChecked && activeEvents.isEmpty()) {
+                val checkResult = checkAndStartReversion()
+                if (checkResult.isNotEmpty()) {
+                    if (activeEvents.isEmpty()) {
+                        // 활성 이벤트가 없으면 즉시 반동 적용
+                        reversionMessage = checkResult
+                    } else {
+                        // 활성 이벤트가 있으면 반동 방향을 저장하고 이벤트 종료 후에 적용
+                        pendingReversion = -lastMoveDirection
+                        pendingReversionChecked = true
+                    }
                 }
             }
         }
@@ -128,10 +143,8 @@ data class Stock(
             if (reversionRemainingMs <= 0) {
                 reversionActive = false
                 reversionDirection = 0
+                pendingReversionChecked = false  // 반동 체크 플래그 리셋
             }
-        } else {
-            // 반동 효과가 활성화되어 있지 않은 경우 - 새로운 반동 효과 발생 여부 체크
-            reversionMessage = checkAndStartReversion()
         }
         
         // 랜덤 변동 요소 계산
@@ -211,7 +224,15 @@ data class Stock(
         
         // 반동 확률에 따라 반동 효과 활성화
         if (Random.nextDouble() < reversionProbability) {
-            return applyReversion(-lastMoveDirection)
+            if (activeEvents.isEmpty()) {
+                // 이벤트가 없으면 즉시 반동 효과 적용
+                return applyReversion(-lastMoveDirection)
+            } else {
+                // 이벤트가 있으면 반동 방향만 저장
+                pendingReversion = -lastMoveDirection
+                pendingReversionChecked = true
+                return ""
+            }
         }
         
         return ""
@@ -255,13 +276,6 @@ data class Stock(
         isPositiveNews = false
         isNegativeNews = false
         
-        // 기존 이벤트 제거 (반동 이벤트와 충돌 방지)
-        clearAllEvents()
-        
-        // 상승 반동을 위한 커스텀 이벤트 생성 - 반드시 양수 변동값이 나오도록 조정
-        val minRate = 0.02  // +2%
-        val maxRate = 0.09  // +9%
-        
         // 지속 시간 설정
         val durationMs = ticks * UPDATE_INTERVAL
         
@@ -271,15 +285,15 @@ data class Stock(
         // 이벤트 생성
         val event = StockEvent(
             type = StockEventType.POSITIVE_LARGE,  // 타입은 큰 의미 없으나 대형 호재로 설정
-            minChangeRate = minRate,
-            maxChangeRate = maxRate,
+            minChangeRate = 0.02,  // +2%
+            maxChangeRate = 0.09,  // +9%
             duration = durationMs,
             message = message,
             affectedStockNames = listOf(name),
             volatilityMultiplier = 1.0
         )
         
-        // 이벤트 적용
+        // 이벤트 적용 - 기존 이벤트를 유지하면서 반동 이벤트만 추가
         addEvent(event)
         
         return event.message
@@ -295,13 +309,6 @@ data class Stock(
         isPositiveNews = false
         isNegativeNews = false
         
-        // 기존 이벤트 제거 (반동 이벤트와 충돌 방지)
-        clearAllEvents()
-        
-        // 하락 반동을 위한 커스텀 이벤트 생성 - 반드시 음수 변동값이 나오도록 조정
-        val minRate = -0.09  // -9%
-        val maxRate = -0.02  // -2%
-        
         // 지속 시간 설정
         val durationMs = ticks * UPDATE_INTERVAL
         
@@ -311,15 +318,15 @@ data class Stock(
         // 이벤트 생성
         val event = StockEvent(
             type = StockEventType.NEGATIVE_LARGE,  // 타입은 큰 의미 없으나 대형 악재로 설정
-            minChangeRate = minRate,
-            maxChangeRate = maxRate,
+            minChangeRate = -0.09,  // -9%
+            maxChangeRate = -0.02,  // -2%
             duration = durationMs,
             message = message,
             affectedStockNames = listOf(name),
             volatilityMultiplier = 1.0
         )
         
-        // 이벤트 적용
+        // 이벤트 적용 - 기존 이벤트를 유지하면서 반동 이벤트만 추가
         addEvent(event)
         
         return event.message

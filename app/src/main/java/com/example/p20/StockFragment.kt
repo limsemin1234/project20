@@ -341,12 +341,26 @@ class StockFragment : BaseFragment() {
         infoBuilder.append("• 주식 가격이 한 방향으로 연속 5회 이상 변동하면 반대 방향으로의 반동이 발생합니다.\n")
         infoBuilder.append("• 연속 변동 횟수가 증가할수록 반동 확률이 높아집니다.\n")
         infoBuilder.append("• 10회 이상 연속 변동 시 95% 확률로 반동이 발생합니다.\n")
-        infoBuilder.append("• 반동 발생 시 20초~40초간 해당 방향으로의 가격 변동이 유도됩니다.\n\n")
+        infoBuilder.append("• 반동 발생 시 20초~40초간 해당 방향으로의 가격 변동이 유도됩니다.\n")
+        infoBuilder.append("• 다른 이벤트가 진행 중일 때 반동 조건이 만족되면, 이벤트 종료 후 반동이 발생합니다.\n\n")
         
         infoBuilder.append("■ 기본 주식 변동 시스템\n")
         infoBuilder.append("• 추세 기능이 제거되어 가격 변동이 100% 랜덤으로 이루어집니다.\n")
         infoBuilder.append("• 주식마다 기본 변동성(1.0~1.4)이 다르게 적용됩니다.\n")
-        infoBuilder.append("• 기본 변동 범위: -4% ~ +4%")
+        infoBuilder.append("• 기본 변동 범위: -4% ~ +4%\n\n")
+        
+        // 이벤트 시스템 설명 추가
+        infoBuilder.append("■ 주식 이벤트 시스템\n")
+        infoBuilder.append("• 개별 종목 이벤트:\n")
+        infoBuilder.append("  - 소형 호재/악재: +2%~4% / -4%~-2% (25% 확률)\n")
+        infoBuilder.append("  - 중형 호재/악재: +3%~6% / -6%~-3% (18% 확률)\n")
+        infoBuilder.append("  - 대형 호재/악재: +5%~9% / -9%~-5% (12% 확률)\n")
+        infoBuilder.append("• 시장 전체 이벤트:\n")
+        infoBuilder.append("  - 경기 부양/침체: +2%~5% / -5%~-2% (10% 확률)\n")
+        infoBuilder.append("  - 시장 폭등/폭락: +4%~8% / -8%~-4% (5% 확률)\n")
+        infoBuilder.append("• 특별 이벤트:\n")
+        infoBuilder.append("  - 대박/대폭락 종목: +10%~20% / -20%~-10% (8% 확률)\n")
+        infoBuilder.append("• 반동 효과가 진행 중일 때는 새로운 이벤트가 적용되지 않습니다.\n")
         
         featuresInfoText.text = infoBuilder.toString()
     }
