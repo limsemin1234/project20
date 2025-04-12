@@ -191,10 +191,16 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         StockInfo("푸름제약", 41000, "소형주")
     )
     
-    // 사용자가 지정한 10개의 현재가 목록
+    // 사용자가 지정한 주식 가격 목록
     private val availablePrices = listOf(
-        10000, 20000, 30000, 40000, 50000, 
-        70000, 90000, 100000, 150000, 200000
+        20000, 30000, 40000, 50000, 60000,
+        70000, 80000, 90000, 100000, 120000, 150000, 200000
+    )
+    
+    // 초기 주식 생성 시 사용될 가격 목록
+    private val randomPricePool = listOf(
+        30000, 40000, 50000, 60000, 70000, 
+        80000, 90000, 100000, 120000, 150000, 200000
     )
     
     // 주식 정보 데이터 클래스
@@ -274,11 +280,13 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         // 종목명 중복 방지를 위해 랜덤하게 5개 선택
         val randomStocks = availableStocks.shuffled().take(5)
         
-        // 가격 중복 방지를 위해 5개의 서로 다른 가격 선택
-        val randomPrices = availablePrices.shuffled().take(5)
+        // 가격 선택 - 첫 번째는 2만원 고정, 나머지는 랜덤하게 4개 선택
+        val fixedPrice = 20000
+        val randomPrices = randomPricePool.shuffled().take(4).toMutableList()
+        randomPrices.add(0, fixedPrice) // 첫 번째 위치에 2만원 삽입
         
         // 변동성 값 배열
-        val volatilityOptions = listOf(0.8, 0.9, 1.0, 1.1, 1.2)
+        val volatilityOptions = listOf(1.0, 1.1, 1.2, 1.3, 1.4)
         // 변동성 중복 방지를 위해 섞기
         val randomVolatilities = volatilityOptions.shuffled().take(5)
         
@@ -908,7 +916,7 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         val randomPrices = availablePrices.shuffled().take(5)
         
         // 변동성 값 배열
-        val volatilityOptions = listOf(0.8, 0.9, 1.0, 1.1, 1.2)
+        val volatilityOptions = listOf(1.0, 1.1, 1.2, 1.3, 1.4)
         // 변동성 중복 방지를 위해 섞기
         val randomVolatilities = volatilityOptions.shuffled().take(5)
         

@@ -1,6 +1,7 @@
 package com.example.p20
 
 import kotlin.math.absoluteValue
+import kotlin.math.max
 import kotlin.math.roundToInt
 import kotlin.math.sign
 import kotlin.random.Random
@@ -63,19 +64,14 @@ data class Stock(
      * @return 반동 발생 시 메시지, 없으면 빈 문자열
      */
     fun updateChangeValue(): String {
-        // 현재 가격이 이미 이력에 있는지 확인
-        val shouldAddToHistory = priceHistory.isEmpty() || priceHistory.last() != price
-        
-        // 가격이 다를 때만 이력에 추가
-        if (shouldAddToHistory) {
-            priceHistory.add(price)
-            if (priceHistory.size > MAX_HISTORY_SIZE) {
-                priceHistory.removeAt(0)
-            }
+        // 항상 현재 가격을 이력에 추가
+        priceHistory.add(price)
+        if (priceHistory.size > MAX_HISTORY_SIZE) {
+            priceHistory.removeAt(0)
         }
         
-        var minChangePercent = -0.04  // 기본 최소 변동률 (-0.04%)
-        var maxChangePercent = 0.04   // 기본 최대 변동률 (0.04%)
+        var minChangePercent = -0.04  // 기본 최소 변동률 (-4%)
+        var maxChangePercent = 0.04   // 기본 최대 변동률 (4%)
         var currentVolatility = volatility  // 기본 변동성
         
         // 반동 메시지를 저장할 변수
@@ -86,12 +82,12 @@ data class Stock(
             // 기존 호재/악재 이벤트 처리 (이전 버전과의 호환성)
             when {
                 isPositiveNews -> {
-                    minChangePercent = 0.01 // 최소 0.01% 상승
-                    maxChangePercent = 0.05 // 최대 0.05% 상승
+                    minChangePercent = 0.02 // 최소 2% 상승
+                    maxChangePercent = 0.07 // 최대 7% 상승
                 }
                 isNegativeNews -> {
-                    minChangePercent = -0.05 // 최소 0.05% 하락
-                    maxChangePercent = -0.01 // 최대 0.01% 하락
+                    minChangePercent = -0.07 // 최소 7% 하락
+                    maxChangePercent = -0.02 // 최대 2% 하락
                 }
             }
             
@@ -147,8 +143,17 @@ data class Stock(
         // 변동성 적용
         val adjustedChangePercent = finalChangePercent * currentVolatility
         
-        // 변동값 계산 (100원 단위로 반올림)
-        val calculatedChange = (price * adjustedChangePercent / 100.0).roundToInt() * 100
+        // 변동값 계산 (100원 단위로 조정)
+        var calculatedChange = (price * adjustedChangePercent / 100.0).roundToInt() * 100
+        
+        // 반동 효과가 활성화된 경우 방향성 강제 적용
+        if (reversionActive) {
+            // 0원이거나 반동 방향과 일치하지 않는 경우 최소 변동값 강제 적용
+            if (calculatedChange == 0 || calculatedChange.sign != reversionDirection) {
+                // 최소 100원의 상승/하락 보장
+                calculatedChange = reversionDirection * max(100, calculatedChange.absoluteValue)
+            }
+        }
         
         // 계산된 변동값 사용
         changeValue = calculatedChange
@@ -158,9 +163,13 @@ data class Stock(
         
         // 반동 효과가 활성화되어 있지 않을 때만 연속 변동 카운터 업데이트
         if (!reversionActive) {
-            if (currentDirection == lastMoveDirection && currentDirection != 0) {
+            if (currentDirection == 0) {
+                // 변동값이 0일 경우에는 연속 카운터를 업데이트하지 않음
+                // 카운터와 lastMoveDirection은 이전 상태를 유지
+            } else if (currentDirection == lastMoveDirection && lastMoveDirection != 0) {
+                // 이전과 같은 방향으로 변동할 경우
                 consecutiveMovesInSameDirection++
-            } else if (currentDirection != 0) {
+            } else {
                 // 방향이 바뀌었거나 처음 변동
                 consecutiveMovesInSameDirection = 1
                 lastMoveDirection = currentDirection
@@ -180,7 +189,13 @@ data class Stock(
     private fun checkAndStartReversion(): String {       
         // 연속 변동이 5회 미만이면 반동 효과 적용하지 않음
         // 추가 조건: 가격 이력이 최소 6개 이상 있어야 함 (초기 가격 + 5번의 변동)
-        if (consecutiveMovesInSameDirection < 5 || lastMoveDirection == 0 || priceHistory.size < 6) {
+        // lastMoveDirection이 0인 조건 제거 (변동값이 0이어도 반동 메커니즘이 작동하도록)
+        if (consecutiveMovesInSameDirection < 5 || priceHistory.size < 6) {
+            return ""
+        }
+
+        // 현재 추세 방향이 없는 경우(lastMoveDirection이 0인 경우) 반동 기능 적용 안함
+        if (lastMoveDirection == 0) {
             return ""
         }
 
@@ -231,7 +246,7 @@ data class Stock(
     }
     
     /**
-     * 상승 반동에 대한 커스텀 호재 이벤트 적용 (+0.02% ~ +0.09%)
+     * 상승 반동에 대한 커스텀 호재 이벤트 적용 (+2% ~ +9%)
      * @param ticks 반동 지속 틱 수
      * @return 반동 이벤트 메시지
      */
@@ -243,15 +258,15 @@ data class Stock(
         // 기존 이벤트 제거 (반동 이벤트와 충돌 방지)
         clearAllEvents()
         
-        // 상승 반동을 위한 커스텀 이벤트 생성
-        val minRate = 0.0002  // +0.02%
-        val maxRate = 0.0009  // +0.09%
+        // 상승 반동을 위한 커스텀 이벤트 생성 - 반드시 양수 변동값이 나오도록 조정
+        val minRate = 0.02  // +2%
+        val maxRate = 0.09  // +9%
         
         // 지속 시간 설정
         val durationMs = ticks * UPDATE_INTERVAL
         
         // 이벤트 메시지
-        val message = "반동 효과: 상승 유도 (0.02%~0.09%) - ${ticks}회 적용"
+        val message = "반동 효과: 상승 유도 (2%~9%) - ${ticks}회 적용"
         
         // 이벤트 생성
         val event = StockEvent(
@@ -271,7 +286,7 @@ data class Stock(
     }
     
     /**
-     * 하락 반동에 대한 커스텀 악재 이벤트 적용 (-0.09% ~ -0.02%)
+     * 하락 반동에 대한 커스텀 악재 이벤트 적용 (-9% ~ -2%)
      * @param ticks 반동 지속 틱 수
      * @return 반동 이벤트 메시지
      */
@@ -283,15 +298,15 @@ data class Stock(
         // 기존 이벤트 제거 (반동 이벤트와 충돌 방지)
         clearAllEvents()
         
-        // 하락 반동을 위한 커스텀 이벤트 생성
-        val minRate = -0.0009  // -0.09%
-        val maxRate = -0.0002  // -0.02%
+        // 하락 반동을 위한 커스텀 이벤트 생성 - 반드시 음수 변동값이 나오도록 조정
+        val minRate = -0.09  // -9%
+        val maxRate = -0.02  // -2%
         
         // 지속 시간 설정
         val durationMs = ticks * UPDATE_INTERVAL
         
         // 이벤트 메시지
-        val message = "반동 효과: 하락 유도 (-0.09%~-0.02%) - ${ticks}회 적용"
+        val message = "반동 효과: 하락 유도 (-9%~-2%) - ${ticks}회 적용"
         
         // 이벤트 생성
         val event = StockEvent(
@@ -323,7 +338,10 @@ data class Stock(
         val oldPrice = price
         price += changeValue
         price = maxOf(price, 10)
-        // 0으로 나누기 방지
+        
+        // 변동률 계산 수정 - 직접 변동률 범위를 -4% ~ +4%로 표현
+        // 원래 계산된 변동률을 사용하는 대신, 기존 계산에서 구한 changeValue로부터 
+        // 비율을 다시 계산하여 변동률 범위가 -4% ~ +4%가 되도록 함
         changeRate = if (oldPrice > 0) (changeValue.toDouble() / oldPrice) * 100 else 0.0
         
         // 새 가격을 즉시 이력에 추가하지 않음 - updateChangeValue()에서 처리

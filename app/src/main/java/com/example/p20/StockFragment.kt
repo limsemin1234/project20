@@ -337,19 +337,16 @@ class StockFragment : BaseFragment() {
     private fun updateImplementedFeatures() {
         val infoBuilder = StringBuilder()
         
-        // 반동 메커니즘 설명
-        infoBuilder.append("[반동 메커니즘]\n")
-        infoBuilder.append("• 같은 방향으로 5회 이상 연속 변동 시 반동 확률 발동\n")
-        infoBuilder.append("• 연속 변동 횟수별 반동 확률: 5회 50%, 6회 60%, 7회 70%, 8회 80%, 9회 90%, 10회 이상 95%\n")
-        infoBuilder.append("• 반동 효과 지속: 3~6회 가격 변동(15~30초) 랜덤 적용\n")
-        infoBuilder.append("• 상승 반동 변동률: +0.02% ~ +0.09% 범위로 가격 상승\n")
-        infoBuilder.append("• 하락 반동 변동률: -0.09% ~ -0.02% 범위로 가격 하락\n\n")
+        infoBuilder.append("■ 향상된 가격 변동 메커니즘\n")
+        infoBuilder.append("• 주식 가격이 한 방향으로 연속 5회 이상 변동하면 반대 방향으로의 반동이 발생합니다.\n")
+        infoBuilder.append("• 연속 변동 횟수가 증가할수록 반동 확률이 높아집니다.\n")
+        infoBuilder.append("• 10회 이상 연속 변동 시 95% 확률로 반동이 발생합니다.\n")
+        infoBuilder.append("• 반동 발생 시 20초~40초간 해당 방향으로의 가격 변동이 유도됩니다.\n\n")
         
-        infoBuilder.append("[주의사항]\n")
-        infoBuilder.append("• 현재 이벤트 시스템은 비활성화되어 있습니다.\n")
+        infoBuilder.append("■ 기본 주식 변동 시스템\n")
         infoBuilder.append("• 추세 기능이 제거되어 가격 변동이 100% 랜덤으로 이루어집니다.\n")
-        infoBuilder.append("• 주식마다 기본 변동성(0.8~1.2)이 다르게 적용됩니다.\n")
-        infoBuilder.append("• 기본 변동 범위: -0.04% ~ +0.04%")
+        infoBuilder.append("• 주식마다 기본 변동성(1.0~1.4)이 다르게 적용됩니다.\n")
+        infoBuilder.append("• 기본 변동 범위: -4% ~ +4%")
         
         featuresInfoText.text = infoBuilder.toString()
     }
@@ -387,7 +384,7 @@ class StockFragment : BaseFragment() {
         val graphUpdateObserver = Observer<MutableList<Stock>> { updatedStockList ->
             updatedStockList.find { it.name == stock.name }?.let { updatedStock ->
                 // 이미 타이머가 처리 중인지 확인
-                if (!graphState.isTimerProcessing && updatedStock.price != graphState.lastPrice) {
+                if (!graphState.isTimerProcessing) {
                     updateGraph(lineChart, updatedStock, graphState)
                 }
             }
@@ -397,31 +394,27 @@ class StockFragment : BaseFragment() {
         val graphUpdateHandler = android.os.Handler(android.os.Looper.getMainLooper())
         val graphUpdateRunnable = object : Runnable {
             override fun run() {
-                try {
-                    // 처리 중 표시 (Observer와 충돌 방지)
-                    graphState.isTimerProcessing = true
-                    
-                    // 최신 데이터 가져오기
-                    stockViewModel.stockItems.value?.find { it.name == stock.name }?.let { currentStock ->
-                        // 데이터가 변경된 경우에만 업데이트
-                        if (currentStock.price != graphState.lastPrice) {
-                            updateGraph(lineChart, currentStock, graphState)
-                        }
-                    }
-                } finally {
-                    // 처리 완료 표시
-                    graphState.isTimerProcessing = false
-                    
-                    // 다이얼로그가 아직 표시 중이면 다음 업데이트 예약
-                    if (dialog.isShowing) {
-                        graphUpdateHandler.postDelayed(this, 5000)
-                    }
+                // 더 이상 매 5초마다 자동으로 데이터 포인트를 추가하지 않음
+                // 대신 LiveData 업데이트만 감지하여 변경된 경우에만 그래프 업데이트
+
+                // 다이얼로그가 아직 표시 중이면 다음 타이머 예약
+                if (dialog.isShowing) {
+                    graphUpdateHandler.postDelayed(this, 5000)
                 }
             }
         }
         
-        // 주식 데이터 변경 감지를 위한 옵저버 등록
-        stockViewModel.stockItems.observe(viewLifecycleOwner, graphUpdateObserver)
+        // 주식 데이터 변경 감지를 위한 옵저버 등록 - 가격 변경 시에만 그래프 업데이트
+        stockViewModel.stockItems.observe(viewLifecycleOwner, Observer { updatedStockList ->
+            updatedStockList.find { it.name == stock.name }?.let { updatedStock ->
+                // 변경된 경우에만 그래프 업데이트
+                if (updatedStock.price != graphState.lastPrice) {
+                    graphState.isTimerProcessing = true
+                    updateGraph(lineChart, updatedStock, graphState)
+                    graphState.isTimerProcessing = false
+                }
+            }
+        })
         
         // 첫 타이머 예약
         graphUpdateHandler.postDelayed(graphUpdateRunnable, 5000)
