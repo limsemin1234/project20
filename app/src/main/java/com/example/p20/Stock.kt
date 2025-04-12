@@ -56,8 +56,10 @@ data class Stock(
     var initialPrice: Int = 0
     
     init {
-        // 초기 가격을 이력에 추가
-        priceHistory.add(price)
+        // 초기 가격을 이력에 추가 - 중복 방지를 위해 priceHistory가 비어있을 때만 추가
+        if (priceHistory.isEmpty()) {
+            priceHistory.add(price)
+        }
         
         // 초기 가격 저장
         initialPrice = price
@@ -68,12 +70,6 @@ data class Stock(
      * @return 반동 발생 시 메시지, 없으면 빈 문자열
      */
     fun updateChangeValue(): String {
-        // 항상 현재 가격을 이력에 추가
-        priceHistory.add(price)
-        if (priceHistory.size > MAX_HISTORY_SIZE) {
-            priceHistory.removeAt(0)
-        }
-        
         var minChangePercent = -0.04  // 기본 최소 변동률 (-4%)
         var maxChangePercent = 0.04   // 기본 최대 변동률 (4%)
         var currentVolatility = volatility  // 기본 변동성
@@ -81,8 +77,19 @@ data class Stock(
         // 반동 메시지를 저장할 변수
         var reversionMessage = ""
         
-        // 예약된 반동 효과가 있고, 활성 이벤트가 없는 경우 반동 효과 적용
-        if (pendingReversion != 0 && activeEvents.isEmpty() && !reversionActive) {
+        // 반동 효과 체크를 우선적으로 수행 - 이벤트 상태와 관계없이 항상 체크
+        if (!reversionActive && !pendingReversionChecked) {
+            val checkResult = checkAndStartReversion()
+            if (checkResult.isNotEmpty()) {
+                // 반동 발생 시 모든 기존 이벤트 제거 후 반동 적용
+                clearAllEvents()
+                reversionMessage = checkResult
+            }
+        }
+        
+        // 예약된 반동 효과가 있는 경우 최우선 적용 (기존 이벤트 모두 제거)
+        if (pendingReversion != 0 && !reversionActive) {
+            clearAllEvents() // 모든 이벤트 제거
             reversionMessage = applyReversion(pendingReversion)
             pendingReversion = 0  // 반동 효과를 적용했으므로 대기 중인 반동 제거
             pendingReversionChecked = false
@@ -116,20 +123,10 @@ data class Stock(
                     maxChangePercent = it.maxChangeRate
                 }
             }
-            
-            // 반동 효과 체크 (이벤트가 활성화되어 있으면 체크만 하고 적용은 나중에)
-            if (!pendingReversionChecked && activeEvents.isEmpty()) {
-                val checkResult = checkAndStartReversion()
-                if (checkResult.isNotEmpty()) {
-                    if (activeEvents.isEmpty()) {
-                        // 활성 이벤트가 없으면 즉시 반동 적용
-                        reversionMessage = checkResult
-                    } else {
-                        // 활성 이벤트가 있으면 반동 방향을 저장하고 이벤트 종료 후에 적용
-                        pendingReversion = -lastMoveDirection
-                        pendingReversionChecked = true
-                    }
-                }
+        } else {
+            // 반동 효과가 활성화된 상태에서 이벤트가 있으면 모두 제거
+            if (activeEvents.isNotEmpty() || isPositiveNews || isNegativeNews) {
+                clearAllEvents()
             }
         }
         
@@ -144,6 +141,9 @@ data class Stock(
                 reversionActive = false
                 reversionDirection = 0
                 pendingReversionChecked = false  // 반동 체크 플래그 리셋
+                
+                // 반동용 이벤트 제거
+                removeReversalEvents()
             }
         }
         
@@ -192,6 +192,12 @@ data class Stock(
         // 변동값과 상관없이 항상 가격 처리 수행
         updatePriceAndChangeValue()
         
+        // 가격 이력에 추가 - updatePriceAndChangeValue() 호출 후에 추가하여 변경된 가격이 반영되도록 함
+        priceHistory.add(price)
+        if (priceHistory.size > MAX_HISTORY_SIZE) {
+            priceHistory.removeAt(0)
+        }
+        
         return reversionMessage
     }
 
@@ -224,15 +230,8 @@ data class Stock(
         
         // 반동 확률에 따라 반동 효과 활성화
         if (Random.nextDouble() < reversionProbability) {
-            if (activeEvents.isEmpty()) {
-                // 이벤트가 없으면 즉시 반동 효과 적용
-                return applyReversion(-lastMoveDirection)
-            } else {
-                // 이벤트가 있으면 반동 방향만 저장
-                pendingReversion = -lastMoveDirection
-                pendingReversionChecked = true
-                return ""
-            }
+            // 이벤트 상태와 관계없이 항상 즉시 반동 효과 적용
+            return applyReversion(-lastMoveDirection)
         }
         
         return ""
@@ -244,6 +243,9 @@ data class Stock(
      * @return 반동 이벤트 메시지
      */
     private fun applyReversion(direction: Int): String {
+        // 반동 적용 시 모든 기존 이벤트 제거
+        clearAllEvents()
+        
         reversionActive = true
         reversionDirection = direction
         
@@ -350,8 +352,6 @@ data class Stock(
         // 원래 계산된 변동률을 사용하는 대신, 기존 계산에서 구한 changeValue로부터 
         // 비율을 다시 계산하여 변동률 범위가 -4% ~ +4%가 되도록 함
         changeRate = if (oldPrice > 0) (changeValue.toDouble() / oldPrice) * 100 else 0.0
-        
-        // 새 가격을 즉시 이력에 추가하지 않음 - updateChangeValue()에서 처리
     }
 
     /**
@@ -536,6 +536,22 @@ data class Stock(
         activeEvents.clear()
         isPositiveNews = false
         isNegativeNews = false
+    }
+    
+    /**
+     * 반동 관련 이벤트만 제거합니다.
+     */
+    private fun removeReversalEvents() {
+        // 반동 이벤트 타입 목록
+        val reversalEventTypes = listOf(
+            StockEventType.POSITIVE_LARGE,  // 상승 반동용 이벤트 타입
+            StockEventType.NEGATIVE_LARGE   // 하락 반동용 이벤트 타입
+        )
+        
+        // 반동 이벤트만 제거
+        reversalEventTypes.forEach { eventType ->
+            activeEvents.remove(eventType)
+        }
     }
 }
 

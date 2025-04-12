@@ -25,12 +25,12 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     
     // 기존 호재 이벤트 설정 (호환성 유지)
     private val positiveNewsInterval = 30000L // 호재 이벤트 체크 간격 (30초)
-    private val positiveNewsChance = 0.2 // 호재 발생 확률 (20%로 활성화)
+    private val positiveNewsChance = 0.0 // 호재 발생 확률 (0%로 비활성화)
     private val positiveNewsDuration = 20000L // 호재 지속 시간 (20초)
     
     // 기존 악제 이벤트 설정 (호환성 유지)
     private val negativeNewsInterval = 30000L // 악제 이벤트 체크 간격 (30초)
-    private val negativeNewsChance = 0.2 // 악제 발생 확률 (20%로 활성화)
+    private val negativeNewsChance = 0.0 // 악제 발생 확률 (0%로 비활성화)
     private val negativeNewsDuration = 20000L // 악제 지속 시간 (20초)
     
     // 새 이벤트 시스템 설정
@@ -40,61 +40,61 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         StockEventType.POSITIVE_SMALL to EventSettings(
             minRate = 0.02, maxRate = 0.04,
             duration = 15000L, interval = 30000L, 
-            chance = 0.25, stockCount = 2     // 이벤트 발생 확률 25%로 설정
+            chance = 0.0, stockCount = 2     // 이벤트 발생 확률 0%로 설정
         ),
         // 중형 호재
         StockEventType.POSITIVE_MEDIUM to EventSettings(
             minRate = 0.03, maxRate = 0.06,
             duration = 15000L, interval = 45000L, 
-            chance = 0.18, stockCount = 1     // 이벤트 발생 확률 18%로 설정
+            chance = 0.0, stockCount = 1     // 이벤트 발생 확률 0%로 설정
         ),
         // 대형 호재
         StockEventType.POSITIVE_LARGE to EventSettings(
             minRate = 0.05, maxRate = 0.09,
             duration = 18000L, interval = 60000L, 
-            chance = 0.12, stockCount = 1     // 이벤트 발생 확률 12%로 설정
+            chance = 0.0, stockCount = 1     // 이벤트 발생 확률 0%로 설정
         ),
         // 소형 악재
         StockEventType.NEGATIVE_SMALL to EventSettings(
             minRate = -0.04, maxRate = -0.02,
             duration = 15000L, interval = 30000L, 
-            chance = 0.25, stockCount = 2     // 이벤트 발생 확률 25%로 설정
+            chance = 0.0, stockCount = 2     // 이벤트 발생 확률 0%로 설정
         ),
         // 중형 악재
         StockEventType.NEGATIVE_MEDIUM to EventSettings(
             minRate = -0.06, maxRate = -0.03,
             duration = 15000L, interval = 45000L, 
-            chance = 0.18, stockCount = 1     // 이벤트 발생 확률 18%로 설정
+            chance = 0.0, stockCount = 1     // 이벤트 발생 확률 0%로 설정
         ),
         // 대형 악재
         StockEventType.NEGATIVE_LARGE to EventSettings(
             minRate = -0.09, maxRate = -0.05,
             duration = 18000L, interval = 60000L, 
-            chance = 0.12, stockCount = 1     // 이벤트 발생 확률 12%로 설정
+            chance = 0.0, stockCount = 1     // 이벤트 발생 확률 0%로 설정
         ),
         // 경기 부양
         StockEventType.MARKET_BOOM to EventSettings(
             minRate = 0.02, maxRate = 0.05,
             duration = 24000L, interval = 180000L, 
-            chance = 0.10, stockCount = 0     // 이벤트 발생 확률 10%로 설정
+            chance = 0.0, stockCount = 0     // 이벤트 발생 확률 0%로 설정
         ),
         // 경기 침체
         StockEventType.MARKET_RECESSION to EventSettings(
             minRate = -0.05, maxRate = -0.02,
             duration = 24000L, interval = 180000L, 
-            chance = 0.10, stockCount = 0     // 이벤트 발생 확률 10%로 설정
+            chance = 0.0, stockCount = 0     // 이벤트 발생 확률 0%로 설정
         ),
         // 시장 폭등
         StockEventType.MARKET_SURGE to EventSettings(
             minRate = 0.04, maxRate = 0.08,
             duration = 12000L, interval = 300000L, 
-            chance = 0.05, stockCount = 0     // 이벤트 발생 확률 5%로 설정
+            chance = 0.0, stockCount = 0     // 이벤트 발생 확률 0%로 설정
         ),
         // 시장 폭락
         StockEventType.MARKET_CRASH to EventSettings(
             minRate = -0.08, maxRate = -0.04,
             duration = 12000L, interval = 300000L, 
-            chance = 0.05, stockCount = 0     // 이벤트 발생 확률 5%로 설정
+            chance = 0.0, stockCount = 0     // 이벤트 발생 확률 0%로 설정
         )
     )
     
@@ -104,13 +104,13 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         StockEventType.STOCK_SURGE to EventSettings(
             minRate = 0.1, maxRate = 0.2,
             duration = 0L, interval = 600000L, 
-            chance = 0.08, stockCount = 1     // 이벤트 발생 확률 8%로 설정
+            chance = 0.0, stockCount = 1     // 이벤트 발생 확률 0%로 설정
         ),
         // 대폭락 종목
         StockEventType.STOCK_CRASH to EventSettings(
             minRate = -0.2, maxRate = -0.1,
             duration = 0L, interval = 600000L, 
-            chance = 0.08, stockCount = 1     // 이벤트 발생 확률 8%로 설정
+            chance = 0.0, stockCount = 1     // 이벤트 발생 확률 0%로 설정
         )
     )
     
@@ -378,8 +378,9 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
         
-        // 첫 번째 업데이트는 지정된 간격 후에 시작
-        handler.postDelayed(updateRunnable, updateInterval)
+        // 첫 번째 업데이트는 즉시 실행하고, 이후부터 지정된 간격으로 실행
+        updateStockPrices() // 즉시 첫 번째 업데이트 실행
+        handler.postDelayed(updateRunnable, updateInterval) // 이후부터 정기적 업데이트
     }
     
     // 기존 호재/악제 이벤트 메서드 (호환성 유지)
@@ -523,8 +524,16 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
                 else -> stocks.shuffled().take(settings.stockCount)
             }
             
+            // 반동 효과가 활성화된 종목 제외
+            val filteredStocks = affectedStocks.filter { !it.reversionActive }
+            
+            // 모든 주식이 반동 상태면 이벤트 적용하지 않음
+            if (filteredStocks.isEmpty()) {
+                return
+            }
+            
             // 영향받는 종목 이름 목록
-            val affectedStockNames = affectedStocks.map { it.name }
+            val affectedStockNames = filteredStocks.map { it.name }
             
             // 이벤트 메시지 생성
             val message = generateEventMessage(eventType, affectedStockNames)
@@ -540,8 +549,8 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
                 affectedStockNames = affectedStockNames
             )
             
-            // 이벤트를 종목에 적용
-            affectedStocks.forEach { stock ->
+            // 이벤트를 종목에 적용 (반동 효과가 없는 종목만)
+            filteredStocks.forEach { stock ->
                 stock.addEvent(event)
             }
             
@@ -550,8 +559,11 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
             
             // 이벤트 지속 시간 후 자동 제거
             handler.postDelayed({
-                affectedStocks.forEach { stock ->
-                    stock.removeEvent(eventType)
+                filteredStocks.forEach { stock ->
+                    // 해당 종목이 반동 효과가 활성화되지 않은 경우에만 이벤트 제거
+                    if (!stock.reversionActive) {
+                        stock.removeEvent(eventType)
+                    }
                 }
                 // UI 업데이트
                 _stockItems.value = stocks
@@ -591,30 +603,37 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
             // 기존의 호재 영향 초기화
             stocks.filter { it.isPositiveNews }.forEach { it.isPositiveNews = false }
             
-            // 악제 영향을 받고 있지 않은 종목들 중에서 선택
-            val eligibleStocks = stocks.filter { !it.isNegativeNews }
+            // 악제 영향을 받고 있지 않고, 반동 효과가 활성화되지 않은 종목들 중에서 선택
+            val eligibleStocks = stocks.filter { !it.isNegativeNews && !it.reversionActive }
             
             // 선택 가능한 종목이 2개 이상 있는지 확인
             if (eligibleStocks.size >= 2) {
                 // 선택 가능한 종목들 중에서 랜덤하게 2개 선택
                 val selectedStocks = eligibleStocks.shuffled().take(2)
                 
-                // 선택된 주식에 호재 적용
+                // 선택된 종목들에 호재 영향 설정
                 selectedStocks.forEach { it.isPositiveNews = true }
                 
-                // 호재 영향 받는 주식 이름 리스트
+                // 호재 종목 이름 목록
                 val positiveNewsStockNames = selectedStocks.map { it.name }
                 
-                // 콜백 호출 (Fragment에 알림)
+                // 호재 콜백 호출
                 positiveNewsCallback?.invoke(positiveNewsStockNames)
-                
-                // 20초 후에 호재 효과 제거
-                handler.postDelayed({
-                    removePositiveNews()
-                }, positiveNewsDuration)
                 
                 // UI 업데이트
                 _stockItems.value = stocks
+                
+                // 일정 시간 후에 호재 효과 제거
+                handler.postDelayed({
+                    // 반동 효과가 활성화된 종목은 제외하고 호재 효과 제거
+                    selectedStocks.forEach { 
+                        if (!it.reversionActive) {
+                            it.isPositiveNews = false 
+                        }
+                    }
+                    // UI 업데이트
+                    _stockItems.value = stocks
+                }, positiveNewsDuration)
             }
         }
     }
@@ -624,30 +643,35 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
             // 기존의 악제 영향 초기화
             stocks.filter { it.isNegativeNews }.forEach { it.isNegativeNews = false }
             
-            // 호재 영향을 받고 있지 않은 종목들 중에서 선택
-            val eligibleStocks = stocks.filter { !it.isPositiveNews }
+            // 호재 영향을 받고 있지 않고, 반동 효과가 활성화되지 않은 종목들 중에서 선택
+            val eligibleStocks = stocks.filter { !it.isPositiveNews && !it.reversionActive }
             
-            // 선택 가능한 종목이 2개 이상 있는지 확인
-            if (eligibleStocks.size >= 2) {
-                // 선택 가능한 종목들 중에서 랜덤하게 2개 선택
-                val selectedStocks = eligibleStocks.shuffled().take(2)
+            // 선택 가능한 종목이 있는지 확인
+            if (eligibleStocks.isNotEmpty()) {
+                // 선택 가능한 종목들 중에서 랜덤하게 1개 선택
+                val selectedStock = eligibleStocks.random()
                 
-                // 선택된 주식에 악제 적용
-                selectedStocks.forEach { it.isNegativeNews = true }
+                // 선택된 종목에 악제 영향 설정
+                selectedStock.isNegativeNews = true
                 
-                // 악제 영향 받는 주식 이름 리스트
-                val negativeNewsStockNames = selectedStocks.map { it.name }
+                // 악제 종목 이름 목록
+                val negativeNewsStockNames = listOf(selectedStock.name)
                 
-                // 콜백 호출 (Fragment에 알림)
+                // 악제 콜백 호출
                 negativeNewsCallback?.invoke(negativeNewsStockNames)
-                
-                // 20초 후에 악제 효과 제거
-                handler.postDelayed({
-                    removeNegativeNews()
-                }, negativeNewsDuration)
                 
                 // UI 업데이트
                 _stockItems.value = stocks
+                
+                // 일정 시간 후에 악제 효과 제거
+                handler.postDelayed({
+                    // 반동 효과가 활성화된 종목은 제외하고 악제 효과 제거
+                    if (!selectedStock.reversionActive) {
+                        selectedStock.isNegativeNews = false
+                    }
+                    // UI 업데이트
+                    _stockItems.value = stocks
+                }, negativeNewsDuration)
             }
         }
     }

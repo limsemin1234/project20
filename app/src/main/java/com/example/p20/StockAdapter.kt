@@ -26,7 +26,19 @@ class StockAdapter(
     override fun onBindViewHolder(holder: StockViewHolder, position: Int) {
         val stock = stockList[position]
 
-        holder.stockName.text = stock.name
+        // 주식명 표시 - 호재/악재 상태에 따라 표시 변경
+        when {
+            stock.isPositiveNews -> {
+                holder.stockName.text = "${stock.name} [호재]"
+            }
+            stock.isNegativeNews -> {
+                holder.stockName.text = "${stock.name} [악재]"
+            }
+            else -> {
+                holder.stockName.text = stock.name
+            }
+        }
+
         holder.stockPrice.text = "${String.format("%,d", stock.price)}원"
         holder.stockChangeValue.text = "${String.format("%,d", stock.changeValue)}원"
         holder.stockChangeRate.text = "${"%.2f".format(stock.changeRate)}%"
@@ -80,19 +92,7 @@ class StockAdapter(
         } else {
             // 선택되지 않은 항목
             background.setStroke(1, Color.parseColor("#DDDDDD"))  // 연한 회색 테두리
-            
-            // 호재/악제 영향을 받는 주식인 경우 배경색 변경
-            when {
-                stock.isPositiveNews -> {
-                    background.setColor(Color.argb(50, 0, 180, 0))  // 연한 녹색 배경
-                }
-                stock.isNegativeNews -> {
-                    background.setColor(Color.argb(50, 180, 0, 0))  // 연한 빨간색 배경
-                }
-                else -> {
-                    background.setColor(Color.WHITE)  // 기본 흰색 배경
-                }
-            }
+            background.setColor(Color.WHITE)  // 기본 흰색 배경
             
             // 텍스트 일반 스타일로 복원
             holder.stockName.setTypeface(null, android.graphics.Typeface.NORMAL)
