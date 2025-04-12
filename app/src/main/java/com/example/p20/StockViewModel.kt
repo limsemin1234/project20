@@ -774,6 +774,8 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         val buyCount = stock.buyStocks(quantity)
         if (buyCount > 0) {
             saveStockData()
+            // LiveData 갱신을 위해 새 인스턴스 생성하여 할당
+            _stockItems.value = _stockItems.value?.toMutableList()
         }
         return buyCount
     }
@@ -788,21 +790,29 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         val sellCount = stock.sellStocks(quantity)
         if (sellCount > 0) {
             saveStockData()
+            // LiveData 갱신을 위해 새 인스턴스 생성하여 할당
+            _stockItems.value = _stockItems.value?.toMutableList()
         }
         return sellCount
     }
 
     fun buyAllStock(stock: Stock, currentAsset: Long): Int {
         val buyCount = stock.buyAllStock(currentAsset)
-        saveStockData()
-        _stockItems.value = _stockItems.value
+        if (buyCount > 0) {
+            saveStockData()
+            // LiveData 갱신을 위해 새 인스턴스 생성하여 할당
+            _stockItems.value = _stockItems.value?.toMutableList()
+        }
         return buyCount
     }
 
     fun sellAllStock(stock: Stock): Int {
         val sellCount = stock.sellAllStock()
-        saveStockData()
-        _stockItems.value = _stockItems.value
+        if (sellCount > 0) {
+            saveStockData()
+            // LiveData 갱신을 위해 새 인스턴스 생성하여 할당
+            _stockItems.value = _stockItems.value?.toMutableList()
+        }
         return sellCount
     }
 
@@ -842,10 +852,27 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
             
-            // 보유량이 있는 경우 매입가격 설정
-            stock.purchasePrices.clear()
-            val savedPurchasePrice = stock.getAvgPurchasePrice()
-            editor.putInt("purchasePrice_$index", savedPurchasePrice)
+            // 보유량이 있는 경우 매입가격 저장
+            if (stock.holding > 0) {
+                // 매입 가격 목록의 크기 저장
+                val purchasesSize = stock.purchasePrices.size
+                editor.putInt("purchasesSize_$index", purchasesSize)
+                
+                // 각 매입 가격 저장
+                for (i in 0 until purchasesSize) {
+                    if (i < stock.purchasePrices.size) {
+                        editor.putInt("purchasePrice_${index}_$i", stock.purchasePrices[i])
+                    }
+                }
+                
+                // 평균 매입가 저장 (purchasePrices를 지우지 않고 계산)
+                val avgPurchasePrice = stock.getAvgPurchasePrice()
+                editor.putInt("avgPurchasePrice_$index", avgPurchasePrice)
+            } else {
+                // 보유량이 없으면 매입 가격 목록 크기는 0
+                editor.putInt("purchasesSize_$index", 0)
+                editor.putInt("avgPurchasePrice_$index", 0)
+            }
         }
         
         editor.apply()
@@ -902,10 +929,32 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
             
             // 보유량이 있는 경우 매입가격 설정
             stock.purchasePrices.clear()
-            val savedPurchasePrice = sharedPreferences.getInt("purchasePrice_$index", 0)
-            if (savedPurchasePrice > 0 && stock.holding > 0) {
-                repeat(stock.holding) {
-                    stock.purchasePrices.add(savedPurchasePrice)
+            
+            if (stock.holding > 0) {
+                // 새 저장 방식: 개별 매입 가격 로드
+                val purchasesSize = sharedPreferences.getInt("purchasesSize_$index", 0)
+                
+                if (purchasesSize > 0) {
+                    // 각 매입 가격 로드
+                    for (i in 0 until purchasesSize) {
+                        val purchasePrice = sharedPreferences.getInt("purchasePrice_${index}_$i", 0)
+                        if (purchasePrice > 0) {
+                            stock.purchasePrices.add(purchasePrice)
+                        }
+                    }
+                } else {
+                    // 이전 저장 방식 호환: 평균 매입가 사용
+                    val avgPurchasePrice = sharedPreferences.getInt("avgPurchasePrice_$index", 0)
+                    if (avgPurchasePrice > 0) {
+                        repeat(stock.holding) {
+                            stock.purchasePrices.add(avgPurchasePrice)
+                        }
+                    } else {
+                        // 최후의 방법: 현재 가격으로 설정
+                        repeat(stock.holding) {
+                            stock.purchasePrices.add(stock.price)
+                        }
+                    }
                 }
             }
         }

@@ -76,6 +76,18 @@
             android:textColor="@android:color/black"
             android:gravity="end"/>
 
+        <!-- 그래프 버튼 -->
+        <ImageButton
+            android:id="@+id/stockGraphButton"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="그래프 보기"
+            android:src="@android:drawable/ic_dialog_dialer"
+            android:scaleType="fitCenter"
+            android:tint="@color/purple_500" />
+
     </LinearLayout>
 
 </androidx.cardview.widget.CardView>

@@ -119,11 +119,8 @@ class StockFragment : BaseFragment() {
 
         // 그래프 버튼 추가
         showGraphButton = view.findViewById(R.id.btnShowGraph)
-        showGraphButton.setOnClickListener {
-            selectedStock?.let { stock ->
-                showStockGraphDialog(stock)
-            } ?: showMessage("주식을 먼저 선택해주세요.")
-        }
+        // 리사이클러뷰 아이템에 그래프 버튼이 추가되어 기존 버튼은 숨김
+        showGraphButton.visibility = View.GONE
 
         // 수량 버튼 찾기
         quantityBtn1 = view.findViewById(R.id.quantityBtn1)
@@ -145,10 +142,16 @@ class StockFragment : BaseFragment() {
         selectedStockName = view.findViewById(R.id.selectedStockName)
 
         stockRecyclerView.layoutManager = LinearLayoutManager(requireContext())
-        stockAdapter = StockAdapter(stockItems) { stock ->
-            selectedStock = stock
-            updateStockDetails(stock) // 주식 상세 정보 업데이트
-        }
+        stockAdapter = StockAdapter(
+            stockItems, 
+            { stock -> // 아이템 클릭 콜백
+                selectedStock = stock
+                updateStockDetails(stock) // 주식 상세 정보 업데이트
+            },
+            { stock -> // 그래프 버튼 클릭 콜백
+                showStockGraphDialog(stock)
+            }
+        )
         stockRecyclerView.adapter = stockAdapter
 
         // 수량 버튼 클릭 리스너 설정
@@ -352,14 +355,14 @@ class StockFragment : BaseFragment() {
         // 이벤트 시스템 설명 추가
         infoBuilder.append("■ 주식 이벤트 시스템\n")
         infoBuilder.append("• 개별 종목 이벤트:\n")
-        infoBuilder.append("  - 소형 호재/악재: +2%~4% / -4%~-2% (25% 확률)\n")
-        infoBuilder.append("  - 중형 호재/악재: +3%~6% / -6%~-3% (18% 확률)\n")
-        infoBuilder.append("  - 대형 호재/악재: +5%~9% / -9%~-5% (12% 확률)\n")
+        infoBuilder.append("  - 소형 호재/악재: +2%~4% / -4%~-2% (비활성화)\n")
+        infoBuilder.append("  - 중형 호재/악재: +3%~6% / -6%~-3% (비활성화)\n")
+        infoBuilder.append("  - 대형 호재/악재: +5%~9% / -9%~-5% (비활성화)\n")
         infoBuilder.append("• 시장 전체 이벤트:\n")
-        infoBuilder.append("  - 경기 부양/침체: +2%~5% / -5%~-2% (10% 확률)\n")
-        infoBuilder.append("  - 시장 폭등/폭락: +4%~8% / -8%~-4% (5% 확률)\n")
+        infoBuilder.append("  - 경기 부양/침체: +2%~5% / -5%~-2% (비활성화)\n")
+        infoBuilder.append("  - 시장 폭등/폭락: +4%~8% / -8%~-4% (비활성화)\n")
         infoBuilder.append("• 특별 이벤트:\n")
-        infoBuilder.append("  - 대박/대폭락 종목: +10%~20% / -20%~-10% (8% 확률)\n")
+        infoBuilder.append("  - 대박/대폭락 종목: +10%~20% / -20%~-10% (비활성화)\n")
         infoBuilder.append("• 반동 효과가 진행 중일 때는 새로운 이벤트가 적용되지 않습니다.\n")
         
         featuresInfoText.text = infoBuilder.toString()

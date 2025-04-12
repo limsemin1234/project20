@@ -8,10 +8,12 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import androidx.core.content.ContextCompat
 import android.graphics.drawable.GradientDrawable
+import android.widget.ImageButton
 
 class StockAdapter(
     private var stockList: List<Stock>,
-    private val onItemClick: (Stock) -> Unit
+    private val onItemClick: (Stock) -> Unit,
+    private val onGraphClick: (Stock) -> Unit
 ) : RecyclerView.Adapter<StockAdapter.StockViewHolder>() {
 
     // 현재 선택된 주식을 추적
@@ -115,6 +117,11 @@ class StockAdapter(
             // 콜백 호출
             onItemClick(stock) 
         }
+        
+        // 그래프 버튼 클릭 이벤트 처리
+        holder.stockGraphButton.setOnClickListener {
+            onGraphClick(stock)
+        }
     }
 
     override fun getItemCount(): Int = stockList.size
@@ -165,5 +172,6 @@ class StockAdapter(
         val stockChangeValue: TextView = itemView.findViewById(R.id.stockChangeValue)
         val stockChangeRate: TextView = itemView.findViewById(R.id.stockChangeRate)
         val stockHolding: TextView = itemView.findViewById(R.id.stockHolding)
+        val stockGraphButton: ImageButton = itemView.findViewById(R.id.stockGraphButton)
     }
 } 
