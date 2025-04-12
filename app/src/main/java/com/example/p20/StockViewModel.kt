@@ -25,12 +25,12 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     
     // 기존 호재 이벤트 설정 (호환성 유지)
     private val positiveNewsInterval = 30000L // 호재 이벤트 체크 간격 (30초)
-    private val positiveNewsChance = 0.3 // 호재 발생 확률 (30%)
+    private val positiveNewsChance = 0.0 // 호재 발생 확률 (0%로 비활성화)
     private val positiveNewsDuration = 20000L // 호재 지속 시간 (20초)
     
     // 기존 악제 이벤트 설정 (호환성 유지)
     private val negativeNewsInterval = 30000L // 악제 이벤트 체크 간격 (30초)
-    private val negativeNewsChance = 0.3 // 악제 발생 확률 (30%)
+    private val negativeNewsChance = 0.0 // 악제 발생 확률 (0%로 비활성화)
     private val negativeNewsDuration = 20000L // 악제 지속 시간 (20초)
     
     // 새 이벤트 시스템 설정
@@ -38,63 +38,63 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     private val EVENT_SETTINGS = mapOf(
         // 소형 호재
         StockEventType.POSITIVE_SMALL to EventSettings(
-            minRate = 0.01, maxRate = 0.02,
+            minRate = 0.02, maxRate = 0.04,
             duration = 15000L, interval = 30000L, 
-            chance = 0.25, stockCount = 2
+            chance = 0.0, stockCount = 2     // 이벤트 발생 확률 0으로 설정
         ),
         // 중형 호재
         StockEventType.POSITIVE_MEDIUM to EventSettings(
-            minRate = 0.02, maxRate = 0.04,
+            minRate = 0.03, maxRate = 0.06,
             duration = 15000L, interval = 45000L, 
-            chance = 0.15, stockCount = 1
+            chance = 0.0, stockCount = 1     // 이벤트 발생 확률 0으로 설정
         ),
         // 대형 호재
         StockEventType.POSITIVE_LARGE to EventSettings(
-            minRate = 0.04, maxRate = 0.07,
+            minRate = 0.05, maxRate = 0.09,
             duration = 18000L, interval = 60000L, 
-            chance = 0.05, stockCount = 1
+            chance = 0.0, stockCount = 1     // 이벤트 발생 확률 0으로 설정
         ),
         // 소형 악재
         StockEventType.NEGATIVE_SMALL to EventSettings(
-            minRate = -0.02, maxRate = -0.01,
+            minRate = -0.04, maxRate = -0.02,
             duration = 15000L, interval = 30000L, 
-            chance = 0.25, stockCount = 2
+            chance = 0.0, stockCount = 2     // 이벤트 발생 확률 0으로 설정
         ),
         // 중형 악재
         StockEventType.NEGATIVE_MEDIUM to EventSettings(
-            minRate = -0.04, maxRate = -0.02,
+            minRate = -0.06, maxRate = -0.03,
             duration = 15000L, interval = 45000L, 
-            chance = 0.15, stockCount = 1
+            chance = 0.0, stockCount = 1     // 이벤트 발생 확률 0으로 설정
         ),
         // 대형 악재
         StockEventType.NEGATIVE_LARGE to EventSettings(
-            minRate = -0.07, maxRate = -0.04,
+            minRate = -0.09, maxRate = -0.05,
             duration = 18000L, interval = 60000L, 
-            chance = 0.05, stockCount = 1
+            chance = 0.0, stockCount = 1     // 이벤트 발생 확률 0으로 설정
         ),
         // 경기 부양
         StockEventType.MARKET_BOOM to EventSettings(
-            minRate = 0.02, maxRate = 0.03,
+            minRate = 0.02, maxRate = 0.05,
             duration = 24000L, interval = 180000L, 
-            chance = 0.03, stockCount = 0  // 0은 모든 종목 영향
+            chance = 0.0, stockCount = 0     // 이벤트 발생 확률 0으로 설정
         ),
         // 경기 침체
         StockEventType.MARKET_RECESSION to EventSettings(
-            minRate = -0.03, maxRate = -0.02,
+            minRate = -0.05, maxRate = -0.02,
             duration = 24000L, interval = 180000L, 
-            chance = 0.03, stockCount = 0
+            chance = 0.0, stockCount = 0     // 이벤트 발생 확률 0으로 설정
         ),
         // 시장 폭등
         StockEventType.MARKET_SURGE to EventSettings(
-            minRate = 0.05, maxRate = 0.08,
+            minRate = 0.04, maxRate = 0.08,
             duration = 12000L, interval = 300000L, 
-            chance = 0.01, stockCount = 0
+            chance = 0.0, stockCount = 0     // 이벤트 발생 확률 0으로 설정
         ),
         // 시장 폭락
         StockEventType.MARKET_CRASH to EventSettings(
-            minRate = -0.08, maxRate = -0.05,
+            minRate = -0.08, maxRate = -0.04,
             duration = 12000L, interval = 300000L, 
-            chance = 0.01, stockCount = 0
+            chance = 0.0, stockCount = 0     // 이벤트 발생 확률 0으로 설정
         )
     )
     
@@ -102,15 +102,15 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     private val ONE_TIME_EVENT_SETTINGS = mapOf(
         // 대박 종목
         StockEventType.STOCK_SURGE to EventSettings(
-            minRate = 0.2, maxRate = 0.3,
+            minRate = 0.1, maxRate = 0.2,
             duration = 0L, interval = 600000L, 
-            chance = 0.01, stockCount = 1
+            chance = 0.0, stockCount = 1     // 이벤트 발생 확률 0으로 설정
         ),
         // 대폭락 종목
         StockEventType.STOCK_CRASH to EventSettings(
-            minRate = -0.3, maxRate = -0.2,
+            minRate = -0.2, maxRate = -0.1,
             duration = 0L, interval = 600000L, 
-            chance = 0.01, stockCount = 1
+            chance = 0.0, stockCount = 1     // 이벤트 발생 확률 0으로 설정
         )
     )
     
@@ -120,14 +120,14 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         StockEventType.VOLATILITY_UP to EventSettings(
             minRate = 0.0, maxRate = 0.0,
             duration = 21000L, interval = 420000L, 
-            chance = 0.02, stockCount = 0,
+            chance = 0.0, stockCount = 0,    // 이벤트 발생 확률 0으로 설정
             volatilityMultiplier = 1.5
         ),
         // 변동성 감소
         StockEventType.VOLATILITY_DOWN to EventSettings(
             minRate = 0.0, maxRate = 0.0,
             duration = 21000L, interval = 420000L, 
-            chance = 0.02, stockCount = 0,
+            chance = 0.0, stockCount = 0,    // 이벤트 발생 확률 0으로 설정
             volatilityMultiplier = 0.7
         )
     )
@@ -226,6 +226,14 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
                 stock.reversionRemainingMs = 0
                 stock.consecutiveMovesInSameDirection = 0
                 stock.lastMoveDirection = 0
+                // 이벤트 초기화
+                stock.clearAllEvents()
+                // 초기 가격으로 초기화
+                if (stock.priceHistory.isNotEmpty()) {
+                    stock.initialPrice = stock.priceHistory[0]
+                } else {
+                    stock.initialPrice = stock.price
+                }
             }
             
             // 저장된 데이터 로드
@@ -241,6 +249,14 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
                 stock.reversionRemainingMs = 0
                 stock.consecutiveMovesInSameDirection = 0
                 stock.lastMoveDirection = 0
+                // 이벤트 초기화
+                stock.clearAllEvents()
+                // 초기 가격으로 초기화
+                if (stock.priceHistory.isNotEmpty()) {
+                    stock.initialPrice = stock.priceHistory[0]
+                } else {
+                    stock.initialPrice = stock.price
+                }
             }
         }
         
@@ -261,10 +277,18 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         // 가격 중복 방지를 위해 5개의 서로 다른 가격 선택
         val randomPrices = availablePrices.shuffled().take(5)
         
+        // 변동성 값 배열
+        val volatilityOptions = listOf(0.8, 0.9, 1.0, 1.1, 1.2)
+        // 변동성 중복 방지를 위해 섞기
+        val randomVolatilities = volatilityOptions.shuffled().take(5)
+        
         // 주식 객체 생성
         val stockList = mutableListOf<Stock>()
         for (i in 0 until 5) {
             val stock = Stock(randomStocks[i].name, randomPrices[i], 0, 0.0, 0)
+            
+            // 기본 변동성 설정 (랜덤 값 사용)
+            stock.volatility = randomVolatilities[i]
             
             // 반동 관련 필드 초기화
             stock.reversionActive = false
@@ -272,6 +296,9 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
             stock.reversionRemainingMs = 0
             stock.consecutiveMovesInSameDirection = 0
             stock.lastMoveDirection = 0
+            
+            // 이벤트 초기화
+            stock.clearAllEvents()
             
             stockList.add(stock)
         }
@@ -297,6 +324,16 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
             stock.reversionRemainingMs = 0
             stock.consecutiveMovesInSameDirection = 0
             stock.lastMoveDirection = 0
+            
+            // 이벤트 초기화
+            stock.clearAllEvents()
+            
+            // 초기 가격으로 초기화
+            if (stock.priceHistory.isNotEmpty()) {
+                stock.initialPrice = stock.priceHistory[0]
+            } else {
+                stock.initialPrice = stock.price
+            }
         }
         
         // 저장된 데이터 삭제 - 종목 데이터를 모두 삭제
@@ -774,8 +811,7 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
             editor.putBoolean("isPositiveNews_$index", stock.isPositiveNews)
             editor.putBoolean("isNegativeNews_$index", stock.isNegativeNews)
             
-            // 추세 정보 저장
-            editor.putFloat("trendStrength_$index", stock.trendStrength.toFloat())
+            // 변동성 정보 저장
             editor.putFloat("volatility_$index", stock.volatility.toFloat())
             
             // 반동 관련 필드는 앱 재시작 시 항상 초기화하도록 함
@@ -797,9 +833,10 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
             
-            // 매입가 평균 저장 (간소화)
-            val avgPurchasePrice = stock.getAvgPurchasePrice()
-            editor.putInt("purchasePrice_$index", avgPurchasePrice)
+            // 보유량이 있는 경우 매입가격 설정
+            stock.purchasePrices.clear()
+            val savedPurchasePrice = stock.getAvgPurchasePrice()
+            editor.putInt("purchasePrice_$index", savedPurchasePrice)
         }
         
         editor.apply()
@@ -830,8 +867,7 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
             stock.isPositiveNews = sharedPreferences.getBoolean("isPositiveNews_$index", false)
             stock.isNegativeNews = sharedPreferences.getBoolean("isNegativeNews_$index", false)
             
-            // 추세 관련 데이터 로드
-            stock.trendStrength = sharedPreferences.getFloat("trendStrength_$index", 0f).toDouble()
+            // 변동성 관련 데이터 로드
             stock.volatility = sharedPreferences.getFloat("volatility_$index", stock.volatility.toFloat()).toDouble()
             
             // 가격 이력 로드
@@ -846,6 +882,13 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
                 if (historyPrice > 0 && historyPrice != stock.price) {
                     stock.priceHistory.add(historyPrice)
                 }
+            }
+            
+            // 초기 가격 설정 (이상치 감지를 위해)
+            if (stock.priceHistory.isNotEmpty()) {
+                stock.initialPrice = stock.priceHistory[0]
+            } else {
+                stock.initialPrice = stock.price
             }
             
             // 보유량이 있는 경우 매입가격 설정
@@ -864,12 +907,20 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         // 가격 중복 방지를 위해 5개의 서로 다른 가격 선택
         val randomPrices = availablePrices.shuffled().take(5)
         
+        // 변동성 값 배열
+        val volatilityOptions = listOf(0.8, 0.9, 1.0, 1.1, 1.2)
+        // 변동성 중복 방지를 위해 섞기
+        val randomVolatilities = volatilityOptions.shuffled().take(5)
+        
         _stockItems.value?.forEachIndexed { index, stock ->
             // 선택된 가격으로 리셋
             val initialPrice = randomPrices[index]
             
             // 가격 리셋
             stock.resetPrice(initialPrice)
+            
+            // 변동성 리셋
+            stock.volatility = randomVolatilities[index]
         }
         
         // 저장된 데이터 초기화

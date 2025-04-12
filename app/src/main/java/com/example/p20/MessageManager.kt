@@ -26,7 +26,7 @@ import com.google.android.material.snackbar.Snackbar
  */
 object MessageManager {
     private const val ANIMATION_DURATION = 300L // 애니메이션 지속 시간 (ms)
-    private const val MESSAGE_DISPLAY_DURATION = 2000L // 메시지 표시 기본 시간 (ms) - 5초에서 2초로 변경
+    private const val MESSAGE_DISPLAY_DURATION = 3000L // 메시지 표시 기본 시간 (ms) - 2초에서 3초로 변경
     private const val MAX_MESSAGES = 5 // 동시에 표시할 최대 메시지 수
 
     private val messageQueue: Queue<String> = LinkedList()
@@ -112,7 +112,7 @@ object MessageManager {
             }
             radius = 8f // 모서리 둥글게
             cardElevation = 4f // 그림자 효과
-            setCardBackgroundColor(Color.argb(200, 51, 51, 51)) // 배경색에 투명도 추가 (78% 불투명)
+            setCardBackgroundColor(Color.argb(230, 51, 51, 51)) // 배경색에 투명도 추가 (90% 불투명)
             alpha = 0f // 처음에는 투명하게 시작
         }
         

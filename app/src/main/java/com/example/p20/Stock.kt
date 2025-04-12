@@ -17,7 +17,6 @@ data class Stock(
     
     // 향상된 가격 변동 알고리즘을 위한 추가 필드
     val priceHistory: MutableList<Int> = mutableListOf(), // 가격 변동 이력
-    var trendStrength: Double = 0.0,     // 현재 추세 강도 (-1.0 ~ 1.0)
     var volatility: Double = 1.0,         // 기본 변동성 계수
     
     // 새 이벤트 시스템을 위한 필드
@@ -35,11 +34,8 @@ data class Stock(
     // 이력 최대 크기
     private val MAX_HISTORY_SIZE = 30
     
-    // 추세 영향력 가중치 (0.0 ~ 1.0)
-    private val TREND_WEIGHT = 0.4
-    
-    // 랜덤 변동 가중치
-    private val RANDOM_WEIGHT = 0.6
+    // 랜덤 변동 가중치 (추세 제거로 인해 100%로 설정)
+    private val RANDOM_WEIGHT = 1.0
     
     // 반동 확률 기본값
     private val BASE_REVERSION_PROBABILITY = 0.3
@@ -61,20 +57,12 @@ data class Stock(
     // 가격 이상치 감지 비율 (초기 가격의 몇 배 이상이면 강제 반동 발생)
     private val PRICE_ANOMALY_THRESHOLD = 2.0  // 초기 가격의 2배 이상
     
-    // 초기 가격 저장 (이상치 감지용)
-    private var initialPrice: Int = 0
+    // 초기 가격 저장 (이상치 감지용) - private에서 public으로 변경
+    var initialPrice: Int = 0
     
     init {
         // 초기 가격을 이력에 추가
         priceHistory.add(price)
-        
-        // 주식별 기본 변동성 설정 - 사용자 지정 가격 범위에 맞게 조정
-        volatility = when {
-            price <= 30000 -> 0.9    // 저가주는 안정적
-            price <= 100000 -> 1.0   // 중간 가격은 보통
-            price > 100000 -> 1.1   // 고가주는 변동성 큼
-            else -> 1.0   // 기본값
-        }
         
         // 초기 가격 저장 (이상치 감지용)
         initialPrice = price
@@ -95,9 +83,6 @@ data class Stock(
                 priceHistory.removeAt(0)
             }
         }
-        
-        // 현재 추세 계산
-        calculateTrend()
         
         var minChangePercent = -0.02  // 기본 최소 변동률 (-0.02%)
         var maxChangePercent = 0.02   // 기본 최대 변동률 (0.02%)
@@ -170,11 +155,8 @@ data class Stock(
         // 랜덤 변동 요소 계산
         val randomPercent = (minChangePercent..maxChangePercent).random()
         
-        // 추세 요소 (trendStrength는 -1.0 ~ 1.0 사이)
-        val trendPercent = trendStrength * 0.05 // 추세 크기 조정
-        
-        // 최종 변동률 계산 (랜덤 요소 + 추세 요소)
-        val finalChangePercent = (randomPercent * RANDOM_WEIGHT) + (trendPercent * TREND_WEIGHT)
+        // 최종 변동률 계산 (100% 랜덤, 추세 제거)
+        val finalChangePercent = randomPercent * RANDOM_WEIGHT
         
         // 변동성 적용
         val adjustedChangePercent = finalChangePercent * currentVolatility
@@ -186,12 +168,16 @@ data class Stock(
         changeValue = if (reversionActive) {
             when (reversionDirection) {
                 1 -> { // 상승 유도
-                    // 최소 100원 이상 상승하도록 보정
-                    maxOf(calculatedChange, 100)
+                    // 반동 중인 호재 이벤트는 최소 주가의 0.05% 이상 상승하도록 보정 (0.5%에서 0.05%로 변경)
+                    val minReversionChange = (price * 0.0005).roundToInt() * 100
+                    // 실제 계산된 변화량과 최소 변화량 중 큰 값 선택 (최소 100원)
+                    maxOf(calculatedChange, minReversionChange, 100)
                 }
                 -1 -> { // 하락 유도
-                    // 최소 100원 이상 하락하도록 보정
-                    minOf(calculatedChange, -100)
+                    // 반동 중인 악재 이벤트는 최소 주가의 0.05% 이상 하락하도록 보정 (0.5%에서 0.05%로 변경)
+                    val minReversionChange = -((price * 0.0005).roundToInt() * 100)
+                    // 실제 계산된 변화량과 최소 변화량 중 작은 값 선택 (하락이므로 더 작은 값이 더 큰 하락폭, 최소 -100원)
+                    minOf(calculatedChange, minReversionChange, -100)
                 }
                 else -> calculatedChange
             }
@@ -256,7 +242,8 @@ data class Stock(
         }
         
         // 연속 변동이 3회 미만이면 반동 효과 적용하지 않음
-        if (consecutiveMovesInSameDirection < 3 || lastMoveDirection == 0) {
+        // 추가 조건: 가격 이력이 최소 4개 이상 있어야 함 (초기 가격 + 3번의 변동)
+        if (consecutiveMovesInSameDirection < 3 || lastMoveDirection == 0 || priceHistory.size < 4) {
             return ""
         }
 
@@ -443,12 +430,12 @@ data class Stock(
     private fun createReversionEvent(eventType: StockEventType): StockEvent {
         // 이벤트 타입에 따라 변동률 범위 설정
         val (minRate, maxRate) = when (eventType) {
-            StockEventType.POSITIVE_SMALL -> Pair(0.01, 0.02)
-            StockEventType.POSITIVE_MEDIUM -> Pair(0.02, 0.04)
-            StockEventType.POSITIVE_LARGE -> Pair(0.04, 0.07)
-            StockEventType.NEGATIVE_SMALL -> Pair(-0.02, -0.01)
-            StockEventType.NEGATIVE_MEDIUM -> Pair(-0.04, -0.02)
-            StockEventType.NEGATIVE_LARGE -> Pair(-0.07, -0.04)
+            StockEventType.POSITIVE_SMALL -> Pair(0.0002, 0.0004)   // 0.02% ~ 0.04%
+            StockEventType.POSITIVE_MEDIUM -> Pair(0.0003, 0.0006)  // 0.03% ~ 0.06%
+            StockEventType.POSITIVE_LARGE -> Pair(0.0005, 0.0009)   // 0.05% ~ 0.09%
+            StockEventType.NEGATIVE_SMALL -> Pair(-0.0004, -0.0002) // -0.04% ~ -0.02%
+            StockEventType.NEGATIVE_MEDIUM -> Pair(-0.0006, -0.0003) // -0.06% ~ -0.03%
+            StockEventType.NEGATIVE_LARGE -> Pair(-0.0009, -0.0005) // -0.09% ~ -0.05%
             else -> Pair(0.0, 0.0) // 기본값
         }
         
@@ -486,30 +473,10 @@ data class Stock(
     /**
      * 과거 가격 이력을 기반으로 현재 추세 강도와 방향을 계산합니다.
      * trendStrength 값은 -1.0 (강한 하락 추세) ~ 1.0 (강한 상승 추세) 범위입니다.
+     * 추세 기능이 제거됨에 따라 빈 메서드로 유지
      */
     private fun calculateTrend() {
-        if (priceHistory.size < 3) return
-        
-        // 단기 추세 (최근 5개 또는 전체 이력)
-        val shortTermSize = minOf(5, priceHistory.size - 1)
-        var shortTermTrend = 0.0
-        
-        // 최근 변동들에 가중치를 부여 (최근 변동에 더 높은 가중치)
-        for (i in 1..shortTermSize) {
-            val idx = priceHistory.size - i
-            val prevIdx = priceHistory.size - i - 1
-            val change = priceHistory[idx] - priceHistory[prevIdx]
-            
-            // 변동의 방향(sign)과 크기를 고려, 최근 변동에 더 높은 가중치 부여
-            val weight = (shortTermSize - i + 1.0) / shortTermSize
-            shortTermTrend += change.sign * weight * (change.absoluteValue / 1000.0)
-        }
-        
-        // 추세 강도 정규화 (-1.0 ~ 1.0 범위로)
-        shortTermTrend = shortTermTrend.coerceIn(-1.0, 1.0)
-        
-        // 추세 강도를 업데이트 (기존 추세에 약간의 관성 부여)
-        trendStrength = (trendStrength * 0.7) + (shortTermTrend * 0.3)
+        // 추세 기능 제거
     }
 
     private fun updatePriceAndChangeValue() {
@@ -517,7 +484,7 @@ data class Stock(
         price += changeValue
         price = maxOf(price, 10)
         // 0으로 나누기 방지
-        changeRate = if (oldPrice > 0) ((changeValue.toDouble() / oldPrice) * 100) else 0.0
+        changeRate = if (oldPrice > 0) (changeValue.toDouble() / oldPrice) * 100 else 0.0
         
         // 새 가격을 즉시 이력에 추가하지 않음 - updateChangeValue()에서 처리
     }
@@ -685,7 +652,7 @@ data class Stock(
         changeRate = 0.0
         priceHistory.clear()
         priceHistory.add(price)
-        trendStrength = 0.0  // 추세 초기화
+        volatility = 1.0  // 변동성 초기화
         
         // 반동 관련 필드 초기화
         reversionActive = false
@@ -693,14 +660,6 @@ data class Stock(
         reversionRemainingMs = 0
         consecutiveMovesInSameDirection = 0
         lastMoveDirection = 0
-        
-        // 가격에 따른 변동성 재설정
-        volatility = when {
-            price <= 30000 -> 0.9    // 저가주는 안정적
-            price <= 100000 -> 1.0   // 중간 가격은 보통
-            price > 100000 -> 1.1   // 고가주는 변동성 큼
-            else -> 1.0   // 기본값
-        }
         
         clearAllEvents()
     }
