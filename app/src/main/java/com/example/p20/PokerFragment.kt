@@ -857,6 +857,9 @@ class PokerFragment : Fragment() {
             winCount++
             resultMessage = "축하합니다! ${score}점으로 ${multiplier}배 획득! (${handRank.koreanName}) +${formatCurrency(payout - currentBet)}"
             snackbarColor = Color.argb(200, 76, 175, 80) // 녹색
+            
+            // 승리 시 아이템 획득 처리
+            processItemReward(currentBet, multiplier)
         } else {
             // 패배
             loseCount++
@@ -880,6 +883,25 @@ class PokerFragment : Fragment() {
         // 3초 후에 카드 지우기
         cleanupRunnable?.let { runnable ->
             mainHandler.postDelayed(runnable, 3000) // 3초 지연
+        }
+    }
+    
+    /**
+     * 승리 시 아이템 획득 처리
+     */
+    private fun processItemReward(betAmount: Long, multiplier: Int) {
+        // 배율이 높을수록 아이템 획득 확률 증가를 위해 베팅 금액 조정
+        val adjustedBet = betAmount * multiplier.toLong() / 2
+        
+        // 아이템 획득 처리 (포커는 gameType 2)
+        val itemReward = ItemUtil.processCasinoWin(requireContext(), adjustedBet, 2)
+        
+        // 아이템을 획득했으면 메시지 표시
+        itemReward?.let {
+            // 1.5초 지연 후 아이템 획득 메시지 표시 (기존 승리 메시지와 겹치지 않게)
+            mainHandler.postDelayed({
+                showCustomSnackbar("🎁 ${it.itemName} 아이템을 획득했습니다!")
+            }, 1500)
         }
     }
     

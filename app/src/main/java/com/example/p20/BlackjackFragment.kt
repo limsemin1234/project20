@@ -545,6 +545,9 @@ class BlackjackFragment : Fragment() {
                 "$reward 획득! (2배)"
             }
             winCount++
+            
+            // 승리 시 아이템 획득 처리
+            processItemReward(currentBet)
         } else {
             message = "패배했습니다. 베팅액을 잃었습니다."
             loseCount++
@@ -573,6 +576,22 @@ class BlackjackFragment : Fragment() {
         cleanupRunnable?.let { runnable ->
             mainHandler.removeCallbacks(runnable) // 기존에 예약된 정리 작업 취소
             mainHandler.postDelayed(runnable, 3000)
+        }
+    }
+    
+    /**
+     * 승리 시 아이템 획득 처리
+     */
+    private fun processItemReward(betAmount: Long) {
+        // 아이템 획득 처리 (블랙잭은 gameType 1)
+        val itemReward = ItemUtil.processCasinoWin(requireContext(), betAmount, 1)
+        
+        // 아이템을 획득했으면 메시지 표시
+        itemReward?.let {
+            // 0.5초 지연 후 아이템 획득 메시지 표시 (기존 승리 메시지와 겹치지 않게)
+            mainHandler.postDelayed({
+                showCustomSnackbar("🎁 ${it.itemName} 아이템을 획득했습니다!")
+            }, 1500)
         }
     }
     

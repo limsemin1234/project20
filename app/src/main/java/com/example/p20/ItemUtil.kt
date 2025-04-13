@@ -52,6 +52,41 @@ object ItemUtil {
     }
     
     /**
+     * 카지노 게임(블랙잭, 포커) 승리 시 아이템 획득 처리
+     * @param context Context
+     * @param betAmount 베팅 금액
+     * @param gameType 게임 종류 (1: 블랙잭, 2: 포커)
+     * @return 획득한 아이템 정보 (없으면 null)
+     */
+    fun processCasinoWin(context: Context, betAmount: Long, gameType: Int): ItemReward? {
+        // 최소 베팅 금액 설정 (블랙잭: 5만원, 포커: 10만원)
+        val minBetAmount = if (gameType == 1) 50000L else 100000L
+        
+        // 최소 베팅 금액 이상일 때만 아이템 획득 가능
+        if (betAmount < minBetAmount) {
+            return null
+        }
+        
+        // 아이템 획득 확률 계산 (베팅 금액이 클수록 확률 증가)
+        // 기본 확률: 블랙잭 20%, 포커 25%
+        val baseChance = if (gameType == 1) 20 else 25
+        // 베팅 금액에 따른 추가 확률 (최대 +30%)
+        val additionalChance = minOf(30, (betAmount / 20000).toInt())
+        val totalChance = baseChance + additionalChance
+        
+        // 확률에 따른 아이템 획득 여부 결정
+        if (Random.nextInt(100) >= totalChance) {
+            return null
+        }
+        
+        // 랜덤으로 시간증폭 아이템 하나 선택 (ID: 1~3)
+        val randomItemId = Random.nextInt(1, 4)
+        
+        // 아이템 재고 증가
+        return increaseItemStock(context, randomItemId, 1)
+    }
+    
+    /**
      * 아이템 재고를 증가시킵니다.
      * @param context Context
      * @param itemId 아이템 ID
