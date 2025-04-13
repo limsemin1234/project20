@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:background="#FFFFFF"
+    android:background="#0F0F1A"
     tools:context=".PokerFragment">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -22,7 +22,7 @@
             android:text="1인발라트로"
             android:textSize="24sp"
             android:textStyle="bold"
-            android:textColor="#333333"
+            android:textColor="#FFEB3B"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -36,7 +36,7 @@
             android:text="패 없음"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="#333333"
+            android:textColor="#FFEB3B"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/titleText" />
@@ -48,6 +48,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:orientation="vertical"
+            android:background="#1A1A2E"
+            android:padding="8dp"
             app:layout_constraintTop_toBottomOf="@+id/handRankText">
 
             <!-- 플레이어 카드 -->
@@ -57,7 +59,7 @@
                 android:text="내 카드 (터치하여 교체할 카드 선택)"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#333333" />
+                android:textColor="#E0E0E0" />
 
             <HorizontalScrollView
                 android:layout_width="match_parent"
@@ -88,7 +90,7 @@
             android:text="점수: 0"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="#333333"
+            android:textColor="#E0E0E0"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/cardArea" />
@@ -101,7 +103,7 @@
             android:layout_marginTop="8dp"
             android:text="베팅 금액: ₩0"
             android:textSize="18sp"
-            android:textColor="#333333"
+            android:textColor="#4CAF50"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/scoreText" />
@@ -122,8 +124,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="4dp"
                 android:layout_weight="1"
-                android:text="1만원"
-                android:textSize="12sp" />
+                android:text="만원"
+                android:textSize="12sp"
+                android:backgroundTint="#400080" />
 
             <Button
                 android:id="@+id/bet50kButton"
@@ -132,7 +135,8 @@
                 android:layout_marginEnd="4dp"
                 android:layout_weight="1"
                 android:text="5만원"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                android:backgroundTint="#400080" />
 
             <Button
                 android:id="@+id/bet100kButton"
@@ -141,7 +145,8 @@
                 android:layout_marginEnd="4dp"
                 android:layout_weight="1"
                 android:text="10만원"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                android:backgroundTint="#400080" />
                 
             <Button
                 android:id="@+id/bet500kButton"
@@ -149,7 +154,8 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="50만원"
-                android:textSize="12sp" />
+                android:textSize="12sp" 
+                android:backgroundTint="#400080" />
         </LinearLayout>
 
         <!-- 게임 컨트롤 버튼 -->
@@ -169,7 +175,8 @@
                 android:layout_marginEnd="4dp"
                 android:layout_weight="1"
                 android:text="게임설명"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                android:backgroundTint="#8C52FF" />
 
             <Button
                 android:id="@+id/changeButton"
@@ -179,7 +186,8 @@
                 android:layout_weight="1"
                 android:text="카드교체\n(무료)"
                 android:textSize="12sp"
-                android:enabled="false" />
+                android:enabled="false"
+                android:backgroundTint="#8C52FF" />
 
             <Button
                 android:id="@+id/endGameButton"
@@ -189,7 +197,8 @@
                 android:layout_weight="1"
                 android:text="게임종료"
                 android:textSize="12sp"
-                android:enabled="false" />
+                android:enabled="false"
+                android:backgroundTint="#8C52FF" />
 
             <Button
                 android:id="@+id/newGameButton"
@@ -197,7 +206,8 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="새게임"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                android:backgroundTint="#8C52FF" />
         </LinearLayout>
 
         <!-- 족보 설명 -->
@@ -206,7 +216,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:background="#F5F5F5"
+            android:background="#1A1A2E"
             android:orientation="vertical"
             android:padding="12dp"
             app:layout_constraintTop_toBottomOf="@+id/gameControls">
@@ -217,77 +227,77 @@
                 android:text="📋 족보 및 배당률"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#3F51B5"
+                android:textColor="#FFEB3B"
                 android:layout_marginBottom="8dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="로얄 스트레이트 플러시 (같은 무늬의 A, K, Q, J, 10 카드)\n점수: (150 + 카드총합) × 10"
-                android:textColor="#333333"
+                android:textColor="#E0E0E0"
                 android:layout_marginBottom="4dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="스트레이트 플러시 (같은 무늬의 연속된 숫자 5장)\n점수: (100 + 카드총합) × 8"
-                android:textColor="#333333"
+                android:textColor="#E0E0E0"
                 android:layout_marginBottom="4dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="포카드(Four of a Kind) (같은 숫자 4장을 포함한 패)\n점수: (60 + 카드총합) × 7"
-                android:textColor="#333333"
+                android:textColor="#E0E0E0"
                 android:layout_marginBottom="4dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="풀하우스 (같은 숫자 3장과 다른 같은 숫자 2장으로 구성)\n점수: (40 + 카드총합) × 4"
-                android:textColor="#333333"
+                android:textColor="#E0E0E0"
                 android:layout_marginBottom="4dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="플러시 (같은 무늬(스페이드, 하트, 다이아몬드, 클로버) 5장)\n점수: (35 + 카드총합) × 4"
-                android:textColor="#333333"
+                android:textColor="#E0E0E0"
                 android:layout_marginBottom="4dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="스트레이트 (연속된 숫자 5장, 예: 5, 6, 7, 8, 9)\n점수: (30 + 카드총합) × 4"
-                android:textColor="#333333"
+                android:textColor="#E0E0E0"
                 android:layout_marginBottom="4dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="트리플(Three of a Kind) (같은 숫자 3장을 포함한 패)\n점수: (30 + 카드총합) × 3"
-                android:textColor="#333333"
+                android:textColor="#E0E0E0"
                 android:layout_marginBottom="4dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="투페어 (서로 다른 두 쌍의 같은 숫자 카드)\n점수: (20 + 카드총합) × 2"
-                android:textColor="#333333"
+                android:textColor="#E0E0E0"
                 android:layout_marginBottom="4dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="원페어 (같은 숫자 2장을 포함한 패)\n점수: (10 + 카드총합) × 2"
-                android:textColor="#333333"
+                android:textColor="#E0E0E0"
                 android:layout_marginBottom="4dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="하이카드: 패배 (위의 어떤 족보에도 해당하지 않는 패)\n점수: 카드총합"
-                android:textColor="#333333" />
+                android:textColor="#E0E0E0" />
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
