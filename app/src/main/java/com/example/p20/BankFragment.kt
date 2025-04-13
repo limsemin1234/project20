@@ -113,7 +113,7 @@ class BankFragment : Fragment() {
 
     private fun updateDepositRemainingTime(remainingTime: Long) {
         // 예금 이자 타이머 표시 수정
-        depositRemainingTimeText.text = "(${remainingTime}초 후 이자)"
+        depositRemainingTimeText.text = "(${remainingTime}초 후 자산에 이자 추가)"
         depositRemainingTimeText.visibility = View.VISIBLE
         
         // 10초 이하일 때 텍스트 색상 변경
@@ -126,7 +126,7 @@ class BankFragment : Fragment() {
 
     private fun updateLoanRemainingTime(remainingTime: Long) {
         // 대출 이자 타이머 표시 수정
-        loanRemainingTimeText.text = "(${remainingTime}초 후 이자)"
+        loanRemainingTimeText.text = "(${remainingTime}초 후 자산에서 이자 차감)"
         loanRemainingTimeText.visibility = View.VISIBLE
         
         // 10초 이하일 때 텍스트 색상 변경

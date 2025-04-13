@@ -112,7 +112,7 @@ class AssetViewModel(
     fun addDeposit(amount: Long): Boolean {
         if (repository.addDeposit(amount)) {
             calculator.resetDepositTimer()
-            showMessage("${formatNumber(amount)}원이 예금되었습니다")
+            showMessage("${formatNumber(amount)}원이 예금되었습니다. 30초마다 3%의 이자가 자산에 추가됩니다.")
             return true
         } else {
             showMessage("보유 자산이 부족합니다")
@@ -139,7 +139,7 @@ class AssetViewModel(
     fun addLoan(amount: Long) {
         repository.addLoan(amount)
         calculator.resetLoanTimer()
-        showMessage("${formatNumber(amount)}원을 대출했습니다")
+        showMessage("${formatNumber(amount)}원을 대출했습니다. 30초마다 10%의 이자가 자산에서 차감됩니다.")
     }
 
     /**

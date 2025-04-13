@@ -36,7 +36,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textSize="14sp"
-                    android:text="이자율: 10% (30초마다 발생)"
+                    android:text="이자율: 10% (30초마다 자산에서 차감)"
                     android:layout_marginBottom="16dp"/>
 
                 <TextView

@@ -91,4 +91,11 @@
     <style name="ErrorText" parent="StatusText">
         <item name="android:textColor">@color/error</item>
     </style>
+
+    <style name="SwitchTheme" parent="Theme.AppCompat.Light">
+        <!-- 활성화된 스위치의 색상 -->
+        <item name="colorControlActivated">#2196F3</item>
+        <!-- 비활성화된 스위치의 색상 -->
+        <item name="colorSwitchThumbNormal">#CCCCCC</item>
+    </style>
 </resources> 

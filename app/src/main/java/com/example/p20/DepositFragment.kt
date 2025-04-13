@@ -59,6 +59,12 @@ class DepositFragment : Fragment() {
         withdrawThousandButton = view.findViewById(R.id.withdrawThousandButton)
         resetButton = view.findViewById(R.id.resetButton)
         
+        // 이자 정보 텍스트 참조 가져오기 및 변경
+        val interestInfoText = view.findViewWithTag<TextView>("interest_info_text")
+        if (interestInfoText != null) {
+            interestInfoText.text = "이자율: 3% (30초마다 자산에 추가)"
+        }
+        
         btn1Man = view.findViewById(R.id.btn1Man)
         btn10Man = view.findViewById(R.id.btn10Man)
         btn100Man = view.findViewById(R.id.btn100Man)
