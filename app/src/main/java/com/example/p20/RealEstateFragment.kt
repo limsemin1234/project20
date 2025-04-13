@@ -22,11 +22,10 @@ import android.view.Gravity
 import android.widget.FrameLayout
 import java.text.DecimalFormat
 
-class RealEstateFragment : Fragment() {
+class RealEstateFragment : BaseFragment() {
 
     private lateinit var realEstateRecyclerView: RecyclerView
     private lateinit var realEstateAdapter: RealEstateAdapter
-    private lateinit var assetViewModel: AssetViewModel
     private lateinit var realEstateViewModel: RealEstateViewModel
     private var selectedEstate: RealEstate? = null
 
@@ -62,8 +61,13 @@ class RealEstateFragment : Fragment() {
         detailBuyButton = view.findViewById(R.id.detailBuyButton)
         detailSellButton = view.findViewById(R.id.detailSellButton)
 
+        return view
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
         realEstateViewModel = ViewModelProvider(requireActivity()).get(RealEstateViewModel::class.java)
-        assetViewModel = ViewModelProvider(requireActivity()).get(AssetViewModel::class.java)
 
         realEstateRecyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
         realEstateAdapter = RealEstateAdapter(
@@ -74,6 +78,34 @@ class RealEstateFragment : Fragment() {
             },
             realEstateViewModel  // ViewModel 전달
         )
+        
+        // 복구 콜백 설정
+        realEstateAdapter.setRepairCallback(object : RealEstateAdapter.RepairCallback {
+            override fun onRepairRequested(estate: RealEstate, cost: Long) {
+                val currentAsset = assetViewModel.asset.value ?: 0L
+                
+                if (currentAsset >= cost) {
+                    // 복구 확인 대화상자 표시
+                    val message = "${estate.name}을(를) ${FormatUtils.formatCurrency(cost)}원을 지불하고 복구하시겠습니까?"
+                    
+                    showConfirmMessage(message, "복구") {
+                        // 복구 실행
+                        val repairSuccess = realEstateViewModel.repairEstate(estate.id) { repairCost ->
+                            // 자산 감소
+                            assetViewModel.decreaseAsset(repairCost)
+                            true // 지불 성공
+                        }
+                        
+                        if (repairSuccess) {
+                            showSuccessMessage("${estate.name}이(가) 성공적으로 복구되었습니다!")
+                        }
+                    }
+                } else {
+                    showErrorMessage("복구 비용이 부족합니다. 필요 금액: ${FormatUtils.formatCurrency(cost)}원")
+                }
+            }
+        })
+        
         realEstateRecyclerView.adapter = realEstateAdapter
 
         realEstateViewModel.realEstateList.observe(viewLifecycleOwner) { updatedList ->
@@ -155,9 +187,6 @@ class RealEstateFragment : Fragment() {
         closeButton.setOnClickListener {
             motionLayout.transitionToStart()
         }
-
-
-        return view
     }
 
     private fun showEstateDetailSlide(estate: RealEstate) {

@@ -76,20 +76,43 @@
             android:maxLines="1"
             android:ellipsize="end" />
 
-        <TextView
-            android:id="@+id/estateOwned"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="미보유"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:textColor="#FF0000"
-            android:background="@drawable/ownership_status_background"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp"
-            android:layout_marginTop="4dp"/>
+            android:orientation="horizontal"
+            android:layout_marginTop="4dp">
+
+            <TextView
+                android:id="@+id/estateOwned"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="미보유"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#FF0000"
+                android:background="@drawable/ownership_status_background"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp" />
+
+            <!-- 전쟁 영향을 받을 때만 표시되는 복구 버튼 -->
+            <Button
+                android:id="@+id/repairButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="복구"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#E91E63"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"
+                android:layout_marginStart="8dp"
+                android:visibility="gone" />
+        </LinearLayout>
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

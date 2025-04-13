@@ -4,6 +4,7 @@ import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import java.text.DecimalFormat
@@ -20,6 +21,20 @@ class RealEstateAdapter(
         val estateOwned: TextView = itemView.findViewById(R.id.estateOwned)
         val estateStageIndicator: TextView = itemView.findViewById(R.id.estateStageIndicator)
         val estateIncome: TextView = itemView.findViewById(R.id.estateIncome)
+        val repairButton: Button = itemView.findViewById(R.id.repairButton)
+    }
+
+    // 부동산 복구 콜백 인터페이스
+    interface RepairCallback {
+        fun onRepairRequested(estate: RealEstate, cost: Long)
+    }
+
+    // 복구 콜백 속성
+    private var repairCallback: RepairCallback? = null
+
+    // 복구 콜백 설정 메서드
+    fun setRepairCallback(callback: RepairCallback) {
+        repairCallback = callback
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RealEstateViewHolder {
@@ -35,16 +50,33 @@ class RealEstateAdapter(
         holder.estateName.text = estate.name
         
         // 전쟁 이벤트 영향 체크하여 가격 텍스트 색상 및 카드 배경색 설정
-        if (viewModel.isAffectedByWar(estate.id)) {
+        val isAffectedByWar = viewModel.isAffectedByWar(estate.id)
+        if (isAffectedByWar) {
             holder.estatePrice.text = "${formatter.format(estate.price)}원"
             holder.estatePrice.setTextColor(Color.parseColor("#FF0000"))  // 빨간색으로 변경
             // 카드 배경색 변경 - 약간 붉은 색조로
             (holder.itemView as androidx.cardview.widget.CardView).setCardBackgroundColor(Color.parseColor("#502020"))
+            
+            // 복구 버튼 표시 및 설정 (소유한 부동산인 경우에만)
+            if (estate.owned) {
+                holder.repairButton.visibility = View.VISIBLE
+                val repairCost = viewModel.getRepairCost(estate.id)
+                holder.repairButton.text = "복구 (${formatter.format(repairCost)}원)"
+                
+                // 복구 버튼 클릭 리스너
+                holder.repairButton.setOnClickListener {
+                    repairCallback?.onRepairRequested(estate, repairCost)
+                }
+            } else {
+                holder.repairButton.visibility = View.GONE
+            }
         } else {
             holder.estatePrice.text = "${formatter.format(estate.price)}원"
             holder.estatePrice.setTextColor(Color.parseColor("#FFFFFF"))  // 기본 색상(흰색)으로 복원
             // 카드 배경색 복원 - 원래 색상(#303555)으로
             (holder.itemView as androidx.cardview.widget.CardView).setCardBackgroundColor(Color.parseColor("#303555"))
+            // 복구 버튼 숨김
+            holder.repairButton.visibility = View.GONE
         }
         
         // 보유 상태 설정

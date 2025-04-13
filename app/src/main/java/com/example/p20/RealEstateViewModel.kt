@@ -24,12 +24,12 @@ class RealEstateViewModel(application: Application) : AndroidViewModel(applicati
     // 전쟁 이벤트 관련 변수
     private val warEventHandler = Handler(Looper.getMainLooper())
     private val warEventInterval = 30000L // 30초마다 전쟁 이벤트 발생 확률 체크
-    private val warRecoveryDuration = 60000L // 전쟁 후 1분(60초) 후 가격 회복
     private val warProbability = 10 // 10% 확률로 전쟁 발생
     private val _warEventMessage = MutableLiveData<String>()
     val warEventMessage: LiveData<String> get() = _warEventMessage
     private val affectedEstateIds = mutableSetOf<Int>() // 전쟁 영향 받는 부동산 ID
     private val originalPrices = mutableMapOf<Int, Long>() // 원래 가격 저장
+    private val repairCostRate = 0.25 // 복구 비용 비율 (현재 가격의 25%)
 
     var incomeCallback: ((Long) -> Unit)? = null
 
@@ -169,21 +169,22 @@ class RealEstateViewModel(application: Application) : AndroidViewModel(applicati
     private fun triggerWarEvent() {
         val estateList = _realEstateList.value ?: return
         
-        // 랜덤하게 1~3개의 부동산 선택
-        val numAffected = (1..3).random()
-        val selectedIndices = estateList.indices.shuffled().take(numAffected)
+        // 소유한 부동산만 필터링
+        val ownedEstates = estateList.filter { it.owned }
         
-        // 선택된 부동산들의 가격 저장 및 반으로 감소
-        selectedIndices.forEach { index ->
-            val estate = estateList[index]
-            affectedEstateIds.add(estate.id)
-            originalPrices[estate.id] = estate.price
-            estate.price = estate.price / 2 // 가격 반으로 감소
-        }
+        // 소유한 부동산이 없으면 이벤트 발생하지 않음
+        if (ownedEstates.isEmpty()) return
         
-        // 영향받은 부동산 이름 목록
-        val affectedNames = selectedIndices.map { estateList[it].name }
-        val message = "⚠️ 전쟁 발생! ${affectedNames.joinToString(", ")}의 가격이 반으로 하락했습니다!"
+        // 소유한 부동산 중 하나를 랜덤하게 선택
+        val affectedEstate = ownedEstates.random()
+        
+        // 선택된 부동산의 가격 저장 및 반으로 감소
+        affectedEstateIds.add(affectedEstate.id)
+        originalPrices[affectedEstate.id] = affectedEstate.price
+        affectedEstate.price = affectedEstate.price / 2 // 가격 반으로 감소
+        
+        // 메시지 생성
+        val message = "⚠️ 전쟁 발생! ${affectedEstate.name}의 가격이 반으로 하락했습니다! 복구하려면 현재 가격의 25%를 지불하세요."
         
         // 메시지 업데이트 및 콜백 호출
         _warEventMessage.value = message
@@ -192,11 +193,6 @@ class RealEstateViewModel(application: Application) : AndroidViewModel(applicati
         // 리스트 업데이트 및 저장
         _realEstateList.value = estateList
         saveRealEstateData()
-        
-        // 1분 후 가격 복구 스케줄링
-        warEventHandler.postDelayed({
-            recoverFromWarEvent()
-        }, warRecoveryDuration)
     }
 
     // 전쟁 이벤트 복구
@@ -227,6 +223,54 @@ class RealEstateViewModel(application: Application) : AndroidViewModel(applicati
     // 특정 부동산이 전쟁 이벤트의 영향을 받고 있는지 확인하는 메서드
     fun isAffectedByWar(estateId: Int): Boolean {
         return affectedEstateIds.contains(estateId)
+    }
+
+    // 부동산 복구 함수 (현재 가격의 25% 비용 지불)
+    fun repairEstate(estateId: Int, paymentCallback: (Long) -> Boolean): Boolean {
+        val estateList = _realEstateList.value ?: return false
+        
+        // 영향받은 부동산인지 확인
+        if (!affectedEstateIds.contains(estateId)) return false
+        
+        // 해당 부동산 찾기
+        val estate = estateList.find { it.id == estateId } ?: return false
+        
+        // 복구 비용 계산 (현재 가격의 25%)
+        val repairCost = (estate.price * repairCostRate).toLong()
+        
+        // 지불 콜백 호출 (비용을 지불할 수 있는지 확인)
+        val paymentSuccess = paymentCallback(repairCost)
+        
+        // 지불 성공시 복구 진행
+        if (paymentSuccess) {
+            // 원래 가격으로 복원
+            estate.price = originalPrices[estateId] ?: estate.price
+            
+            // 상태에서 제거
+            affectedEstateIds.remove(estateId)
+            originalPrices.remove(estateId)
+            
+            // 리스트 업데이트 및 저장
+            _realEstateList.value = estateList
+            saveRealEstateData()
+            
+            // 모든 전쟁 이벤트가 종료된 경우 메시지 업데이트
+            if (affectedEstateIds.isEmpty()) {
+                _warEventMessage.value = ""
+            } else {
+                _warEventMessage.value = "⚠️ 아직 일부 부동산이 전쟁 영향을 받고 있습니다."
+            }
+            
+            return true
+        }
+        
+        return false
+    }
+
+    // 현재 부동산의 복구 비용 계산
+    fun getRepairCost(estateId: Int): Long {
+        val estate = _realEstateList.value?.find { it.id == estateId } ?: return 0
+        return (estate.price * repairCostRate).toLong()
     }
 
     override fun onCleared() {
