@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    
+    <!-- 그래프 배경 (투명한 사각형) -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#6200EE"
+        android:strokeWidth="1.5"
+        android:strokeLineJoin="round"
+        android:pathData="M3,3 L3,21 L21,21" />
+    
+    <!-- 그래프 라인 (꺾은선 그래프) -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#6200EE"
+        android:strokeWidth="2"
+        android:strokeLineJoin="round"
+        android:strokeLineCap="round"
+        android:pathData="M4,18 L8,12 L12,15 L16,8 L20,5" />
+    
+    <!-- 데이터 포인트 (점) -->
+    <path
+        android:fillColor="#6200EE"
+        android:pathData="M4,18 m-1.5,0 a1.5,1.5 0 1,0 3,0 a1.5,1.5 0 1,0 -3,0" />
+    <path
+        android:fillColor="#6200EE"
+        android:pathData="M8,12 m-1.5,0 a1.5,1.5 0 1,0 3,0 a1.5,1.5 0 1,0 -3,0" />
+    <path
+        android:fillColor="#6200EE"
+        android:pathData="M12,15 m-1.5,0 a1.5,1.5 0 1,0 3,0 a1.5,1.5 0 1,0 -3,0" />
+    <path
+        android:fillColor="#6200EE"
+        android:pathData="M16,8 m-1.5,0 a1.5,1.5 0 1,0 3,0 a1.5,1.5 0 1,0 -3,0" />
+    <path
+        android:fillColor="#6200EE"
+        android:pathData="M20,5 m-1.5,0 a1.5,1.5 0 1,0 3,0 a1.5,1.5 0 1,0 -3,0" />
+</vector> 

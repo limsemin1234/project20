@@ -430,6 +430,10 @@
             android:layout_margin="10dp"
             android:backgroundTint="@color/purple_500"
             android:text="📊 주가 변동 그래프 보기"
+            android:drawableStart="@drawable/ic_graph_chart"
+            android:drawableTint="@android:color/white"
+            android:drawablePadding="8dp"
+            android:gravity="center"
             android:textSize="16sp"/>
         
         <!-- 구현 기능 설명 영역 - 하단으로 이동 -->

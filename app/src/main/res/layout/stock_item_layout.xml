@@ -84,9 +84,8 @@
             android:layout_marginStart="4dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="그래프 보기"
-            android:src="@android:drawable/ic_dialog_dialer"
-            android:scaleType="fitCenter"
-            android:tint="@color/purple_500" />
+            android:src="@drawable/ic_graph_chart"
+            android:scaleType="fitCenter" />
 
     </LinearLayout>
 
