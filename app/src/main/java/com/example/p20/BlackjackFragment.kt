@@ -19,6 +19,7 @@ import java.util.Locale
 import java.util.Random
 import android.os.Handler
 import android.os.Looper
+import android.content.Context
 
 class BlackjackFragment : Fragment() {
 
@@ -30,10 +31,12 @@ class BlackjackFragment : Fragment() {
     private lateinit var betAmountText: TextView
     private lateinit var hitButton: Button
     private lateinit var standButton: Button
+    private lateinit var doubleDownButton: Button  // 더블다운 버튼 추가
     private lateinit var newGameButton: Button
     private lateinit var bet10kButton: Button
     private lateinit var bet50kButton: Button
     private lateinit var bet100kButton: Button
+    private lateinit var statsTextView: TextView   // 승률 통계 표시용 TextView 추가
     
     // 게임 상태
     private var currentBet = 0L
@@ -42,7 +45,9 @@ class BlackjackFragment : Fragment() {
     private var isGameOver = false
     private var winCount = 0
     private var loseCount = 0
+    private var drawCount = 0  // 무승부 카운트 추가
     private var isWaitingForCleanup = false
+    private var hasDoubledDown = false  // 더블다운 사용 여부 플래그
     
     // 카드 관련 변수
     private val suits = listOf("♠", "♥", "♦", "♣")
@@ -84,14 +89,23 @@ class BlackjackFragment : Fragment() {
         betAmountText = view.findViewById(R.id.betAmountText)
         hitButton = view.findViewById(R.id.hitButton)
         standButton = view.findViewById(R.id.standButton)
+        doubleDownButton = view.findViewById(R.id.doubleDownButton)  // 더블다운 버튼 초기화
         newGameButton = view.findViewById(R.id.newGameButton)
         bet10kButton = view.findViewById(R.id.bet10kButton)
         bet50kButton = view.findViewById(R.id.bet50kButton)
         bet100kButton = view.findViewById(R.id.bet100kButton)
+        statsTextView = view.findViewById(R.id.statsTextView)
         
         // 게임 버튼 초기 비활성화
         hitButton.isEnabled = false
         standButton.isEnabled = false
+        doubleDownButton.isEnabled = false
+        
+        // 저장된 통계 로드
+        loadStats()
+        
+        // 통계 표시
+        updateStatsDisplay()
         
         // 잔액 업데이트
         updateBalanceText()
@@ -155,6 +169,9 @@ class BlackjackFragment : Fragment() {
             }
             
             playerHit()
+            
+            // 히트 후 더블다운 비활성화
+            doubleDownButton.isEnabled = false
         }
         
         // 스탠드 버튼 - 턴 종료
@@ -165,6 +182,45 @@ class BlackjackFragment : Fragment() {
             }
             
             playerStand()
+        }
+        
+        // 더블다운 버튼 - 베팅 2배 및 카드 1장 추가
+        doubleDownButton.setOnClickListener {
+            if (!isGameActive) {
+                showCustomSnackbar("게임이 진행 중이 아닙니다.")
+                return@setOnClickListener
+            }
+            
+            val currentAsset = assetViewModel.asset.value ?: 0L
+            if (currentBet > currentAsset) {
+                showCustomSnackbar("더블다운할 만큼의 자산이 부족합니다.")
+                return@setOnClickListener
+            }
+            
+            // 자산에서 추가 베팅액 차감
+            assetViewModel.decreaseAsset(currentBet)
+            
+            // 베팅액 2배로 증가
+            currentBet *= 2
+            updateBalanceText()
+            updateBetAmountText()
+            
+            // 더블다운 사용 플래그 설정
+            hasDoubledDown = true
+            
+            // 카드 1장 추가 후 턴 종료
+            playerHit()
+            
+            // 버튼 비활성화
+            doubleDownButton.isEnabled = false
+            hitButton.isEnabled = false
+            
+            // 0.5초 후 자동으로 스탠드
+            Handler(Looper.getMainLooper()).postDelayed({
+                if (isGameActive && !isGameOver) {
+                    playerStand()
+                }
+            }, 500)
         }
     }
     
@@ -191,12 +247,18 @@ class BlackjackFragment : Fragment() {
     
     private fun updateBetAmountText() {
         betAmountText.text = "베팅 금액: ${formatCurrency(tempBetAmount)}"
+        if (isGameActive && !hasDoubledDown) {
+            betAmountText.text = "베팅 금액: ${formatCurrency(currentBet)}"
+        } else if (isGameActive && hasDoubledDown) {
+            betAmountText.text = "베팅 금액: ${formatCurrency(currentBet)} (더블다운)"
+        }
     }
     
     private fun startNewGame() {
         // 게임 상태 초기화
         isGameActive = true
         isGameOver = false
+        hasDoubledDown = false
         playerCards.clear()
         dealerCards.clear()
         dealerCardsLayout.removeAllViews()
@@ -218,6 +280,10 @@ class BlackjackFragment : Fragment() {
         // 버튼 활성화
         hitButton.isEnabled = true
         standButton.isEnabled = true
+        
+        // 더블다운 버튼 활성화 (초기 2장만 받은 상태)
+        val currentAsset = assetViewModel.asset.value ?: 0L
+        doubleDownButton.isEnabled = currentBet <= currentAsset
         
         // 점수 업데이트
         dealerScoreText.text = "점수: ${calculateDealerScore(true)}"
@@ -248,75 +314,54 @@ class BlackjackFragment : Fragment() {
         if (isGameOver) return
         
         // 플레이어에게 카드 한 장 추가
-        val card = drawCard()
-        playerCards.add(card)
-        addCardView(playerCardsLayout, card, playerCards.size - 1)
+        val newCard = drawCard()
+        playerCards.add(newCard)
+        addCardView(playerCardsLayout, newCard, playerCards.size - 1)
         
         // 점수 업데이트
         val score = calculatePlayerScore()
         playerScoreText.text = "점수: $score"
         
-        // 버스트 확인
+        // 버스트 체크
         if (score > 21) {
-            isGameOver = true
-            showAllDealerCards()
-            
-            // 게임 종료 처리 (지는 경우)
-            endGame(false, "버스트! 21점을 초과하여 패배했습니다.")
+            endGame(playerWins = false)
         }
     }
     
     private fun playerStand() {
         if (isGameOver) return
         
-        isGameOver = true
-        showAllDealerCards()
+        // 딜러 턴 실행
+        dealerTurn()
+    }
+    
+    private fun dealerTurn() {
+        // 딜러의 첫 번째 카드는 이미 보이는 상태
         
-        // 딜러가 규칙에 따라 카드를 뽑음 (17점 이상까지)
-        val handler = Handler(Looper.getMainLooper())
-        
-        fun dealerDrawStep() {
-            val dealerScore = calculateDealerScore(false)
-            
-            if (dealerScore < 17) {
-                // 딜러가 17점 미만이면 카드를 더 뽑음
-                val card = drawCard()
-                dealerCards.add(card)
-                addCardView(dealerCardsLayout, card, dealerCards.size - 1)
-                
-                // 점수 업데이트
-                dealerScoreText.text = "점수: $dealerScore"
-                
-                // 0.5초 후 다시 확인
-                handler.postDelayed({ dealerDrawStep() }, 500)
-            } else {
-                // 딜러가 17점 이상이면 승패 판정
-                val playerScore = calculatePlayerScore()
-                dealerScoreText.text = "점수: $dealerScore"
-                
-                when {
-                    dealerScore > 21 -> {
-                        // 딜러가 버스트 -> 플레이어 승리
-                        endGame(true, "딜러 버스트! 플레이어 승리!")
-                    }
-                    playerScore > dealerScore -> {
-                        // 플레이어 점수가 더 높음 -> 플레이어 승리
-                        endGame(true, "플레이어 승리!")
-                    }
-                    playerScore < dealerScore -> {
-                        // 딜러 점수가 더 높음 -> 딜러 승리
-                        endGame(false, "딜러 승리!")
-                    }
-                    else -> {
-                        // 무승부
-                        endGame(null, "무승부!")
-                    }
-                }
-            }
+        // 딜러 규칙: 16 이하면 무조건 히트, 17 이상이면 스탠드
+        while (calculateDealerScore(false) < 17) {
+            val newCard = drawCard()
+            dealerCards.add(newCard)
         }
         
-        // 딜러 카드 뽑기 시작
-        dealerDrawStep()
+        // 점수 계산
+        val dealerScore = calculateDealerScore(false)
+        val playerScore = calculatePlayerScore()
+        
+        // 결과 판정
+        if (dealerScore > 21) {
+            // 딜러 버스트
+            endGame(playerWins = true)
+        } else if (dealerScore > playerScore) {
+            // 딜러 점수가 높음
+            endGame(playerWins = false)
+        } else if (dealerScore < playerScore) {
+            // 플레이어 점수가 높음
+            endGame(playerWins = true)
+        } else {
+            // 동점 처리
+            endGame(playerWins = false, isDraw = true)
+        }
     }
     
     private fun showAllDealerCards() {
@@ -406,142 +451,103 @@ class BlackjackFragment : Fragment() {
     }
     
     private fun checkForBlackjack() {
-        // 블랙잭 확인 (처음 2장으로 21점)
-        val playerHasBlackjack = playerCards.size == 2 && calculatePlayerScore() == 21
+        val playerScore = calculatePlayerScore()
         
-        // 딜러의 첫 카드가 A 또는 10점 카드인 경우, 블랙잭 가능성이 있으므로 확인
-        val dealerFirstCard = dealerCards.firstOrNull()
-        val dealerMayHaveBlackjack = dealerFirstCard != null && 
-                (dealerFirstCard.rank == "A" || listOf("10", "J", "Q", "K").contains(dealerFirstCard.rank))
-        
-        if (playerHasBlackjack) {
-            // 딜러도 블랙잭 가능성이 있는 경우, 2번째 카드를 뽑고 블랙잭 여부 확인
-            if (dealerMayHaveBlackjack) {
-                val dealerSecondCard = drawCard()
-                dealerCards.add(dealerSecondCard)
+        if (playerCards.size == 2 && playerScore == 21) {
+            // 딜러 첫 카드가 A나 10점 카드인지 확인
+            val dealerFirstCardRank = dealerCards[0].rank
+            val dealerHasAceOrTen = dealerFirstCardRank == "A" || values[dealerFirstCardRank] == 10
+            
+            if (dealerHasAceOrTen) {
+                // 딜러의 두 번째 카드 확인 (블랙잭 가능성)
+                val secondCard = drawCard()
+                dealerCards.add(secondCard)
                 
-                // 딜러의 모든 카드 공개
-                showAllDealerCards()
+                val dealerScore = calculateDealerScore(false)
                 
-                val dealerHasBlackjack = calculateDealerScore(false) == 21
-                
-                if (dealerHasBlackjack) {
-                    // 둘 다 블랙잭 -> 푸시
-                    endGame(null, "양쪽 모두 블랙잭! 무승부!")
+                if (dealerScore == 21) {
+                    // 양쪽 모두 블랙잭 - 무승부
+                    endGame(playerWins = false, isDraw = true)
                 } else {
-                    // 플레이어만 블랙잭 -> 플레이어 승리 (2배 보상)
-                    endGame(true, "블랙잭!")
+                    // 플레이어만 블랙잭 - 승리
+                    endGame(playerWins = true)
                 }
             } else {
-                // 딜러는 블랙잭 가능성이 낮음 -> 플레이어 승리 (2배 보상)
-                showAllDealerCards()
-                endGame(true, "블랙잭!")
-            }
-            isGameOver = true
-        } else if (dealerMayHaveBlackjack) {
-            // 딜러만 블랙잭 가능성이 있는 경우 확인
-            val dealerSecondCard = drawCard()
-            dealerCards.add(dealerSecondCard)
-            
-            if (calculateDealerScore(false) == 21) {
-                // 딜러만 블랙잭 -> 딜러 승리
-                showAllDealerCards()
-                endGame(false, "딜러 블랙잭!")
-                isGameOver = true
+                // 딜러 블랙잭 가능성 없음 - 플레이어 블랙잭 승리
+                endGame(playerWins = true)
             }
         }
     }
     
-    private fun endGame(isPlayerWin: Boolean?, message: String) {
+    private fun endGame(playerWins: Boolean, isDraw: Boolean = false) {
         isGameActive = false
-        isWaitingForCleanup = true
+        isGameOver = true
         hitButton.isEnabled = false
         standButton.isEnabled = false
+        doubleDownButton.isEnabled = false
         
-        // 배팅 버튼 비활성화
-        bet10kButton.isEnabled = false
-        bet50kButton.isEnabled = false
-        bet100kButton.isEnabled = false
-        newGameButton.isEnabled = false
-        
-        // 결과에 따라 자산 업데이트 및 메시지 표시
-        val snackbarColor: Int
-        var additionalMessage = ""
-        
-        when (isPlayerWin) {
-            true -> {
-                // 승리
-                var payout = 0L
-                
-                // 플레이어 점수에 따른 배당률
-                payout = when {
-                    playerCards.size == 2 && calculatePlayerScore() == 21 -> {
-                        // 블랙잭 (첫 2장으로 21점)
-                        additionalMessage = " 배당률 2배가 적용됩니다."
-                        currentBet * 3 // 배팅액의 2배 수익 + 원금
-                    }
-                    calculatePlayerScore() == 21 -> {
-                        // 일반 21점
-                        additionalMessage = " 배당률 1.5배가 적용됩니다."
-                        (currentBet * 25) / 10 // 배팅액의 1.5배 수익 + 원금
-                    }
-                    else -> {
-                        // 일반 승리
-                        currentBet * 2 // 배팅액의 1배 수익 + 원금
-                    }
-                }
-                
-                assetViewModel.increaseAsset(payout)
-                winCount++
-                
-                val winAmount = payout - currentBet
-                additionalMessage += " +${formatCurrency(winAmount)}"
-                snackbarColor = Color.argb(200, 76, 175, 80) // 녹색
-            }
-            false -> {
-                // 패배
-                loseCount++
-                additionalMessage = " -${formatCurrency(currentBet)}"
-                snackbarColor = Color.argb(200, 244, 67, 54) // 빨간색
-            }
-            null -> {
-                // 무승부 (베팅액 반환)
-                assetViewModel.increaseAsset(currentBet)
-                additionalMessage = " 베팅액이 반환되었습니다."
-                snackbarColor = Color.argb(200, 33, 150, 243) // 파란색
-            }
+        // 뒤집어진 카드 공개
+        dealerCardsLayout.removeAllViews()
+        for (i in dealerCards.indices) {
+            addCardView(dealerCardsLayout, dealerCards[i], i)
         }
         
-        // 결과 표시
-        showResultSnackbar("$message$additionalMessage", snackbarColor)
+        // 최종 점수 표시
+        dealerScoreText.text = "점수: ${calculateDealerScore(false)}"
         
-        // 통계 업데이트
+        // 메시지 생성
+        val playerScore = calculatePlayerScore()
+        val dealerScore = calculateDealerScore(false)
+        
+        var message = ""
+        var rewardAmount = 0L
+        
+        if (isDraw) {
+            message = "무승부입니다. 베팅액이 반환됩니다."
+            rewardAmount = currentBet
+            drawCount++
+        } else if (playerWins) {
+            val isBlackjack = playerScore == 21 && playerCards.size == 2
+            val multiplier = if (isBlackjack) 2.5 else 2.0  // 블랙잭은 2.5배
+            rewardAmount = (currentBet * multiplier).toLong()
+            
+            val reward = formatCurrency(rewardAmount)
+            message = if (isBlackjack) {
+                "블랙잭! $reward 획득! (2.5배)"
+            } else {
+                "$reward 획득! (2배)"
+            }
+            winCount++
+        } else {
+            message = "패배했습니다. 베팅액을 잃었습니다."
+            loseCount++
+            rewardAmount = 0
+        }
+        
+        // 통계 저장 및 표시 업데이트
+        saveStats()
+        updateStatsDisplay()
+        
+        // 보상 지급
+        if (rewardAmount > 0) {
+            assetViewModel.increaseAsset(rewardAmount)
+        }
+        
+        // 게임 결과 메시지 표시
+        showCustomSnackbar(message)
+        
+        // 잔액 업데이트
         updateBalanceText()
         
-        // 베팅 초기화
-        currentBet = 0L
+        // 정리 플래그 설정
+        isWaitingForCleanup = true
         
-        // 3초 후에 카드 지우기
+        // 3초 후 UI 정리
         Handler(Looper.getMainLooper()).postDelayed({
-            dealerCardsLayout.removeAllViews()
-            playerCardsLayout.removeAllViews()
-            
-            // 점수 초기화
-            dealerScoreText.text = "점수: ?"
-            playerScoreText.text = "점수: 0"
-            
-            // 배팅 버튼 다시 활성화
-            bet10kButton.isEnabled = true
-            bet50kButton.isEnabled = true
-            bet100kButton.isEnabled = true
-            newGameButton.isEnabled = true
-            
-            // 정리 대기 상태 해제
-            isWaitingForCleanup = false
-            
-            // 게임 준비 메시지
-            showCustomSnackbar("새 게임을 위해 베팅해주세요")
-        }, 3000) // 3초 지연
+            if (isWaitingForCleanup) {
+                cleanupGame()
+            }
+        }, 3000)
     }
     
     private fun updateBalanceText() {
@@ -560,5 +566,52 @@ class BlackjackFragment : Fragment() {
     private fun showResultSnackbar(message: String, backgroundColor: Int) {
         // 결과 메시지도 상단 메시지로 표시 (배경색 정보 무시)
         MessageManager.showMessage(requireContext(), message)
+    }
+
+    // 승률 통계 저장
+    private fun saveStats() {
+        val prefs = requireActivity().getSharedPreferences("blackjack_stats", Context.MODE_PRIVATE)
+        prefs.edit().apply {
+            putInt("win_count", winCount)
+            putInt("lose_count", loseCount)
+            putInt("draw_count", drawCount)
+            apply()
+        }
+    }
+    
+    // 승률 통계 로드
+    private fun loadStats() {
+        val prefs = requireActivity().getSharedPreferences("blackjack_stats", Context.MODE_PRIVATE)
+        winCount = prefs.getInt("win_count", 0)
+        loseCount = prefs.getInt("lose_count", 0)
+        drawCount = prefs.getInt("draw_count", 0)
+    }
+    
+    // 승률 표시 업데이트
+    private fun updateStatsDisplay() {
+        val totalGames = winCount + loseCount + drawCount
+        val winRate = if (totalGames > 0) (winCount.toFloat() / totalGames * 100).toInt() else 0
+        
+        statsTextView.text = "승률: $winRate% (${winCount}승 ${loseCount}패 ${drawCount}무)"
+    }
+
+    // 게임 정리 메서드 추가
+    private fun cleanupGame() {
+        // 카드 지우기
+        dealerCardsLayout.removeAllViews()
+        playerCardsLayout.removeAllViews()
+        
+        // 점수 초기화
+        dealerScoreText.text = "점수: ?"
+        playerScoreText.text = "점수: 0"
+        
+        // 베팅 초기화
+        currentBet = 0L
+        
+        // 정리 대기 상태 해제
+        isWaitingForCleanup = false
+        
+        // 게임 준비 메시지
+        showCustomSnackbar("새 게임을 위해 베팅해주세요")
     }
 } 

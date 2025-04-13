@@ -6,6 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="5dp"
+    android:background="#0F0F1A"
     tools:context=".CasinoFragment">
 
     <!-- 상단 제목 -->
@@ -13,31 +14,47 @@
         android:id="@+id/casinoTitleText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#673AB7"
+        android:background="#400080"
         android:padding="7dp"
         android:layout_marginTop="0dp"
         android:gravity="center"
         android:text="🎰 카지노 게임장"
         android:textColor="#FFFFFF"
-        android:textSize="16sp"
+        android:textSize="18sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- 경고 메시지 -->
+    <TextView
+        android:id="@+id/casinoInfoText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#55000000"
+        android:padding="8dp"
+        android:layout_marginTop="1dp"
+        android:gravity="center"
+        android:text="⚠️ 주의: 카지노 게임은 운에 좌우되며 큰 손실을 가져올 수 있습니다."
+        android:textColor="#FF5252"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/casinoTitleText" />
+
     <!-- 상단 탭 레이아웃 -->
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/casinoTabLayout"
         android:layout_width="match_parent"
-        android:layout_height="30dp"
+        android:layout_height="40dp"
         android:layout_marginTop="1dp"
-        android:background="#E0E0E0"
+        android:background="#252540"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/casinoTitleText"
-        app:tabIndicatorColor="#2196F3"
-        app:tabSelectedTextColor="#2196F3"
-        app:tabTextColor="#757575">
+        app:layout_constraintTop_toBottomOf="@+id/casinoInfoText"
+        app:tabIndicatorColor="#8C52FF"
+        app:tabSelectedTextColor="#FFFFFF"
+        app:tabTextColor="#B3FFFFFF">
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
@@ -47,7 +64,7 @@
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="1인발라트로" />
+            android:text="포커" />
 
     </com.google.android.material.tabs.TabLayout>
 
