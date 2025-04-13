@@ -322,10 +322,16 @@ class LottoFragment : BaseFragment() {
         if (remainingCooldownTime > 0) {
             val seconds = (remainingCooldownTime / 1000).toInt()
             binding.cooldownText.text = "대기 중: ${seconds}초"
-            binding.cooldownText.setTextColor(Color.RED)
+            binding.cooldownText.setTextColor(Color.WHITE)
+            
+            // 쿨다운 시 배경색 빨간색으로 변경
+            binding.cooldownCardView.setCardBackgroundColor(Color.parseColor("#E74C3C"))
         } else {
             binding.cooldownText.text = "구매 가능"
-            binding.cooldownText.setTextColor(Color.parseColor("#4CAF50")) // 녹색
+            binding.cooldownText.setTextColor(Color.WHITE)
+            
+            // 구매 가능 시 배경색 녹색으로 변경
+            binding.cooldownCardView.setCardBackgroundColor(Color.parseColor("#27AE60"))
         }
     }
     
