@@ -11,13 +11,23 @@ import android.graphics.drawable.GradientDrawable
 import android.widget.ImageButton
 
 class StockAdapter(
-    private var stockList: List<Stock>,
     private val onItemClick: (Stock) -> Unit,
     private val onGraphClick: (Stock) -> Unit
 ) : RecyclerView.Adapter<StockAdapter.StockViewHolder>() {
 
+    private var stockList: List<Stock> = listOf()
+    
     // 현재 선택된 주식을 추적
     private var selectedStockPosition: Int = -1
+    
+    // 기존 생성자 - 하위 호환성 유지
+    constructor(
+        stockList: List<Stock>,
+        onItemClick: (Stock) -> Unit,
+        onGraphClick: (Stock) -> Unit
+    ) : this(onItemClick, onGraphClick) {
+        this.stockList = stockList
+    }
     
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StockViewHolder {
         val view = LayoutInflater.from(parent.context)

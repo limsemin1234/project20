@@ -20,6 +20,14 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
     private val _stockItems = MutableLiveData<MutableList<Stock>>()
     val stockItems: LiveData<MutableList<Stock>> get() = _stockItems
 
+    // 선택된 주식을 추적하기 위한 LiveData 추가
+    private val _selectedStock = MutableLiveData<Stock>()
+    val selectedStockLiveData: LiveData<Stock> get() = _selectedStock
+    
+    // 선택된 수량 및 거래 모드
+    var selectedQuantity: Int = 0
+    var isBuyMode: Boolean = true  // 기본값은 매수 모드
+    
     private val handler = Handler(Looper.getMainLooper())
     private val updateInterval = 5000L // 주식 가격 업데이트 간격 (5초)
     
@@ -1010,5 +1018,19 @@ class StockViewModel(application: Application) : AndroidViewModel(application) {
         // 2. 대신 반동 조건이 만족될 경우 pendingReversion에 방향을 저장
         // 3. 이벤트가 모두 종료되면 저장된 반동 방향으로 반동 효과를 적용
         // 4. 이렇게 함으로써 이벤트의 효과가 중간에 중단되지 않음
+    }
+
+    // 주식 선택 메소드 추가
+    fun selectStock(index: Int) {
+        _stockItems.value?.let { stocksList ->
+            if (index >= 0 && index < stocksList.size) {
+                _selectedStock.value = stocksList[index]
+            }
+        }
+    }
+
+    // 주식 직접 선택 메소드 추가
+    fun selectStock(stock: Stock) {
+        _selectedStock.value = stock
     }
 }

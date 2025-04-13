@@ -34,6 +34,7 @@ class StockFragment : BaseFragment() {
 
     private var selectedStock: Stock? = null
     private var selectedQuantity: Int = 0  // 기본 수량을 0으로 설정
+    private var isBuyMode: Boolean = true  // 매수 모드 기본값
 
     private lateinit var stockViewModel: StockViewModel
     private var stockItems: List<Stock> = listOf()
@@ -54,10 +55,17 @@ class StockFragment : BaseFragment() {
     private lateinit var quantityBtn1: Button
     private lateinit var quantityBtn5: Button
     private lateinit var quantityBtn10: Button
-    private lateinit var quantityBtn20: Button
+    private lateinit var quantityBtn20: Button  // 기존 20주 버튼을 500주처럼 사용
     private lateinit var quantityBtn50: Button
     private lateinit var quantityBtn100: Button
-    private lateinit var resetQuantityBtn: Button
+    
+    // 거래 모드 토글 버튼
+    private lateinit var buyModeButton: Button  // 기존 buyButton 사용
+    private lateinit var sellModeButton: Button  // 기존 sellButton 사용
+
+    // 매수/매도 전체 버튼
+    private lateinit var buyAllButton: Button
+    private lateinit var sellAllButton: Button
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -71,6 +79,76 @@ class StockFragment : BaseFragment() {
 
         stockViewModel = ViewModelProvider(requireActivity())[StockViewModel::class.java]
 
+        // 초기화
+        initViews(view)
+        observeViewModel()
+
+        // 처음에는 기본적으로 첫 번째 주식 선택
+        stockViewModel.selectStock(0)
+
+        updateSelectedQuantityText()
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        // 화면으로 돌아올 때 수량 초기화
+        resetSelectedQuantity()
+    }
+    
+    private fun initViews(view: View) {
+        // RecyclerView 및 Adapter 초기화
+        stockRecyclerView = view.findViewById(R.id.stockRecyclerView)
+        stockAdapter = StockAdapter(this::onStockClicked, this::showStockGraphDialog)
+        stockRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        stockRecyclerView.adapter = stockAdapter
+
+        // 텍스트뷰 바인딩 - ID를 실제 레이아웃에 맞게 수정
+        stockDetailsTextView = view.findViewById(R.id.stockDetailsTextView)
+        featuresInfoText = view.findViewById(R.id.stockFeaturesInfoText)
+        selectedQuantityText = view.findViewById(R.id.selectedQuantityText)
+        buyModeButton = view.findViewById(R.id.buyButton)
+        sellModeButton = view.findViewById(R.id.sellButton)
+        buyAllButton = view.findViewById(R.id.buyAllButton)
+        sellAllButton = view.findViewById(R.id.sellAllButton)
+
+        // 수량 버튼 초기화
+        quantityBtn1 = view.findViewById(R.id.quantityBtn1)
+        quantityBtn5 = view.findViewById(R.id.quantityBtn5)
+        quantityBtn10 = view.findViewById(R.id.quantityBtn10)
+        quantityBtn20 = view.findViewById(R.id.quantityBtn20)
+        quantityBtn50 = view.findViewById(R.id.quantityBtn50)
+        quantityBtn100 = view.findViewById(R.id.quantityBtn100)
+
+        avgPurchasePriceData = view.findViewById(R.id.avgPurchasePriceData)
+        profitLossData = view.findViewById(R.id.profitLossData)
+        profitRateData = view.findViewById(R.id.profitRateData)
+        stockQuantityData = view.findViewById(R.id.stockQuantityData)
+        selectedStockName = view.findViewById(R.id.selectedStockName)
+
+        // 그래프 버튼 추가
+        showGraphButton = view.findViewById(R.id.btnShowGraph)
+        
+        // 그래프 버튼 클릭 리스너 설정
+        showGraphButton.setOnClickListener {
+            selectedStock?.let { stock ->
+                showStockGraphDialog(stock)
+            } ?: showMessage("주식을 선택하세요.")
+        }
+
+        // 수량 텍스트 초기화
+        updateSelectedQuantityText()
+
+        // 매수/매도 모드 버튼 설정
+        setupModeButtons()
+        
+        // 수량 버튼 클릭 리스너 설정
+        setupQuantityButtons()
+
+        // 매수/매도 전체 버튼 설정
+        setupAllButtons()
+    }
+
+    private fun observeViewModel() {
         stockViewModel.stockItems.observe(viewLifecycleOwner, Observer { updatedStockList ->
             updateStockList(updatedStockList)
             selectedStock?.let { 
@@ -91,192 +169,168 @@ class StockFragment : BaseFragment() {
         stockViewModel.setNegativeNewsCallback { stockNames ->
             showNegativeNewsMessage(stockNames)
         }
-
-        setupUI(view)
-        
-        // 화면 전환 후 다시 돌아왔을 때 수량 초기화
-        resetSelectedQuantity()
-        
-        // 기능 설명 업데이트
-        updateImplementedFeatures()
     }
-    
-    override fun onResume() {
-        super.onResume()
-        // 화면으로 돌아올 때 수량 초기화
-        resetSelectedQuantity()
-    }
-    
-    private fun setupUI(view: View) {
-        stockRecyclerView = view.findViewById(R.id.stockRecyclerView)
-        stockDetailsTextView = view.findViewById(R.id.stockDetailsTextView)
-        featuresInfoText = view.findViewById(R.id.stockFeaturesInfoText)
 
-        val buyButton: Button = view.findViewById(R.id.buyButton)
-        val sellButton: Button = view.findViewById(R.id.sellButton)
-        val buyAllButton: Button = view.findViewById(R.id.buyAllButton)
-        val sellAllButton: Button = view.findViewById(R.id.sellAllButton)
-
-        // 그래프 버튼 추가
-        showGraphButton = view.findViewById(R.id.btnShowGraph)
-        // 리사이클러뷰 아이템에 그래프 버튼이 추가되어 기존 버튼은 숨김
-        showGraphButton.visibility = View.GONE
-
-        // 수량 버튼 찾기
-        quantityBtn1 = view.findViewById(R.id.quantityBtn1)
-        quantityBtn5 = view.findViewById(R.id.quantityBtn5)
-        quantityBtn10 = view.findViewById(R.id.quantityBtn10)
-        quantityBtn20 = view.findViewById(R.id.quantityBtn20)
-        quantityBtn50 = view.findViewById(R.id.quantityBtn50)
-        quantityBtn100 = view.findViewById(R.id.quantityBtn100)
-        resetQuantityBtn = view.findViewById(R.id.resetQuantityBtn)
-        selectedQuantityText = view.findViewById(R.id.selectedQuantityText)
-
-        // 수량 텍스트 초기화
-        updateSelectedQuantityText()
-
-        avgPurchasePriceData = view.findViewById(R.id.avgPurchasePriceData)
-        profitLossData = view.findViewById(R.id.profitLossData)
-        profitRateData = view.findViewById(R.id.profitRateData)
-        stockQuantityData = view.findViewById(R.id.stockQuantityData)
-        selectedStockName = view.findViewById(R.id.selectedStockName)
-
-        stockRecyclerView.layoutManager = LinearLayoutManager(requireContext())
-        stockAdapter = StockAdapter(
-            stockItems, 
-            { stock -> // 아이템 클릭 콜백
-                selectedStock = stock
-                updateStockDetails(stock) // 주식 상세 정보 업데이트
-            },
-            { stock -> // 그래프 버튼 클릭 콜백
-                showStockGraphDialog(stock)
+    // 매수/매도 모드 버튼 설정
+    private fun setupModeButtons() {
+        // 초기 모드 설정 (매수 모드가 기본)
+        updateModeButtons()
+        
+        buyModeButton.setOnClickListener {
+            if (!isBuyMode) {
+                isBuyMode = true
+                updateModeButtons()
+                updateSelectedQuantityText() // 모드 변경 시 텍스트 업데이트
             }
-        )
-        stockRecyclerView.adapter = stockAdapter
-
-        // 수량 버튼 클릭 리스너 설정
-        setupQuantityButtons()
-
-        buyButton.setOnClickListener {
-            selectedStock?.let {
-                val currentAsset = assetViewModel.asset.value ?: 0L
-                val totalCost = it.price.toLong() * selectedQuantity
-                
-                if (selectedQuantity <= 0) {
-                    showErrorMessage("거래 수량을 선택해주세요.")
-                    return@setOnClickListener
-                }
-                
-                if (currentAsset >= totalCost) {
-                    // 다수의 주식 매수 메소드 사용
-                    val buyCount = stockViewModel.buyStocks(it, selectedQuantity)
-                    assetViewModel.decreaseAsset(totalCost)
-                    showMessage("${it.name}을(를) ${buyCount}주 매수했습니다! 보유량: ${it.holding}주")
-                    stockAdapter.notifyDataSetChanged()
-                    updateStockDetails(it) // 주식 상세 정보 업데이트
-                    resetSelectedQuantity() // 거래 후 수량 초기화
-                } else {
-                    showErrorMessage("자산이 부족합니다! 필요 금액: ${formatCurrency(totalCost)}")
-                }
-            } ?: showMessage("주식을 선택하세요.")
         }
-
-        sellButton.setOnClickListener {
-            selectedStock?.let {
-                if (selectedQuantity <= 0) {
-                    showErrorMessage("거래 수량을 선택해주세요.")
-                    return@setOnClickListener
-                }
-                
-                if (it.holding >= selectedQuantity) {
-                    // 다수의 주식 매도 메소드 사용
-                    val sellCount = stockViewModel.sellStocks(it, selectedQuantity)
-                    val totalGain = it.price.toLong() * sellCount
-                    assetViewModel.increaseAsset(totalGain)
-                    showMessage("${it.name} ${sellCount}주 매도! 총액: ${formatCurrency(totalGain)}원")
-                    stockAdapter.notifyDataSetChanged()
-                    updateStockDetails(it) // 주식 상세 정보 업데이트
-                    resetSelectedQuantity() // 거래 후 수량 초기화
-                } else {
-                    showErrorMessage("보유한 주식이 부족합니다! 현재 보유량: ${it.holding}주")
-                }
-            } ?: showMessage("주식을 선택하세요.")
+        
+        sellModeButton.setOnClickListener {
+            if (isBuyMode) {
+                isBuyMode = false
+                updateModeButtons()
+                updateSelectedQuantityText() // 모드 변경 시 텍스트 업데이트
+            }
         }
+    }
+    
+    // 매수/매도 모드에 따라 UI 업데이트
+    private fun updateModeButtons() {
+        if (isBuyMode) {
+            // 임시 방편으로 배경색 직접 설정
+            buyModeButton.setBackgroundColor(ContextCompat.getColor(requireContext(), android.R.color.holo_blue_dark))
+            buyModeButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
+            sellModeButton.setBackgroundColor(ContextCompat.getColor(requireContext(), android.R.color.white))
+            sellModeButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.black))
+        } else {
+            buyModeButton.setBackgroundColor(ContextCompat.getColor(requireContext(), android.R.color.white))
+            buyModeButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.black))
+            sellModeButton.setBackgroundColor(ContextCompat.getColor(requireContext(), android.R.color.holo_red_dark))
+            sellModeButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
+        }
+    }
 
+    // 매수/매도 전체 버튼 설정
+    private fun setupAllButtons() {
         buyAllButton.setOnClickListener {
-            selectedStock?.let { stock ->
-                val currentAsset = assetViewModel.asset.value ?: 0L
-                if (currentAsset >= stock.price.toLong()) {
-                    val buyCount = stockViewModel.buyAllStock(stock, currentAsset)
-                    val usedAsset = stock.price.toLong() * buyCount
-                    assetViewModel.decreaseAsset(usedAsset)
-                    showMessage("${stock.name}을(를) ${buyCount}주 전체 매수했습니다!")
-                    stockAdapter.notifyDataSetChanged()
-                    updateStockDetails(stock) // 주식 상세 정보 업데이트
-                    resetSelectedQuantity() // 거래 후 수량 초기화
-                } else {
-                    showErrorMessage("자산이 부족합니다!")
-                }
-            } ?: showMessage("주식을 선택하세요.")
+            if (executeTradeWithCheck()) {
+                selectedStock?.let { stock ->
+                    val currentAsset = assetViewModel.asset.value ?: 0L
+                    if (currentAsset >= stock.price.toLong()) {
+                        val buyCount = stockViewModel.buyAllStock(stock, currentAsset)
+                        val usedAsset = stock.price.toLong() * buyCount
+                        assetViewModel.decreaseAsset(usedAsset)
+                        showMessage("${stock.name}을(를) ${buyCount}주 전체 매수했습니다!")
+                        stockAdapter.notifyDataSetChanged()
+                        updateStockDetails(stock) // 주식 상세 정보 업데이트
+                    } else {
+                        showErrorMessage("자산이 부족합니다!")
+                    }
+                } ?: showMessage("주식을 선택하세요.")
+            }
         }
 
         sellAllButton.setOnClickListener {
-            selectedStock?.let { stock ->
-                if (stock.holding > 0) {
-                    val sellCount = stockViewModel.sellAllStock(stock)
-                    val gain = stock.price.toLong() * sellCount
-                    assetViewModel.increaseAsset(gain)
-                    showMessage("${stock.name} ${sellCount}주 전체 매도 완료!")
-                    stockAdapter.notifyDataSetChanged()
-                    updateStockDetails(stock) // 주식 상세 정보 업데이트
-                    resetSelectedQuantity() // 거래 후 수량 초기화
-                } else {
-                    showErrorMessage("보유한 주식이 없습니다!")
-                }
-            } ?: showMessage("주식을 선택하세요.")
+            if (executeTradeWithCheck()) {
+                selectedStock?.let { stock ->
+                    if (stock.holding > 0) {
+                        val sellCount = stockViewModel.sellAllStock(stock)
+                        val gain = stock.price.toLong() * sellCount
+                        assetViewModel.increaseAsset(gain)
+                        showMessage("${stock.name} ${sellCount}주 전체 매도 완료!")
+                        stockAdapter.notifyDataSetChanged()
+                        updateStockDetails(stock) // 주식 상세 정보 업데이트
+                    } else {
+                        showErrorMessage("보유한 주식이 없습니다!")
+                    }
+                } ?: showMessage("주식을 선택하세요.")
+            }
         }
     }
 
     // 수량 버튼 설정
     private fun setupQuantityButtons() {
         quantityBtn1.setOnClickListener { 
-            selectedQuantity += 1
-            updateSelectedQuantityText()
+            executeTradeWithQuantity(1)
         }
         
         quantityBtn5.setOnClickListener { 
-            selectedQuantity += 5
-            updateSelectedQuantityText()
+            executeTradeWithQuantity(5)
         }
         
         quantityBtn10.setOnClickListener { 
-            selectedQuantity += 10
-            updateSelectedQuantityText()
+            executeTradeWithQuantity(10)
         }
         
         quantityBtn20.setOnClickListener { 
-            selectedQuantity += 20
-            updateSelectedQuantityText()
+            executeTradeWithQuantity(500)  // 500주로 사용
         }
         
         quantityBtn50.setOnClickListener { 
-            selectedQuantity += 50
-            updateSelectedQuantityText()
+            executeTradeWithQuantity(50)
         }
         
         quantityBtn100.setOnClickListener { 
-            selectedQuantity += 100
-            updateSelectedQuantityText()
+            executeTradeWithQuantity(100)
         }
-        
-        resetQuantityBtn.setOnClickListener {
-            resetSelectedQuantity()
+    }
+
+    // 지정된 수량으로 거래 실행
+    private fun executeTradeWithQuantity(quantity: Int) {
+        if (executeTradeWithCheck()) {
+            if (isBuyMode) {
+                executeBuy(quantity)
+            } else {
+                executeSell(quantity)
+            }
+        }
+    }
+
+    // 거래 전 체크
+    private fun executeTradeWithCheck(): Boolean {
+        if (selectedStock == null) {
+            showMessage("주식을 선택하세요.")
+            return false
+        }
+        return true
+    }
+    
+    // 매수 실행
+    private fun executeBuy(quantity: Int) {
+        selectedStock?.let {
+            val currentAsset = assetViewModel.asset.value ?: 0L
+            val totalCost = it.price.toLong() * quantity
+            
+            if (currentAsset >= totalCost) {
+                val buyCount = stockViewModel.buyStocks(it, quantity)
+                assetViewModel.decreaseAsset(totalCost)
+                showMessage("${it.name}을(를) ${buyCount}주 매수했습니다! 보유량: ${it.holding}주")
+                stockAdapter.notifyDataSetChanged()
+                updateStockDetails(it) // 주식 상세 정보 업데이트
+            } else {
+                showErrorMessage("자산이 부족합니다! 필요 금액: ${formatCurrency(totalCost)}")
+            }
+        }
+    }
+    
+    // 매도 실행
+    private fun executeSell(quantity: Int) {
+        selectedStock?.let {
+            if (it.holding >= quantity) {
+                val sellCount = stockViewModel.sellStocks(it, quantity)
+                val totalGain = it.price.toLong() * sellCount
+                assetViewModel.increaseAsset(totalGain)
+                showMessage("${it.name} ${sellCount}주 매도! 총액: ${formatCurrency(totalGain)}원")
+                stockAdapter.notifyDataSetChanged()
+                updateStockDetails(it) // 주식 상세 정보 업데이트
+            } else {
+                showErrorMessage("보유한 주식이 부족합니다! 현재 보유량: ${it.holding}주")
+            }
         }
     }
 
     // 선택된 수량 텍스트 업데이트
     private fun updateSelectedQuantityText() {
-        selectedQuantityText?.text = "$selectedQuantity 주"
+        selectedQuantityText?.text = if (isBuyMode) "매수 모드" else "매도 모드"
     }
     
     // 선택된 수량을 0으로 초기화
@@ -321,51 +375,11 @@ class StockFragment : BaseFragment() {
         showErrorMessage(message)
     }
 
-    fun updateFeaturesInfo(newFeature: String) {
-        val currentText = featuresInfoText.text.toString()
-        val baseText = currentText.split("\n")[0]
-        val features = currentText.substringAfter("\n").split("\n- ").filter { it.isNotEmpty() }.toMutableList()
-        
-        if (!features.contains(newFeature)) {
-            features.add(newFeature)
-        }
-        
-        val updatedText = "$baseText\n- ${features.joinToString("\n- ")}"
-        featuresInfoText.text = updatedText
-    }
-    
-    /**
-     * 구현된 기능 목록을 업데이트합니다.
-     */
-    private fun updateImplementedFeatures() {
-        val infoBuilder = StringBuilder()
-        
-        infoBuilder.append("■ 향상된 가격 변동 메커니즘\n")
-        infoBuilder.append("• 주식 가격이 한 방향으로 연속 5회 이상 변동하면 반대 방향으로의 반동이 발생합니다.\n")
-        infoBuilder.append("• 연속 변동 횟수가 증가할수록 반동 확률이 높아집니다.\n")
-        infoBuilder.append("• 10회 이상 연속 변동 시 95% 확률로 반동이 발생합니다.\n")
-        infoBuilder.append("• 반동 발생 시 20초~40초간 해당 방향으로의 가격 변동이 유도됩니다.\n")
-        infoBuilder.append("• 다른 이벤트가 진행 중일 때 반동 조건이 만족되면, 이벤트 종료 후 반동이 발생합니다.\n\n")
-        
-        infoBuilder.append("■ 기본 주식 변동 시스템\n")
-        infoBuilder.append("• 추세 기능이 제거되어 가격 변동이 100% 랜덤으로 이루어집니다.\n")
-        infoBuilder.append("• 주식마다 기본 변동성(1.0~1.4)이 다르게 적용됩니다.\n")
-        infoBuilder.append("• 기본 변동 범위: -4% ~ +4%\n\n")
-        
-        // 이벤트 시스템 설명 추가
-        infoBuilder.append("■ 주식 이벤트 시스템\n")
-        infoBuilder.append("• 개별 종목 이벤트:\n")
-        infoBuilder.append("  - 소형 호재/악재: +2%~4% / -4%~-2% (비활성화)\n")
-        infoBuilder.append("  - 중형 호재/악재: +3%~6% / -6%~-3% (비활성화)\n")
-        infoBuilder.append("  - 대형 호재/악재: +5%~9% / -9%~-5% (비활성화)\n")
-        infoBuilder.append("• 시장 전체 이벤트:\n")
-        infoBuilder.append("  - 경기 부양/침체: +2%~5% / -5%~-2% (비활성화)\n")
-        infoBuilder.append("  - 시장 폭등/폭락: +4%~8% / -8%~-4% (비활성화)\n")
-        infoBuilder.append("• 특별 이벤트:\n")
-        infoBuilder.append("  - 대박/대폭락 종목: +10%~20% / -20%~-10% (비활성화)\n")
-        infoBuilder.append("• 반동 효과가 진행 중일 때는 새로운 이벤트가 적용되지 않습니다.\n")
-        
-        featuresInfoText.text = infoBuilder.toString()
+    // 주식 선택 처리 함수
+    private fun onStockClicked(stock: Stock) {
+        selectedStock = stock
+        stockViewModel.selectStock(stock)
+        updateStockDetails(stock)
     }
     
     /**
@@ -397,32 +411,7 @@ class StockFragment : BaseFragment() {
         }
         
         // 그래프 실시간 업데이트를 위한 옵저버
-        // LiveData는 값이 변경될 때만 알림을 보냄 (효율적)
         val graphUpdateObserver = Observer<MutableList<Stock>> { updatedStockList ->
-            updatedStockList.find { it.name == stock.name }?.let { updatedStock ->
-                // 이미 타이머가 처리 중인지 확인
-                if (!graphState.isTimerProcessing) {
-                    updateGraph(lineChart, updatedStock, graphState)
-                }
-            }
-        }
-        
-        // 백업 타이머 - LiveData 이벤트를 놓치는 경우를 대비
-        val graphUpdateHandler = android.os.Handler(android.os.Looper.getMainLooper())
-        val graphUpdateRunnable = object : Runnable {
-            override fun run() {
-                // 더 이상 매 5초마다 자동으로 데이터 포인트를 추가하지 않음
-                // 대신 LiveData 업데이트만 감지하여 변경된 경우에만 그래프 업데이트
-
-                // 다이얼로그가 아직 표시 중이면 다음 타이머 예약
-                if (dialog.isShowing) {
-                    graphUpdateHandler.postDelayed(this, 5000)
-                }
-            }
-        }
-        
-        // 주식 데이터 변경 감지를 위한 옵저버 등록 - 가격 변경 시에만 그래프 업데이트
-        stockViewModel.stockItems.observe(viewLifecycleOwner, Observer { updatedStockList ->
             updatedStockList.find { it.name == stock.name }?.let { updatedStock ->
                 // 변경된 경우에만 그래프 업데이트
                 if (updatedStock.price != graphState.lastPrice) {
@@ -431,15 +420,14 @@ class StockFragment : BaseFragment() {
                     graphState.isTimerProcessing = false
                 }
             }
-        })
+        }
         
-        // 첫 타이머 예약
-        graphUpdateHandler.postDelayed(graphUpdateRunnable, 5000)
+        // 주식 데이터 변경 감지를 위한 옵저버 등록
+        stockViewModel.stockItems.observe(viewLifecycleOwner, graphUpdateObserver)
         
-        // 다이얼로그가 닫힐 때 옵저버 및 핸들러 제거
+        // 다이얼로그가 닫힐 때 옵저버 제거
         dialog.setOnDismissListener {
             stockViewModel.stockItems.removeObserver(graphUpdateObserver)
-            graphUpdateHandler.removeCallbacksAndMessages(null)
         }
         
         // 다이얼로그 표시
