@@ -1,5 +1,6 @@
 package com.example.p20
 
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -67,6 +68,14 @@ class MyInfoFragment : Fragment() {
         assetViewModel.asset.observe(viewLifecycleOwner) { asset ->
             currentAsset = asset
             assetTextView.text = formatCurrency(asset)
+            
+            // 자산이 마이너스일 경우 색상 변경
+            if (asset < 0) {
+                assetTextView.setTextColor(Color.RED)
+            } else {
+                assetTextView.setTextColor(Color.WHITE) // 기존 색상 유지
+            }
+            
             updateTotalAsset()
         }
 
@@ -116,6 +125,13 @@ class MyInfoFragment : Fragment() {
         // 총자산 = 현금 + 주식 + 부동산 + 예금 - 대출
         val totalAsset = currentAsset + stockAsset + realEstateAsset + depositAsset - loanAsset
         totalAssetTextView.text = formatCurrency(totalAsset)
+        
+        // 총자산이 마이너스일 경우 색상 변경
+        if (totalAsset < 0) {
+            totalAssetTextView.setTextColor(Color.RED)
+        } else {
+            totalAssetTextView.setTextColor(Color.WHITE) // 기존 색상 유지
+        }
     }
     
     // 통화 형식 포맷팅 함수

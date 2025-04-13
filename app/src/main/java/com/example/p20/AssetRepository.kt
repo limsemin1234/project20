@@ -71,12 +71,9 @@ class AssetRepository(private val context: Context) {
     
     fun decreaseAsset(amount: Long): Boolean {
         val currentAsset = _asset.value ?: 0L
-        if (currentAsset - amount >= 0L) {
-            _asset.value = currentAsset - amount
-            saveToPreferences()
-            return true
-        }
-        return false
+        _asset.value = currentAsset - amount
+        saveToPreferences()
+        return true
     }
     
     // 예금 관련 메서드

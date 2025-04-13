@@ -198,8 +198,18 @@ class InterestCalculator(
             if (remainingTime <= 0) {
                 val interest = (loan * LOAN_INTEREST_RATE).roundToLong()
                 mainHandler.post {
-                    repository.decreaseAsset(interest)  // 이자를 자산에서 차감
-                    val message = "대출 이자 ${repository.formatNumber(interest)}원이 자산에서 차감되었습니다"
+                    val currentAsset = repository.asset.value ?: 0L
+                    
+                    // 이자를 항상 차감 (마이너스가 될 수 있음)
+                    repository.decreaseAsset(interest)
+                    
+                    // 메시지 내용 변경
+                    val message = if (currentAsset < interest) {
+                        "대출 이자 ${repository.formatNumber(interest)}원이 발생했습니다. 자산이 부족하여 마이너스 상태가 되었습니다."
+                    } else {
+                        "대출 이자 ${repository.formatNumber(interest)}원이 자산에서 차감되었습니다"
+                    }
+                    
                     _interestNotification.postValue(message)
                     _lastNotificationTimestamp.postValue(System.currentTimeMillis())
                     MessageManager.showMessage(application, message)

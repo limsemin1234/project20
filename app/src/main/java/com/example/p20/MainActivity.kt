@@ -140,6 +140,13 @@ class MainActivity : AppCompatActivity() {
         // 자산 초기 표시
         assetViewModel.asset.observe(this) { newAsset ->
             assetTextView.text = assetViewModel.getAssetText()
+            
+            // 자산이 마이너스일 경우 색상 변경
+            if (newAsset < 0) {
+                assetTextView.setTextColor(android.graphics.Color.RED)
+            } else {
+                assetTextView.setTextColor(android.graphics.Color.WHITE)
+            }
         }
 
         /////////////////////////////버튼///////////////////////////////

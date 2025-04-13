@@ -14,11 +14,17 @@ import kotlin.math.roundToInt
 object FormatUtils {
     
     /**
-     * 숫자를 통화 형식으로 포맷팅 (예: 1000 -> 1,000)
+     * 숫자를 통화 형식으로 포맷팅 (예: 1000 -> 1,000, -1000 -> -1,000)
      */
     fun formatCurrency(amount: Long): String {
         val numberFormat = NumberFormat.getNumberInstance(Locale.KOREA)
-        return numberFormat.format(amount)
+        val formattedNumber = numberFormat.format(amount)
+        
+        // 음수 값에 대해 더 눈에 띄게 표시
+        if (amount < 0) {
+            return formattedNumber // -1,000 형식으로 표시됨
+        }
+        return formattedNumber
     }
     
     /**

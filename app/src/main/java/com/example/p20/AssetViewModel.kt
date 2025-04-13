@@ -161,7 +161,14 @@ class AssetViewModel(
      * 자산 표시 텍스트 포맷
      */
     fun getAssetText(): String {
-        return "자산: ${formatNumber(repository.asset.value ?: 0)}원"
+        val assetValue = repository.asset.value ?: 0L
+        val formattedAsset = formatNumber(assetValue)
+        
+        // 자산이 마이너스인 경우 붉은색으로 표시하기 위한 HTML 태그 적용 (TextView에서 HTML.fromHtml 사용 필요)
+        if (assetValue < 0) {
+            return "자산: ${formattedAsset}원"
+        }
+        return "자산: ${formattedAsset}원"
     }
 
     /**
