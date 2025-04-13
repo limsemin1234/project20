@@ -128,8 +128,20 @@ class DepositFragment : Fragment() {
     private fun setupActionButtons() {
         // 예금하기 버튼 클릭 이벤트
         depositButton.setOnClickListener {
-            val amount = depositAmountInput.text.toString().toLongOrNull() ?: 0L
+            val amount = getAmount()
             if (amount > 0) {
+                // 현재 자산 확인
+                val currentAsset = viewModel.asset.value ?: 0L
+                
+                // 자산보다 많은 금액 예금 시도 시 경고 메시지
+                if (amount > currentAsset) {
+                    MessageManager.showMessage(
+                        requireContext(),
+                        "보유 자산(${NumberFormat.getNumberInstance(Locale.KOREA).format(currentAsset)}원)보다 많은 금액은 예금할 수 없습니다."
+                    )
+                    return@setOnClickListener
+                }
+                
                 // 입금 처리
                 if (viewModel.addDeposit(amount)) {
                     updateAmountInput(0L)
@@ -171,10 +183,16 @@ class DepositFragment : Fragment() {
                     // 만단위 이하 금액 출금
                     if (viewModel.subtractDeposit(tenThousandRemainder)) {
                         updateAmountInput(0L)
-                        Toast.makeText(context, "만단위 이하 ${NumberFormat.getNumberInstance(Locale.KOREA).format(tenThousandRemainder)}원을 출금했습니다.", Toast.LENGTH_SHORT).show()
+                        MessageManager.showMessage(
+                            requireContext(),
+                            "만단위 이하 ${NumberFormat.getNumberInstance(Locale.KOREA).format(tenThousandRemainder)}원을 출금했습니다."
+                        )
                     }
                 } else {
-                    Toast.makeText(context, "출금할 만단위 이하 금액이 없습니다.", Toast.LENGTH_SHORT).show()
+                    MessageManager.showMessage(
+                        requireContext(),
+                        "출금할 만단위 이하 금액이 없습니다."
+                    )
                 }
             }
         }

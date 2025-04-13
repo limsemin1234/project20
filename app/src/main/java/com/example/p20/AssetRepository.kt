@@ -17,7 +17,7 @@ class AssetRepository(private val context: Context) {
         private const val KEY_ASSET = "asset"
         private const val KEY_DEPOSIT = "deposit"
         private const val KEY_LOAN = "loan"
-        private const val DEFAULT_INITIAL_ASSET = 500_000L
+        private const val DEFAULT_INITIAL_ASSET = 5_000_000L
     }
     
     // LiveData
@@ -71,6 +71,12 @@ class AssetRepository(private val context: Context) {
     
     fun decreaseAsset(amount: Long): Boolean {
         val currentAsset = _asset.value ?: 0L
+        
+        // 자산이 부족한 경우 차감 불가
+        if (currentAsset < amount) {
+            return false
+        }
+        
         _asset.value = currentAsset - amount
         saveToPreferences()
         return true
