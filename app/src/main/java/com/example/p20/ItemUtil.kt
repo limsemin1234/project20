@@ -129,6 +129,19 @@ object ItemUtil {
         }
         return itemIds
     }
+    
+    /**
+     * 복권 꽝일 때 아이템 재고를 증가시킵니다.
+     * @param context Context
+     * @return 획득한 아이템 정보 (없으면 null)
+     */
+    fun increaseLottoTimeItemStock(context: Context): ItemReward? {
+        // 랜덤으로 시간증폭 아이템 하나 선택 (ID: 1~3)
+        val randomItemId = Random.nextInt(1, 4)
+        
+        // 아이템 재고 증가
+        return increaseItemStock(context, randomItemId, 1)
+    }
 }
 
 /**

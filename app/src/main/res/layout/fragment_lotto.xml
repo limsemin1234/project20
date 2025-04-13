@@ -4,122 +4,224 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="5dp"
-    android:background="#202040"
+    android:padding="16dp"
+    android:background="#2C3E50"
     tools:context=".LottoFragment">
 
-    <!-- 제목 추가 -->
-    <TextView
-        android:id="@+id/lottoTitleText"
-        style="@style/LottoHeader"
-        android:text="🎫 행운의 복권 판매점"
+    <!-- 제목 추가 - 더 화려하게 -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/lottoTitleCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="15dp"
+        app:cardElevation="8dp"
+        app:cardBackgroundColor="#3498DB"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent">
+        
+        <TextView
+            android:id="@+id/lottoTitleText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:padding="15dp"
+            android:gravity="center"
+            android:textColor="#FFFFFF"
+            android:text="🎯 행운의 복권 판매점 🎯"
+            android:shadowColor="#8000CCFF"
+            android:shadowDx="2"
+            android:shadowDy="2"
+            android:shadowRadius="4" />
+    </androidx.cardview.widget.CardView>
 
-    <!-- 로또 가격 -->
-    <TextView
-        android:id="@+id/lottoPriceText"
+    <!-- 로또 가격 - 더 눈에 띄게 -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/priceCardView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="티켓 가격: 1,000원"
-        android:padding="10dp"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="#FFFFFF"
-        app:layout_constraintTop_toBottomOf="@id/lottoTitleText"
-        app:layout_constraintStart_toStartOf="parent" />
+        android:layout_marginTop="20dp"
+        app:cardCornerRadius="10dp"
+        app:cardElevation="6dp"
+        app:cardBackgroundColor="#34495E"
+        app:layout_constraintTop_toBottomOf="@id/lottoTitleCard"
+        app:layout_constraintStart_toStartOf="parent">
+        
+        <TextView
+            android:id="@+id/lottoPriceText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="티켓 가격: 1,000원"
+            android:padding="12dp"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#F1C40F"
+            android:drawableStart="@android:drawable/ic_dialog_info"
+            android:drawablePadding="8dp" />
+    </androidx.cardview.widget.CardView>
 
-    <!-- 쿨다운 텍스트 추가 -->
-    <TextView
-        android:id="@+id/cooldownText"
+    <!-- 쿨다운 텍스트 추가 - 더 눈에 띄게 -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cooldownCardView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="구매 가능"
-        android:textSize="14sp"
-        android:textColor="#4CAF50"
         android:layout_marginStart="16dp"
+        app:cardCornerRadius="10dp"
+        app:cardElevation="6dp"
+        app:cardBackgroundColor="#27AE60"
         app:layout_constraintTop_toTopOf="@id/buyLottoButton"
         app:layout_constraintBottom_toBottomOf="@id/buyLottoButton"
-        app:layout_constraintStart_toEndOf="@id/buyLottoButton" />
+        app:layout_constraintStart_toEndOf="@id/buyLottoButton">
+        
+        <TextView
+            android:id="@+id/cooldownText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="구매 가능"
+            android:textSize="16sp"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:padding="12dp" />
+    </androidx.cardview.widget.CardView>
 
-    <!-- 구매 버튼 -->
-    <Button
+    <!-- 구매 버튼 - 더 화려하게 -->
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/buyLottoButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_width="170dp"
+        android:layout_height="60dp"
+        android:layout_marginTop="24dp"
         android:text="복권 구매"
-        android:backgroundTint="#5C5CFF"
-        app:layout_constraintTop_toBottomOf="@id/lottoPriceText"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:backgroundTint="#E74C3C"
+        app:cornerRadius="12dp"
+        android:elevation="10dp"
+        app:strokeColor="#F39C12"
+        app:strokeWidth="2dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        app:icon="@android:drawable/ic_menu_add"
+        app:iconGravity="textStart"
+        app:layout_constraintTop_toBottomOf="@id/priceCardView"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- 긁는 영역 -->
-    <FrameLayout
-        android:id="@+id/scratchAreaLayout"
-        android:layout_width="300dp"
-        android:layout_height="150dp"
-        android:layout_marginTop="16dp"
+    <!-- 긁는 영역 - 더 화려하게 -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/scratchAreaCard"
+        android:layout_width="340dp"
+        android:layout_height="200dp"
+        android:layout_marginTop="30dp"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="12dp"
+        app:strokeColor="#F39C12"
+        app:strokeWidth="2dp"
         app:layout_constraintTop_toBottomOf="@id/buyLottoButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
-
-        <!-- 결과 텍스트 (숨김) -->
-        <TextView
-            android:id="@+id/prizeText"
+        
+        <FrameLayout
+            android:id="@+id/scratchAreaLayout"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@android:color/white" 
-            android:gravity="center"
-            android:text="결과" 
-            android:textSize="32sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/black"
-            android:visibility="gone" 
-            tools:visibility="visible"/> 
+            android:layout_height="match_parent">
 
-        <!-- 덮개 이미지 (클릭 가능) -->
-        <ImageView
-            android:id="@+id/scratchCoatingImage"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#BDBDBD" 
-            android:clickable="true"
-            android:focusable="true"
-            android:src="@android:drawable/ic_menu_edit" 
-            android:scaleType="center" 
-            android:visibility="invisible" 
-            tools:visibility="visible"/> 
+            <!-- 결과 텍스트 배경 화려하게 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:background="@android:color/white"
+                android:gravity="center">
+                
+                <!-- 결과 텍스트 (숨김) -->
+                <TextView
+                    android:id="@+id/prizeText"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="결과" 
+                    android:textSize="46sp"
+                    android:textStyle="bold"
+                    android:textColor="#E74C3C"
+                    android:shadowColor="#80000000"
+                    android:shadowDx="2"
+                    android:shadowDy="2"
+                    android:shadowRadius="3"
+                    android:visibility="gone" 
+                    tools:visibility="visible"/> 
+            </LinearLayout>
 
-    </FrameLayout>
+            <!-- 덮개 이미지 (클릭 가능) - 더 눈에 띄게 -->
+            <ImageView
+                android:id="@+id/scratchCoatingImage"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#3498DB" 
+                android:clickable="true"
+                android:focusable="true"
+                android:src="@android:drawable/ic_menu_edit" 
+                android:scaleType="center" 
+                android:visibility="invisible" 
+                tools:visibility="visible"/> 
 
-    <!-- 결과 메시지 -->
-    <TextView
-        android:id="@+id/resultMessageText"
+            <!-- 스크래치 텍스트 추가 -->
+            <TextView
+                android:id="@+id/scratchInstructionText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="✨ 여기를 터치하여 긁어주세요! ✨"
+                android:textColor="#2C3E50"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:background="#A0FFFFFF"
+                android:padding="12dp"
+                android:layout_gravity="center"/>
+
+        </FrameLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- 결과 메시지 - 더 화려하게 -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/resultMessageCard"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:text="결과 메시지"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="#FFFFFF"
+        app:cardCornerRadius="15dp"
+        app:cardElevation="8dp"
+        app:cardBackgroundColor="#34495E"
         android:visibility="invisible"
         tools:visibility="visible"
-        app:layout_constraintTop_toBottomOf="@id/scratchAreaLayout"
+        app:layout_constraintTop_toBottomOf="@id/scratchAreaCard"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent">
+        
+        <TextView
+            android:id="@+id/resultMessageText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:text="결과 메시지"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            android:textColor="#F1C40F"
+            android:shadowColor="#80000000"
+            android:shadowDx="2"
+            android:shadowDy="2"
+            android:shadowRadius="4" />
+    </androidx.cardview.widget.CardView>
 
-    <!-- 당첨 확률 설명 카드 추가 -->
+    <!-- 당첨 확률 설명 카드 - 더 눈에 띄게 -->
     <androidx.cardview.widget.CardView
         android:id="@+id/probabilityCardView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="0dp"
         android:layout_marginBottom="16dp"
-        app:cardCornerRadius="8dp"
-        app:cardElevation="4dp"
-        app:cardBackgroundColor="#303555"
+        app:cardCornerRadius="15dp"
+        app:cardElevation="10dp"
+        app:cardBackgroundColor="#34495E"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -128,91 +230,145 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="12dp">
+            android:padding="18dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="당첨 확률 안내"
-                android:textSize="16sp"
+                android:text="💰 당첨 확률 안내"
+                android:textSize="20sp"
                 android:textStyle="bold"
-                android:textColor="#ADD8E6"
-                android:layout_marginBottom="8dp"/>
+                android:textColor="#3498DB"
+                android:layout_marginBottom="15dp"/>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:padding="6dp"
+                android:background="#283747">
 
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="꽝"
-                    android:textColor="#E0E0E0"/>
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#ECF0F1"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="70%"
-                    android:textColor="#F44336"/>
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#E74C3C"/>
+            </LinearLayout>
+
+            <!-- 꽝에서도 아이템 얻을 수 있는 확률 안내 추가 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="6dp"
+                android:layout_marginTop="4dp"
+                android:background="#283747">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="꽝일 때 시간증폭 아이템 재고 +1"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#ECF0F1"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="50%"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#F39C12"/>
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:padding="6dp"
+                android:layout_marginTop="4dp"
+                android:background="#283747">
 
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="소액 당첨 (100원 ~ 5만원)"
-                    android:textColor="#E0E0E0"/>
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#ECF0F1"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="25%"
-                    android:textColor="#4CAF50"/>
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#2ECC71"/>
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:padding="6dp"
+                android:layout_marginTop="4dp"
+                android:background="#283747">
 
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="중액 당첨 (5만원 ~ 50만원)"
-                    android:textColor="#E0E0E0"/>
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#ECF0F1"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="4%"
-                    android:textColor="#2196F3"/>
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#3498DB"/>
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:padding="6dp"
+                android:layout_marginTop="4dp"
+                android:background="#283747">
 
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="대박 당첨 (300만원)"
-                    android:textColor="#E0E0E0"/>
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#ECF0F1"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="1%"
-                    android:textColor="#E040FB"/>
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#9B59B6"/>
             </LinearLayout>
         </LinearLayout>
     </androidx.cardview.widget.CardView>

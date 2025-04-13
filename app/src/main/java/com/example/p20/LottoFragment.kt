@@ -1,17 +1,29 @@
 package com.example.p20
 
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.AnimationUtils
+import android.view.animation.OvershootInterpolator
+import android.widget.Button
+import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
 import com.example.p20.databinding.FragmentLottoBinding
 import android.graphics.Color
-import android.os.Looper
-import android.os.Handler
 import kotlin.random.Random
-import androidx.lifecycle.ViewModelProvider
+import kotlin.math.roundToInt
 
 class LottoFragment : BaseFragment() {
 
@@ -41,6 +53,19 @@ class LottoFragment : BaseFragment() {
             }
         }
     }
+
+    private lateinit var buyLottoButton: Button
+    private lateinit var cooldownText: TextView
+    private lateinit var scratchAreaLayout: FrameLayout
+    private lateinit var scratchCoatingImage: ImageView
+    private lateinit var prizeText: TextView
+    private lateinit var resultMessageText: TextView
+    private lateinit var scratchInstructionText: TextView
+    private lateinit var scratchAreaCard: CardView
+
+    private val scratchCooldownMs = 10000L // 10초 쿨다운
+    private var lastPurchaseTime = 0L
+    private var isScratchable = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -80,6 +105,46 @@ class LottoFragment : BaseFragment() {
 
         // 스크래치 영역 초기 상태 설정
         binding.scratchCoatingImage.visibility = View.VISIBLE
+
+        buyLottoButton = binding.buyLottoButton
+        cooldownText = binding.cooldownText
+        scratchAreaLayout = binding.scratchAreaLayout
+        scratchCoatingImage = binding.scratchCoatingImage
+        prizeText = binding.prizeText
+        resultMessageText = binding.resultMessageText
+        scratchInstructionText = binding.scratchInstructionText
+        scratchAreaCard = binding.scratchAreaCard
+
+        // 초기 애니메이션 적용
+        applyInitialAnimations(view)
+    }
+
+    private fun applyInitialAnimations(view: View) {
+        // 제목 카드 애니메이션
+        val titleCard = view.findViewById<CardView>(R.id.lottoTitleCard)
+        titleCard.alpha = 0f
+        titleCard.translationY = -50f
+        titleCard.animate()
+            .alpha(1f)
+            .translationY(0f)
+            .setDuration(800)
+            .setInterpolator(OvershootInterpolator())
+            .start()
+            
+        // 구매 버튼 펄스 애니메이션
+        val pulseAnim = AnimationUtils.loadAnimation(context, android.R.anim.fade_in)
+        pulseAnim.duration = 1000
+        pulseAnim.repeatCount = 3
+        pulseAnim.repeatMode = android.view.animation.Animation.REVERSE
+        buyLottoButton.startAnimation(pulseAnim)
+        
+        // 스크래치 영역 애니메이션
+        scratchAreaCard.alpha = 0.7f
+        scratchAreaCard.animate()
+            .alpha(1f)
+            .setDuration(1000)
+            .setStartDelay(500)
+            .start()
     }
 
     private fun buyLottoTicket() {
@@ -90,6 +155,9 @@ class LottoFragment : BaseFragment() {
 
         val currentAsset = assetViewModel.asset.value ?: 0L
         if (currentAsset >= lottoPrice) {
+            // 구매 버튼 애니메이션
+            animatePurchaseButton()
+            
             assetViewModel.decreaseAsset(lottoPrice)
             isLottoPurchased = true
 
@@ -105,6 +173,10 @@ class LottoFragment : BaseFragment() {
             binding.prizeText.visibility = View.GONE
             binding.scratchCoatingImage.visibility = View.VISIBLE
             binding.resultMessageText.visibility = View.INVISIBLE
+            
+            // 스크래치 영역 활성화 애니메이션
+            animateScratchArea()
+            
             showMessage("로또 구매 완료! 긁어서 확인하세요.")
 
             // 구매 버튼 비활성화 및 쿨타임 시작
@@ -113,20 +185,121 @@ class LottoFragment : BaseFragment() {
             showErrorMessage("자산이 부족합니다.")
         }
     }
+    
+    private fun animatePurchaseButton() {
+        val scaleX = ObjectAnimator.ofFloat(buyLottoButton, "scaleX", 1f, 1.2f, 1f)
+        val scaleY = ObjectAnimator.ofFloat(buyLottoButton, "scaleY", 1f, 1.2f, 1f)
+        val rotate = ObjectAnimator.ofFloat(buyLottoButton, "rotation", 0f, 5f, -5f, 0f)
+        
+        val animSet = AnimatorSet()
+        animSet.playTogether(scaleX, scaleY, rotate)
+        animSet.duration = 500
+        animSet.interpolator = AccelerateDecelerateInterpolator()
+        animSet.start()
+    }
+    
+    private fun animateScratchArea() {
+        // 스크래치 코팅 반짝임 효과
+        val coatingFadeIn = ObjectAnimator.ofFloat(scratchCoatingImage, "alpha", 0.5f, 1f)
+        coatingFadeIn.duration = 300
+        
+        val scaleX = ObjectAnimator.ofFloat(scratchAreaCard, "scaleX", 1f, 1.05f, 1f)
+        val scaleY = ObjectAnimator.ofFloat(scratchAreaCard, "scaleY", 1f, 1.05f, 1f)
+        
+        val animSet = AnimatorSet()
+        animSet.playTogether(coatingFadeIn, scaleX, scaleY)
+        animSet.duration = 800
+        animSet.start()
+        
+        // 스크래치 지시 텍스트 강조
+        scratchInstructionText.visibility = View.VISIBLE
+        scratchInstructionText.alpha = 0f
+        scratchInstructionText.animate()
+            .alpha(1f)
+            .setDuration(500)
+            .setStartDelay(300)
+            .start()
+    }
 
     private fun revealPrize() {
+        // 스크래치 효과 애니메이션
+        val fadeOut = ObjectAnimator.ofFloat(scratchCoatingImage, "alpha", 1f, 0f)
+        fadeOut.duration = 800
+        
+        // 지시 텍스트 페이드 아웃
+        scratchInstructionText.animate()
+            .alpha(0f)
+            .setDuration(300)
+            .start()
+        
+        // 복권 결과 애니메이션
+        prizeText.alpha = 0f
+        prizeText.scaleX = 0.8f
+        prizeText.scaleY = 0.8f
+        
+        fadeOut.start()
+        
         binding.scratchCoatingImage.visibility = View.INVISIBLE
         binding.prizeText.visibility = View.VISIBLE
+        
+        // 결과 텍스트 애니메이션
+        prizeText.animate()
+            .alpha(1f)
+            .scaleX(1f)
+            .scaleY(1f)
+            .setDuration(800)
+            .setInterpolator(OvershootInterpolator(1.5f))
+            .withEndAction {
+                revealResultMessage()
+            }
+            .start()
+    }
+    
+    private fun revealResultMessage() {
         binding.resultMessageText.visibility = View.VISIBLE
+        binding.resultMessageText.alpha = 0f
+        binding.resultMessageText.translationY = 50f
 
         if (currentPrize > 0) {
             binding.resultMessageText.text = "축하합니다! ${formatCurrency(currentPrize)} 당첨!"
+            binding.resultMessageText.setTextColor(Color.parseColor("#FFD700")) // 골드 색상
+            
+            // 당첨 효과 애니메이션
+            val celebrateAnim = AnimatorSet()
+            val scaleX = ObjectAnimator.ofFloat(resultMessageText, "scaleX", 0.8f, 1.2f, 1f)
+            val scaleY = ObjectAnimator.ofFloat(resultMessageText, "scaleY", 0.8f, 1.2f, 1f)
+            val rotate = ObjectAnimator.ofFloat(resultMessageText, "rotation", -5f, 5f, 0f)
+            
+            celebrateAnim.playTogether(scaleX, scaleY, rotate)
+            celebrateAnim.duration = 1000
+            celebrateAnim.start()
+            
             assetViewModel.increaseAsset(currentPrize)
             showSuccessMessage("${formatCurrency(currentPrize)}원에 당첨되었습니다!")
         } else {
             binding.resultMessageText.text = "아쉽지만, 꽝입니다."
-            showMessage("아쉽지만 꽝입니다. 다음 기회에...")
+            binding.resultMessageText.setTextColor(Color.parseColor("#3498DB")) // 밝은 파란색
+            
+            // 꽝인 경우 50% 확률로 시간증폭 아이템 재고 +1 증가
+            if (Random.nextInt(100) < 50) {
+                // 아이템 재고 증가
+                val itemReward = ItemUtil.increaseLottoTimeItemStock(requireContext())
+                
+                // 아이템 획득 메시지 표시
+                itemReward?.let {
+                    showSuccessMessage("꽝이지만 ${it.itemName} 아이템 재고가 +1 증가했습니다!")
+                }
+            } else {
+                showMessage("아쉽지만 꽝입니다. 다음 기회에...")
+            }
         }
+        
+        binding.resultMessageText.animate()
+            .alpha(1f)
+            .translationY(0f)
+            .setDuration(600)
+            .start()
+            
         isLottoPurchased = false
     }
 
