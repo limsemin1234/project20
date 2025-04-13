@@ -30,7 +30,6 @@ class StockFragment : BaseFragment() {
     private lateinit var stockAdapter: StockAdapter
     private lateinit var stockDetailsTextView: LinearLayout
     private lateinit var featuresInfoText: TextView
-    private lateinit var showGraphButton: Button
 
     private var selectedStock: Stock? = null
     private var selectedQuantity: Int = 0  // 기본 수량을 0으로 설정
@@ -44,7 +43,6 @@ class StockFragment : BaseFragment() {
     private var profitRateData: TextView? = null
     private var stockQuantityData: TextView? = null
     private var selectedStockName: TextView? = null
-    private var selectedQuantityText: TextView? = null  // 선택된 수량을 표시할 TextView
 
     private var isPositiveNewsFeatureAdded = false
     private var isNegativeNewsFeatureAdded = false
@@ -55,7 +53,7 @@ class StockFragment : BaseFragment() {
     private lateinit var quantityBtn1: Button
     private lateinit var quantityBtn5: Button
     private lateinit var quantityBtn10: Button
-    private lateinit var quantityBtn20: Button  // 기존 20주 버튼을 500주처럼 사용
+    private lateinit var quantityBtn500: Button  // 기존 20주 버튼을 500주로 변경
     private lateinit var quantityBtn50: Button
     private lateinit var quantityBtn100: Button
     
@@ -85,8 +83,9 @@ class StockFragment : BaseFragment() {
 
         // 처음에는 기본적으로 첫 번째 주식 선택
         stockViewModel.selectStock(0)
-
-        updateSelectedQuantityText()
+        
+        // 주식 기능 설명 텍스트 설정
+        updateFeatureInfoText()
     }
     
     override fun onResume() {
@@ -105,7 +104,6 @@ class StockFragment : BaseFragment() {
         // 텍스트뷰 바인딩 - ID를 실제 레이아웃에 맞게 수정
         stockDetailsTextView = view.findViewById(R.id.stockDetailsTextView)
         featuresInfoText = view.findViewById(R.id.stockFeaturesInfoText)
-        selectedQuantityText = view.findViewById(R.id.selectedQuantityText)
         buyModeButton = view.findViewById(R.id.buyButton)
         sellModeButton = view.findViewById(R.id.sellButton)
         buyAllButton = view.findViewById(R.id.buyAllButton)
@@ -115,7 +113,7 @@ class StockFragment : BaseFragment() {
         quantityBtn1 = view.findViewById(R.id.quantityBtn1)
         quantityBtn5 = view.findViewById(R.id.quantityBtn5)
         quantityBtn10 = view.findViewById(R.id.quantityBtn10)
-        quantityBtn20 = view.findViewById(R.id.quantityBtn20)
+        quantityBtn500 = view.findViewById(R.id.quantityBtn500)  // ID를 일관되게 변경
         quantityBtn50 = view.findViewById(R.id.quantityBtn50)
         quantityBtn100 = view.findViewById(R.id.quantityBtn100)
 
@@ -124,19 +122,6 @@ class StockFragment : BaseFragment() {
         profitRateData = view.findViewById(R.id.profitRateData)
         stockQuantityData = view.findViewById(R.id.stockQuantityData)
         selectedStockName = view.findViewById(R.id.selectedStockName)
-
-        // 그래프 버튼 추가
-        showGraphButton = view.findViewById(R.id.btnShowGraph)
-        
-        // 그래프 버튼 클릭 리스너 설정
-        showGraphButton.setOnClickListener {
-            selectedStock?.let { stock ->
-                showStockGraphDialog(stock)
-            } ?: showMessage("주식을 선택하세요.")
-        }
-
-        // 수량 텍스트 초기화
-        updateSelectedQuantityText()
 
         // 매수/매도 모드 버튼 설정
         setupModeButtons()
@@ -180,7 +165,8 @@ class StockFragment : BaseFragment() {
             if (!isBuyMode) {
                 isBuyMode = true
                 updateModeButtons()
-                updateSelectedQuantityText() // 모드 변경 시 텍스트 업데이트
+                // 모드 전환 확인 메시지
+                showMessage("매수 모드로 전환했습니다")
             }
         }
         
@@ -188,7 +174,8 @@ class StockFragment : BaseFragment() {
             if (isBuyMode) {
                 isBuyMode = false
                 updateModeButtons()
-                updateSelectedQuantityText() // 모드 변경 시 텍스트 업데이트
+                // 모드 전환 확인 메시지
+                showMessage("매도 모드로 전환했습니다")
             }
         }
     }
@@ -196,16 +183,17 @@ class StockFragment : BaseFragment() {
     // 매수/매도 모드에 따라 UI 업데이트
     private fun updateModeButtons() {
         if (isBuyMode) {
-            // 임시 방편으로 배경색 직접 설정
-            buyModeButton.setBackgroundColor(ContextCompat.getColor(requireContext(), android.R.color.holo_blue_dark))
-            buyModeButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
-            sellModeButton.setBackgroundColor(ContextCompat.getColor(requireContext(), android.R.color.white))
-            sellModeButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.black))
+            // 매수 모드일 때
+            buyModeButton.setBackgroundResource(R.drawable.button_active_blue)
+            buyModeButton.setTextColor(Color.WHITE)
+            sellModeButton.setBackgroundResource(R.drawable.button_inactive)
+            sellModeButton.setTextColor(Color.DKGRAY)
         } else {
-            buyModeButton.setBackgroundColor(ContextCompat.getColor(requireContext(), android.R.color.white))
-            buyModeButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.black))
-            sellModeButton.setBackgroundColor(ContextCompat.getColor(requireContext(), android.R.color.holo_red_dark))
-            sellModeButton.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
+            // 매도 모드일 때
+            buyModeButton.setBackgroundResource(R.drawable.button_inactive)
+            buyModeButton.setTextColor(Color.DKGRAY)
+            sellModeButton.setBackgroundResource(R.drawable.button_active_red)
+            sellModeButton.setTextColor(Color.WHITE)
         }
     }
 
@@ -261,7 +249,7 @@ class StockFragment : BaseFragment() {
             executeTradeWithQuantity(10)
         }
         
-        quantityBtn20.setOnClickListener { 
+        quantityBtn500.setOnClickListener { 
             executeTradeWithQuantity(500)  // 500주로 사용
         }
         
@@ -326,17 +314,6 @@ class StockFragment : BaseFragment() {
                 showErrorMessage("보유한 주식이 부족합니다! 현재 보유량: ${it.holding}주")
             }
         }
-    }
-
-    // 선택된 수량 텍스트 업데이트
-    private fun updateSelectedQuantityText() {
-        selectedQuantityText?.text = if (isBuyMode) "매수 모드" else "매도 모드"
-    }
-    
-    // 선택된 수량을 0으로 초기화
-    private fun resetSelectedQuantity() {
-        selectedQuantity = 0
-        updateSelectedQuantityText()
     }
 
     private fun updateStockList(updatedStockList: List<Stock>) {
@@ -563,8 +540,34 @@ class StockFragment : BaseFragment() {
         }
     }
     
+    /**
+     * 주식 기능 설명 텍스트를 업데이트합니다.
+     */
+    private fun updateFeatureInfoText() {
+        val featureText = """
+            📊 주식 기능 설명
+            
+            1️⃣ 주식 선택: 목록에서 주식을 선택하여 거래하세요
+            2️⃣ 매수/매도 모드: 상단 버튼으로 매수와 매도 모드를 전환하세요
+            3️⃣ 거래 수량: 1, 5, 10, 500, 50, 100주 버튼을 선택하여 거래할 수 있어요
+            4️⃣ 전체 매수/매도: 보유한 자산으로 최대 매수하거나 보유한 주식을 전체 매도할 수 있어요
+            5️⃣ 그래프 보기: 각 주식 항목의 그래프 아이콘을 클릭하면 주가 변동 그래프를 볼 수 있어요
+            6️⃣ 호재/악재: 일정 시간마다 호재나 악재가 발생하여 주가가 변동할 수 있어요
+            
+            👨‍💼 전략적으로 매수/매도하여 수익을 극대화하세요!
+        """.trimIndent()
+        
+        featuresInfoText.text = featureText
+    }
+    
     override fun onDestroy() {
         super.onDestroy()
         handler.removeCallbacksAndMessages(null)
+    }
+
+    // 수량 초기화 메서드 수정
+    private fun resetSelectedQuantity() {
+        // 선택된 수량 초기화
+        selectedQuantity = 0
     }
 }

@@ -402,9 +402,11 @@ data class Stock(
      */
     fun buyStocks(quantity: Int): Int {
         if (quantity <= 0) return 0
-        repeat(quantity) {
-            purchasePrices.add(price)
-        }
+        
+        // 효율성을 위해 반복문 대신 한 번에 처리
+        val newPurchases = List(quantity) { price }
+        purchasePrices.addAll(newPurchases)
+        
         holding += quantity
         return quantity
     }
