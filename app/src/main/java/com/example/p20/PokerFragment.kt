@@ -992,7 +992,7 @@ class PokerFragment : Fragment() {
     // 점수 텍스트 업데이트 함수
     private fun updateScoreText() {
         if (selectedCardIndices.size != 5) {
-            scoreText.text = "점수: 0"
+            scoreText.text = "점수: 0\n "  // 줄바꿈 추가하여 항상 2줄 유지
             return
         }
 
@@ -1145,7 +1145,7 @@ class PokerFragment : Fragment() {
         playerCardsLayout.removeAllViews()
         cardViews.clear()
         handRankText.text = "패 없음"
-        scoreText.text = "점수: 0"
+        scoreText.text = "점수: 0\n "  // 줄바꿈 추가하여 항상 2줄 유지
         
         // 버튼 상태 초기화
         changeButton.isEnabled = false
@@ -1187,6 +1187,7 @@ class PokerFragment : Fragment() {
         // UI 초기화
         playerCardsLayout.removeAllViews()
         handRankText.text = ""
+        scoreText.text = "점수: 0\n "  // 줄바꿈 추가하여 항상 2줄 유지
         updateBetAmountText()
         
         // 선택된 카드 초기화
