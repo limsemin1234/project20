@@ -235,7 +235,7 @@
             android:layout_marginBottom="16dp"
             android:background="#073d1e"
             android:padding="12dp"
-            android:text="〈블랙잭 게임 규칙〉\n• 카드 합이 21에 가깝게 만드세요\n• A는 1 또는 11로 계산\n• 21 초과시 패배(버스트)\n• 더블다운: 베팅 2배 후 카드 1장\n• 블랙잭(처음 2장으로 21): 2.5배 지급"
+            android:text="〈블랙잭 게임 규칙〉\n• 카드 합이 21에 가깝게 만드세요\n• 카드 합이 21 초과시 패배\n• A는 1 또는 11로 계산 (합이 21넘어가면 11로 자동계산)\n• 더블다운 : 베팅 2배 후 카드 1장만 더 받고 바로 멈춤\n• 블랙잭(처음 2장으로 21): 2.5배 지급"
             android:textColor="#E0E0E0"
             android:textSize="14sp"
             app:layout_constraintBottom_toBottomOf="parent"
