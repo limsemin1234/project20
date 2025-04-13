@@ -20,6 +20,8 @@ import java.util.Random
 import android.os.Handler
 import android.os.Looper
 import android.content.Context
+import androidx.lifecycle.Observer
+import android.graphics.drawable.Drawable
 
 class BlackjackFragment : Fragment() {
 
@@ -49,26 +51,43 @@ class BlackjackFragment : Fragment() {
     private var isWaitingForCleanup = false
     private var hasDoubledDown = false  // 더블다운 사용 여부 플래그
     
-    // 카드 관련 변수
+    // 카드 관련 변수 - 불변 값으로 설정
     private val suits = listOf("♠", "♥", "♦", "♣")
     private val ranks = listOf("A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K")
-    private val values = mapOf(
-        "A" to 11, "2" to 2, "3" to 3, "4" to 4, "5" to 5, "6" to 6, "7" to 7, "8" to 8, "9" to 9,
-        "10" to 10, "J" to 10, "Q" to 10, "K" to 10
-    )
     
-    // 카드 덱과 손패
-    private val deck = mutableListOf<Card>()
-    private val playerCards = mutableListOf<Card>()
-    private val dealerCards = mutableListOf<Card>()
+    // 카드 덱과 손패 - 미리 용량 할당
+    private val deck = ArrayList<Card>(52)
+    private val playerCards = ArrayList<Card>(10)
+    private val dealerCards = ArrayList<Card>(10)
+    
+    // 공유 자원 캐싱
+    private val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.KOREA)
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var cleanupRunnable: Runnable? = null
+    
+    // 재사용 가능한 카드 배경 드로어블
+    private lateinit var cardBackgroundDrawable: Drawable
     
     // ViewModel 공유
     private val assetViewModel: AssetViewModel by activityViewModels()
 
+    // 데이터 클래스 최적화
     data class Card(val rank: String, val suit: String) {
-        override fun toString(): String {
-            return "$rank$suit"
-        }
+        // 텍스트 값을 한 번만 계산
+        private val _toString = "$rank$suit"
+        
+        override fun toString(): String = _toString
+        
+        // 값을 즉시 계산해서 저장
+        val value = cardValues[rank] ?: 0
+    }
+    
+    companion object {
+        // 카드 값 매핑을 companion object로 이동
+        private val cardValues = mapOf(
+            "A" to 11, "2" to 2, "3" to 3, "4" to 4, "5" to 5, "6" to 6, "7" to 7, "8" to 8, "9" to 9,
+            "10" to 10, "J" to 10, "Q" to 10, "K" to 10
+        )
     }
     
     override fun onCreateView(
@@ -96,6 +115,9 @@ class BlackjackFragment : Fragment() {
         bet100kButton = view.findViewById(R.id.bet100kButton)
         statsTextView = view.findViewById(R.id.statsTextView)
         
+        // 카드 배경 드로어블 초기화
+        cardBackgroundDrawable = ContextCompat.getDrawable(requireContext(), android.R.drawable.btn_default)!!
+        
         // 게임 버튼 초기 비활성화
         hitButton.isEnabled = false
         standButton.isEnabled = false
@@ -116,21 +138,30 @@ class BlackjackFragment : Fragment() {
         
         // 환영 메시지 표시
         showCustomSnackbar("배팅 후 블랙잭 게임을 시작해주세요!")
+        
+        // 정리 작업 런너블 한 번만 생성
+        cleanupRunnable = Runnable {
+            if (isWaitingForCleanup) {
+                cleanupGame()
+            }
+        }
+    }
+    
+    override fun onDestroyView() {
+        super.onDestroyView()
+        // 리소스 정리
+        mainHandler.removeCallbacksAndMessages(null)
+        cleanupRunnable = null
+        deck.clear()
+        playerCards.clear()
+        dealerCards.clear()
     }
     
     private fun setupButtonListeners() {
-        // 베팅 버튼 리스너
-        bet10kButton.setOnClickListener {
-            addBet(10000)
-        }
-        
-        bet50kButton.setOnClickListener {
-            addBet(50000)
-        }
-        
-        bet100kButton.setOnClickListener {
-            addBet(100000)
-        }
+        // 베팅 버튼 리스너 - 벌크 세팅
+        bet10kButton.setOnClickListener { addBet(10000) }
+        bet50kButton.setOnClickListener { addBet(50000) }
+        bet100kButton.setOnClickListener { addBet(100000) }
         
         // 새 게임 시작 버튼
         newGameButton.setOnClickListener {
@@ -216,7 +247,7 @@ class BlackjackFragment : Fragment() {
             hitButton.isEnabled = false
             
             // 0.5초 후 자동으로 스탠드
-            Handler(Looper.getMainLooper()).postDelayed({
+            mainHandler.postDelayed({
                 if (isGameActive && !isGameOver) {
                     playerStand()
                 }
@@ -241,16 +272,19 @@ class BlackjackFragment : Fragment() {
             return
         }
         
+        // 금액 추가
         tempBetAmount += amount
         updateBetAmountText()
+        
+        // 메시지 표시
+        showCustomSnackbar("베팅 금액: ${formatCurrency(tempBetAmount)}")
     }
     
     private fun updateBetAmountText() {
-        betAmountText.text = "베팅 금액: ${formatCurrency(tempBetAmount)}"
-        if (isGameActive && !hasDoubledDown) {
-            betAmountText.text = "베팅 금액: ${formatCurrency(currentBet)}"
-        } else if (isGameActive && hasDoubledDown) {
-            betAmountText.text = "베팅 금액: ${formatCurrency(currentBet)} (더블다운)"
+        betAmountText.text = when {
+            isGameActive && hasDoubledDown -> "베팅 금액: ${formatCurrency(currentBet)} (더블다운)"
+            isGameActive -> "베팅 금액: ${formatCurrency(currentBet)}"
+            else -> "베팅 금액: ${formatCurrency(tempBetAmount)}"
         }
     }
     
@@ -295,6 +329,9 @@ class BlackjackFragment : Fragment() {
     
     private fun createShuffledDeck() {
         deck.clear()
+        // 초기 용량 지정하여 효율적으로 덱 만들기
+        deck.ensureCapacity(52)
+        
         for (suit in suits) {
             for (rank in ranks) {
                 deck.add(Card(rank, suit))
@@ -364,17 +401,6 @@ class BlackjackFragment : Fragment() {
         }
     }
     
-    private fun showAllDealerCards() {
-        // 딜러의 모든 카드 공개
-        dealerCardsLayout.removeAllViews()
-        for (i in dealerCards.indices) {
-            addCardView(dealerCardsLayout, dealerCards[i], i)
-        }
-        
-        // 실제 점수로 업데이트
-        dealerScoreText.text = "점수: ${calculateDealerScore(false)}"
-    }
-    
     private fun addCardView(container: LinearLayout, card: Card, index: Int) {
         val cardView = TextView(requireContext())
         
@@ -390,7 +416,8 @@ class BlackjackFragment : Fragment() {
             marginEnd = cardWidth / 15  // 카드 간격 조정
         }
         
-        cardView.background = ContextCompat.getDrawable(requireContext(), android.R.drawable.btn_default)
+        // 재사용 가능한 드로어블 사용
+        cardView.background = cardBackgroundDrawable.constantState?.newDrawable()
         cardView.gravity = Gravity.CENTER
         cardView.textSize = 24f  // 텍스트 크기 증가
         cardView.setPadding(12, 12, 12, 12)  // 패딩 증가
@@ -414,8 +441,8 @@ class BlackjackFragment : Fragment() {
         var aceCount = 0
         
         for (card in playerCards) {
-            val value = values[card.rank] ?: 0
-            score += value
+            // 카드 값 직접 접근으로 변경
+            score += card.value
             if (card.rank == "A") aceCount++
         }
         
@@ -436,8 +463,8 @@ class BlackjackFragment : Fragment() {
         val visibleCards = if (isHidden) dealerCards.take(1) else dealerCards
         
         for (card in visibleCards) {
-            val value = values[card.rank] ?: 0
-            score += value
+            // 카드 값 직접 접근으로 변경
+            score += card.value
             if (card.rank == "A") aceCount++
         }
         
@@ -456,7 +483,7 @@ class BlackjackFragment : Fragment() {
         if (playerCards.size == 2 && playerScore == 21) {
             // 딜러 첫 카드가 A나 10점 카드인지 확인
             val dealerFirstCardRank = dealerCards[0].rank
-            val dealerHasAceOrTen = dealerFirstCardRank == "A" || values[dealerFirstCardRank] == 10
+            val dealerHasAceOrTen = dealerFirstCardRank == "A" || dealerCards[0].value == 10
             
             if (dealerHasAceOrTen) {
                 // 딜러의 두 번째 카드 확인 (블랙잭 가능성)
@@ -499,7 +526,7 @@ class BlackjackFragment : Fragment() {
         val playerScore = calculatePlayerScore()
         val dealerScore = calculateDealerScore(false)
         
-        var message = ""
+        var message: String
         var rewardAmount = 0L
         
         if (isDraw) {
@@ -543,11 +570,10 @@ class BlackjackFragment : Fragment() {
         isWaitingForCleanup = true
         
         // 3초 후 UI 정리
-        Handler(Looper.getMainLooper()).postDelayed({
-            if (isWaitingForCleanup) {
-                cleanupGame()
-            }
-        }, 3000)
+        cleanupRunnable?.let { runnable ->
+            mainHandler.removeCallbacks(runnable) // 기존에 예약된 정리 작업 취소
+            mainHandler.postDelayed(runnable, 3000)
+        }
     }
     
     private fun updateBalanceText() {
@@ -555,28 +581,21 @@ class BlackjackFragment : Fragment() {
     }
     
     private fun formatCurrency(amount: Long): String {
-        val formatter = NumberFormat.getCurrencyInstance(Locale.KOREA)
-        return formatter.format(amount)
+        return currencyFormatter.format(amount)
     }
     
     private fun showCustomSnackbar(message: String) {
         MessageManager.showMessage(requireContext(), message)
     }
     
-    private fun showResultSnackbar(message: String, backgroundColor: Int) {
-        // 결과 메시지도 상단 메시지로 표시 (배경색 정보 무시)
-        MessageManager.showMessage(requireContext(), message)
-    }
-
-    // 승률 통계 저장
+    // 승률 통계 저장 - 메모리 최적화
     private fun saveStats() {
-        val prefs = requireActivity().getSharedPreferences("blackjack_stats", Context.MODE_PRIVATE)
-        prefs.edit().apply {
-            putInt("win_count", winCount)
-            putInt("lose_count", loseCount)
-            putInt("draw_count", drawCount)
-            apply()
-        }
+        requireActivity().getSharedPreferences("blackjack_stats", Context.MODE_PRIVATE)
+            .edit()
+            .putInt("win_count", winCount)
+            .putInt("lose_count", loseCount)
+            .putInt("draw_count", drawCount)
+            .apply()
     }
     
     // 승률 통계 로드
@@ -595,7 +614,7 @@ class BlackjackFragment : Fragment() {
         statsTextView.text = "승률: $winRate% (${winCount}승 ${loseCount}패 ${drawCount}무)"
     }
 
-    // 게임 정리 메서드 추가
+    // 게임 정리 메서드
     private fun cleanupGame() {
         // 카드 지우기
         dealerCardsLayout.removeAllViews()

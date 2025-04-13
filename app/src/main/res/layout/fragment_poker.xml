@@ -14,18 +14,6 @@
         android:layout_height="wrap_content"
         android:padding="12dp">
 
-        <!-- 게임 제목 표시 -->
-        <TextView
-            android:id="@+id/titleText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="1인발라트로"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="#FFEB3B"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
 
         <!-- 패 정보 표시 -->
         <TextView

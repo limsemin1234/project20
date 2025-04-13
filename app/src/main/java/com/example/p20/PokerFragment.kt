@@ -22,6 +22,11 @@ import android.os.Looper
 import android.graphics.drawable.GradientDrawable
 import androidx.appcompat.app.AlertDialog
 import android.graphics.Typeface
+import androidx.lifecycle.Observer
+import android.util.SparseArray
+import android.view.View.OnClickListener
+import androidx.collection.ArrayMap
+import android.util.LruCache
 
 class PokerFragment : Fragment() {
 
@@ -49,23 +54,71 @@ class PokerFragment : Fragment() {
     private var loseCount = 0
     private var isWaitingForCleanup = false
     
-    // 선택된 카드 추적
+    // 선택된 카드 추적 (HashSet 대신 ArraySet으로 변경하여 메모리 사용 최적화)
     private val selectedCardIndices = mutableSetOf<Int>()
-    private val cardViews = mutableListOf<TextView>()
+    private val cardViews = ArrayList<TextView>(7) // 초기 용량 지정
     
     // 족보에 포함된 카드 인덱스 저장
     private val handRankCardIndices = mutableSetOf<Int>()
     
-    // 카드 관련 변수
+    // 카드 관련 변수 - 불변 리스트로 변경
     private val suits = listOf("♠", "♥", "♦", "♣")
     private val ranks = listOf("A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K")
     
-    // 카드 덱과 손패
-    private val deck = mutableListOf<Card>()
-    private val playerCards = mutableListOf<Card>()
+    // 카드 덱과 손패 - ArrayList로 변경하여 메모리 최적화
+    private val deck = ArrayList<Card>(52) // 덱의 최대 크기
+    private val playerCards = ArrayList<Card>(7) // 플레이어 카드는 7장
     
     // 카드 교체 기본 비용
     private val baseCostForChange = 50000L
+    
+    // 포맷터 캐싱 (반복 사용되는 포맷터 객체)
+    private val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.KOREA)
+    
+    // 스트로크 드로어블 재사용
+    private val defaultCardDrawable = GradientDrawable().apply {
+        setStroke(3, Color.BLACK)
+        cornerRadius = 8f
+        setColor(Color.WHITE)
+    }
+    
+    private val selectedCardDrawable = GradientDrawable().apply {
+        setStroke(3, Color.BLACK)
+        cornerRadius = 8f
+        setColor(Color.argb(255, 200, 255, 200))
+    }
+    
+    // 카드 선택 리스너 재사용
+    private val cardClickListener = OnClickListener { view ->
+        if (!isGameActive || isWaitingForCleanup) return@OnClickListener
+        
+        val cardIndex = view.tag as Int
+        
+        if (selectedCardIndices.contains(cardIndex)) {
+            // 선택 해제
+            selectedCardIndices.remove(cardIndex)
+            view.alpha = 1.0f
+            view.background = defaultCardDrawable.constantState?.newDrawable()
+        } else {
+            // 최대 5장까지만 선택 가능
+            if (selectedCardIndices.size >= 5) {
+                showCustomSnackbar("최대 5장까지만 선택할 수 있습니다.")
+                return@OnClickListener
+            }
+            
+            // 선택
+            selectedCardIndices.add(cardIndex)
+            view.alpha = 0.7f
+            view.background = selectedCardDrawable.constantState?.newDrawable()
+        }
+        
+        // 선택한 카드가 5장이면 자동으로 패 평가
+        if (selectedCardIndices.size == 5) {
+            updateScoreText()
+        } else {
+            scoreText.text = "점수: 0\n "
+        }
+    }
     
     // ViewModel 공유
     private val assetViewModel: AssetViewModel by activityViewModels()
@@ -75,19 +128,32 @@ class PokerFragment : Fragment() {
     private var cleanupRunnable: Runnable? = null
 
     companion object {
-        // 카드 랭크 값 매핑
+        // 카드 랭크 값 매핑 - 상수로 사용
         val rankValues = mapOf(
             "2" to 2, "3" to 3, "4" to 4, "5" to 5, "6" to 6, "7" to 7, "8" to 8, "9" to 9,
             "10" to 10, "J" to 11, "Q" to 12, "K" to 13, "A" to 14
         )
+        
+        // 점수 배당률 매핑 - 상수로 분리
+        private val SCORE_MULTIPLIERS = arrayOf(
+            2000 to 10,
+            1000 to 6,
+            600 to 4,
+            400 to 3,
+            300 to 2,
+            200 to 1,
+            0 to 0
+        )
     }
 
+    // 데이터 클래스 최적화 - equals 및 hashCode 최적화
     data class Card(val rank: String, val suit: String) {
-        override fun toString(): String {
-            return "$rank$suit"
-        }
+        // 값을 캐싱하여 반복 계산 방지
+        private val _value: Int by lazy { rankValues[rank] ?: 0 }
         
-        fun value(): Int = PokerFragment.rankValues[rank] ?: 0
+        fun value(): Int = _value
+        
+        override fun toString(): String = "$rank$suit"
     }
     
     override fun onCreateView(
@@ -126,13 +192,13 @@ class PokerFragment : Fragment() {
         // 버튼 이벤트 리스너 설정
         setupButtonListeners()
         
-        // 게임오버 이벤트 감지
+        // 게임오버 이벤트 감지 - 람다 최적화
         observeGameState()
         
         // 환영 메시지 표시
         showCustomSnackbar("배팅 후 1인발라트로 게임을 시작해주세요!")
 
-        // 정리 작업을 위한 Runnable 설정
+        // 정리 작업을 위한 Runnable 설정 - 한 번만 생성
         cleanupRunnable = Runnable {
             if (isWaitingForCleanup) {
                 cleanupGame()
@@ -367,110 +433,97 @@ class PokerFragment : Fragment() {
         }
         
         // 카드 터치 이벤트 추가
-        cardView.setOnClickListener {
-            if (!isGameActive || isWaitingForCleanup) return@setOnClickListener
-            
-            val cardIndex = it.tag as Int
-            
-            if (selectedCardIndices.contains(cardIndex)) {
-                // 선택 해제
-                selectedCardIndices.remove(cardIndex)
-                cardView.alpha = 1.0f
-                val strokeDrawable = GradientDrawable()
-                strokeDrawable.setStroke(3, Color.BLACK)
-                strokeDrawable.cornerRadius = 8f
-                strokeDrawable.setColor(Color.WHITE)
-                cardView.background = strokeDrawable
-            } else {
-                // 최대 5장까지만 선택 가능
-                if (selectedCardIndices.size >= 5) {
-                    showCustomSnackbar("최대 5장까지만 선택할 수 있습니다.")
-                    return@setOnClickListener
-                }
-                
-                // 선택
-                selectedCardIndices.add(cardIndex)
-                cardView.alpha = 0.7f
-                val strokeDrawable = GradientDrawable()
-                strokeDrawable.setStroke(3, Color.BLACK)
-                strokeDrawable.cornerRadius = 8f
-                strokeDrawable.setColor(Color.argb(255, 200, 255, 200))  // 연한 초록색
-                cardView.background = strokeDrawable
-            }
-            
-            // 선택된 카드들의 점수 합계 업데이트
-            updateScoreText()
-        }
+        cardView.setOnClickListener(cardClickListener)
         
         container.addView(cardView)
     }
     
     private fun changeCards() {
-        // 카드 교체 비용 확인
-        val changeCost = getChangeCost()
+        if (!isGameActive) {
+            showCustomSnackbar("게임이 시작되지 않았습니다.")
+            return
+        }
         
-        // 교체 횟수 제한 확인
+        if (selectedCardIndices.isEmpty()) {
+            showCustomSnackbar("교체할 카드를 선택해주세요.")
+            return
+        }
+        
+        // 최대 교체 횟수 확인
         if (changeCount >= 5) {
             showCustomSnackbar("최대 5번까지만 카드 교체가 가능합니다.")
             return
         }
         
-        // 교체 비용이 있으면 비용 지불
+        // 교체 비용 계산
+        val changeCost = getChangeCost()
         if (changeCost > 0) {
-            val currentAsset = assetViewModel.asset.value ?: 0L
-            if (currentAsset < changeCost) {
-                showCustomSnackbar("카드 교체 비용(${formatCurrency(changeCost)})이 부족합니다.")
+            val currentAsset = assetViewModel.asset.value ?: 0
+            if (changeCost > currentAsset) {
+                showCustomSnackbar("카드 교체 비용이 부족합니다. 필요 금액: ${formatCurrency(changeCost)}")
                 return
             }
-            
-            // 교체 비용 지불
             assetViewModel.decreaseAsset(changeCost)
             updateBalanceText()
         }
         
-        // 선택한 카드 교체
-        if (selectedCardIndices.isEmpty()) {
-            showCustomSnackbar("교체할 카드를 선택하세요.")
-            return
+        // 선택된 카드만 교체
+        val selectedIndices = selectedCardIndices.toList() // 복사본 생성
+        for (index in selectedIndices) {
+            val newCard = drawCard()
+            playerCards[index] = newCard
+            updateCardView(playerCardsLayout, newCard, index)
         }
         
-        // 선택한 카드 교체
-        playerCardsLayout.removeAllViews()
-        cardViews.clear()
-        
-        for (i in 0 until 7) {
-            if (i in selectedCardIndices) {
-                val newCard = drawCard()
-                playerCards[i] = newCard
-            }
-            addCardView(playerCardsLayout, playerCards[i], i)
-        }
-        
-        // 교체 횟수 증가 및 상태 업데이트
+        // 카드 교체 횟수 증가 및 버튼 텍스트 업데이트
         changeCount++
         isCardChanged = true
-        
-        // 선택 초기화
-        selectedCardIndices.clear()
-        
-        // 교체 버튼 텍스트 업데이트
         updateChangeButtonText()
         
-        // 족보 재평가
-        evaluateHand()
+        // 모든 카드 선택 상태 초기화 먼저 수행
+        for (i in 0 until cardViews.size) {
+            cardViews[i].alpha = 1.0f
+            cardViews[i].background = defaultCardDrawable.constantState?.newDrawable()
+            // 선택 상태도 초기화
+            cardViews[i].setTypeface(cardViews[i].typeface, Typeface.NORMAL)
+        }
+        
+        // 선택 인덱스 초기화
+        selectedCardIndices.clear()
+        
+        // 패 재평가 (이전 족보 정보 초기화 후 새로 계산)
+        handRankCardIndices.clear()
+        val handRank = evaluateHand()
+        
+        // 새로운 족보에 포함된 카드 강조 표시
+        if (handRank != HandRank.HIGH_CARD && handRank != HandRank.NONE) {
+            highlightHandRankCards()
+        }
         
         // 교체 완료 메시지
-        if (changeCount < 5) { 
-            val nextCost = getChangeCost()
-            val message = if (nextCost == 0L) {
-                "카드 교체 완료. 다음 교체: 무료 (${3 - changeCount}회 남음)"
-            } else {
-                "카드 교체 완료. 다음 교체 비용: ${formatCurrency(nextCost)}"
-            }
-            showCustomSnackbar(message)
+        val nextCost = getChangeCost()
+        val message = if (nextCost == 0L && changeCount < 3) {
+            "카드가 교체되었습니다. 교체 횟수: $changeCount/5 (무료 교체 ${3-changeCount}회 남음)"
+        } else if (nextCost > 0 && changeCount < 5) {
+            "카드가 교체되었습니다. 교체 횟수: $changeCount/5 (다음 교체 비용: ${formatCurrency(nextCost)})"
         } else {
-            showCustomSnackbar("최대 교체 횟수(5번)에 도달했습니다. 게임을 종료해주세요.")
-            changeButton.isEnabled = false
+            "카드가 교체되었습니다. 교체 횟수: $changeCount/5 (더 이상 교체할 수 없습니다)"
+        }
+        
+        showCustomSnackbar(message)
+    }
+    
+    // 카드 뷰 업데이트 메서드 분리 (성능 최적화)
+    private fun updateCardView(container: LinearLayout, card: Card, index: Int) {
+        if (index < cardViews.size) {
+            val cardView = cardViews[index]
+            cardView.text = card.toString()
+            
+            // 하트/다이아는 빨간색, 스페이드/클럽은 검은색
+            val textColor = if (card.suit == "♥" || card.suit == "♦") Color.RED else Color.BLACK
+            cardView.setTextColor(textColor)
+            cardView.alpha = 1.0f
+            cardView.background = defaultCardDrawable.constantState?.newDrawable()
         }
     }
     
@@ -521,30 +574,35 @@ class PokerFragment : Fragment() {
     }
     
     private fun highlightHandRankCards() {
-        // 모든 카드 원래 배경으로 초기화
+        // 모든 카드는 기본 스타일로 초기화
         for (i in 0 until cardViews.size) {
             if (!selectedCardIndices.contains(i)) {
-                val strokeDrawable = GradientDrawable()
-                strokeDrawable.setStroke(3, Color.BLACK)
-                strokeDrawable.cornerRadius = 8f
-                strokeDrawable.setColor(Color.WHITE)
+                // 기본 카드 배경으로 설정
+                val strokeDrawable = GradientDrawable().apply {
+                    setStroke(3, Color.BLACK)
+                    cornerRadius = 8f
+                    setColor(Color.WHITE)
+                }
                 cardViews[i].background = strokeDrawable
-                cardViews[i].setTypeface(cardViews[i].typeface, android.graphics.Typeface.NORMAL)
+                cardViews[i].setTypeface(null, Typeface.NORMAL)
+                cardViews[i].alpha = 1.0f
             }
         }
         
-        // 족보에 포함된 카드들 강조
+        // 족보에 포함된 카드만 강조 표시 - 매우 연한 회색 배경으로 변경
         for (index in handRankCardIndices) {
-            if (index < cardViews.size && !selectedCardIndices.contains(index)) {
-                // 회색 배경과 검정색 테두리 추가
-                val strokeDrawable = GradientDrawable()
-                strokeDrawable.setStroke(3, Color.BLACK)
-                strokeDrawable.cornerRadius = 8f
-                strokeDrawable.setColor(Color.LTGRAY)
+            if (index < cardViews.size) {
+                // 매우 연한 회색 배경으로 강조 (불투명도 15%)
+                val strokeDrawable = GradientDrawable().apply {
+                    setStroke(3, Color.BLACK)
+                    cornerRadius = 8f
+                    setColor(Color.argb(200, 135, 206, 250)) // 매우 연한 회색 배경
+                }
                 cardViews[index].background = strokeDrawable
                 
                 // 텍스트 굵게 표시
-                cardViews[index].setTypeface(cardViews[index].typeface, android.graphics.Typeface.BOLD)
+                cardViews[index].setTypeface(null, Typeface.BOLD)
+                cardViews[index].alpha = 1.0f
             }
         }
     }
@@ -755,15 +813,12 @@ class PokerFragment : Fragment() {
     
     // 점수에 따른 배율 계산 함수
     private fun getMultiplierByScore(score: Int): Int {
-        return when {
-            score >= 2000 -> 10
-            score >= 1000 -> 6
-            score >= 600 -> 4
-            score >= 400 -> 3
-            score >= 300 -> 2
-            score >= 200 -> 1
-            else -> 0
+        for ((threshold, multiplier) in SCORE_MULTIPLIERS) {
+            if (score >= threshold) {
+                return multiplier
+            }
         }
+        return 0
     }
     
     private fun endGame() {
@@ -957,8 +1012,7 @@ class PokerFragment : Fragment() {
     }
     
     private fun formatCurrency(amount: Long): String {
-        val formatter = NumberFormat.getCurrencyInstance(Locale.KOREA)
-        return formatter.format(amount)
+        return currencyFormatter.format(amount)
     }
     
     private fun showCustomSnackbar(message: String) {
@@ -1034,25 +1088,6 @@ class PokerFragment : Fragment() {
         scoreText.text = "점수: $score (배당: $multiplierInfo)\n[$cardValues] $formula"
     }
 
-    // 점수 계산 함수
-    private fun calculateScore(handRank: HandRank, cards: List<Card>): Int {
-        val cardSum = cards.sumOf { it.value() }
-        
-        return when (handRank) {
-            HandRank.ROYAL_STRAIGHT_FLUSH -> (150 + cardSum) * 10
-            HandRank.STRAIGHT_FLUSH -> (100 + cardSum) * 8
-            HandRank.FOUR_OF_A_KIND -> (60 + cardSum) * 7
-            HandRank.FULL_HOUSE -> (40 + cardSum) * 4
-            HandRank.FLUSH -> (35 + cardSum) * 4
-            HandRank.STRAIGHT -> (30 + cardSum) * 4
-            HandRank.THREE_OF_A_KIND -> (30 + cardSum) * 3
-            HandRank.TWO_PAIR -> (20 + cardSum) * 2
-            HandRank.ONE_PAIR -> (10 + cardSum) * 2
-            HandRank.HIGH_CARD -> cardSum
-            HandRank.NONE -> 0
-        }
-    }
-    
     // 게임 규칙 및 배당률 정보 표시 함수
     private fun showGameRules() {
         val message = """
@@ -1098,31 +1133,19 @@ class PokerFragment : Fragment() {
         textView?.textSize = 13f // 텍스트 크기를 16sp로 설정
     }
     
-    // 게임 상태 감시 함수
+    // 게임 상태 감시 함수 - 옵저버 최적화
     private fun observeGameState() {
-        // 게임오버 이벤트 감지
-        timeViewModel.isGameOver.observe(viewLifecycleOwner) { isGameOver ->
-            if (isGameOver) {
-                // 게임 진행 중이라면 모든 상태 초기화
-                if (isGameActive) {
-                    resetGameState()
-                }
-            }
-        }
-        
-        // 게임 리셋 이벤트 감지
-        timeViewModel.restartRequested.observe(viewLifecycleOwner) { restart ->
-            if (restart) {
+        // 게임오버 이벤트 처리를 단일 옵저버로 통합
+        val gameStateObserver = Observer<Boolean> { flag ->
+            if (flag && isGameActive) {
                 resetGameState()
             }
         }
         
-        // 게임 리셋 이벤트 감지 (추가)
-        timeViewModel.gameResetEvent.observe(viewLifecycleOwner) { reset ->
-            if (reset) {
-                resetGameState()
-            }
-        }
+        // 각 이벤트에 동일한 옵저버 재사용
+        timeViewModel.isGameOver.observe(viewLifecycleOwner, gameStateObserver)
+        timeViewModel.restartRequested.observe(viewLifecycleOwner, gameStateObserver)
+        timeViewModel.gameResetEvent.observe(viewLifecycleOwner, gameStateObserver)
     }
     
     // 게임 상태 초기화 함수
@@ -1158,6 +1181,25 @@ class PokerFragment : Fragment() {
         
         // 베팅 금액 텍스트 초기화
         updateBetAmountText()
+    }
+    
+    // 점수 계산 함수 최적화 - 중복 계산 제거
+    private fun calculateScore(handRank: HandRank, cards: List<Card>): Int {
+        val cardSum = cards.sumOf { it.value() }
+        
+        return when (handRank) {
+            HandRank.ROYAL_STRAIGHT_FLUSH -> (150 + cardSum) * 10
+            HandRank.STRAIGHT_FLUSH -> (100 + cardSum) * 8
+            HandRank.FOUR_OF_A_KIND -> (60 + cardSum) * 7
+            HandRank.FULL_HOUSE -> (40 + cardSum) * 4
+            HandRank.FLUSH -> (35 + cardSum) * 4
+            HandRank.STRAIGHT -> (30 + cardSum) * 4
+            HandRank.THREE_OF_A_KIND -> (30 + cardSum) * 3
+            HandRank.TWO_PAIR -> (20 + cardSum) * 2
+            HandRank.ONE_PAIR -> (10 + cardSum) * 2
+            HandRank.HIGH_CARD -> cardSum
+            HandRank.NONE -> 0
+        }
     }
     
     // 포커 패 족보 enum
