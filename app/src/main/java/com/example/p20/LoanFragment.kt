@@ -320,14 +320,14 @@ class LoanFragment : Fragment() {
      */
     private fun updateAmountInput() {
         val amount = calculateAmount()
-        loanAmountInput.text = viewModel.formatNumber(amount)
+        loanAmountInput.text = NumberFormat.getNumberInstance(Locale.KOREA).format(amount)
     }
 
     /**
      * 금액 입력 필드에 특정 금액 설정
      */
     private fun updateAmountInput(amount: Long) {
-        loanAmountInput.text = viewModel.formatNumber(amount)
+        loanAmountInput.text = NumberFormat.getNumberInstance(Locale.KOREA).format(amount)
     }
 
     /**

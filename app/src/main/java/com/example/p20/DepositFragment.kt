@@ -244,14 +244,16 @@ class DepositFragment : Fragment() {
 
     private fun getAmount(): Long {
         return try {
-            depositAmountInput.text.toString().toLong()
+            // 천 단위 구분자 제거 후 Long으로 변환
+            depositAmountInput.text.toString().replace(",", "").toLong()
         } catch (e: NumberFormatException) {
             0L
         }
     }
 
     private fun setAmount(amount: Long) {
-        depositAmountInput.text = amount.toString()
+        // 천 단위 구분자 추가
+        depositAmountInput.text = NumberFormat.getNumberInstance(Locale.KOREA).format(amount)
     }
 
     private fun addAmount(amount: Long) {
@@ -260,7 +262,6 @@ class DepositFragment : Fragment() {
     }
 
     private fun updateAmountInput(amount: Long) {
-        depositAmountInput.text = amount.toString()
         setAmount(amount)
     }
 } 
