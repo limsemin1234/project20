@@ -548,10 +548,24 @@ class BlackjackFragment : Fragment() {
             
             // 승리 시 아이템 획득 처리
             processItemReward(currentBet)
+            
+            // 승리 애니메이션 표시
+            val rootView = requireActivity().findViewById<ViewGroup>(android.R.id.content)
+            val winMessage = if (isBlackjack) "블랙잭!" else "승리!"
+            val amountText = "+${formatCurrency(rewardAmount - currentBet)}"
+            CasinoAnimationManager.showWinAnimation(rootView, winMessage, amountText)
         } else {
             message = "패배했습니다. 베팅액을 잃었습니다."
             loseCount++
             rewardAmount = 0
+            
+            // 패배 애니메이션 표시
+            val rootView = requireActivity().findViewById<ViewGroup>(android.R.id.content)
+            val loseMessage = if (dealerScore == 21 && dealerCards.size == 2) 
+                "딜러 블랙잭!" 
+            else 
+                "플레이어: $playerScore vs 딜러: $dealerScore"
+            CasinoAnimationManager.showLoseAnimation(rootView, loseMessage, "-${formatCurrency(currentBet)}")
         }
         
         // 통계 저장 및 표시 업데이트
@@ -572,10 +586,10 @@ class BlackjackFragment : Fragment() {
         // 정리 플래그 설정
         isWaitingForCleanup = true
         
-        // 3초 후 UI 정리
+        // 정리 작업 지연 (애니메이션을 위해 더 긴 시간 대기)
         cleanupRunnable?.let { runnable ->
             mainHandler.removeCallbacks(runnable) // 기존에 예약된 정리 작업 취소
-            mainHandler.postDelayed(runnable, 3000)
+            mainHandler.postDelayed(runnable, 4000)
         }
     }
     

@@ -860,11 +860,27 @@ class PokerFragment : Fragment() {
             
             // 승리 시 아이템 획득 처리
             processItemReward(currentBet, multiplier)
+            
+            // 승리 애니메이션 표시
+            val rootView = requireActivity().findViewById<ViewGroup>(android.R.id.content)
+            CasinoAnimationManager.showWinAnimation(
+                rootView,
+                "${handRank.koreanName} (${score}점)",
+                "+${formatCurrency(payout - currentBet)}"
+            )
         } else {
             // 패배
             loseCount++
             resultMessage = "아쉽습니다. ${score}점으로 배당을 받지 못했습니다. (${handRank.koreanName}) -${formatCurrency(currentBet)}"
             snackbarColor = Color.argb(200, 244, 67, 54) // 빨간색
+            
+            // 패배 애니메이션 표시
+            val rootView = requireActivity().findViewById<ViewGroup>(android.R.id.content)
+            CasinoAnimationManager.showLoseAnimation(
+                rootView,
+                "${handRank.koreanName} (${score}점)",
+                "-${formatCurrency(currentBet)}"
+            )
         }
         
         // 결과 표시
@@ -880,9 +896,10 @@ class PokerFragment : Fragment() {
         // 선택되지 않은 카드 흐리게 표시
         highlightSelectedCards()
         
-        // 3초 후에 카드 지우기
+        // 3초 후에 카드 지우기 (애니메이션 보여주기 위해 더 오래 기다림)
         cleanupRunnable?.let { runnable ->
-            mainHandler.postDelayed(runnable, 3000) // 3초 지연
+            mainHandler.removeCallbacks(runnable) // 기존에 예약된 정리 작업 취소
+            mainHandler.postDelayed(runnable, 4000) // 4초 지연
         }
     }
     
