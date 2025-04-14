@@ -326,7 +326,13 @@ class StockFragment : BaseFragment() {
         avgPurchasePriceData?.text = formatCurrency(stock.getAvgPurchasePrice().toLong()) + "원"
         
         val profitLoss = stock.getProfitLoss()
-        profitLossData?.text = formatWithSign(profitLoss) + "원"
+        // 천단위 구분자를 적용한 평가손익 값을 표시
+        val formattedProfitLoss = if (profitLoss >= 0) {
+            "+${formatCurrency(profitLoss.toLong())}"
+        } else {
+            formatCurrency(profitLoss.toLong())
+        }
+        profitLossData?.text = formattedProfitLoss + "원"
         profitLossData?.setTextColor(getChangeColor(profitLoss))
         
         val profitRate = stock.getProfitRate()
