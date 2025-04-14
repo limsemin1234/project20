@@ -57,9 +57,6 @@ class CasinoFragment : Fragment(), LifecycleObserver {
         
         // 탭 레이아웃 및 뷰페이저 설정
         setupTabLayoutWithViewPager()
-        
-        // 경고 메시지 표시
-        showInitialWarningMessage(view)
     }
     
     /**
@@ -93,17 +90,6 @@ class CasinoFragment : Fragment(), LifecycleObserver {
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
             tab.text = TAB_TITLES.getOrElse(position) { "게임" }
         }.attach()
-    }
-    
-    /**
-     * 초기 경고 메시지 표시 메서드
-     */
-    private fun showInitialWarningMessage(view: View) {
-        Snackbar.make(
-            view, 
-            "카지노 게임은 높은 위험성을 가지고 있습니다. 신중하게 베팅하세요!", 
-            Snackbar.LENGTH_LONG
-        ).show()
     }
     
     /**

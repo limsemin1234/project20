@@ -62,6 +62,9 @@ class MainActivity : AppCompatActivity() {
         
         // 시간 위험 효과를 위한 뷰 찾기
         val timeWarningEffect = findViewById<View>(R.id.timeWarningEffect)
+        // 추가 효과 뷰 찾기
+        val distortionEffect = findViewById<View>(R.id.distortionEffect)
+        val screenCrackEffect = findViewById<View>(R.id.screenCrackEffect)
         
         timeViewModel.remainingTime.observe(this) { remainingSeconds ->
             // 텍스트 업데이트 (초 단위)
@@ -83,6 +86,59 @@ class MainActivity : AppCompatActivity() {
                 // 15초에서 0초로 갈수록 0.2에서 0.9로 알파값 증가 (더 강한 빨간색)
                 val intensity = 0.2f + (0.7f * (15 - remainingSeconds) / 15f)
                 
+                // 화면 왜곡 효과 (10초 이하부터 시작)
+                if (remainingSeconds <= 10) {
+                    distortionEffect.visibility = View.VISIBLE
+                    // 10초에서 0초로 갈수록 0.1에서 0.5로 알파값 증가
+                    val distortionIntensity = 0.1f + (0.4f * (10 - remainingSeconds) / 10f)
+                    distortionEffect.alpha = distortionIntensity
+                    
+                    // 화면 왜곡 효과에 떨림 애니메이션 추가 (남은 시간이 적을수록 더 심하게 떨림)
+                    val shakeAmount = (5 + (15 * (10 - remainingSeconds) / 10)).toInt()
+                    val shakeAnim = android.view.animation.TranslateAnimation(
+                        -shakeAmount.toFloat(), shakeAmount.toFloat(),
+                        -shakeAmount.toFloat(), shakeAmount.toFloat()
+                    )
+                    shakeAnim.duration = 100
+                    shakeAnim.repeatCount = android.view.animation.Animation.INFINITE
+                    shakeAnim.repeatMode = android.view.animation.Animation.REVERSE
+                    
+                    // 기존 애니메이션 제거 후 새 애니메이션 시작
+                    distortionEffect.clearAnimation()
+                    distortionEffect.startAnimation(shakeAnim)
+                } else {
+                    distortionEffect.visibility = View.INVISIBLE
+                    distortionEffect.clearAnimation()
+                }
+                
+                // 화면 깨짐 효과 (5초 이하부터 시작)
+                if (remainingSeconds <= 5) {
+                    screenCrackEffect.visibility = View.VISIBLE
+                    // 5초에서 0초로 갈수록 0.2에서 0.7로 알파값 증가
+                    val crackIntensity = 0.2f + (0.5f * (5 - remainingSeconds) / 5f)
+                    screenCrackEffect.alpha = crackIntensity
+                    
+                    // 화면 깨짐 효과에 펄스 애니메이션 추가 (심박동과 비슷하게)
+                    val pulseAnim2 = android.animation.ObjectAnimator.ofFloat(
+                        screenCrackEffect,
+                        "alpha",
+                        crackIntensity * 0.7f,
+                        crackIntensity * 1.2f
+                    )
+                    
+                    pulseAnim2.duration = 150
+                    pulseAnim2.repeatCount = android.animation.ObjectAnimator.INFINITE
+                    pulseAnim2.repeatMode = android.animation.ObjectAnimator.REVERSE
+                    
+                    // 기존 애니메이션 제거 후 새 애니메이션 시작
+                    screenCrackEffect.clearAnimation()
+                    pulseAnim2.start()
+                } else {
+                    screenCrackEffect.visibility = View.INVISIBLE
+                    screenCrackEffect.clearAnimation()
+                    screenCrackEffect.animate().cancel()
+                }
+                
                 // 심박동 애니메이션 효과 - 시간이 줄어들수록 더 빠르게 펄스
                 val pulseAnim = android.animation.ObjectAnimator.ofFloat(
                     timeWarningEffect, 
@@ -103,11 +159,21 @@ class MainActivity : AppCompatActivity() {
                 pulseAnim.start()
                 
             } else {
-                // 15초 이상일 때는 효과 제거
+                // 15초 이상일 때는 모든 효과 제거
                 globalRemainingTimeTextView.clearAnimation()
+                
                 timeWarningEffect.visibility = View.INVISIBLE
                 timeWarningEffect.alpha = 0f
                 timeWarningEffect.clearAnimation()
+                
+                distortionEffect.visibility = View.INVISIBLE
+                distortionEffect.alpha = 0f
+                distortionEffect.clearAnimation()
+                
+                screenCrackEffect.visibility = View.INVISIBLE
+                screenCrackEffect.alpha = 0f
+                screenCrackEffect.clearAnimation()
+                screenCrackEffect.animate().cancel()
             }
         }
 

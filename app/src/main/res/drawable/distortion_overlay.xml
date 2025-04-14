@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 흐릿한 반투명 레이어 -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#33000000" />
+        </shape>
+    </item>
+    
+    <!-- 물결 모양 패턴 -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="250dp"
+                android:startColor="#33555555"
+                android:endColor="#55000000"
+                android:centerX="0.3"
+                android:centerY="0.7" />
+        </shape>
+    </item>
+    
+    <!-- 또 다른 물결 패턴 (중첩 효과) -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="300dp"
+                android:startColor="#22444444"
+                android:endColor="#33000000"
+                android:centerX="0.7"
+                android:centerY="0.3" />
+        </shape>
+    </item>
+    
+    <!-- 비네팅 효과 (모서리가 어두워지는) -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="100%p"
+                android:startColor="#00000000"
+                android:endColor="#55000000"
+                android:centerX="0.5"
+                android:centerY="0.5" />
+        </shape>
+    </item>
+</layer-list> 

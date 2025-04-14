@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 투명한 배경 -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#00000000" />
+        </shape>
+    </item>
+    
+    <!-- 중앙에서 시작하는 균열 패턴 -->
+    <item>
+        <shape android:shape="rectangle">
+            <stroke
+                android:width="1dp"
+                android:color="#77000000"
+                android:dashWidth="3dp"
+                android:dashGap="5dp" />
+        </shape>
+    </item>
+    
+    <!-- 대각선 균열 1 -->
+    <item android:right="150dp" android:left="150dp" android:top="250dp">
+        <rotate android:fromDegrees="45">
+            <shape android:shape="line">
+                <stroke
+                    android:width="1.5dp"
+                    android:color="#77000000" />
+            </shape>
+        </rotate>
+    </item>
+    
+    <!-- 대각선 균열 2 -->
+    <item android:right="100dp" android:left="100dp" android:bottom="200dp">
+        <rotate android:fromDegrees="-30">
+            <shape android:shape="line">
+                <stroke
+                    android:width="1.5dp"
+                    android:color="#77000000" />
+            </shape>
+        </rotate>
+    </item>
+    
+    <!-- 대각선 균열 3 -->
+    <item android:right="50dp" android:left="200dp" android:top="100dp">
+        <rotate android:fromDegrees="10">
+            <shape android:shape="line">
+                <stroke
+                    android:width="1.2dp"
+                    android:color="#77000000" />
+            </shape>
+        </rotate>
+    </item>
+    
+    <!-- 먼지 효과 - 흐릿한 점들 -->
+    <item>
+        <shape android:shape="oval">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="300dp"
+                android:startColor="#33222222"
+                android:endColor="#00000000"
+                android:centerX="0.3"
+                android:centerY="0.3" />
+        </shape>
+    </item>
+</layer-list> 
