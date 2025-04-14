@@ -117,9 +117,13 @@ class LoanFragment : Fragment() {
         
         // 대출 금액 변경 감지
         viewModel.loan.observe(viewLifecycleOwner) { loanAmount ->
+            loanAmountInput.text = "대출: ${NumberFormat.getNumberInstance(Locale.KOREA).format(loanAmount)}원"
             updateLoanUI(loanAmount)
             updateInterestInfoTexts()
         }
+        
+        // 초기값 설정 (대출: 0원)
+        updateAmountInput(0L)
         
         // 이자 발생 타이머 관찰
         viewModel.loanRemainingTime.observe(viewLifecycleOwner) { _ ->
@@ -271,6 +275,14 @@ class LoanFragment : Fragment() {
             }
             
             viewModel.addLoan(amount)
+            // 대출 처리 후 입력값 초기화
+            updateAmountInput(0L)
+            // 숫자 버튼 값도 초기화
+            selectedNumber1 = 0
+            selectedNumber10 = 0
+            selectedNumber100 = 0
+            selectedNumber1000 = 0
+            updateNumberButtons()
         }
 
         repayButton.setOnClickListener {
@@ -320,14 +332,14 @@ class LoanFragment : Fragment() {
      */
     private fun updateAmountInput() {
         val amount = calculateAmount()
-        loanAmountInput.text = NumberFormat.getNumberInstance(Locale.KOREA).format(amount)
+        loanAmountInput.text = "대출: ${NumberFormat.getNumberInstance(Locale.KOREA).format(amount)}원"
     }
 
     /**
      * 금액 입력 필드에 특정 금액 설정
      */
     private fun updateAmountInput(amount: Long) {
-        loanAmountInput.text = NumberFormat.getNumberInstance(Locale.KOREA).format(amount)
+        loanAmountInput.text = "대출: ${NumberFormat.getNumberInstance(Locale.KOREA).format(amount)}원"
     }
 
     /**
@@ -336,8 +348,11 @@ class LoanFragment : Fragment() {
     private fun getSelectedAmount(): Long {
         try {
             val amountText = loanAmountInput.text.toString()
-            // 쉼표 제거 후 숫자로 변환
-            return amountText.replace(",", "").toLong()
+                .replace(",", "") // 쉼표 제거
+                .replace("대출: ", "") // "대출: " 문구 제거
+                .replace("원", "") // "원" 문구 제거
+                .trim() // 공백 제거
+            return if (amountText.isEmpty()) 0L else amountText.toLong()
         } catch (e: Exception) {
             return 0L
         }
@@ -358,5 +373,17 @@ class LoanFragment : Fragment() {
         } else {
             loanButton.text = "대출하기"
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // 화면에 다시 표시될 때마다 입력값 초기화
+        updateAmountInput(0L)
+        // 숫자 버튼 값도 초기화
+        selectedNumber1 = 0
+        selectedNumber10 = 0
+        selectedNumber100 = 0
+        selectedNumber1000 = 0
+        updateNumberButtons()
     }
 } 

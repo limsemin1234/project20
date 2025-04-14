@@ -61,6 +61,9 @@ class DepositFragment : Fragment() {
         withdrawThousandButton = view.findViewById(R.id.withdrawThousandButton)
         resetButton = view.findViewById(R.id.resetButton)
         
+        // 초기값 설정
+        setAmount(0L) // 입력: 0원으로 초기화
+        
         // 이자 정보 텍스트 참조 가져오기 및 변경
         val interestInfoText = view.findViewWithTag<TextView>("interest_info_text")
         if (interestInfoText != null) {
@@ -188,18 +191,24 @@ class DepositFragment : Fragment() {
                 
                 // 입금 처리
                 if (viewModel.addDeposit(amount)) {
-                    updateAmountInput(0L)
+                    resetInputAmount()
+                } else {
+                    // 입금 실패해도 입력값은 초기화
+                    resetInputAmount()
                 }
             }
         }
 
         // 출금하기 버튼 클릭 이벤트
         withdrawButton.setOnClickListener {
-            val amount = depositAmountInput.text.toString().toLongOrNull() ?: 0L
+            val amount = getAmount()
             if (amount > 0) {
                 // 출금 처리
                 if (viewModel.subtractDeposit(amount)) {
-                    updateAmountInput(0L)
+                    resetInputAmount()
+                } else {
+                    // 출금 실패해도 입력값은 초기화
+                    resetInputAmount()
                 }
             }
         }
@@ -244,16 +253,22 @@ class DepositFragment : Fragment() {
 
     private fun getAmount(): Long {
         return try {
-            // 천 단위 구분자 제거 후 Long으로 변환
-            depositAmountInput.text.toString().replace(",", "").toLong()
+            // 천 단위 구분자와 접두사, 접미사 제거 후 Long으로 변환
+            depositAmountInput.text.toString()
+                .replace(",", "")
+                .replace("입력: ", "")
+                .replace("예금: ", "")
+                .replace("원", "")
+                .trim()
+                .toLongOrNull() ?: 0L
         } catch (e: NumberFormatException) {
             0L
         }
     }
 
     private fun setAmount(amount: Long) {
-        // 천 단위 구분자 추가
-        depositAmountInput.text = NumberFormat.getNumberInstance(Locale.KOREA).format(amount)
+        // 천 단위 구분자 추가하고 접두사 및 접미사 추가
+        depositAmountInput.text = "예금: ${NumberFormat.getNumberInstance(Locale.KOREA).format(amount)}원"
     }
 
     private fun addAmount(amount: Long) {
@@ -263,5 +278,21 @@ class DepositFragment : Fragment() {
 
     private fun updateAmountInput(amount: Long) {
         setAmount(amount)
+    }
+
+    /**
+     * 금액 입력 필드 초기화
+     */
+    private fun resetInputAmount() {
+        setAmount(0L)
+    }
+    
+    /**
+     * 프래그먼트가 화면에 다시 표시될 때 호출됨
+     */
+    override fun onResume() {
+        super.onResume()
+        // 화면에 다시 표시될 때마다 입력값 초기화
+        resetInputAmount()
     }
 } 
