@@ -60,6 +60,9 @@ class MainActivity : AppCompatActivity() {
         // 전역 남은 시간 UI 업데이트 추가
         globalRemainingTimeTextView = findViewById(R.id.globalRemainingTimeInfo) // 텍스트뷰 참조
         
+        // 남은 시간 표시를 드래그로 이동할 수 있도록 설정
+        setupDraggableTimeView()
+        
         // 시간 위험 효과를 위한 뷰 찾기
         val timeWarningEffect = findViewById<View>(R.id.timeWarningEffect)
         // 추가 효과 뷰 찾기
@@ -423,5 +426,188 @@ class MainActivity : AppCompatActivity() {
         
         // 앱 종료
         finishAffinity()
+    }
+
+    /**
+     * 남은 시간 표시를 드래그로 이동할 수 있도록 설정하는 메서드
+     */
+    private fun setupDraggableTimeView() {
+        // 초기 마진 값 저장 (레이아웃 속성 복원을 위해)
+        val layoutParams = globalRemainingTimeTextView.layoutParams as FrameLayout.LayoutParams
+        val initialMarginTop = layoutParams.topMargin
+        val initialMarginEnd = layoutParams.rightMargin
+        val initialGravity = layoutParams.gravity
+        
+        // 마지막 터치 위치를 저장할 변수
+        var lastX = 0f
+        var lastY = 0f
+        var isDragging = false
+        
+        // 터치 이벤트 리스너 설정
+        globalRemainingTimeTextView.setOnTouchListener { view, event ->
+            when (event.action) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    // 터치 시작 - 마지막 위치 저장
+                    lastX = event.rawX
+                    lastY = event.rawY
+                    isDragging = true
+                    
+                    // 터치 시 배경 강조 효과
+                    view.animate().scaleX(1.1f).scaleY(1.1f).setDuration(100).start()
+                    
+                    true
+                }
+                
+                android.view.MotionEvent.ACTION_MOVE -> {
+                    if (!isDragging) return@setOnTouchListener false
+                    
+                    // 이동 거리 계산
+                    val deltaX = event.rawX - lastX
+                    val deltaY = event.rawY - lastY
+                    
+                    // 뷰의 현재 위치 가져오기
+                    val params = view.layoutParams as FrameLayout.LayoutParams
+                    
+                    // gravity 속성 제거하고 절대 위치 사용
+                    params.gravity = android.view.Gravity.NO_GRAVITY
+                    
+                    // 뷰의 새 위치 계산 (화면 경계 벗어나지 않도록)
+                    val newX = (view.x + deltaX).coerceIn(0f, (view.parent as View).width - view.width.toFloat())
+                    val newY = (view.y + deltaY).coerceIn(0f, (view.parent as View).height - view.height.toFloat())
+                    
+                    // 뷰 위치 업데이트
+                    view.x = newX
+                    view.y = newY
+                    
+                    // 마지막 위치 업데이트
+                    lastX = event.rawX
+                    lastY = event.rawY
+                    
+                    true
+                }
+                
+                android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                    isDragging = false
+                    
+                    // 배경 효과 원복
+                    view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start()
+                    
+                    // 위치가 수정된 후에는 레이아웃 매개변수를 업데이트
+                    val params = view.layoutParams as FrameLayout.LayoutParams
+                    params.gravity = android.view.Gravity.NO_GRAVITY
+                    view.layoutParams = params
+                    
+                    // 간단한 애니메이션 효과로 이동 완료 알림
+                    view.animate()
+                        .alpha(0.7f)
+                        .setDuration(100)
+                        .withEndAction {
+                            view.animate()
+                                .alpha(1.0f)
+                                .setDuration(100)
+                                .start()
+                        }
+                        .start()
+                    
+                    true
+                }
+                
+                else -> false
+            }
+        }
+        
+        // 더블 탭으로 초기 위치로 돌아가는 기능 추가
+        val gestureDetector = android.view.GestureDetector(this, object : android.view.GestureDetector.SimpleOnGestureListener() {
+            override fun onDoubleTap(e: android.view.MotionEvent): Boolean {
+                // 초기 레이아웃 매개변수로 원복
+                val params = globalRemainingTimeTextView.layoutParams as FrameLayout.LayoutParams
+                params.gravity = initialGravity
+                params.topMargin = initialMarginTop
+                params.rightMargin = initialMarginEnd
+                params.leftMargin = 0
+                params.bottomMargin = 0
+                
+                // 뷰 위치 초기화
+                globalRemainingTimeTextView.x = 0f
+                globalRemainingTimeTextView.y = 0f
+                
+                globalRemainingTimeTextView.layoutParams = params
+                
+                // 간단한 애니메이션 효과로 위치 이동 완료 알림
+                globalRemainingTimeTextView.animate()
+                    .scaleX(1.2f).scaleY(1.2f)
+                    .setDuration(200)
+                    .withEndAction {
+                        globalRemainingTimeTextView.animate()
+                            .scaleX(1.0f).scaleY(1.0f)
+                            .setDuration(200)
+                            .start()
+                    }
+                    .start()
+                
+                return true
+            }
+        })
+        
+        // 기존 OnTouchListener와 GestureDetector 결합
+        globalRemainingTimeTextView.setOnTouchListener { view, event ->
+            val gestureResult = gestureDetector.onTouchEvent(event)
+            
+            if (!gestureResult) {
+                when (event.action) {
+                    android.view.MotionEvent.ACTION_DOWN -> {
+                        // 터치 시작 - 마지막 위치 저장
+                        lastX = event.rawX
+                        lastY = event.rawY
+                        isDragging = true
+                        
+                        // 터치 시 배경 강조 효과
+                        view.animate().scaleX(1.1f).scaleY(1.1f).setDuration(100).start()
+                        
+                        true
+                    }
+                    
+                    android.view.MotionEvent.ACTION_MOVE -> {
+                        if (!isDragging) return@setOnTouchListener false
+                        
+                        // 이동 거리 계산
+                        val deltaX = event.rawX - lastX
+                        val deltaY = event.rawY - lastY
+                        
+                        // 뷰의 새 위치 계산 (화면 경계 벗어나지 않도록)
+                        val newX = (view.x + deltaX).coerceIn(0f, (view.parent as View).width - view.width.toFloat())
+                        val newY = (view.y + deltaY).coerceIn(0f, (view.parent as View).height - view.height.toFloat())
+                        
+                        // 뷰 위치 업데이트
+                        view.x = newX
+                        view.y = newY
+                        
+                        // 마지막 위치 업데이트
+                        lastX = event.rawX
+                        lastY = event.rawY
+                        
+                        true
+                    }
+                    
+                    android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                        isDragging = false
+                        
+                        // 배경 효과 원복
+                        view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start()
+                        
+                        true
+                    }
+                    
+                    else -> false
+                }
+            } else {
+                true
+            }
+        }
+        
+        // 작은 도움말 표시
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            MessageManager.showMessage(this, "남은 시간 표시를 드래그하여 이동할 수 있습니다. 더블 탭으로 원위치")
+        }, 3000) // 3초 후 안내 메시지
     }
 }
