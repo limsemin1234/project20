@@ -59,19 +59,55 @@ class MainActivity : AppCompatActivity() {
         
         // 전역 남은 시간 UI 업데이트 추가
         globalRemainingTimeTextView = findViewById(R.id.globalRemainingTimeInfo) // 텍스트뷰 참조
+        
+        // 시간 위험 효과를 위한 뷰 찾기
+        val timeWarningEffect = findViewById<View>(R.id.timeWarningEffect)
+        
         timeViewModel.remainingTime.observe(this) { remainingSeconds ->
             // 텍스트 업데이트 (초 단위)
             globalRemainingTimeTextView.text = "남은 시간: ${remainingSeconds}초"
 
-            // 10초 이하일 때 깜빡이는 애니메이션 로직 통합
-            if (remainingSeconds <= 10) {
+            // 15초 이하일 때 깜빡이는 애니메이션과 빨간색 화면 효과
+            if (remainingSeconds <= 15) {
+                // 텍스트 깜빡임 애니메이션
                 val anim = AlphaAnimation(0.0f, 1.0f)
                 anim.duration = 500
                 anim.repeatMode = Animation.REVERSE
                 anim.repeatCount = Animation.INFINITE
                 globalRemainingTimeTextView.startAnimation(anim)
+                
+                // 빨간색 화면 효과 표시
+                timeWarningEffect.visibility = View.VISIBLE
+                
+                // 남은 시간에 따라 효과의 강도(알파값) 조절
+                // 15초에서 0초로 갈수록 0.2에서 0.9로 알파값 증가 (더 강한 빨간색)
+                val intensity = 0.2f + (0.7f * (15 - remainingSeconds) / 15f)
+                
+                // 심박동 애니메이션 효과 - 시간이 줄어들수록 더 빠르게 펄스
+                val pulseAnim = android.animation.ObjectAnimator.ofFloat(
+                    timeWarningEffect, 
+                    "alpha", 
+                    intensity * 0.4f, // 최소 알파값 (더 큰 변화를 위해 40%로 조정)
+                    intensity * 1.3f  // 최대 알파값 (더 강한 효과를 위해 130%로 조정)
+                )
+                
+                // 남은 시간이 적을수록 더 빠르게 진동 (300ms에서 100ms까지)
+                // 맥박 효과를 더 극적으로 변경
+                val pulseDuration = (300 - 200 * (15 - remainingSeconds) / 15).toLong().coerceAtLeast(100)
+                pulseAnim.duration = pulseDuration
+                pulseAnim.repeatCount = android.animation.ObjectAnimator.INFINITE
+                pulseAnim.repeatMode = android.animation.ObjectAnimator.REVERSE
+                
+                // 기존 애니메이션 제거 후 새 애니메이션 시작
+                timeWarningEffect.clearAnimation()
+                pulseAnim.start()
+                
             } else {
+                // 15초 이상일 때는 효과 제거
                 globalRemainingTimeTextView.clearAnimation()
+                timeWarningEffect.visibility = View.INVISIBLE
+                timeWarningEffect.alpha = 0f
+                timeWarningEffect.clearAnimation()
             }
         }
 
