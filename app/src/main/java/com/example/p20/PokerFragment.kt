@@ -1050,7 +1050,8 @@ class PokerFragment : Fragment() {
     private fun getChangeCost(): Long {
         return when (changeCount) {
             0, 1, 2 -> 0L  // 첫 3번은 무료
-            3, 4 -> currentBet  // 4번째, 5번째는 배팅금만큼
+            3 -> currentBet / 2  // 4번째는 배팅금의 절반
+            4 -> currentBet  // 5번째는 배팅금만큼
             else -> currentBet  // 최대 5번까지만 가능하므로 이 경우는 발생하지 않음
         }
     }
@@ -1115,7 +1116,7 @@ class PokerFragment : Fragment() {
         val message = """
             [게임 규칙]
             1. 7장의 카드 중 5장을 선택하여 최고의 패를 만드세요.
-            2. 카드 교체는 3회까지 무료, 이후는 배팅금만큼 비용이 듭니다.
+            2. 카드 교체는 3회까지 무료, 4번째는 배팅금의 절반, 5번째는 배팅금만큼 비용이 듭니다.
             3. 최대 5번까지 교체할 수 있습니다.
             4. 게임 종료 시 정확히 5장을 선택해야 합니다.
             
