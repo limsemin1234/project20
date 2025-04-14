@@ -57,7 +57,7 @@
                     android:id="@+id/accumulatedInterestText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="총 받은 이자: 0원"
+                    android:text="총 예금 이자: 0원"
                     android:textSize="14sp"
                     android:textStyle="bold"
                     android:textColor="#FF9800"
