@@ -31,11 +31,11 @@ class MainActivity : AppCompatActivity() {
 
         val contentFrame = findViewById<FrameLayout>(R.id.contentFrame)
         val timeInfo: TextView = findViewById(R.id.timeInfo)
-        
+
         // 메시지 관리자 초기화
         val messageContainer = findViewById<LinearLayout>(R.id.messageContainer)
         MessageManager.initialize(messageContainer)
-        
+
         // 시간 표시 설정
         globalRemainingTimeTextView = findViewById(R.id.timeInfo)
         assetTextView = findViewById(R.id.assetInfo)
@@ -56,19 +56,19 @@ class MainActivity : AppCompatActivity() {
         timeViewModel.time.observe(this) { newTime ->
             timeInfo.text = "게임시간: $newTime"
         }
-        
+
         // 전역 남은 시간 UI 업데이트 추가
         globalRemainingTimeTextView = findViewById(R.id.globalRemainingTimeInfo) // 텍스트뷰 참조
-        
+
         // 남은 시간 표시를 드래그로 이동할 수 있도록 설정
         setupDraggableTimeView()
-        
+
         // 시간 위험 효과를 위한 뷰 찾기
         val timeWarningEffect = findViewById<View>(R.id.timeWarningEffect)
         // 추가 효과 뷰 찾기
         val distortionEffect = findViewById<View>(R.id.distortionEffect)
         val screenCrackEffect = findViewById<View>(R.id.screenCrackEffect)
-        
+
         timeViewModel.remainingTime.observe(this) { remainingSeconds ->
             // 텍스트 업데이트 (초 단위)
             globalRemainingTimeTextView.text = "남은 시간: ${remainingSeconds}초"
@@ -81,21 +81,21 @@ class MainActivity : AppCompatActivity() {
                 anim.repeatMode = Animation.REVERSE
                 anim.repeatCount = Animation.INFINITE
                 globalRemainingTimeTextView.startAnimation(anim)
-                
+
                 // 빨간색 화면 효과 표시
                 timeWarningEffect.visibility = View.VISIBLE
-                
+
                 // 남은 시간에 따라 효과의 강도(알파값) 조절
                 // 15초에서 0초로 갈수록 0.2에서 0.9로 알파값 증가 (더 강한 빨간색)
                 val intensity = 0.2f + (0.7f * (15 - remainingSeconds) / 15f)
-                
+
                 // 화면 왜곡 효과 (10초 이하부터 시작)
                 if (remainingSeconds <= 10) {
                     distortionEffect.visibility = View.VISIBLE
                     // 10초에서 0초로 갈수록 0.1에서 0.5로 알파값 증가
                     val distortionIntensity = 0.1f + (0.4f * (10 - remainingSeconds) / 10f)
                     distortionEffect.alpha = distortionIntensity
-                    
+
                     // 화면 왜곡 효과에 떨림 애니메이션 추가 (남은 시간이 적을수록 더 심하게 떨림)
                     val shakeAmount = (5 + (15 * (10 - remainingSeconds) / 10)).toInt()
                     val shakeAnim = android.view.animation.TranslateAnimation(
@@ -105,7 +105,7 @@ class MainActivity : AppCompatActivity() {
                     shakeAnim.duration = 100
                     shakeAnim.repeatCount = android.view.animation.Animation.INFINITE
                     shakeAnim.repeatMode = android.view.animation.Animation.REVERSE
-                    
+
                     // 기존 애니메이션 제거 후 새 애니메이션 시작
                     distortionEffect.clearAnimation()
                     distortionEffect.startAnimation(shakeAnim)
@@ -113,14 +113,14 @@ class MainActivity : AppCompatActivity() {
                     distortionEffect.visibility = View.INVISIBLE
                     distortionEffect.clearAnimation()
                 }
-                
+
                 // 화면 깨짐 효과 (5초 이하부터 시작)
                 if (remainingSeconds <= 5) {
                     screenCrackEffect.visibility = View.VISIBLE
                     // 5초에서 0초로 갈수록 0.2에서 0.7로 알파값 증가
                     val crackIntensity = 0.2f + (0.5f * (5 - remainingSeconds) / 5f)
                     screenCrackEffect.alpha = crackIntensity
-                    
+
                     // 화면 깨짐 효과에 펄스 애니메이션 추가 (심박동과 비슷하게)
                     val pulseAnim2 = android.animation.ObjectAnimator.ofFloat(
                         screenCrackEffect,
@@ -128,11 +128,11 @@ class MainActivity : AppCompatActivity() {
                         crackIntensity * 0.7f,
                         crackIntensity * 1.2f
                     )
-                    
+
                     pulseAnim2.duration = 150
                     pulseAnim2.repeatCount = android.animation.ObjectAnimator.INFINITE
                     pulseAnim2.repeatMode = android.animation.ObjectAnimator.REVERSE
-                    
+
                     // 기존 애니메이션 제거 후 새 애니메이션 시작
                     screenCrackEffect.clearAnimation()
                     pulseAnim2.start()
@@ -141,38 +141,38 @@ class MainActivity : AppCompatActivity() {
                     screenCrackEffect.clearAnimation()
                     screenCrackEffect.animate().cancel()
                 }
-                
+
                 // 심박동 애니메이션 효과 - 시간이 줄어들수록 더 빠르게 펄스
                 val pulseAnim = android.animation.ObjectAnimator.ofFloat(
-                    timeWarningEffect, 
-                    "alpha", 
+                    timeWarningEffect,
+                    "alpha",
                     intensity * 0.4f, // 최소 알파값 (더 큰 변화를 위해 40%로 조정)
                     intensity * 1.3f  // 최대 알파값 (더 강한 효과를 위해 130%로 조정)
                 )
-                
+
                 // 남은 시간이 적을수록 더 빠르게 진동 (300ms에서 100ms까지)
                 // 맥박 효과를 더 극적으로 변경
                 val pulseDuration = (300 - 200 * (15 - remainingSeconds) / 15).toLong().coerceAtLeast(100)
                 pulseAnim.duration = pulseDuration
                 pulseAnim.repeatCount = android.animation.ObjectAnimator.INFINITE
                 pulseAnim.repeatMode = android.animation.ObjectAnimator.REVERSE
-                
+
                 // 기존 애니메이션 제거 후 새 애니메이션 시작
                 timeWarningEffect.clearAnimation()
                 pulseAnim.start()
-                
+
             } else {
                 // 15초 이상일 때는 모든 효과 제거
                 globalRemainingTimeTextView.clearAnimation()
-                
+
                 timeWarningEffect.visibility = View.INVISIBLE
                 timeWarningEffect.alpha = 0f
                 timeWarningEffect.clearAnimation()
-                
+
                 distortionEffect.visibility = View.INVISIBLE
                 distortionEffect.alpha = 0f
                 distortionEffect.clearAnimation()
-                
+
                 screenCrackEffect.visibility = View.INVISIBLE
                 screenCrackEffect.alpha = 0f
                 screenCrackEffect.clearAnimation()
@@ -189,14 +189,14 @@ class MainActivity : AppCompatActivity() {
                 stockViewModel.resetStocks()
                 albaViewModel.resetAlba()
                 realEstateViewModel.resetRealEstatePrices()
-                
+
                 // ViewModelFactory 초기화 후 TimingAlbaViewModel 리셋 추가
                 if (::viewModelFactory.isInitialized) {
                     // 타이밍 알바 뷰모델 제거
                     // 게임 리셋 시 알바 뷰모델만 리셋
                     albaViewModel.resetAlba()
                 }
-                
+
                 // 게임 리셋 이벤트 발생
                 timeViewModel.triggerGameResetEvent()
 
@@ -219,7 +219,7 @@ class MainActivity : AppCompatActivity() {
                 globalRemainingTimeTextView.clearAnimation()
                 // 다이얼로그가 이미 떠 있지 않다면 새로 띄움
                 if (existingDialog == null) {
-                     GameOverDialogFragment().show(supportFragmentManager, dialogTag)
+                    GameOverDialogFragment().show(supportFragmentManager, dialogTag)
                 }
             } else {
                 // 게임 오버 상태가 아니라면 다이얼로그 닫기
@@ -232,20 +232,20 @@ class MainActivity : AppCompatActivity() {
 
         // ViewModelFactory 초기화
         viewModelFactory = ViewModelFactory(application)
-        
+
         // AssetViewModel과 기타 ViewModel 초기화
         assetViewModel = ViewModelProvider(this, viewModelFactory).get(AssetViewModel::class.java)
-        
+
         // 알바 관련 ViewModel 초기화
         ViewModelProvider(this, viewModelFactory).get(AlbaViewModel::class.java)
         // 타이밍 알바와 원 알바 뷰모델 초기화 제거
-        
+
         assetTextView = findViewById(R.id.assetInfo)
 
         // 자산 초기 표시
         assetViewModel.asset.observe(this) { newAsset ->
             assetTextView.text = assetViewModel.getAssetText()
-            
+
             // 자산이 마이너스일 경우 색상 변경
             if (newAsset < 0) {
                 assetTextView.setTextColor(android.graphics.Color.RED)
@@ -268,7 +268,7 @@ class MainActivity : AppCompatActivity() {
 
         // 앱 첫 시작 시 ExplanationFragment 추가
         if (savedInstanceState == null) { // 액티비티가 처음 생성될 때만
-             supportFragmentManager.beginTransaction()
+            supportFragmentManager.beginTransaction()
                 .add(R.id.contentFrame, ExplanationFragment(), "ExplanationFragment")
                 .commit()
         }
@@ -351,7 +351,7 @@ class MainActivity : AppCompatActivity() {
                 buttonFlash.repeatCount = 1
                 buttonFlash.repeatMode = Animation.REVERSE
                 buttonEarnMoney.startAnimation(buttonFlash)
-                
+
                 // 패널 나타나는 효과
                 slidePanel.visibility = View.VISIBLE
                 val slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up)
@@ -418,12 +418,12 @@ class MainActivity : AppCompatActivity() {
             .replace(R.id.contentFrame, fragment)
             .commit()
     }
-    
+
     // 앱 데이터를 저장하고 종료하는 public 메소드
     fun saveDataAndExit() {
         // 필요한 데이터 저장 로직 실행
         // 예: 주식 데이터, 게임 상태 등 저장
-        
+
         // 앱 종료
         finishAffinity()
     }
@@ -437,12 +437,12 @@ class MainActivity : AppCompatActivity() {
         val initialMarginTop = layoutParams.topMargin
         val initialMarginEnd = layoutParams.rightMargin
         val initialGravity = layoutParams.gravity
-        
+
         // 마지막 터치 위치를 저장할 변수
         var lastX = 0f
         var lastY = 0f
         var isDragging = false
-        
+
         // 터치 이벤트 리스너 설정
         globalRemainingTimeTextView.setOnTouchListener { view, event ->
             when (event.action) {
@@ -451,52 +451,52 @@ class MainActivity : AppCompatActivity() {
                     lastX = event.rawX
                     lastY = event.rawY
                     isDragging = true
-                    
+
                     // 터치 시 배경 강조 효과
                     view.animate().scaleX(1.1f).scaleY(1.1f).setDuration(100).start()
-                    
+
                     true
                 }
-                
+
                 android.view.MotionEvent.ACTION_MOVE -> {
                     if (!isDragging) return@setOnTouchListener false
-                    
+
                     // 이동 거리 계산
                     val deltaX = event.rawX - lastX
                     val deltaY = event.rawY - lastY
-                    
+
                     // 뷰의 현재 위치 가져오기
                     val params = view.layoutParams as FrameLayout.LayoutParams
-                    
+
                     // gravity 속성 제거하고 절대 위치 사용
                     params.gravity = android.view.Gravity.NO_GRAVITY
-                    
+
                     // 뷰의 새 위치 계산 (화면 경계 벗어나지 않도록)
                     val newX = (view.x + deltaX).coerceIn(0f, (view.parent as View).width - view.width.toFloat())
                     val newY = (view.y + deltaY).coerceIn(0f, (view.parent as View).height - view.height.toFloat())
-                    
+
                     // 뷰 위치 업데이트
                     view.x = newX
                     view.y = newY
-                    
+
                     // 마지막 위치 업데이트
                     lastX = event.rawX
                     lastY = event.rawY
-                    
+
                     true
                 }
-                
+
                 android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
                     isDragging = false
-                    
+
                     // 배경 효과 원복
                     view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start()
-                    
+
                     // 위치가 수정된 후에는 레이아웃 매개변수를 업데이트
                     val params = view.layoutParams as FrameLayout.LayoutParams
                     params.gravity = android.view.Gravity.NO_GRAVITY
                     view.layoutParams = params
-                    
+
                     // 간단한 애니메이션 효과로 이동 완료 알림
                     view.animate()
                         .alpha(0.7f)
@@ -508,14 +508,14 @@ class MainActivity : AppCompatActivity() {
                                 .start()
                         }
                         .start()
-                    
+
                     true
                 }
-                
+
                 else -> false
             }
         }
-        
+
         // 더블 탭으로 초기 위치로 돌아가는 기능 추가
         val gestureDetector = android.view.GestureDetector(this, object : android.view.GestureDetector.SimpleOnGestureListener() {
             override fun onDoubleTap(e: android.view.MotionEvent): Boolean {
@@ -526,13 +526,13 @@ class MainActivity : AppCompatActivity() {
                 params.rightMargin = initialMarginEnd
                 params.leftMargin = 0
                 params.bottomMargin = 0
-                
+
                 // 뷰 위치 초기화
                 globalRemainingTimeTextView.x = 0f
                 globalRemainingTimeTextView.y = 0f
-                
+
                 globalRemainingTimeTextView.layoutParams = params
-                
+
                 // 간단한 애니메이션 효과로 위치 이동 완료 알림
                 globalRemainingTimeTextView.animate()
                     .scaleX(1.2f).scaleY(1.2f)
@@ -544,15 +544,15 @@ class MainActivity : AppCompatActivity() {
                             .start()
                     }
                     .start()
-                
+
                 return true
             }
         })
-        
+
         // 기존 OnTouchListener와 GestureDetector 결합
         globalRemainingTimeTextView.setOnTouchListener { view, event ->
             val gestureResult = gestureDetector.onTouchEvent(event)
-            
+
             if (!gestureResult) {
                 when (event.action) {
                     android.view.MotionEvent.ACTION_DOWN -> {
@@ -560,51 +560,51 @@ class MainActivity : AppCompatActivity() {
                         lastX = event.rawX
                         lastY = event.rawY
                         isDragging = true
-                        
+
                         // 터치 시 배경 강조 효과
                         view.animate().scaleX(1.1f).scaleY(1.1f).setDuration(100).start()
-                        
+
                         true
                     }
-                    
+
                     android.view.MotionEvent.ACTION_MOVE -> {
                         if (!isDragging) return@setOnTouchListener false
-                        
+
                         // 이동 거리 계산
                         val deltaX = event.rawX - lastX
                         val deltaY = event.rawY - lastY
-                        
+
                         // 뷰의 새 위치 계산 (화면 경계 벗어나지 않도록)
                         val newX = (view.x + deltaX).coerceIn(0f, (view.parent as View).width - view.width.toFloat())
                         val newY = (view.y + deltaY).coerceIn(0f, (view.parent as View).height - view.height.toFloat())
-                        
+
                         // 뷰 위치 업데이트
                         view.x = newX
                         view.y = newY
-                        
+
                         // 마지막 위치 업데이트
                         lastX = event.rawX
                         lastY = event.rawY
-                        
+
                         true
                     }
-                    
+
                     android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
                         isDragging = false
-                        
+
                         // 배경 효과 원복
                         view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start()
-                        
+
                         true
                     }
-                    
+
                     else -> false
                 }
             } else {
                 true
             }
         }
-        
+
         // 작은 도움말 표시
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
             MessageManager.showMessage(this, "남은 시간 표시를 드래그하여 이동할 수 있습니다. 더블 탭으로 원위치")
