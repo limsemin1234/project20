@@ -1,6 +1,7 @@
 package com.example.p20
 
 import android.os.Bundle
+import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -74,6 +75,29 @@ class CasinoFragment : Fragment(), LifecycleObserver {
             append("자신의 자산 범위 내에서 책임감 있게 게임하세요.")
         }
         casinoInfoText.text = warningText.toString()
+        
+        // 5초 후에 주의 문구를 애니메이션과 함께 사라지게 함
+        Handler(android.os.Looper.getMainLooper()).postDelayed({
+            // 페이드아웃 애니메이션 생성
+            val fadeOut = android.view.animation.AlphaAnimation(1.0f, 0.0f)
+            fadeOut.duration = 1000 // 1초 동안 페이드아웃
+            fadeOut.fillAfter = true // 애니메이션 후 상태 유지
+            
+            // 애니메이션 리스너 설정
+            fadeOut.setAnimationListener(object : android.view.animation.Animation.AnimationListener {
+                override fun onAnimationStart(animation: android.view.animation.Animation?) {}
+                
+                override fun onAnimationEnd(animation: android.view.animation.Animation?) {
+                    // 애니메이션 종료 후 뷰 완전히 숨김
+                    casinoInfoText.visibility = android.view.View.GONE
+                }
+                
+                override fun onAnimationRepeat(animation: android.view.animation.Animation?) {}
+            })
+            
+            // 애니메이션 시작
+            casinoInfoText.startAnimation(fadeOut)
+        }, 5000) // 5초 후 실행
         
         // 어댑터 설정
         viewPager.adapter = adapter
