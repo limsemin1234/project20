@@ -17,7 +17,7 @@ class AssetRepository(private val context: Context) {
         private const val KEY_ASSET = "asset"
         private const val KEY_DEPOSIT = "deposit"
         private const val KEY_LOAN = "loan"
-        private const val DEFAULT_INITIAL_ASSET = 5_000_000L
+        private const val DEFAULT_INITIAL_ASSET = 2_000_000L
     }
     
     // LiveData
