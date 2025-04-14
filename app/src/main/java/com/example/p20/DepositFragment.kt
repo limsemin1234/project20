@@ -35,6 +35,8 @@ class DepositFragment : Fragment() {
     private lateinit var btn10Eok: Button
     private lateinit var btn100Eok: Button
     private lateinit var btn1000Eok: Button
+    private lateinit var totalInterestText: TextView
+    private lateinit var accumulatedInterestText: TextView
 
     // 마지막으로 처리한 알림의 타임스탬프
     private var lastProcessedNotificationTime: Long = 0
@@ -65,6 +67,15 @@ class DepositFragment : Fragment() {
             interestInfoText.text = "이자율: 1% (30초마다 자산에 추가)"
         }
         
+        // 총 이자 텍스트 참조 찾기
+        totalInterestText = view.findViewById(R.id.totalInterestText)
+        
+        // 누적 이자 텍스트 참조 찾기
+        accumulatedInterestText = view.findViewById(R.id.accumulatedInterestText)
+        
+        // 이자 정보 업데이트
+        updateInterestInfoTexts()
+        
         btn1Man = view.findViewById(R.id.btn1Man)
         btn10Man = view.findViewById(R.id.btn10Man)
         btn100Man = view.findViewById(R.id.btn100Man)
@@ -77,6 +88,17 @@ class DepositFragment : Fragment() {
         // 예금 금액 변경 감지
         viewModel.deposit.observe(viewLifecycleOwner) { amount ->
             depositAmountInput.text = "예금: ${NumberFormat.getNumberInstance(Locale.KOREA).format(amount)}원"
+            updateInterestInfoTexts()
+        }
+        
+        // 이자 발생 타이머 관찰
+        viewModel.depositRemainingTime.observe(viewLifecycleOwner) { _ ->
+            updateInterestInfoTexts()
+        }
+        
+        // 누적 이자 정보 관찰
+        viewModel.totalDepositInterest.observe(viewLifecycleOwner) { totalInterest ->
+            updateAccumulatedInterestText(totalInterest)
         }
 
         // 금액 초기화 버튼 클릭 이벤트
@@ -89,6 +111,28 @@ class DepositFragment : Fragment() {
         
         // 예금 및 출금 버튼 이벤트
         setupActionButtons()
+    }
+    
+    // 이자 정보 텍스트 업데이트
+    private fun updateInterestInfoTexts() {
+        // 다음 이자 금액 계산 및 표시
+        updateTotalInterestText()
+        
+        // 누적 이자 정보 표시
+        val totalAccumulated = viewModel.totalDepositInterest.value ?: 0L
+        updateAccumulatedInterestText(totalAccumulated)
+    }
+    
+    // 다음 이자 금액 계산 및 텍스트 업데이트
+    private fun updateTotalInterestText() {
+        val nextInterest = viewModel.calculateNextDepositInterest()
+        
+        totalInterestText.text = "다음 이자 금액: ${NumberFormat.getNumberInstance(Locale.KOREA).format(nextInterest)}원"
+    }
+    
+    // 누적 이자 정보 텍스트 업데이트
+    private fun updateAccumulatedInterestText(totalInterest: Long) {
+        accumulatedInterestText.text = "총 받은 이자: ${NumberFormat.getNumberInstance(Locale.KOREA).format(totalInterest)}원"
     }
     
     private fun setupAmountButtons() {

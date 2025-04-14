@@ -37,8 +37,32 @@
                     android:text="이자율: 3% (30초마다 자산에 추가)"
                     android:textSize="14sp"
                     android:textColor="#333333"
-                    android:layout_marginBottom="16dp"
+                    android:layout_marginBottom="8dp"
                     android:tag="interest_info_text"/>
+
+                <!-- 추가된 총 이자 정보 표시 -->
+                <TextView
+                    android:id="@+id/totalInterestText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="다음 이자 금액: 0원"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#4CAF50"
+                    android:layout_marginBottom="8dp"
+                    android:visibility="visible"/>
+                
+                <!-- 추가된 누적 이자 정보 표시 -->
+                <TextView
+                    android:id="@+id/accumulatedInterestText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="총 받은 이자: 0원"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#FF9800"
+                    android:layout_marginBottom="16dp"
+                    android:visibility="visible"/>
 
                 <TextView
                     android:id="@+id/depositAmountInput"

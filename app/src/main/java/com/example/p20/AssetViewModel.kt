@@ -30,6 +30,10 @@ class AssetViewModel(
     val interestNotification: LiveData<String> = calculator.interestNotification
     val lastNotificationTimestamp: LiveData<Long> = calculator.lastNotificationTimestamp
     
+    // 추가: 누적 이자 정보에 대한 LiveData
+    val totalDepositInterest: LiveData<Long> = calculator.totalDepositInterest
+    val totalLoanInterest: LiveData<Long> = calculator.totalLoanInterest
+    
     // 부동산 정보
     private val _realEstateList = MutableLiveData<List<RealEstate>>()
     val realEstateList: LiveData<List<RealEstate>> get() = _realEstateList
@@ -112,7 +116,7 @@ class AssetViewModel(
     fun addDeposit(amount: Long): Boolean {
         if (repository.addDeposit(amount)) {
             calculator.resetDepositTimer()
-            showMessage("${formatNumber(amount)}원이 예금되었습니다. 30초마다 3%의 이자가 자산에 추가됩니다.")
+            showMessage("${formatNumber(amount)}원이 예금되었습니다. 30초마다 1%의 이자가 자산에 추가됩니다.")
             return true
         } else {
             showMessage("보유 자산이 부족합니다")
@@ -139,7 +143,7 @@ class AssetViewModel(
     fun addLoan(amount: Long) {
         repository.addLoan(amount)
         calculator.resetLoanTimer()
-        showMessage("${formatNumber(amount)}원을 대출했습니다. 30초마다 10%의 이자가 자산에서 차감됩니다.")
+        showMessage("${formatNumber(amount)}원을 대출했습니다. 30초마다 5%의 이자가 자산에서 차감됩니다.")
     }
 
     /**
@@ -155,6 +159,27 @@ class AssetViewModel(
         
         showMessage("보유 자산이 부족합니다 (필요: ${formatNumber(amount)}원)")
         return false
+    }
+    
+    /**
+     * 다음 예금 이자 계산
+     */
+    fun calculateNextDepositInterest(): Long {
+        return calculator.calculateNextDepositInterest()
+    }
+    
+    /**
+     * 다음 대출 이자 계산
+     */
+    fun calculateNextLoanInterest(): Long {
+        return calculator.calculateNextLoanInterest()
+    }
+    
+    /**
+     * 누적 이자 정보 초기화
+     */
+    fun resetTotalInterestData() {
+        calculator.resetTotalInterestData()
     }
 
     /**
@@ -184,6 +209,7 @@ class AssetViewModel(
     fun resetAssets() {
         calculator.cleanup()
         repository.resetAll()
+        resetTotalInterestData()
     }
 
     /**

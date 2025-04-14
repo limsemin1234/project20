@@ -35,6 +35,8 @@ class InterestCalculator(
         private const val PREF_DEPOSIT_TIME_REMAINING = "deposit_time_remaining"
         private const val PREF_LOAN_TIME_REMAINING = "loan_time_remaining"
         private const val PREF_LAST_SAVE_TIME = "last_save_time"
+        private const val PREF_TOTAL_DEPOSIT_INTEREST = "total_deposit_interest"
+        private const val PREF_TOTAL_LOAN_INTEREST = "total_loan_interest"
     }
     
     // 메인 스레드 핸들러 (백그라운드 스레드에서 메인 스레드로 작업을 전달하기 위함)
@@ -68,10 +70,19 @@ class InterestCalculator(
     // 마지막 이자 발생 시간
     private var lastDepositInterestTime: Long = 0
     private var lastLoanInterestTime: Long = 0
+    
+    // 추가: 누적 이자 정보 LiveData
+    private val _totalDepositInterest = MutableLiveData<Long>()
+    val totalDepositInterest: LiveData<Long> = _totalDepositInterest
+    
+    private val _totalLoanInterest = MutableLiveData<Long>()
+    val totalLoanInterest: LiveData<Long> = _totalLoanInterest
 
     init {
         // SharedPreferences에서 이자 쿨타임 복원
         restoreInterestTimes()
+        // 추가: 누적 이자 정보 로드
+        restoreTotalInterestData()
     }
     
     /**
@@ -90,6 +101,21 @@ class InterestCalculator(
     }
     
     /**
+     * 추가: 누적 이자 정보 로드
+     */
+    private fun restoreTotalInterestData() {
+        val prefs = application.getSharedPreferences("interest_data", Context.MODE_PRIVATE)
+        
+        // 총 예금 이자 로드
+        val savedTotalDepositInterest = prefs?.getLong(PREF_TOTAL_DEPOSIT_INTEREST, 0L) ?: 0L
+        _totalDepositInterest.value = savedTotalDepositInterest
+        
+        // 총 대출 이자 로드
+        val savedTotalLoanInterest = prefs?.getLong(PREF_TOTAL_LOAN_INTEREST, 0L) ?: 0L
+        _totalLoanInterest.value = savedTotalLoanInterest
+    }
+    
+    /**
      * 이자 쿨타임을 SharedPreferences에 저장
      */
     private fun saveInterestTimes() {
@@ -97,6 +123,18 @@ class InterestCalculator(
         prefs?.edit()?.apply {
             putLong(PREF_DEPOSIT_TIME_REMAINING, _depositTimeRemaining.value ?: (INTEREST_PERIOD_MS / 1000))
             putLong(PREF_LOAN_TIME_REMAINING, _loanTimeRemaining.value ?: (INTEREST_PERIOD_MS / 1000))
+            apply()
+        }
+    }
+    
+    /**
+     * 추가: 누적 이자 정보 저장
+     */
+    private fun saveTotalInterestData() {
+        val prefs = application.getSharedPreferences("interest_data", Context.MODE_PRIVATE)
+        prefs?.edit()?.apply {
+            putLong(PREF_TOTAL_DEPOSIT_INTEREST, _totalDepositInterest.value ?: 0L)
+            putLong(PREF_TOTAL_LOAN_INTEREST, _totalLoanInterest.value ?: 0L)
             apply()
         }
     }
@@ -175,6 +213,12 @@ class InterestCalculator(
                 val interest = (deposit * DEPOSIT_INTEREST_RATE).roundToLong()
                 mainHandler.post {
                     repository.increaseAsset(interest)  // 이자를 자산에 추가
+                    
+                    // 총 예금 이자 업데이트
+                    val currentTotal = _totalDepositInterest.value ?: 0L
+                    _totalDepositInterest.value = currentTotal + interest
+                    saveTotalInterestData()
+                    
                     val message = "예금 이자 ${repository.formatNumber(interest)}원이 자산에 추가되었습니다"
                     _interestNotification.postValue(message)
                     _lastNotificationTimestamp.postValue(System.currentTimeMillis())
@@ -203,6 +247,11 @@ class InterestCalculator(
                     // 이자를 항상 차감 (마이너스가 될 수 있음)
                     repository.decreaseAsset(interest)
                     
+                    // 총 대출 이자 업데이트
+                    val currentTotal = _totalLoanInterest.value ?: 0L
+                    _totalLoanInterest.value = currentTotal + interest
+                    saveTotalInterestData()
+                    
                     // 메시지 내용 변경
                     val message = if (currentAsset < interest) {
                         "대출 이자 ${repository.formatNumber(interest)}원이 발생했습니다. 자산이 부족하여 마이너스 상태가 되었습니다."
@@ -217,6 +266,31 @@ class InterestCalculator(
                 resetLoanTimer()
             }
         }
+    }
+    
+    /**
+     * 총 예금 이자 계산
+     */
+    fun calculateNextDepositInterest(): Long {
+        val deposit = repository.deposit.value ?: 0L
+        return (deposit * DEPOSIT_INTEREST_RATE).roundToLong()
+    }
+    
+    /**
+     * 총 대출 이자 계산
+     */
+    fun calculateNextLoanInterest(): Long {
+        val loan = repository.loan.value ?: 0L
+        return (loan * LOAN_INTEREST_RATE).roundToLong()
+    }
+    
+    /**
+     * 누적 이자 데이터 초기화
+     */
+    fun resetTotalInterestData() {
+        _totalDepositInterest.value = 0L
+        _totalLoanInterest.value = 0L
+        saveTotalInterestData()
     }
     
     /**
