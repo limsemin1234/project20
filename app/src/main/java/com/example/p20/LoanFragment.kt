@@ -61,9 +61,11 @@ class LoanFragment : Fragment() {
         repayButton = view.findViewById(R.id.repayButton)
         resetButton = view.findViewById(R.id.resetButton)
         
-        // loanInfoText 참조 가져오기
-        val loanInfoText = view.findViewById<TextView>(R.id.loanInfoText)
-        loanInfoText.text = "이자율: 10% (30초마다 자산에서 차감)"
+        // 이자 정보 텍스트 참조 가져오기 및 변경
+        val interestInfoText = view.findViewWithTag<TextView>("interest_info_text")
+        if (interestInfoText != null) {
+            interestInfoText.text = "이자율: 5% (30초마다 자산에서 차감)"
+        }
         
         try {
             percent25Button = view.findViewById(R.id.percent25Button)

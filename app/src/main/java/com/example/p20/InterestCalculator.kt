@@ -19,8 +19,8 @@ class InterestCalculator(
 ) {
     
     companion object {
-        const val DEPOSIT_INTEREST_RATE = 0.03 // 3%
-        const val LOAN_INTEREST_RATE = 0.10 // 10%
+        const val DEPOSIT_INTEREST_RATE = 0.01 // 1%
+        const val LOAN_INTEREST_RATE = 0.05 // 5%
         
         // 이자 발생 주기 (밀리초)
         const val INTEREST_PERIOD_MS = 30_000L // 30초
