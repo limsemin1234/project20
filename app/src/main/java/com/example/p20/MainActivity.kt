@@ -28,6 +28,12 @@ class MainActivity : AppCompatActivity() {
     private var initialY: Float = 0f
     private var initialGravity: Int = 0
 
+    // 클래스 변수 추가 - 애니메이션 객체들 저장
+    private var timeWarningPulseAnimator: android.animation.ObjectAnimator? = null
+    private var screenCrackPulseAnimator: android.animation.ObjectAnimator? = null
+    private var distortionShakeAnimation: android.view.animation.Animation? = null
+    private var timeBlinkAnimation: android.view.animation.AlphaAnimation? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -79,11 +85,12 @@ class MainActivity : AppCompatActivity() {
             // 15초 이하일 때 깜빡이는 애니메이션과 빨간색 화면 효과
             if (remainingSeconds <= 15) {
                 // 텍스트 깜빡임 애니메이션
-                val anim = AlphaAnimation(0.0f, 1.0f)
-                anim.duration = 500
-                anim.repeatMode = Animation.REVERSE
-                anim.repeatCount = Animation.INFINITE
-                globalRemainingTimeTextView.startAnimation(anim)
+                timeBlinkAnimation = AlphaAnimation(0.0f, 1.0f).apply {
+                    duration = 500
+                    repeatMode = Animation.REVERSE
+                    repeatCount = Animation.INFINITE
+                }
+                globalRemainingTimeTextView.startAnimation(timeBlinkAnimation)
 
                 // 빨간색 화면 효과 표시
                 timeWarningEffect.visibility = View.VISIBLE
@@ -101,20 +108,22 @@ class MainActivity : AppCompatActivity() {
 
                     // 화면 왜곡 효과에 떨림 애니메이션 추가 (남은 시간이 적을수록 더 심하게 떨림)
                     val shakeAmount = (5 + (15 * (10 - remainingSeconds) / 10)).toInt()
-                    val shakeAnim = android.view.animation.TranslateAnimation(
+                    distortionShakeAnimation = android.view.animation.TranslateAnimation(
                         -shakeAmount.toFloat(), shakeAmount.toFloat(),
                         -shakeAmount.toFloat(), shakeAmount.toFloat()
-                    )
-                    shakeAnim.duration = 100
-                    shakeAnim.repeatCount = android.view.animation.Animation.INFINITE
-                    shakeAnim.repeatMode = android.view.animation.Animation.REVERSE
+                    ).apply {
+                        duration = 100
+                        repeatCount = android.view.animation.Animation.INFINITE
+                        repeatMode = android.view.animation.Animation.REVERSE
+                    }
 
                     // 기존 애니메이션 제거 후 새 애니메이션 시작
                     distortionEffect.clearAnimation()
-                    distortionEffect.startAnimation(shakeAnim)
+                    distortionEffect.startAnimation(distortionShakeAnimation)
                 } else {
                     distortionEffect.visibility = View.INVISIBLE
                     distortionEffect.clearAnimation()
+                    distortionShakeAnimation = null
                 }
 
                 // 화면 깨짐 효과 (5초 이하부터 시작)
@@ -125,61 +134,45 @@ class MainActivity : AppCompatActivity() {
                     screenCrackEffect.alpha = crackIntensity
 
                     // 화면 깨짐 효과에 펄스 애니메이션 추가 (심박동과 비슷하게)
-                    val pulseAnim2 = android.animation.ObjectAnimator.ofFloat(
+                    screenCrackPulseAnimator?.cancel() // 기존 애니메이션 취소
+                    
+                    screenCrackPulseAnimator = android.animation.ObjectAnimator.ofFloat(
                         screenCrackEffect,
                         "alpha",
                         crackIntensity * 0.7f,
                         crackIntensity * 1.2f
-                    )
-
-                    pulseAnim2.duration = 150
-                    pulseAnim2.repeatCount = android.animation.ObjectAnimator.INFINITE
-                    pulseAnim2.repeatMode = android.animation.ObjectAnimator.REVERSE
-
-                    // 기존 애니메이션 제거 후 새 애니메이션 시작
-                    screenCrackEffect.clearAnimation()
-                    pulseAnim2.start()
+                    ).apply {
+                        duration = 150
+                        repeatCount = android.animation.ObjectAnimator.INFINITE
+                        repeatMode = android.animation.ObjectAnimator.REVERSE
+                        start()
+                    }
                 } else {
                     screenCrackEffect.visibility = View.INVISIBLE
                     screenCrackEffect.clearAnimation()
-                    screenCrackEffect.animate().cancel()
+                    screenCrackPulseAnimator?.cancel()
+                    screenCrackPulseAnimator = null
                 }
 
                 // 심박동 애니메이션 효과 - 시간이 줄어들수록 더 빠르게 펄스
-                val pulseAnim = android.animation.ObjectAnimator.ofFloat(
+                timeWarningPulseAnimator?.cancel() // 기존 애니메이션 취소
+                
+                timeWarningPulseAnimator = android.animation.ObjectAnimator.ofFloat(
                     timeWarningEffect,
                     "alpha",
                     intensity * 0.4f, // 최소 알파값 (더 큰 변화를 위해 40%로 조정)
                     intensity * 1.3f  // 최대 알파값 (더 강한 효과를 위해 130%로 조정)
-                )
-
-                // 남은 시간이 적을수록 더 빠르게 진동 (300ms에서 100ms까지)
-                // 맥박 효과를 더 극적으로 변경
-                val pulseDuration = (300 - 200 * (15 - remainingSeconds) / 15).toLong().coerceAtLeast(100)
-                pulseAnim.duration = pulseDuration
-                pulseAnim.repeatCount = android.animation.ObjectAnimator.INFINITE
-                pulseAnim.repeatMode = android.animation.ObjectAnimator.REVERSE
-
-                // 기존 애니메이션 제거 후 새 애니메이션 시작
-                timeWarningEffect.clearAnimation()
-                pulseAnim.start()
-
+                ).apply {
+                    // 남은 시간이 적을수록 더 빠르게 진동 (300ms에서 100ms까지)
+                    // 맥박 효과를 더 극적으로 변경
+                    duration = (300 - 200 * (15 - remainingSeconds) / 15).toLong().coerceAtLeast(100)
+                    repeatCount = android.animation.ObjectAnimator.INFINITE
+                    repeatMode = android.animation.ObjectAnimator.REVERSE
+                    start()
+                }
             } else {
                 // 15초 이상일 때는 모든 효과 제거
-                globalRemainingTimeTextView.clearAnimation()
-
-                timeWarningEffect.visibility = View.INVISIBLE
-                timeWarningEffect.alpha = 0f
-                timeWarningEffect.clearAnimation()
-
-                distortionEffect.visibility = View.INVISIBLE
-                distortionEffect.alpha = 0f
-                distortionEffect.clearAnimation()
-
-                screenCrackEffect.visibility = View.INVISIBLE
-                screenCrackEffect.alpha = 0f
-                screenCrackEffect.clearAnimation()
-                screenCrackEffect.animate().cancel()
+                stopAllAnimations()
             }
         }
 
@@ -219,14 +212,22 @@ class MainActivity : AppCompatActivity() {
             val existingDialog = supportFragmentManager.findFragmentByTag(dialogTag) as? DialogFragment
 
             if (isGameOver) {
-                globalRemainingTimeTextView.clearAnimation()
+                // 모든 시각적 효과 중지 - 메서드로 추출
+                stopAllAnimations()
+                
                 // 다이얼로그가 이미 떠 있지 않다면 새로 띄움
                 if (existingDialog == null) {
                     GameOverDialogFragment().show(supportFragmentManager, dialogTag)
                 }
+                
+                // 게임 오버 시 모든 기능 버튼 비활성화
+                setAllButtonsEnabled(false)
             } else {
                 // 게임 오버 상태가 아니라면 다이얼로그 닫기
                 existingDialog?.dismiss()
+                
+                // 게임 진행 중일 때는 모든 버튼 활성화
+                setAllButtonsEnabled(true)
             }
         }
 
@@ -563,5 +564,76 @@ class MainActivity : AppCompatActivity() {
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
             MessageManager.showMessage(this, "남은 시간 표시를 드래그하여 이동하거나 더블 탭하여 원위치로 되돌릴 수 있습니다")
         }, 3000)
+    }
+
+    // 버튼 활성화/비활성화 헬퍼 메서드 추가
+    private fun setAllButtonsEnabled(enabled: Boolean) {
+        // 모든 기능 버튼 참조
+        val buttonAlba = findViewById<Button>(R.id.buttonAlba)
+        val buttonStock = findViewById<Button>(R.id.buttonStock)
+        val buttonRealEstate = findViewById<Button>(R.id.buttonRealEstate)
+        val buttonEarnMoney = findViewById<Button>(R.id.buttonEarnMoney)
+        val buttonMyInfo = findViewById<Button>(R.id.buttonMyInfo)
+        val buttonItem = findViewById<Button>(R.id.buttonItem)
+        val buttonBank = findViewById<Button>(R.id.buttonBank)
+        val buttonCasino = findViewById<Button>(R.id.buttonCasino)
+        val buttonLotto = findViewById<Button>(R.id.buttonLotto)
+        val buttonSettings = findViewById<Button>(R.id.buttonSettings)
+        
+        // 모든 버튼의 활성화 상태 설정
+        buttonAlba.isEnabled = enabled
+        buttonStock.isEnabled = enabled
+        buttonRealEstate.isEnabled = enabled
+        buttonEarnMoney.isEnabled = enabled
+        buttonMyInfo.isEnabled = enabled
+        buttonItem.isEnabled = enabled
+        buttonBank.isEnabled = enabled
+        buttonCasino.isEnabled = enabled
+        buttonLotto.isEnabled = enabled
+        buttonSettings.isEnabled = enabled
+        
+        // 비활성화 시 버튼 투명도 조정으로 시각적 피드백 제공
+        val alpha = if (enabled) 1.0f else 0.5f
+        buttonAlba.alpha = alpha
+        buttonStock.alpha = alpha
+        buttonRealEstate.alpha = alpha
+        buttonEarnMoney.alpha = alpha
+        buttonMyInfo.alpha = alpha
+        buttonItem.alpha = alpha
+        buttonBank.alpha = alpha
+        buttonCasino.alpha = alpha
+        buttonLotto.alpha = alpha
+        buttonSettings.alpha = alpha
+    }
+
+    // 모든 애니메이션을 중지하는 헬퍼 메서드 추가
+    private fun stopAllAnimations() {
+        // 시간 텍스트뷰 애니메이션 중지
+        globalRemainingTimeTextView.clearAnimation()
+        timeBlinkAnimation = null
+        
+        // 빨간색 효과 중지
+        val timeWarningEffect = findViewById<View>(R.id.timeWarningEffect)
+        timeWarningEffect.clearAnimation()
+        timeWarningEffect.visibility = View.INVISIBLE
+        timeWarningEffect.alpha = 0f
+        timeWarningPulseAnimator?.cancel()
+        timeWarningPulseAnimator = null
+        
+        // 왜곡 효과 중지
+        val distortionEffect = findViewById<View>(R.id.distortionEffect)
+        distortionEffect.clearAnimation()
+        distortionEffect.visibility = View.INVISIBLE
+        distortionEffect.alpha = 0f
+        distortionShakeAnimation = null
+        
+        // 화면 깨짐 효과 중지
+        val screenCrackEffect = findViewById<View>(R.id.screenCrackEffect)
+        screenCrackEffect.clearAnimation()
+        screenCrackEffect.visibility = View.INVISIBLE
+        screenCrackEffect.alpha = 0f
+        screenCrackEffect.animate().cancel()
+        screenCrackPulseAnimator?.cancel()
+        screenCrackPulseAnimator = null
     }
 }

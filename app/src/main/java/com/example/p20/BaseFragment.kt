@@ -22,6 +22,9 @@ abstract class BaseFragment : Fragment() {
         // 공통 ViewModel 초기화
         assetViewModel = ViewModelProvider(requireActivity())[AssetViewModel::class.java]
         timeViewModel = ViewModelProvider(requireActivity())[TimeViewModel::class.java]
+        
+        // 게임 오버 상태 관찰
+        observeGameOverState()
     }
     
     /**
@@ -96,5 +99,46 @@ abstract class BaseFragment : Fragment() {
      */
     protected fun getChangeColor(change: Int): Int {
         return FormatUtils.getChangeColor(change)
+    }
+    
+    /**
+     * 게임 오버 상태를 관찰하고 UI 접근을 제한합니다
+     */
+    private fun observeGameOverState() {
+        timeViewModel.isGameOver.observe(viewLifecycleOwner) { isGameOver ->
+            // 게임 오버일 경우 프래그먼트의 모든 상호작용 비활성화
+            view?.let { rootView ->
+                setViewAndChildrenEnabled(rootView, !isGameOver)
+            }
+            
+            if (isGameOver) {
+                // 게임 오버 시 진행 중인 작업 중단
+                onGameOver()
+            }
+        }
+    }
+    
+    /**
+     * 게임 오버 상태일 때 호출되는 메서드
+     * 자식 클래스에서 필요하면 오버라이드하여 추가 처리
+     */
+    protected open fun onGameOver() {
+        // 기본 구현은 비어있음
+        // 자식 클래스에서 필요하면 오버라이드
+    }
+    
+    /**
+     * 뷰와 모든 자식 뷰의 활성화 상태를 설정합니다
+     */
+    private fun setViewAndChildrenEnabled(view: View, enabled: Boolean) {
+        view.isEnabled = enabled
+        view.alpha = if (enabled) 1.0f else 0.5f
+        
+        if (view is android.view.ViewGroup) {
+            for (i in 0 until view.childCount) {
+                val child = view.getChildAt(i)
+                setViewAndChildrenEnabled(child, enabled)
+            }
+        }
     }
 } 
