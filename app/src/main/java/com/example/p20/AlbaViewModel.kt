@@ -17,7 +17,7 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
     val albaLevel: LiveData<Int> get() = _albaLevel
 
     private var clickCounter = 0
-    private val CLICKS_PER_LEVEL = 10 // 10번 클릭해야 레벨 1 증가
+    private val CLICKS_PER_LEVEL = 20 // 20번 클릭해야 레벨 1 증가
 
     private val _isActivePhase = MutableLiveData(false)
     val isActivePhase: LiveData<Boolean> get() = _isActivePhase
@@ -102,7 +102,7 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun getRewardAmount(): Int {
-        return (_albaLevel.value ?: 1) * 50
+        return (_albaLevel.value ?: 1) * 100
     }
 
     fun increaseAlbaLevel() {
@@ -138,7 +138,7 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
         val message = if (reward.isMultiple) {
             "${reward.itemName} 재고 증가!"
         } else {
-            "${reward.itemName} 재고 ${reward.quantity}개 증가!"
+            "레벨업! ${_albaLevel.value}레벨 달성! ${reward.itemName} 재고 ${reward.quantity}개 증가!"
         }
         
         // MessageManager를 사용하여 상단에 메시지 표시

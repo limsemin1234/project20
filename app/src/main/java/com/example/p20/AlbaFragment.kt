@@ -126,7 +126,7 @@ class ClickAlbaFragment : Fragment() {
 
         albaViewModel.albaLevel.observe(viewLifecycleOwner, Observer { level ->
             val rewardAmount = albaViewModel.getRewardAmount()
-            levelText.text = "레벨: $level\n보상: ${"%,d".format(rewardAmount)}원\n(10번 클릭마다 레벨업)"
+            levelText.text = "레벨: $level\n보상: ${"%,d".format(rewardAmount)}원\n(20번 클릭마다 레벨업)"
         })
 
         // 아이템 획득 이벤트 관찰
@@ -194,15 +194,15 @@ class ClickAlbaFragment : Fragment() {
         val moveY = ObjectAnimator.ofFloat(rewardTextView, "y", rewardTextView.y, targetY.toFloat()).apply {
             duration = moveDuration
         }
-        val fadeOut = ObjectAnimator.ofFloat(rewardTextView, "alpha", 1f, 0f).apply {
-            duration = moveDuration
-        }
+        
+        // 크기 축소 효과 다시 활성화
         val scaleX = ObjectAnimator.ofFloat(rewardTextView, "scaleX", 1f, scaleTarget).apply {
             duration = moveDuration
         }
         val scaleY = ObjectAnimator.ofFloat(rewardTextView, "scaleY", 1f, scaleTarget).apply {
             duration = moveDuration
         }
+        // 투명도 효과는 계속 비활성화 상태 유지
 
         val shake = ObjectAnimator.ofFloat(rewardTextView, "rotation", 0f, shakeAngle, -shakeAngle, shakeAngle / 1.5f, -shakeAngle / 1.5f, 0f).apply {
             this.duration = shakeSpeed
@@ -210,7 +210,8 @@ class ClickAlbaFragment : Fragment() {
             repeatMode = ObjectAnimator.RESTART
         }
 
-        fadeOut.addListener(object : AnimatorListenerAdapter() {
+        // 이동 애니메이션이 끝나면 View 제거
+        moveX.addListener(object : AnimatorListenerAdapter() {
             override fun onAnimationEnd(animation: Animator) {
                 shake.cancel()
                 animationContainer.removeView(rewardTextView)
@@ -219,7 +220,6 @@ class ClickAlbaFragment : Fragment() {
 
         moveX.start()
         moveY.start()
-        fadeOut.start()
         scaleX.start()
         scaleY.start()
         shake.start()

@@ -20,35 +20,12 @@ object ItemUtil {
      * @return 획득한 아이템 정보 (없으면 null)
      */
     fun processClickAlbaLevelUp(context: Context, currentLevel: Int): ItemReward? {
-        // 5레벨 단위로 체크
-        if (currentLevel % 5 != 0) {
-            return null
-        }
+        // 레벨업할 때마다 랜덤으로 시간증폭 아이템 1개 획득
+        // 아이템 ID: 1(60초), 2(120초), 3(180초) 중 하나를 랜덤 선택
+        val randomItemId = Random.nextInt(1, 4) // 1, 2, 3 중 랜덤
         
-        return when (currentLevel) {
-            5, 10 -> increaseItemStock(context, 1, 1) // 레벨 5, 10 -> 60초 아이템 재고 1개 증가
-            15, 20 -> increaseItemStock(context, 2, 1) // 레벨 15, 20 -> 120초 아이템 재고 1개 증가
-            25, 30 -> increaseItemStock(context, 3, 1) // 레벨 25, 30 -> 180초 아이템 재고 1개 증가
-            else -> {
-                // 30레벨 이후 랜덤으로 2개 아이템 재고 증가
-                val randomItems = getRandomItems(2)
-                val rewards = mutableListOf<ItemReward>()
-                
-                randomItems.forEach { itemId ->
-                    increaseItemStock(context, itemId, 1)?.let {
-                        rewards.add(it)
-                    }
-                }
-                
-                if (rewards.isEmpty()) null
-                else ItemReward(
-                    itemId = 0, // 복합 보상이므로 0
-                    itemName = "랜덤 아이템 재고 2개",
-                    quantity = 2,
-                    isMultiple = true
-                )
-            }
-        }
+        // 선택된 아이템의 재고 증가
+        return increaseItemStock(context, randomItemId, 1)
     }
     
     /**
