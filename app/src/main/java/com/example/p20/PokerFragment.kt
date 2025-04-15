@@ -896,10 +896,10 @@ class PokerFragment : Fragment() {
         // 선택되지 않은 카드 흐리게 표시
         highlightSelectedCards()
         
-        // 3초 후에 카드 지우기 (애니메이션 보여주기 위해 더 오래 기다림)
+        // 정리 작업 지연 (애니메이션을 위해 더 긴 시간 대기)
         cleanupRunnable?.let { runnable ->
             mainHandler.removeCallbacks(runnable) // 기존에 예약된 정리 작업 취소
-            mainHandler.postDelayed(runnable, 4000) // 4초 지연
+            mainHandler.postDelayed(runnable, 3000) // 3초 지연으로 수정 (기존 4초)
         }
     }
     

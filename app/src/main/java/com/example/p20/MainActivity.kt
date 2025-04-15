@@ -44,6 +44,8 @@ class MainActivity : AppCompatActivity() {
     private var backgroundMusic: MediaPlayer? = null
     private var isMusicPaused = false
     private var currentMusicIndex = 0 // 현재 선택된 음악 인덱스
+    private var originalMusicIndex = 0 // 임시로 음악을 변경하기 전의 원래 음악 인덱스
+    private var isTemporaryMusic = false // 현재 임시 음악(예: 카지노 음악)이 재생 중인지 여부
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -227,48 +229,83 @@ class MainActivity : AppCompatActivity() {
         buttonAlba.setOnClickListener {
             removeExplanationFragment()
             slidePanel.visibility = View.GONE
+            // 임시 음악이 재생 중이고 15초 경고 음악이 아닐 경우에만 원래 음악으로 복귀
+            if (isTemporaryMusic && !isPlaying15SecondWarning()) {
+                restoreOriginalMusic()
+            }
             showFragment(AlbaFragment(), "AlbaFragment")
         }
 
         buttonStock.setOnClickListener {
             removeExplanationFragment()
             slidePanel.visibility = View.GONE
+            // 임시 음악이 재생 중이고 15초 경고 음악이 아닐 경우에만 원래 음악으로 복귀
+            if (isTemporaryMusic && !isPlaying15SecondWarning()) {
+                restoreOriginalMusic()
+            }
             showFragment(StockFragment(), "StockFragment")
         }
 
         buttonRealEstate.setOnClickListener {
             removeExplanationFragment()
             slidePanel.visibility = View.GONE
+            // 임시 음악이 재생 중이고 15초 경고 음악이 아닐 경우에만 원래 음악으로 복귀
+            if (isTemporaryMusic && !isPlaying15SecondWarning()) {
+                restoreOriginalMusic()
+            }
             showFragment(RealEstateFragment(), "RealEstateFragment")
         }
 
         buttonCasino.setOnClickListener {
             removeExplanationFragment()
             slidePanel.visibility = View.GONE
+            
+            // 15초 경고 음악이 재생 중이 아닐 경우에만 카지노 음악으로 변경
+            if (!isPlaying15SecondWarning()) {
+                // 카지노 화면으로 이동하기 전에 카지노 음악으로 변경
+                setTemporaryMusic(R.raw.casino_1)
+            }
+            
             showFragment(CasinoFragment(), "CasinoFragment")
         }
 
         buttonLotto.setOnClickListener {
             removeExplanationFragment()
             slidePanel.visibility = View.GONE
+            // 임시 음악이 재생 중이고 15초 경고 음악이 아닐 경우에만 원래 음악으로 복귀
+            if (isTemporaryMusic && !isPlaying15SecondWarning()) {
+                restoreOriginalMusic()
+            }
             showFragment(LottoFragment(), "LottoFragment")
         }
 
         buttonMyInfo.setOnClickListener {
             removeExplanationFragment()
             slidePanel.visibility = View.GONE
+            // 임시 음악이 재생 중이고 15초 경고 음악이 아닐 경우에만 원래 음악으로 복귀
+            if (isTemporaryMusic && !isPlaying15SecondWarning()) {
+                restoreOriginalMusic()
+            }
             showFragment(MyInfoFragment(), "`MyInfoFragment`")
         }
 
         buttonBank.setOnClickListener {
             removeExplanationFragment()
             slidePanel.visibility = View.GONE
+            // 임시 음악이 재생 중이고 15초 경고 음악이 아닐 경우에만 원래 음악으로 복귀
+            if (isTemporaryMusic && !isPlaying15SecondWarning()) {
+                restoreOriginalMusic()
+            }
             showFragment(BankFragment(), "BankFragment")
         }
 
         buttonItem.setOnClickListener {
             removeExplanationFragment()
             slidePanel.visibility = View.GONE
+            // 임시 음악이 재생 중이고 15초 경고 음악이 아닐 경우에만 원래 음악으로 복귀
+            if (isTemporaryMusic && !isPlaying15SecondWarning()) {
+                restoreOriginalMusic()
+            }
             showFragment(ItemFragment(), "ItemFragment")
         }
 
@@ -593,6 +630,11 @@ class MainActivity : AppCompatActivity() {
                 0 -> {
                     // 모든 효과 제거
                     stopAllAnimations()
+                    
+                    // 원래 음악으로 돌아가기 (만약 15초 효과 음악이 재생 중이었다면)
+                    if (isTemporaryMusic && backgroundMusic?.isPlaying == true) {
+                        restoreOriginalMusic()
+                    }
                     return
                 }
                 1 -> {
@@ -616,6 +658,11 @@ class MainActivity : AppCompatActivity() {
                     // 약한 빨간색 효과
                     timeWarningEffect.visibility = View.VISIBLE
                     timeWarningEffect.animate().alpha(0.2f).setDuration(500).start()
+                    
+                    // 15초 효과 음악 재생 (임시 음악이 아닐 경우에만)
+                    if (!isTemporaryMusic) {
+                        setTemporaryMusic(R.raw.time_15_second)
+                    }
                 }
                 2 -> {
                     // 중간 효과: 심장박동 + 약한 흔들림
@@ -767,6 +814,12 @@ class MainActivity : AppCompatActivity() {
         visionNarrowingScaleAnimator = null
         flashAnimator?.cancel()
         flashAnimator = null
+        
+        // 15초 효과 음악이 재생 중이었다면 원래 음악으로 돌아가기
+        // 하지만 여전히 15초 이하라면 음악을 유지
+        if (isTemporaryMusic && backgroundMusic?.isPlaying == true && !isPlaying15SecondWarning()) {
+            restoreOriginalMusic()
+        }
     }
 
     // 배경음악 초기화 및 재생 메소드
@@ -801,18 +854,20 @@ class MainActivity : AppCompatActivity() {
         // 인덱스에 따라 다른 음악 리소스 선택
         val musicResId = when (musicIndex) {
             0 -> R.raw.main_music // 기본 음악
-            1 -> R.raw.main_music // 로맨틱한 음악 (같은 파일 사용)
-            2 -> R.raw.main_music // 에너지 넘치는 음악 (같은 파일 사용)
-            3 -> R.raw.main_music // 카지노 스타일 (같은 파일 사용)
-            4 -> R.raw.main_music // 잔잔한 음악 (같은 파일 사용)
+            1 -> R.raw.main_music_sinbi // 로맨틱한 음악 (같은 파일 사용)
+            2 -> R.raw.main_music_electric // 에너지 넘치는 음악 (같은 파일 사용)
+            3 -> R.raw.main_music_guitar // 카지노 스타일 (같은 파일 사용)
+            4 -> R.raw.main_music_janjan // 잔잔한 음악 (같은 파일 사용)
             else -> R.raw.main_music
         }
         
         // 새 MediaPlayer 생성
         backgroundMusic = MediaPlayer.create(this, musicResId)
         
-        // 반복 재생 설정
-        backgroundMusic?.isLooping = true
+        // 음악이 끝났을 때 다시 재생하도록 리스너 설정
+        backgroundMusic?.setOnCompletionListener {
+            it.start()
+        }
         
         // 볼륨 설정 (0.0 ~ 1.0)
         backgroundMusic?.setVolume(0.5f, 0.5f)
@@ -851,6 +906,24 @@ class MainActivity : AppCompatActivity() {
     }
     
     /**
+     * 배경음악을 처음부터 다시 시작
+     */
+    fun restartBackgroundMusic() {
+        // 기존 MediaPlayer가 있을 경우 해제
+        backgroundMusic?.release()
+        backgroundMusic = null
+        
+        // 현재 설정된 음악으로 다시 생성
+        createMediaPlayer(currentMusicIndex)
+        
+        // 음악 재생 시작
+        backgroundMusic?.start()
+        
+        // 일시정지 상태 초기화
+        isMusicPaused = false
+    }
+    
+    /**
      * 배경음악 중지 (설정에서 호출)
      */
     fun stopBackgroundMusic() {
@@ -876,6 +949,87 @@ class MainActivity : AppCompatActivity() {
         if (isMusicPaused && backgroundMusic != null) {
             backgroundMusic?.start()
             isMusicPaused = false
+        }
+    }
+
+    /**
+     * 임시 음악으로 변경 (특정 화면에서만 재생할 음악)
+     * @param musicResId 재생할 음악 리소스 ID
+     */
+    fun setTemporaryMusic(musicResId: Int) {
+        // 이미 임시 음악이 재생 중이면 변경하지 않음
+        if (isTemporaryMusic) return
+        
+        // 현재 재생 중인지 확인
+        val wasPlaying = backgroundMusic?.isPlaying ?: false
+        
+        // 현재 음악 인덱스 저장
+        originalMusicIndex = currentMusicIndex
+        
+        // 기존 재생 중인 음악 해제
+        backgroundMusic?.release()
+        backgroundMusic = null
+        
+        // 새 MediaPlayer 생성
+        backgroundMusic = MediaPlayer.create(this, musicResId)
+        
+        // 반복 재생 설정
+        backgroundMusic?.isLooping = true
+        
+        // 볼륨 설정 (0.0 ~ 1.0)
+        backgroundMusic?.setVolume(0.5f, 0.5f)
+        
+        // 이전에 재생 중이었다면 새 음악도 재생
+        if (wasPlaying) {
+            backgroundMusic?.start()
+        }
+        
+        // 임시 음악 상태로 설정
+        isTemporaryMusic = true
+    }
+    
+    /**
+     * 15초 경고 음악이 재생 중인지 확인하는 헬퍼 메서드
+     * @return 15초 경고 음악이 재생 중이면 true, 아니면 false
+     */
+    fun isPlaying15SecondWarning(): Boolean {
+        // 남은 시간이 15초 이하인지 확인
+        val remainingTime = timeViewModel.remainingTime.value ?: 0
+        return remainingTime <= 15
+    }
+    
+    /**
+     * 원래 설정된 음악으로 복귀
+     */
+    fun restoreOriginalMusic() {
+        // 임시 음악이 아니면 변경할 필요 없음
+        if (!isTemporaryMusic) return
+        
+        // 15초 경고 음악인 경우 복귀하지 않음
+        if (isPlaying15SecondWarning()) return
+        
+        // 현재 재생 중인지 확인
+        val wasPlaying = backgroundMusic?.isPlaying ?: false
+        
+        // 원래 음악으로 MediaPlayer 다시 생성
+        createMediaPlayer(originalMusicIndex)
+        
+        // 이전에 재생 중이었다면 음악 재생
+        if (wasPlaying) {
+            backgroundMusic?.start()
+        }
+        
+        // 현재 인덱스 원래 값으로 복원
+        currentMusicIndex = originalMusicIndex
+        
+        // 임시 음악 상태 해제
+        isTemporaryMusic = false
+    }
+
+    // 게임이 종료될 때 음악을 멈추는 메서드
+    fun stopBackgroundMusicForGameOver() {
+        if (backgroundMusic?.isPlaying == true) {
+            backgroundMusic?.pause()
         }
     }
 }

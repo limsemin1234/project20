@@ -130,11 +130,11 @@ class SettingsDialogFragment : DialogFragment() {
             
             // 사용 가능한 배경음악 목록
             val musicOptions = arrayOf(
-                "기본 음악", 
-                "로맨틱한 음악", 
-                "에너지 넘치는 음악",
-                "카지노 스타일",
-                "잔잔한 음악"
+                "배경음악1",
+                "배경음악2",
+                "배경음악3",
+                "배경음악4",
+                "배경음악5"
             )
             
             // 스피너 어댑터 설정

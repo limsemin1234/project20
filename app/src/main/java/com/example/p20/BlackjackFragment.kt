@@ -589,7 +589,7 @@ class BlackjackFragment : Fragment() {
         // 정리 작업 지연 (애니메이션을 위해 더 긴 시간 대기)
         cleanupRunnable?.let { runnable ->
             mainHandler.removeCallbacks(runnable) // 기존에 예약된 정리 작업 취소
-            mainHandler.postDelayed(runnable, 4000)
+            mainHandler.postDelayed(runnable, 3000) // 3초 지연으로 수정
         }
     }
     

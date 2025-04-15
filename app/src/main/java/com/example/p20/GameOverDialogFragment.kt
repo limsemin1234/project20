@@ -35,6 +35,9 @@ class GameOverDialogFragment : DialogFragment() {
         // 다이얼로그 밖 터치 시 닫히지 않도록 설정
         isCancelable = false
 
+        // 게임 오버 시 배경 음악 멈추기
+        (activity as? MainActivity)?.stopBackgroundMusicForGameOver()
+
         val view = inflater.inflate(R.layout.dialog_game_over, container, false)
 
         // ViewModel 초기화
@@ -104,6 +107,10 @@ class GameOverDialogFragment : DialogFragment() {
                 // MainActivity에 다시 시작 요청 (리셋 및 ExplanationFragment 표시 트리거)
                 resetGame()
                 timeViewModel.requestRestart()
+
+                // 배경음악 처음부터 다시 재생
+                (activity as? MainActivity)?.restartBackgroundMusic()
+                
                 // 다이얼로그 닫기
                 dismiss()
             }, 3000)

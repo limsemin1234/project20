@@ -200,7 +200,7 @@ class CasinoAnimationManager {
                             }
                         })
                         fadeOut.start()
-                    }, 2000) // 2초 후 사라짐
+                    }, 1000) // 1초 후 사라짐 (기존 2초에서 변경)
                 }
             })
             
@@ -380,7 +380,7 @@ class CasinoAnimationManager {
                             }
                         })
                         fadeOut.start()
-                    }, 2000) // 2초 후 사라짐
+                    }, 1000) // 1초 후 사라짐 (기존 2초에서 변경)
                 }
             })
             
