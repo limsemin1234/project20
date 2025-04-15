@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    
+    <!-- 원형 비네트 효과 적용: 중앙은 투명하고 외곽으로 갈수록 검정색 -->
+    <gradient
+        android:type="radial"
+        android:gradientRadius="100%p"
+        android:centerX="0.5"
+        android:centerY="0.5"
+        android:startColor="#00000000"  
+        android:centerColor="#99000000" 
+        android:endColor="#FF000000"    
+    />
+    <!-- 중앙은 완전 투명, 중간은 더 진한 반투명 검정, 외곽은 완전 불투명한 검정 -->
+</shape> 

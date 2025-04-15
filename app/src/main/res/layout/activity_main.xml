@@ -1,184 +1,210 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rootLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#000000"
+    tools:context=".MainActivity">
 
-    <LinearLayout
+    <!-- 실제 콘텐츠를 포함하는 컨테이너 - 심장박동, 흔들림 효과가 적용될 레이아웃 -->
+    <FrameLayout
+        android:id="@+id/contentContainer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/main_top_color"
-        android:orientation="vertical">
+        android:layout_height="match_parent">
 
-        <!-- 상단: 자산 정보와 시간 -->
         <LinearLayout
-            android:id="@+id/topLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/main_top_color"
+            android:orientation="vertical">
+
+            <!-- 상단: 자산 정보와 시간 -->
+            <LinearLayout
+                android:id="@+id/topLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/top_layout_border"
+                android:orientation="horizontal"
+                android:padding="10dp">
+
+                <!-- 자산 정보 -->
+                <TextView
+                    android:id="@+id/assetInfo"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="start|center_vertical"
+                    android:text="자산: 0원"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <!-- 게임 시간 정보 (우측) -->
+                <TextView
+                    android:id="@+id/timeInfo"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="end|center_vertical"
+                    android:text="게임시간: 00:00:00"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <FrameLayout
+                android:id="@+id/contentFrame"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:background="@drawable/main1">
+
+                <TextView
+                    android:id="@+id/titleText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:alpha="0"
+                    android:gravity="center"
+                    android:padding="20dp"
+                    android:background="#80000000"
+                    android:text="🕒 시간과 돈의 게임 🪙\n\n게임 설명\n\n- 알바, 주식, 부동산 등 다양한 방법으로\n  돈을 벌 수 있습니다.\n\n- 번 돈으로 시간을 구매하여\n  수명을 늘릴 수 있습니다.\n\n- 아이템을 사용하여 게임을 더 유리하게\n  진행할 수 있습니다.\n\n최종 목표는 현재 개발 중입니다.\n더 많은 컨텐츠를 기대해 주세요!\n\n▼ 터치하여 시작하기 ▼"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:lineSpacingExtra="6dp"
+                    android:elevation="4dp"
+                    android:textStyle="normal" />
+            </FrameLayout>
+
+            <!-- 하단 버튼 -->
+            <LinearLayout
+                android:id="@+id/bottomLayout"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:orientation="horizontal"
+                android:padding="5dp"
+                android:background="@color/main_bottom_color">
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/buttonMyInfo"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="내정보"
+                    android:textStyle="bold"
+                    android:layout_margin="3dp"
+                    android:background="@drawable/main_button_selector"
+                    android:backgroundTint="@null"
+                    android:textColor="@android:color/white" />
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/buttonBank"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="은행"
+                    android:textStyle="bold"
+                    android:layout_margin="3dp"
+                    android:background="@drawable/main_button_selector"
+                    android:backgroundTint="@null"
+                    android:textColor="@android:color/white" />
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/buttonItem"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="아이템"
+                    android:textStyle="bold"
+                    android:layout_margin="3dp"
+                    android:background="@drawable/main_button_selector"
+                    android:backgroundTint="@null"
+                    android:textColor="@android:color/white" />
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/buttonEarnMoney"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="돈벌기"
+                    android:gravity="center"
+                    android:textStyle="bold"
+                    android:layout_margin="3dp"
+                    android:background="@drawable/earn_money_card_selector"
+                    android:backgroundTint="@null"
+                    android:textColor="@android:color/white" />
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/buttonSettings"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="설정"
+                    android:textStyle="bold"
+                    android:layout_margin="3dp"
+                    android:background="@drawable/main_button_selector"
+                    android:backgroundTint="@null"
+                    android:textColor="@android:color/white" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 전역 남은 시간 표시 (topLayout 아래 우측, 반투명 오버레이) -->
+        <TextView
+            android:id="@+id/globalRemainingTimeInfo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="45dp"
+            android:layout_marginEnd="5dp"
+            android:background="#80000000"
+            android:padding="6dp"
+            android:text="남은 시간: -초"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <!-- 메시지 표시 영역 (최상단에 위치, 화면 오버레이) -->
+        <LinearLayout
+            android:id="@+id/messageContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/top_layout_border"
-            android:orientation="horizontal"
-            android:padding="10dp">
+            android:orientation="vertical"
+            android:layout_gravity="top"
+            android:layout_marginTop="45dp"
+            android:paddingHorizontal="8dp"
+            android:paddingTop="4dp" />
 
-            <!-- 자산 정보 -->
-            <TextView
-                android:id="@+id/assetInfo"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="start|center_vertical"
-                android:text="자산: 0원"
-                android:textColor="@android:color/white"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+        <!-- 메인 화면 중앙 메시지 (초기에는 숨김) -->
+        <TextView
+            android:id="@+id/mainRestartMessageText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:background="#80000000"
+            android:padding="16dp"
+            android:text="시간을 되돌립니다..."
+            android:textColor="@android:color/white"
+            android:textSize="18sp"
+            android:elevation="20dp" />
 
-            <!-- 게임 시간 정보 (우측) -->
-            <TextView
-                android:id="@+id/timeInfo"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="end|center_vertical"
-                android:text="게임시간: 00:00:00"
-                android:textColor="@android:color/white"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <FrameLayout
-            android:id="@+id/contentFrame"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:background="@drawable/main1">
-
-            <TextView
-                android:id="@+id/titleText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:alpha="0"
-                android:gravity="center"
-                android:padding="20dp"
-                android:background="#80000000"
-                android:text="🕒 시간과 돈의 게임 🪙\n\n게임 설명\n\n- 알바, 주식, 부동산 등 다양한 방법으로\n  돈을 벌 수 있습니다.\n\n- 번 돈으로 시간을 구매하여\n  수명을 늘릴 수 있습니다.\n\n- 아이템을 사용하여 게임을 더 유리하게\n  진행할 수 있습니다.\n\n최종 목표는 현재 개발 중입니다.\n더 많은 컨텐츠를 기대해 주세요!\n\n▼ 터치하여 시작하기 ▼"
-                android:textColor="#FFFFFF"
-                android:textSize="16sp"
-                android:lineSpacingExtra="6dp"
-                android:elevation="4dp"
-                android:textStyle="normal" />
-        </FrameLayout>
-
-        <!-- 하단 버튼 -->
-        <LinearLayout
-            android:id="@+id/bottomLayout"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:orientation="horizontal"
-            android:padding="5dp"
-            android:background="@color/main_bottom_color">
-
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/buttonMyInfo"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:text="내정보"
-                android:textStyle="bold"
-                android:layout_margin="3dp"
-                android:background="@drawable/main_button_selector"
-                android:backgroundTint="@null"
-                android:textColor="@android:color/white" />
-
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/buttonBank"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:text="은행"
-                android:textStyle="bold"
-                android:layout_margin="3dp"
-                android:background="@drawable/main_button_selector"
-                android:backgroundTint="@null"
-                android:textColor="@android:color/white" />
-
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/buttonItem"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:text="아이템"
-                android:textStyle="bold"
-                android:layout_margin="3dp"
-                android:background="@drawable/main_button_selector"
-                android:backgroundTint="@null"
-                android:textColor="@android:color/white" />
-
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/buttonEarnMoney"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:text="돈벌기"
-                android:gravity="center"
-                android:textStyle="bold"
-                android:layout_margin="3dp"
-                android:background="@drawable/earn_money_card_selector"
-                android:backgroundTint="@null"
-                android:textColor="@android:color/white" />
-
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/buttonSettings"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:text="설정"
-                android:textStyle="bold"
-                android:layout_margin="3dp"
-                android:background="@drawable/main_button_selector"
-                android:backgroundTint="@null"
-                android:textColor="@android:color/white" />
-        </LinearLayout>
-    </LinearLayout>
-
-    <!-- 전역 남은 시간 표시 (topLayout 아래 우측, 반투명 오버레이) -->
-    <TextView
-        android:id="@+id/globalRemainingTimeInfo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|end"
-        android:layout_marginTop="45dp"
-        android:layout_marginEnd="5dp"
-        android:background="#80000000"
-        android:padding="6dp"
-        android:text="남은 시간: -초"
-        android:textColor="@android:color/white"
-        android:textSize="12sp"
-        android:textStyle="bold" />
-
-    <!-- 메시지 표시 영역 (최상단에 위치, 화면 오버레이) -->
-    <LinearLayout
-        android:id="@+id/messageContainer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_gravity="top"
-        android:layout_marginTop="45dp"
-        android:paddingHorizontal="8dp"
-        android:paddingTop="4dp" />
-
-    <!-- 메인 화면 중앙 메시지 (초기에는 숨김) -->
-    <TextView
-        android:id="@+id/mainRestartMessageText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:visibility="gone"
-        android:background="#80000000"
-        android:padding="16dp"
-        android:text="시간을 되돌립니다..."
-        android:textColor="@android:color/white"
-        android:textSize="18sp"
-        android:elevation="20dp" />
+        <!-- 시간이 5초 이하일 때 나타날 경고 메시지 -->
+        <TextView
+            android:id="@+id/warningMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="서두르세요!"
+            android:textColor="#FFFFFF"
+            android:textSize="36sp"
+            android:textStyle="bold"
+            android:visibility="invisible"
+            android:elevation="10dp"
+            android:background="#44000000"
+            android:padding="16dp" />
+    </FrameLayout>
 
     <!-- 시간 위험 효과 (빨간색 테두리) - 초기에는 안 보임 -->
     <View
@@ -189,23 +215,21 @@
         android:visibility="invisible"
         android:alpha="0" />
 
-    <!-- 화면 왜곡 효과 (시간이 줄어들 때) - 초기에는 안 보임 -->
-    <ImageView
-        android:id="@+id/distortionEffect"
+    <!-- 시야 축소 효과 (외곽을 어둡게) - 초기에는 안 보임 -->
+    <View
+        android:id="@+id/visionNarrowingEffect"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:src="@drawable/distortion_overlay"
-        android:scaleType="fitXY"
+        android:background="@drawable/vignette_effect"
         android:visibility="invisible"
         android:alpha="0" />
 
-    <!-- 화면 깨짐 효과 (시간이 줄어들 때) - 초기에는 안 보임 -->
-    <ImageView
-        android:id="@+id/screenCrackEffect"
+    <!-- 화면 번쩍임 효과 (플래시 효과) - 초기에는 안 보임 -->
+    <View
+        android:id="@+id/flashEffect"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:src="@drawable/screen_crack"
-        android:scaleType="fitXY"
+        android:background="#FFFFFF"
         android:visibility="invisible"
         android:alpha="0" />
 

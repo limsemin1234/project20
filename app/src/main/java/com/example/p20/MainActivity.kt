@@ -13,6 +13,7 @@ import android.view.animation.AnimationUtils
 import android.widget.LinearLayout
 import android.view.animation.AlphaAnimation
 import androidx.fragment.app.DialogFragment
+import android.graphics.Color
 
 class MainActivity : AppCompatActivity() {
 
@@ -30,9 +31,13 @@ class MainActivity : AppCompatActivity() {
 
     // 클래스 변수 추가 - 애니메이션 객체들 저장
     private var timeWarningPulseAnimator: android.animation.ObjectAnimator? = null
-    private var screenCrackPulseAnimator: android.animation.ObjectAnimator? = null
-    private var distortionShakeAnimation: android.view.animation.Animation? = null
     private var timeBlinkAnimation: android.view.animation.AlphaAnimation? = null
+    private var freezeScaleAnimation: android.animation.ValueAnimator? = null
+    private var visionNarrowingScaleAnimator: android.animation.ValueAnimator? = null
+    private var heartbeatAnimator: android.animation.ObjectAnimator? = null
+    private var shakeAnimation: android.view.animation.TranslateAnimation? = null
+    private var flashAnimator: android.animation.ObjectAnimator? = null
+    private var warningEffectLevel = 0 // 0: 없음, 1: 약함, 2: 중간, 3: 강함
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,102 +79,26 @@ class MainActivity : AppCompatActivity() {
 
         // 시간 위험 효과를 위한 뷰 찾기
         val timeWarningEffect = findViewById<View>(R.id.timeWarningEffect)
-        // 추가 효과 뷰 찾기
-        val distortionEffect = findViewById<View>(R.id.distortionEffect)
-        val screenCrackEffect = findViewById<View>(R.id.screenCrackEffect)
+        // 사용하지 않는 효과 뷰 참조 제거
 
         timeViewModel.remainingTime.observe(this) { remainingSeconds ->
             // 텍스트 업데이트 (초 단위)
             globalRemainingTimeTextView.text = "남은 시간: ${remainingSeconds}초"
 
-            // 15초 이하일 때 깜빡이는 애니메이션과 빨간색 화면 효과
+            // 15초 이하일 때 효과 적용
             if (remainingSeconds <= 15) {
                 // 텍스트 깜빡임 애니메이션
-                timeBlinkAnimation = AlphaAnimation(0.0f, 1.0f).apply {
-                    duration = 500
-                    repeatMode = Animation.REVERSE
-                    repeatCount = Animation.INFINITE
-                }
-                globalRemainingTimeTextView.startAnimation(timeBlinkAnimation)
-
-                // 빨간색 화면 효과 표시
-                timeWarningEffect.visibility = View.VISIBLE
-
-                // 남은 시간에 따라 효과의 강도(알파값) 조절
-                // 15초에서 0초로 갈수록 0.2에서 0.9로 알파값 증가 (더 강한 빨간색)
-                val intensity = 0.2f + (0.7f * (15 - remainingSeconds) / 15f)
-
-                // 화면 왜곡 효과 (10초 이하부터 시작)
-                if (remainingSeconds <= 10) {
-                    distortionEffect.visibility = View.VISIBLE
-                    // 10초에서 0초로 갈수록 0.1에서 0.5로 알파값 증가
-                    val distortionIntensity = 0.1f + (0.4f * (10 - remainingSeconds) / 10f)
-                    distortionEffect.alpha = distortionIntensity
-
-                    // 화면 왜곡 효과에 떨림 애니메이션 추가 (남은 시간이 적을수록 더 심하게 떨림)
-                    val shakeAmount = (5 + (15 * (10 - remainingSeconds) / 10)).toInt()
-                    distortionShakeAnimation = android.view.animation.TranslateAnimation(
-                        -shakeAmount.toFloat(), shakeAmount.toFloat(),
-                        -shakeAmount.toFloat(), shakeAmount.toFloat()
-                    ).apply {
-                        duration = 100
-                        repeatCount = android.view.animation.Animation.INFINITE
-                        repeatMode = android.view.animation.Animation.REVERSE
+                if (timeBlinkAnimation == null) {
+                    timeBlinkAnimation = AlphaAnimation(0.0f, 1.0f).apply {
+                        duration = 500
+                        repeatMode = Animation.REVERSE
+                        repeatCount = Animation.INFINITE
                     }
-
-                    // 기존 애니메이션 제거 후 새 애니메이션 시작
-                    distortionEffect.clearAnimation()
-                    distortionEffect.startAnimation(distortionShakeAnimation)
-                } else {
-                    distortionEffect.visibility = View.INVISIBLE
-                    distortionEffect.clearAnimation()
-                    distortionShakeAnimation = null
+                    globalRemainingTimeTextView.startAnimation(timeBlinkAnimation)
                 }
 
-                // 화면 깨짐 효과 (5초 이하부터 시작)
-                if (remainingSeconds <= 5) {
-                    screenCrackEffect.visibility = View.VISIBLE
-                    // 5초에서 0초로 갈수록 0.2에서 0.7로 알파값 증가
-                    val crackIntensity = 0.2f + (0.5f * (5 - remainingSeconds) / 5f)
-                    screenCrackEffect.alpha = crackIntensity
-
-                    // 화면 깨짐 효과에 펄스 애니메이션 추가 (심박동과 비슷하게)
-                    screenCrackPulseAnimator?.cancel() // 기존 애니메이션 취소
-                    
-                    screenCrackPulseAnimator = android.animation.ObjectAnimator.ofFloat(
-                        screenCrackEffect,
-                        "alpha",
-                        crackIntensity * 0.7f,
-                        crackIntensity * 1.2f
-                    ).apply {
-                        duration = 150
-                        repeatCount = android.animation.ObjectAnimator.INFINITE
-                        repeatMode = android.animation.ObjectAnimator.REVERSE
-                        start()
-                    }
-                } else {
-                    screenCrackEffect.visibility = View.INVISIBLE
-                    screenCrackEffect.clearAnimation()
-                    screenCrackPulseAnimator?.cancel()
-                    screenCrackPulseAnimator = null
-                }
-
-                // 심박동 애니메이션 효과 - 시간이 줄어들수록 더 빠르게 펄스
-                timeWarningPulseAnimator?.cancel() // 기존 애니메이션 취소
-                
-                timeWarningPulseAnimator = android.animation.ObjectAnimator.ofFloat(
-                    timeWarningEffect,
-                    "alpha",
-                    intensity * 0.4f, // 최소 알파값 (더 큰 변화를 위해 40%로 조정)
-                    intensity * 1.3f  // 최대 알파값 (더 강한 효과를 위해 130%로 조정)
-                ).apply {
-                    // 남은 시간이 적을수록 더 빠르게 진동 (300ms에서 100ms까지)
-                    // 맥박 효과를 더 극적으로 변경
-                    duration = (300 - 200 * (15 - remainingSeconds) / 15).toLong().coerceAtLeast(100)
-                    repeatCount = android.animation.ObjectAnimator.INFINITE
-                    repeatMode = android.animation.ObjectAnimator.REVERSE
-                    start()
-                }
+                // 위급 상황 효과 적용
+                setupEmergencyEffects(remainingSeconds)
             } else {
                 // 15초 이상일 때는 모든 효과 제거
                 stopAllAnimations()
@@ -610,34 +539,208 @@ class MainActivity : AppCompatActivity() {
         buttonSettings.alpha = alpha
     }
 
-    // 모든 애니메이션을 중지하는 헬퍼 메서드 추가
+    // 심장박동 및 화면 흔들림 효과 구현
+    private fun setupEmergencyEffects(remainingSeconds: Int) {
+        // contentContainer 참조 가져오기
+        val contentContainer = findViewById<FrameLayout>(R.id.contentContainer)
+        val timeWarningEffect = findViewById<View>(R.id.timeWarningEffect)
+        val flashEffect = findViewById<View>(R.id.flashEffect)
+        
+        // 효과 레벨 결정
+        val newEffectLevel = when {
+            remainingSeconds > 15 -> 0 // 효과 없음
+            remainingSeconds > 10 -> 1 // 약한 효과
+            remainingSeconds > 5 -> 2  // 중간 효과
+            else -> 3                  // 강한 효과
+        }
+        
+        // 효과 레벨이 변경된 경우에만 새로운 효과 설정
+        if (newEffectLevel != warningEffectLevel) {
+            warningEffectLevel = newEffectLevel
+            
+            // 기존 애니메이션 정리
+            heartbeatAnimator?.cancel()
+            heartbeatAnimator = null
+            shakeAnimation?.cancel()
+            contentContainer.clearAnimation()
+            
+            when (warningEffectLevel) {
+                0 -> {
+                    // 모든 효과 제거
+                    stopAllAnimations()
+                    return
+                }
+                1 -> {
+                    // 약한 효과: 미세한 심장박동만
+                    heartbeatAnimator = android.animation.ObjectAnimator.ofFloat(
+                        contentContainer, "scaleX", 1.0f, 1.01f
+                    ).apply {
+                        duration = 800
+                        repeatCount = android.animation.ObjectAnimator.INFINITE
+                        repeatMode = android.animation.ObjectAnimator.REVERSE
+                        
+                        // Y축 스케일도 함께 변경
+                        addUpdateListener { animator ->
+                            val value = animator.animatedValue as Float
+                            contentContainer.scaleY = value
+                        }
+                        
+                        start()
+                    }
+                    
+                    // 약한 빨간색 효과
+                    timeWarningEffect.visibility = View.VISIBLE
+                    timeWarningEffect.animate().alpha(0.2f).setDuration(500).start()
+                }
+                2 -> {
+                    // 중간 효과: 심장박동 + 약한 흔들림
+                    heartbeatAnimator = android.animation.ObjectAnimator.ofFloat(
+                        contentContainer, "scaleX", 1.0f, 1.02f
+                    ).apply {
+                        duration = 500
+                        repeatCount = android.animation.ObjectAnimator.INFINITE
+                        repeatMode = android.animation.ObjectAnimator.REVERSE
+                        
+                        addUpdateListener { animator ->
+                            val value = animator.animatedValue as Float
+                            contentContainer.scaleY = value
+                        }
+                        
+                        start()
+                    }
+                    
+                    // 약한 흔들림 효과
+                    shakeAnimation = android.view.animation.TranslateAnimation(
+                        -2f, 2f, -1f, 1f
+                    ).apply {
+                        duration = 100
+                        repeatCount = android.view.animation.Animation.INFINITE
+                        repeatMode = android.view.animation.Animation.REVERSE
+                    }
+                    contentContainer.startAnimation(shakeAnimation)
+                    
+                    // 중간 빨간색 효과
+                    timeWarningEffect.visibility = View.VISIBLE
+                    timeWarningEffect.animate().alpha(0.4f).setDuration(500).start()
+                    
+                    // 간헐적 플래시 효과 (10초에 한번)
+                    scheduleFlashEffect(10000)
+                }
+                3 -> {
+                    // 강한 효과: 빠른 심장박동 + 강한 흔들림
+                    heartbeatAnimator = android.animation.ObjectAnimator.ofFloat(
+                        contentContainer, "scaleX", 1.0f, 1.04f
+                    ).apply {
+                        duration = 300
+                        repeatCount = android.animation.ObjectAnimator.INFINITE
+                        repeatMode = android.animation.ObjectAnimator.REVERSE
+                        
+                        addUpdateListener { animator ->
+                            val value = animator.animatedValue as Float
+                            contentContainer.scaleY = value
+                        }
+                        
+                        start()
+                    }
+                    
+                    // 강한 흔들림 효과
+                    shakeAnimation = android.view.animation.TranslateAnimation(
+                        -5f, 5f, -3f, 3f
+                    ).apply {
+                        duration = 50
+                        repeatCount = android.view.animation.Animation.INFINITE
+                        repeatMode = android.view.animation.Animation.REVERSE
+                    }
+                    contentContainer.startAnimation(shakeAnimation)
+                    
+                    // 강한 빨간색 효과
+                    timeWarningEffect.visibility = View.VISIBLE
+                    timeWarningEffect.animate().alpha(0.6f).setDuration(500).start()
+                    
+                    // 빈번한 플래시 효과 (3초에 한번)
+                    scheduleFlashEffect(3000)
+                }
+            }
+        }
+    }
+
+    // 번쩍임 효과를 주기적으로 실행
+    private fun scheduleFlashEffect(intervalMs: Int) {
+        val handler = android.os.Handler(android.os.Looper.getMainLooper())
+        
+        val flashEffect = findViewById<View>(R.id.flashEffect)
+        
+        val flashRunnable = object : Runnable {
+            override fun run() {
+                if (warningEffectLevel >= 2) {
+                    // 번쩍임 효과 실행
+                    flashEffect.visibility = View.VISIBLE
+                    flashEffect.alpha = 0.3f
+                    
+                    flashEffect.animate()
+                        .alpha(0f)
+                        .setDuration(150)
+                        .withEndAction {
+                            flashEffect.visibility = View.INVISIBLE
+                        }
+                        .start()
+                    
+                    // 다음 번쩍임 예약
+                    handler.postDelayed(this, intervalMs.toLong())
+                }
+            }
+        }
+        
+        // 첫 번쩍임 예약
+        handler.postDelayed(flashRunnable, intervalMs.toLong())
+    }
+
+    // 모든 애니메이션을 중지하는 헬퍼 메서드 수정
     private fun stopAllAnimations() {
+        // 효과 레벨 초기화
+        warningEffectLevel = 0
+        
         // 시간 텍스트뷰 애니메이션 중지
         globalRemainingTimeTextView.clearAnimation()
         timeBlinkAnimation = null
+        
+        // 콘텐츠 컨테이너 애니메이션 중지
+        val contentContainer = findViewById<FrameLayout>(R.id.contentContainer)
+        contentContainer.clearAnimation()
+        contentContainer.scaleX = 1.0f
+        contentContainer.scaleY = 1.0f
+        
+        // 흔들림 효과 중지
+        shakeAnimation = null
+        
+        // 심장박동 효과 중지
+        heartbeatAnimator?.cancel()
+        heartbeatAnimator = null
         
         // 빨간색 효과 중지
         val timeWarningEffect = findViewById<View>(R.id.timeWarningEffect)
         timeWarningEffect.clearAnimation()
         timeWarningEffect.visibility = View.INVISIBLE
         timeWarningEffect.alpha = 0f
-        timeWarningPulseAnimator?.cancel()
-        timeWarningPulseAnimator = null
         
-        // 왜곡 효과 중지
-        val distortionEffect = findViewById<View>(R.id.distortionEffect)
-        distortionEffect.clearAnimation()
-        distortionEffect.visibility = View.INVISIBLE
-        distortionEffect.alpha = 0f
-        distortionShakeAnimation = null
+        // 시야 축소 효과 중지
+        val visionNarrowingEffect = findViewById<View>(R.id.visionNarrowingEffect)
+        visionNarrowingEffect.clearAnimation()
+        visionNarrowingEffect.visibility = View.INVISIBLE
+        visionNarrowingEffect.alpha = 0f
         
-        // 화면 깨짐 효과 중지
-        val screenCrackEffect = findViewById<View>(R.id.screenCrackEffect)
-        screenCrackEffect.clearAnimation()
-        screenCrackEffect.visibility = View.INVISIBLE
-        screenCrackEffect.alpha = 0f
-        screenCrackEffect.animate().cancel()
-        screenCrackPulseAnimator?.cancel()
-        screenCrackPulseAnimator = null
+        // 플래시 효과 중지
+        val flashEffect = findViewById<View>(R.id.flashEffect)
+        flashEffect.clearAnimation()
+        flashEffect.visibility = View.INVISIBLE
+        flashEffect.alpha = 0f
+        
+        // 기존 애니메이션 변수 정리
+        freezeScaleAnimation?.cancel()
+        freezeScaleAnimation = null
+        visionNarrowingScaleAnimator?.cancel()
+        visionNarrowingScaleAnimator = null
+        flashAnimator?.cancel()
+        flashAnimator = null
     }
 }
