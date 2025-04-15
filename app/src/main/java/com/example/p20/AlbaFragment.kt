@@ -4,7 +4,10 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ObjectAnimator
 import android.content.res.ColorStateList
+import android.media.AudioAttributes
+import android.media.AudioManager
 import android.media.MediaPlayer
+import android.media.SoundPool
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -89,14 +92,13 @@ class ClickAlbaFragment : Fragment() {
     // 날아가는 텍스트 애니메이션 추적용 카운터
     private var pendingAnimationCount = 0
     
-    // 효과음 재생을 위한 MediaPlayer
-    private var coinSoundPlayer: MediaPlayer? = null
+    // 효과음 재생을 위한 SoundPool
+    private lateinit var soundPool: SoundPool
+    private var coinSoundId: Int = 0
     
-    // 동시 재생 가능한 효과음 목록
-    private val soundPlayers = mutableListOf<MediaPlayer>()
-    
-    // 최대 동시 재생 효과음 수
-    private val MAX_CONCURRENT_SOUNDS = 4
+    // 디바운싱을 위한 변수
+    private var lastClickTime = 0L
+    private val MIN_CLICK_INTERVAL = 80L // 밀리초 (0.08초)
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -106,6 +108,9 @@ class ClickAlbaFragment : Fragment() {
 
         albaViewModel = ViewModelProvider(requireActivity())[AlbaViewModel::class.java]
         assetViewModel = ViewModelProvider(requireActivity())[AssetViewModel::class.java]
+
+        // SoundPool 초기화
+        initSoundPool()
 
         albaImage = view.findViewById(R.id.albaImage)
         earnText = view.findViewById(R.id.earnText)
@@ -126,26 +131,34 @@ class ClickAlbaFragment : Fragment() {
 
         albaImage.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
-                if (albaViewModel.isCooldown.value == false && albaViewModel.isActivePhase.value == false) {
-                    // 효과음 재생
+                // 쿨다운 상태가 아닐 때만 효과음 재생
+                val isCooldown = albaViewModel.isCooldown.value ?: false
+                if (!isCooldown) {
                     playCoinSound()
+                }
+                
+                // 현재 시간 가져오기
+                val currentTime = System.currentTimeMillis()
+                
+                // 게임 로직과 애니메이션은 디바운싱 적용
+                if (currentTime - lastClickTime > MIN_CLICK_INTERVAL) {
+                    lastClickTime = currentTime
                     
-                    albaViewModel.startActivePhase()
-                    val rewardAmount = albaViewModel.getRewardAmount().toLong()
-                    assetViewModel.increaseAsset(rewardAmount)
-                    val location = IntArray(2)
-                    albaImage.getLocationOnScreen(location)
-                    showRewardAnimation(event.rawX.toInt() - location[0], event.rawY.toInt() - location[1], rewardAmount)
-                } else if (albaViewModel.isActivePhase.value == true) {
-                    // 효과음 재생
-                    playCoinSound()
-                    
-                    albaViewModel.increaseAlbaLevel()
-                    val rewardAmount = albaViewModel.getRewardAmount().toLong()
-                    assetViewModel.increaseAsset(rewardAmount)
-                    val location = IntArray(2)
-                    albaImage.getLocationOnScreen(location)
-                    showRewardAnimation(event.rawX.toInt() - location[0], event.rawY.toInt() - location[1], rewardAmount)
+                    if (albaViewModel.isCooldown.value == false && albaViewModel.isActivePhase.value == false) {
+                        albaViewModel.startActivePhase()
+                        val rewardAmount = albaViewModel.getRewardAmount().toLong()
+                        assetViewModel.increaseAsset(rewardAmount)
+                        val location = IntArray(2)
+                        albaImage.getLocationOnScreen(location)
+                        showRewardAnimation(event.rawX.toInt() - location[0], event.rawY.toInt() - location[1], rewardAmount)
+                    } else if (albaViewModel.isActivePhase.value == true) {
+                        albaViewModel.increaseAlbaLevel()
+                        val rewardAmount = albaViewModel.getRewardAmount().toLong()
+                        assetViewModel.increaseAsset(rewardAmount)
+                        val location = IntArray(2)
+                        albaImage.getLocationOnScreen(location)
+                        showRewardAnimation(event.rawX.toInt() - location[0], event.rawY.toInt() - location[1], rewardAmount)
+                    }
                 }
             }
             true
@@ -423,34 +436,40 @@ class ClickAlbaFragment : Fragment() {
     }
 
     /**
+     * SoundPool 초기화 및 효과음 로드
+     */
+    private fun initSoundPool() {
+        // API 레벨 21 이상에서는 AudioAttributes 사용
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            val audioAttributes = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_GAME)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+            
+            soundPool = SoundPool.Builder()
+                .setMaxStreams(4)  // 최대 동시 재생 수
+                .setAudioAttributes(audioAttributes)
+                .build()
+        } else {
+            // 하위 버전 호환성
+            @Suppress("DEPRECATION")
+            soundPool = SoundPool(4, AudioManager.STREAM_MUSIC, 0)
+        }
+        
+        // 효과음 로드
+        coinSoundId = soundPool.load(requireContext(), R.raw.coin, 1)
+    }
+
+    /**
      * 코인 효과음을 재생합니다.
-     * 빠른 터치에도 소리가 중첩되어 들리도록 여러 MediaPlayer 인스턴스를 사용합니다.
+     * SoundPool을 사용하여 효율적으로 효과음을 중첩 재생합니다.
      */
     private fun playCoinSound() {
         try {
-            // 동시 재생 가능한 효과음 수 제한
-            if (soundPlayers.size >= MAX_CONCURRENT_SOUNDS) {
-                // 가장 오래된 효과음 해제
-                val oldestPlayer = soundPlayers.removeAt(0)
-                oldestPlayer.release()
-            }
-            
-            // 새 효과음 플레이어 생성
-            val newPlayer = MediaPlayer.create(requireContext(), R.raw.coin)
-            
-            // 볼륨 설정 (0.0 ~ 1.0)
-            newPlayer.setVolume(0.5f, 0.5f)
-            
-            // 목록에 추가
-            soundPlayers.add(newPlayer)
-            
-            // 효과음 재생
-            newPlayer.start()
-            
-            // 재생이 끝난 후 리소스 해제
-            newPlayer.setOnCompletionListener {
-                soundPlayers.remove(it)
-                it.release()
+            // 효과음이 로드되었는지 확인
+            if (coinSoundId > 0) {
+                // 효과음 재생 (좌우 볼륨은 0.5로 설정, 우선순위는 1, 반복 횟수 0, 속도 1.0)
+                soundPool.play(coinSoundId, 0.5f, 0.5f, 1, 0, 1.0f)
             }
         } catch (e: Exception) {
             // 효과음 재생 중 오류 발생 시 로그 출력 후 계속 진행
@@ -463,12 +482,9 @@ class ClickAlbaFragment : Fragment() {
         // 핸들러 콜백 제거
         handler.removeCallbacksAndMessages(null)
         
-        // 모든 MediaPlayer 리소스 해제
-        soundPlayers.forEach { it.release() }
-        soundPlayers.clear()
-        
-        // 기존 coinSoundPlayer도 해제 (호환성 유지)
-        coinSoundPlayer?.release()
-        coinSoundPlayer = null
+        // SoundPool 리소스 해제
+        if (::soundPool.isInitialized) {
+            soundPool.release()
+        }
     }
 }
