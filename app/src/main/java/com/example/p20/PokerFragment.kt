@@ -1130,6 +1130,9 @@ class PokerFragment : Fragment() {
 
     // 게임 규칙 및 배당률 정보 표시 함수
     private fun showGameRules() {
+        // 다이얼로그가 표시되면 타이머 멈춤
+        timeViewModel.stopTimer()
+        
         val message = """
             [게임 규칙]
             1. 7장의 카드 중 5장을 선택하여 최고의 패를 만드세요.
@@ -1162,15 +1165,26 @@ class PokerFragment : Fragment() {
         val dialog = androidx.appcompat.app.AlertDialog.Builder(requireContext())
             .setTitle("1인발라트로 게임 설명")
             .setMessage(message)
-            .setPositiveButton("확인") { dialog, _ -> dialog.dismiss() }
+            .setPositiveButton("확인") { dialog, _ -> 
+                dialog.dismiss()
+                // 다이얼로그가 닫히면 타이머 다시 시작
+                timeViewModel.startTimer()
+            }
+            .setOnCancelListener {
+                // 다이얼로그가 취소되어도 타이머 다시 시작
+                timeViewModel.startTimer()
+            }
             .create()
             
         // 다이얼로그 표시
         dialog.show()
         
+        // 사용자에게 타이머가 일시정지되었음을 알림
+        MessageManager.showMessage(requireContext(), "게임 설명을 읽는 동안 시간이 멈춰있습니다.")
+        
         // 텍스트 크기 조절
         val textView = dialog.findViewById<TextView>(android.R.id.message)
-        textView?.textSize = 13f // 텍스트 크기를 16sp로 설정
+        textView?.textSize = 13f // 텍스트 크기를 13sp로 설정
     }
     
     // 게임 상태 감시 함수 - 옵저버 최적화
