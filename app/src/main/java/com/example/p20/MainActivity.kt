@@ -24,6 +24,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var albaViewModel: AlbaViewModel // 알바 뷰모델 추가
     private lateinit var globalRemainingTimeTextView: TextView // 전역 남은 시간 표시 텍스트뷰
     private lateinit var viewModelFactory: ViewModelFactory // viewModelFactory 클래스 변수로 선언
+    private var initialGravity: Int = 0
+    private var initialMarginTop: Int = 0
+    private var initialMarginEnd: Int = 0
+    private var initialMarginLeft: Int = 0
+    private var initialMarginBottom: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -434,9 +439,11 @@ class MainActivity : AppCompatActivity() {
     private fun setupDraggableTimeView() {
         // 초기 마진 값 저장 (레이아웃 속성 복원을 위해)
         val layoutParams = globalRemainingTimeTextView.layoutParams as FrameLayout.LayoutParams
-        val initialMarginTop = layoutParams.topMargin
-        val initialMarginEnd = layoutParams.rightMargin
-        val initialGravity = layoutParams.gravity
+        initialMarginTop = layoutParams.topMargin
+        initialMarginEnd = layoutParams.rightMargin
+        initialGravity = layoutParams.gravity
+        initialMarginLeft = layoutParams.leftMargin
+        initialMarginBottom = layoutParams.bottomMargin
 
         // 마지막 터치 위치를 저장할 변수
         var lastX = 0f
@@ -524,16 +531,16 @@ class MainActivity : AppCompatActivity() {
                 params.gravity = initialGravity
                 params.topMargin = initialMarginTop
                 params.rightMargin = initialMarginEnd
-                params.leftMargin = 0
-                params.bottomMargin = 0
+                params.leftMargin = initialMarginLeft
+                params.bottomMargin = initialMarginBottom
 
-                // 뷰 위치 초기화
+                // gravity가 설정된 경우 x, y 값을 0으로 재설정
                 globalRemainingTimeTextView.x = 0f
                 globalRemainingTimeTextView.y = 0f
 
                 globalRemainingTimeTextView.layoutParams = params
 
-                // 간단한 애니메이션 효과로 위치 이동 완료 알림
+                // 애니메이션 효과
                 globalRemainingTimeTextView.animate()
                     .scaleX(1.2f).scaleY(1.2f)
                     .setDuration(200)
@@ -544,7 +551,10 @@ class MainActivity : AppCompatActivity() {
                             .start()
                     }
                     .start()
-
+                
+                // 메시지 표시
+                MessageManager.showMessage(this@MainActivity, "시간 표시가 원래 위치로 복원되었습니다.")
+                
                 return true
             }
         })
