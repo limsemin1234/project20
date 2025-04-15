@@ -346,6 +346,9 @@ class MainActivity : AppCompatActivity() {
             // 참고: ExplanationFragment의 onDestroy에서도 타이머를 시작하지만,
             // 혹시 모를 상황에 대비해 여기서도 타이머 시작
             timeViewModel.startTimer()
+            
+            // 게임 설명창이 사라진 후 시간 표시 드래그 관련 안내 메시지 표시
+            showDragTimeViewMessage()
         }
     }
 
@@ -363,6 +366,17 @@ class MainActivity : AppCompatActivity() {
 
         // 앱 종료
         finishAffinity()
+    }
+
+    /**
+     * 시간 표시 드래그 안내 메시지를 표시하는 메소드
+     * ExplanationFragment나 다른 곳에서 호출하여 사용
+     */
+    fun showDragTimeViewMessage() {
+        // 메시지 표시 전 약간의 딜레이를 줌 (1초)
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            MessageManager.showMessage(this, "남은 시간 표시를 드래그하여 이동하거나 더블 탭하여 원위치로 되돌릴 수 있습니다")
+        }, 1000)
     }
 
     /**
@@ -493,10 +507,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
         
-        // 안내 메시지
-        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            MessageManager.showMessage(this, "남은 시간 표시를 드래그하여 이동하거나 더블 탭하여 원위치로 되돌릴 수 있습니다")
-        }, 3000)
+        // 안내 메시지는 ExplanationFragment가 사라질 때 표시하도록 이동
     }
 
     // 버튼 활성화/비활성화 헬퍼 메서드 추가

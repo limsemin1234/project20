@@ -2,6 +2,7 @@ package com.example.p20
 
 import android.animation.ObjectAnimator
 import android.os.Bundle
+import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -42,6 +43,10 @@ class ExplanationFragment : Fragment() {
         view.setOnClickListener {
             // 타이머 다시 시작
             timeViewModel.startTimer()
+            
+            // 메인 액티비티에서 메시지를 표시하도록 함
+            (activity as? MainActivity)?.showDragTimeViewMessage()
+            
             // 프래그먼트 제거
             parentFragmentManager.beginTransaction().remove(this).commit()
         }
