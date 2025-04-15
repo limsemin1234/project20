@@ -3,6 +3,8 @@ package com.example.p20
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ObjectAnimator
+import android.content.res.ColorStateList
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -12,7 +14,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
@@ -71,6 +76,8 @@ class ClickAlbaFragment : Fragment() {
     private lateinit var animationContainer: FrameLayout
     private lateinit var albaImage: ImageView
     private lateinit var activePhaseText: TextView
+    private lateinit var expProgressBar: ProgressBar
+    private lateinit var expTextView: TextView
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -87,6 +94,11 @@ class ClickAlbaFragment : Fragment() {
         cooldownText = view.findViewById(R.id.cooldownText)
         animationContainer = view.findViewById(R.id.animationContainer)
         activePhaseText = view.findViewById(R.id.cooldownText)
+        
+        expProgressBar = view.findViewById(R.id.expProgressBar)
+        expTextView = view.findViewById(R.id.expTextView)
+        
+        updateExpBar(albaViewModel.getClickCounter())
 
         earnText.text = "알바 시작!"
 
@@ -99,6 +111,8 @@ class ClickAlbaFragment : Fragment() {
                     val location = IntArray(2)
                     albaImage.getLocationOnScreen(location)
                     showRewardAnimation(event.rawX.toInt() - location[0], event.rawY.toInt() - location[1], rewardAmount)
+                    
+                    updateExpBar(albaViewModel.getClickCounter())
                 } else if (albaViewModel.isActivePhase.value == true) {
                     albaViewModel.increaseAlbaLevel()
                     val rewardAmount = albaViewModel.getRewardAmount().toLong()
@@ -106,6 +120,8 @@ class ClickAlbaFragment : Fragment() {
                     val location = IntArray(2)
                     albaImage.getLocationOnScreen(location)
                     showRewardAnimation(event.rawX.toInt() - location[0], event.rawY.toInt() - location[1], rewardAmount)
+                    
+                    updateExpBar(albaViewModel.getClickCounter())
                 }
             }
             true
@@ -134,6 +150,24 @@ class ClickAlbaFragment : Fragment() {
             if (reward != null) {
                 // 아이템 획득 이벤트만 소비 (메시지는 ViewModel에서 표시)
                 albaViewModel.consumeItemRewardEvent() // 이벤트 소비
+            }
+        })
+        
+        // 클릭 카운터 리셋 이벤트 관찰
+        albaViewModel.clickCounterResetEvent.observe(viewLifecycleOwner, Observer { isReset ->
+            if (isReset == true) {
+                // 경험치 바 초기화
+                updateExpBar(0)
+                
+                // 경험치 바 리셋 효과 애니메이션
+                val fadeOut = ObjectAnimator.ofFloat(expProgressBar, "alpha", 1f, 0.3f)
+                fadeOut.duration = 300
+                fadeOut.repeatMode = ObjectAnimator.REVERSE
+                fadeOut.repeatCount = 1
+                fadeOut.start()
+                
+                // 이벤트 소비
+                albaViewModel.consumeClickCounterResetEvent()
             }
         })
 
@@ -229,5 +263,32 @@ class ClickAlbaFragment : Fragment() {
     // MessageManager로 대체되어 제거할 수 있지만, 코드 호환성을 위해 빈 함수로 유지
     private fun showItemRewardAnimation(reward: ItemReward) {
         // 비워둠 - 이제 MessageManager를 통해 메시지가 표시됨
+    }
+
+    /**
+     * 경험치 바를 업데이트합니다.
+     * @param clickCount 현재 클릭 횟수
+     */
+    private fun updateExpBar(clickCount: Int) {
+        // 0~20 사이 값으로 제한
+        val progress = clickCount.coerceIn(0, 20)
+        expProgressBar.progress = progress
+        expTextView.text = "$progress/20"
+        
+        // 경험치가 쌓일 때마다 색상 변화 효과
+        val greenColor = resources.getColor(android.R.color.holo_green_light, null)
+        val yellowColor = resources.getColor(android.R.color.holo_orange_light, null)
+        val redColor = resources.getColor(android.R.color.holo_red_light, null)
+        
+        val color = when {
+            progress < 7 -> greenColor
+            progress < 14 -> yellowColor
+            else -> redColor
+        }
+        
+        // API 레벨 21 이상에서 색상 변경
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            expProgressBar.progressTintList = ColorStateList.valueOf(color)
+        }
     }
 }

@@ -37,6 +37,10 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
     private val _itemRewardEvent = MutableLiveData<ItemReward?>()
     val itemRewardEvent: LiveData<ItemReward?> get() = _itemRewardEvent
 
+    // 클릭 카운터 리셋 이벤트
+    private val _clickCounterResetEvent = MutableLiveData<Boolean>()
+    val clickCounterResetEvent: LiveData<Boolean> get() = _clickCounterResetEvent
+
     init {
         loadAlbaData()
         if (_isCooldown.value == true && _cooldownTime.value ?: 0 > 0) {
@@ -50,6 +54,11 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
     // 아이템 획득 이벤트를 소비합니다
     fun consumeItemRewardEvent() {
         _itemRewardEvent.value = null
+    }
+
+    // 클릭 카운터 리셋 이벤트를 소비합니다
+    fun consumeClickCounterResetEvent() {
+        _clickCounterResetEvent.value = false
     }
 
     fun startActivePhase() {
@@ -105,6 +114,14 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
         return (_albaLevel.value ?: 1) * 100
     }
 
+    /**
+     * 현재 클릭 카운터 값을 반환합니다.
+     * @return 현재 클릭 횟수
+     */
+    fun getClickCounter(): Int {
+        return clickCounter
+    }
+
     fun increaseAlbaLevel() {
         clickCounter++
         
@@ -114,6 +131,9 @@ class AlbaViewModel(application: Application) : AndroidViewModel(application) {
             val newLevel = currentLevel + 1
             _albaLevel.value = newLevel
             clickCounter = 0
+            
+            // 클릭 카운터 리셋 이벤트 발생
+            _clickCounterResetEvent.value = true
             
             // 레벨업 시 아이템 재고 증가 처리
             val context = getApplication<Application>().applicationContext
