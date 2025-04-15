@@ -413,6 +413,10 @@ class MainActivity : AppCompatActivity() {
         val explanationFragment = supportFragmentManager.findFragmentByTag("ExplanationFragment")
         if (explanationFragment != null) {
             supportFragmentManager.beginTransaction().remove(explanationFragment).commit()
+            // ExplanationFragment가 제거될 때 타이머 시작
+            // 참고: ExplanationFragment의 onDestroy에서도 타이머를 시작하지만,
+            // 혹시 모를 상황에 대비해 여기서도 타이머 시작
+            timeViewModel.startTimer()
         }
     }
 
