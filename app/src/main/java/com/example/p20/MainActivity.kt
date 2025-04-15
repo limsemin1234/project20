@@ -14,6 +14,7 @@ import android.widget.LinearLayout
 import android.view.animation.AlphaAnimation
 import androidx.fragment.app.DialogFragment
 import android.graphics.Color
+import android.media.MediaPlayer
 
 class MainActivity : AppCompatActivity() {
 
@@ -38,6 +39,11 @@ class MainActivity : AppCompatActivity() {
     private var shakeAnimation: android.view.animation.TranslateAnimation? = null
     private var flashAnimator: android.animation.ObjectAnimator? = null
     private var warningEffectLevel = 0 // 0: 없음, 1: 약함, 2: 중간, 3: 강함
+
+    // 배경음악 재생을 위한 MediaPlayer 변수
+    private var backgroundMusic: MediaPlayer? = null
+    private var isMusicPaused = false
+    private var currentMusicIndex = 0 // 현재 선택된 음악 인덱스
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -298,6 +304,9 @@ class MainActivity : AppCompatActivity() {
             val settingsDialog = SettingsDialogFragment()
             settingsDialog.show(supportFragmentManager, SettingsDialogFragment.TAG)
         }
+
+        // 배경음악 초기화 및 재생
+        setupBackgroundMusic()
     }
 
     private fun showFragment(fragment: Fragment, tag: String) {
@@ -332,9 +341,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        
         // 앱이 완전히 종료될 때 데이터 저장
         stockViewModel.saveStockData()
         assetViewModel.saveAssetToPreferences()
+        
+        // 배경음악 해제
+        backgroundMusic?.release()
+        backgroundMusic = null
     }
 
     // ExplanationFragment 제거 함수
@@ -753,5 +767,115 @@ class MainActivity : AppCompatActivity() {
         visionNarrowingScaleAnimator = null
         flashAnimator?.cancel()
         flashAnimator = null
+    }
+
+    // 배경음악 초기화 및 재생 메소드
+    private fun setupBackgroundMusic() {
+        try {
+            // SharedPreferences에서 선택된 음악 인덱스 가져오기
+            val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+            currentMusicIndex = prefs.getInt("selected_music", 0)
+            
+            // 선택된 음악으로 MediaPlayer 초기화
+            createMediaPlayer(currentMusicIndex)
+            
+            // 설정에 따라 음악 재생 여부 결정
+            val soundEnabled = prefs.getBoolean("sound_enabled", true)
+            
+            if (soundEnabled) {
+                backgroundMusic?.start()
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "배경음악 초기화 오류: ${e.message}")
+        }
+    }
+    
+    /**
+     * 인덱스에 따라 해당하는 음악 리소스로 MediaPlayer 생성
+     */
+    private fun createMediaPlayer(musicIndex: Int) {
+        // 기존 재생 중인 음악 해제
+        backgroundMusic?.release()
+        backgroundMusic = null
+        
+        // 인덱스에 따라 다른 음악 리소스 선택
+        val musicResId = when (musicIndex) {
+            0 -> R.raw.main_music // 기본 음악
+            1 -> R.raw.main_music // 로맨틱한 음악 (같은 파일 사용)
+            2 -> R.raw.main_music // 에너지 넘치는 음악 (같은 파일 사용)
+            3 -> R.raw.main_music // 카지노 스타일 (같은 파일 사용)
+            4 -> R.raw.main_music // 잔잔한 음악 (같은 파일 사용)
+            else -> R.raw.main_music
+        }
+        
+        // 새 MediaPlayer 생성
+        backgroundMusic = MediaPlayer.create(this, musicResId)
+        
+        // 반복 재생 설정
+        backgroundMusic?.isLooping = true
+        
+        // 볼륨 설정 (0.0 ~ 1.0)
+        backgroundMusic?.setVolume(0.5f, 0.5f)
+    }
+    
+    /**
+     * 설정에서 음악을 변경할 때 호출
+     */
+    fun changeBackgroundMusic(musicIndex: Int) {
+        if (currentMusicIndex == musicIndex) return
+        
+        // 현재 재생 중인지 확인
+        val wasPlaying = backgroundMusic?.isPlaying ?: false
+        
+        // 새 MediaPlayer 생성
+        createMediaPlayer(musicIndex)
+        
+        // 이전에 재생 중이었다면 새 음악도 재생
+        if (wasPlaying) {
+            backgroundMusic?.start()
+        }
+        
+        // 현재 인덱스 업데이트
+        currentMusicIndex = musicIndex
+    }
+    
+    /**
+     * 배경음악 시작 (설정에서 호출)
+     */
+    fun startBackgroundMusic() {
+        if (backgroundMusic == null) {
+            setupBackgroundMusic()
+        } else if (backgroundMusic?.isPlaying == false) {
+            backgroundMusic?.start()
+        }
+    }
+    
+    /**
+     * 배경음악 중지 (설정에서 호출)
+     */
+    fun stopBackgroundMusic() {
+        if (backgroundMusic?.isPlaying == true) {
+            backgroundMusic?.pause()
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        
+        // 앱이 백그라운드로 가면 음악 일시정지
+        if (backgroundMusic?.isPlaying == true) {
+            backgroundMusic?.pause()
+            isMusicPaused = true
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        
+        // 앱이 다시 포그라운드로 오면 음악 재생 재개
+        if (isMusicPaused && backgroundMusic != null) {
+            backgroundMusic?.start()
+            isMusicPaused = false
+        }
     }
 }
