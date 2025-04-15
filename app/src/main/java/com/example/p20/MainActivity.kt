@@ -26,7 +26,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewModelFactory: ViewModelFactory // viewModelFactory 클래스 변수로 선언
     private var initialGravity: Int = 0
     private var initialMarginTop: Int = 0
-    private var initialMarginEnd: Int = 0
+    private var initialMarginRight: Int = 0
     private var initialMarginLeft: Int = 0
     private var initialMarginBottom: Int = 0
 
@@ -440,7 +440,7 @@ class MainActivity : AppCompatActivity() {
         // 초기 마진 값 저장 (레이아웃 속성 복원을 위해)
         val layoutParams = globalRemainingTimeTextView.layoutParams as FrameLayout.LayoutParams
         initialMarginTop = layoutParams.topMargin
-        initialMarginEnd = layoutParams.rightMargin
+        initialMarginRight = layoutParams.rightMargin
         initialGravity = layoutParams.gravity
         initialMarginLeft = layoutParams.leftMargin
         initialMarginBottom = layoutParams.bottomMargin
@@ -530,7 +530,7 @@ class MainActivity : AppCompatActivity() {
                 val params = globalRemainingTimeTextView.layoutParams as FrameLayout.LayoutParams
                 params.gravity = initialGravity
                 params.topMargin = initialMarginTop
-                params.rightMargin = initialMarginEnd
+                params.rightMargin = initialMarginRight
                 params.leftMargin = initialMarginLeft
                 params.bottomMargin = initialMarginBottom
 
