@@ -130,13 +130,6 @@ class CasinoFragment : Fragment(), LifecycleObserver {
         
         // 라이프사이클 옵저버 제거
         viewLifecycleOwner.lifecycle.removeObserver(this)
-        
-        // 카지노 화면에서 나갈 때 원래 음악으로 복귀
-        // 하지만 15초 경고 음악이 재생 중이면 복귀하지 않음
-        val mainActivity = activity as? MainActivity
-        if (mainActivity != null && !mainActivity.isPlaying15SecondWarning()) {
-            mainActivity.restoreOriginalMusic()
-        }
     }
     
     /**

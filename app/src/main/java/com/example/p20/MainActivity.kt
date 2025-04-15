@@ -46,6 +46,7 @@ class MainActivity : AppCompatActivity() {
     private var currentMusicIndex = 0 // 현재 선택된 음악 인덱스
     private var originalMusicIndex = 0 // 임시로 음악을 변경하기 전의 원래 음악 인덱스
     private var isTemporaryMusic = false // 현재 임시 음악(예: 카지노 음악)이 재생 중인지 여부
+    private var currentMusicResource = -1 // 현재 재생 중인 음악의 리소스 ID
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -259,12 +260,6 @@ class MainActivity : AppCompatActivity() {
         buttonCasino.setOnClickListener {
             removeExplanationFragment()
             slidePanel.visibility = View.GONE
-            
-            // 15초 경고 음악이 재생 중이 아닐 경우에만 카지노 음악으로 변경
-            if (!isPlaying15SecondWarning()) {
-                // 카지노 화면으로 이동하기 전에 카지노 음악으로 변경
-                setTemporaryMusic(R.raw.casino_1)
-            }
             
             showFragment(CasinoFragment(), "CasinoFragment")
         }
@@ -871,6 +866,9 @@ class MainActivity : AppCompatActivity() {
         
         // 볼륨 설정 (0.0 ~ 1.0)
         backgroundMusic?.setVolume(0.5f, 0.5f)
+        
+        // 현재 음악 리소스 ID 업데이트
+        currentMusicResource = musicResId
     }
     
     /**
@@ -957,14 +955,16 @@ class MainActivity : AppCompatActivity() {
      * @param musicResId 재생할 음악 리소스 ID
      */
     fun setTemporaryMusic(musicResId: Int) {
-        // 이미 임시 음악이 재생 중이면 변경하지 않음
-        if (isTemporaryMusic) return
+        // 이미 같은 임시 음악이 재생 중이면 변경하지 않음
+        if (isTemporaryMusic && currentMusicResource == musicResId) return
         
         // 현재 재생 중인지 확인
         val wasPlaying = backgroundMusic?.isPlaying ?: false
         
-        // 현재 음악 인덱스 저장
-        originalMusicIndex = currentMusicIndex
+        // 현재 음악 인덱스 저장 (임시 음악이 아닐 경우에만)
+        if (!isTemporaryMusic) {
+            originalMusicIndex = currentMusicIndex
+        }
         
         // 기존 재생 중인 음악 해제
         backgroundMusic?.release()
@@ -973,8 +973,10 @@ class MainActivity : AppCompatActivity() {
         // 새 MediaPlayer 생성
         backgroundMusic = MediaPlayer.create(this, musicResId)
         
-        // 반복 재생 설정
-        backgroundMusic?.isLooping = true
+        // 음악이 끝났을 때 다시 재생하도록 리스너 설정
+        backgroundMusic?.setOnCompletionListener {
+            it.start()
+        }
         
         // 볼륨 설정 (0.0 ~ 1.0)
         backgroundMusic?.setVolume(0.5f, 0.5f)
@@ -986,6 +988,9 @@ class MainActivity : AppCompatActivity() {
         
         // 임시 음악 상태로 설정
         isTemporaryMusic = true
+        
+        // 현재 재생 중인 음악 리소스 ID 기록
+        currentMusicResource = musicResId
     }
     
     /**
@@ -1024,8 +1029,34 @@ class MainActivity : AppCompatActivity() {
         
         // 임시 음악 상태 해제
         isTemporaryMusic = false
+        
+        // 현재 음악 리소스 업데이트
+        currentMusicResource = when (currentMusicIndex) {
+            0 -> R.raw.main_music
+            1 -> R.raw.main_music_sinbi
+            2 -> R.raw.main_music_electric
+            3 -> R.raw.main_music_guitar
+            4 -> R.raw.main_music_janjan
+            else -> R.raw.main_music
+        }
     }
 
+    /**
+     * 현재 재생 중인 음악 리소스 ID 반환
+     * 음악이 없으면 -1 반환
+     */
+    fun getCurrentMusicResource(): Int {
+        return currentMusicResource
+    }
+
+    /**
+     * 현재 임시 음악이 재생 중인지 여부를 확인
+     * @return 임시 음악이 재생 중이면 true, 아니면 false
+     */
+    fun isTemporaryMusicPlaying(): Boolean {
+        return isTemporaryMusic
+    }
+    
     // 게임이 종료될 때 음악을 멈추는 메서드
     fun stopBackgroundMusicForGameOver() {
         if (backgroundMusic?.isPlaying == true) {
