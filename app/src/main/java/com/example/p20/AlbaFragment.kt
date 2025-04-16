@@ -147,14 +147,17 @@ class ClickAlbaFragment : Fragment() {
 
         albaImage.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
-                // 쿨다운 상태가 아닐 때만 효과음 재생
-                val isCooldown = albaViewModel.isCooldown.value ?: false
-                if (!isCooldown) {
-                    playCoinSound()
-                }
-                
                 // 현재 시간 가져오기
                 val currentTime = System.currentTimeMillis()
+                
+                // 활성 시간이 끝났는지 확인
+                val activeTimeDone = albaViewModel.isActivePhase.value == true && (albaViewModel.activePhaseTime.value ?: 0) <= 0
+                
+                // 쿨다운 상태가 아니고 활성 시간이 끝나지 않았을 때만 효과음 재생
+                val isCooldown = albaViewModel.isCooldown.value ?: false
+                if (!isCooldown && !activeTimeDone) {
+                    playCoinSound()
+                }
                 
                 // 게임 로직과 애니메이션은 디바운싱 적용
                 if (currentTime - lastClickTime > MIN_CLICK_INTERVAL) {
@@ -164,13 +167,24 @@ class ClickAlbaFragment : Fragment() {
                         albaViewModel.startActivePhase()
                         val rewardAmount = albaViewModel.getRewardAmount().toLong()
                         assetViewModel.increaseAsset(rewardAmount)
+                        
+                        // 즉시 경험치바 업데이트
+                        updateExpBar(albaViewModel.getClickCounter())
+                        
+                        // 보상 애니메이션 표시
                         val location = IntArray(2)
                         albaImage.getLocationOnScreen(location)
                         showRewardAnimation(event.rawX.toInt() - location[0], event.rawY.toInt() - location[1], rewardAmount)
-                    } else if (albaViewModel.isActivePhase.value == true) {
+                    } else if (albaViewModel.isActivePhase.value == true && albaViewModel.activePhaseTime.value ?: 0 > 0) {
+                        // 활성 시간이 남아있을 때만 경험치 증가
                         albaViewModel.increaseAlbaLevel()
                         val rewardAmount = albaViewModel.getRewardAmount().toLong()
                         assetViewModel.increaseAsset(rewardAmount)
+                        
+                        // 즉시 경험치바 업데이트
+                        updateExpBar(albaViewModel.getClickCounter())
+                        
+                        // 보상 애니메이션 표시
                         val location = IntArray(2)
                         albaImage.getLocationOnScreen(location)
                         showRewardAnimation(event.rawX.toInt() - location[0], event.rawY.toInt() - location[1], rewardAmount)
@@ -197,6 +211,12 @@ class ClickAlbaFragment : Fragment() {
         })
         albaViewModel.activePhaseTime.observe(viewLifecycleOwner, Observer { time ->
             updateStatusText()
+            
+            // 시간이 0이 되었을 때 경험치 애니메이션 중지
+            if (time <= 0 && albaViewModel.isActivePhase.value == true) {
+                expUpdateQueue.clear()
+                isExpAnimating = false
+            }
         })
 
         albaViewModel.albaLevel.observe(viewLifecycleOwner, Observer { level ->
@@ -314,9 +334,6 @@ class ClickAlbaFragment : Fragment() {
                 shake.cancel()
                 animationContainer.removeView(rewardTextView)
                 
-                // 애니메이션 종료 시 경험치 바 큐에 추가
-                queueExpBarUpdate(albaViewModel.getClickCounter())
-                
                 // 애니메이션 카운터 감소
                 pendingAnimationCount--
             }
@@ -413,7 +430,9 @@ class ClickAlbaFragment : Fragment() {
         // 0~20 사이 값으로 제한
         val progress = clickCount.coerceIn(0, 20)
         expProgressBar.progress = progress
-        expTextView.text = "$progress/20"
+        // 두 자리 숫자 형식(01, 02 등)으로 표시
+        val formattedProgress = String.format("%02d", progress)
+        expTextView.text = "$formattedProgress/20"
         
         // 경험치가 쌓일 때마다 색상 변화 효과
         val greenColor = resources.getColor(android.R.color.holo_green_light, null)
@@ -439,6 +458,13 @@ class ClickAlbaFragment : Fragment() {
         // 대기 중인 애니메이션이 없거나, 활성 상태가 다시 시작된 경우 확인 중지
         val isActive = albaViewModel.isActivePhase.value ?: false
         if (pendingAnimationCount <= 0 || isActive) {
+            return
+        }
+        
+        // 활성 시간이 끝났으면 애니메이션 큐를 비우고 경험치 업데이트 중지
+        if (!isActive || (albaViewModel.activePhaseTime.value ?: 0) <= 0) {
+            expUpdateQueue.clear()
+            isExpAnimating = false
             return
         }
         
@@ -482,6 +508,11 @@ class ClickAlbaFragment : Fragment() {
      */
     private fun playCoinSound() {
         try {
+            // 활성 시간이 끝났으면 소리 재생하지 않음
+            if (albaViewModel.isActivePhase.value == true && (albaViewModel.activePhaseTime.value ?: 0) <= 0) {
+                return
+            }
+            
             // 효과음이 로드되었는지 확인
             if (coinSoundId > 0) {
                 // 효과음 재생 (좌우 볼륨은 0.5로 설정, 우선순위는 1, 반복 횟수 0, 속도 1.0)

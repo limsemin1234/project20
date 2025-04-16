@@ -1063,4 +1063,84 @@ class MainActivity : AppCompatActivity() {
             backgroundMusic?.pause()
         }
     }
+
+    /**
+     * 음량을 조절하는 메서드 (설정 화면에서 호출)
+     * @param volume 0.0 ~ 1.0 사이의 볼륨 값
+     */
+    fun setVolume(volume: Float) {
+        try {
+            // 볼륨 범위를 0.0 ~ 1.0으로 제한
+            val safeVolume = volume.coerceIn(0.0f, 1.0f)
+            
+            // 배경음악 볼륨 설정
+            backgroundMusic?.setVolume(safeVolume, safeVolume)
+            
+            // 현재 볼륨 설정을 저장 (필요시)
+            val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+            prefs.edit().putFloat("current_volume", safeVolume).apply()
+            
+            android.util.Log.d("MainActivity", "음량 설정: $safeVolume")
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "볼륨 설정 오류: ${e.message}")
+        }
+    }
+    
+    /**
+     * 효과음 설정을 업데이트하는 메서드 (설정 화면에서 호출)
+     * @param enabled 효과음 활성화 여부
+     */
+    fun updateSoundEffectSettings(enabled: Boolean) {
+        try {
+            // 설정을 SharedPreferences에 저장
+            val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+            prefs.edit().putBoolean("sound_effect_enabled", enabled).apply()
+            
+            // 여기에 효과음 활성화/비활성화 관련 로직 추가
+            // 예: SoundManager 또는 관련 클래스에 설정 전달
+            
+            android.util.Log.d("MainActivity", "효과음 설정 변경: $enabled")
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "효과음 설정 오류: ${e.message}")
+        }
+    }
+    
+    /**
+     * 효과음을 재생하는 메서드
+     * @param soundId 재생할 효과음 리소스 ID
+     * @return 효과음 재생 성공 여부
+     */
+    fun playSoundEffect(soundId: Int): Boolean {
+        try {
+            // 효과음 설정이 비활성화되어 있거나 음소거 상태면 재생하지 않음
+            val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+            val soundEffectEnabled = prefs.getBoolean("sound_effect_enabled", true)
+            val muted = prefs.getBoolean("mute_enabled", false)
+            
+            if (!soundEffectEnabled || muted) {
+                return false
+            }
+            
+            // 현재 볼륨 설정 가져오기
+            val volume = prefs.getFloat("current_volume", 0.7f)
+            
+            // 효과음 재생 로직 (SoundPool 등을 사용)
+            // 예시로만 작성, 실제로는 적절한 효과음 관리 클래스로 분리하는 것이 좋음
+            val soundPool = android.media.SoundPool.Builder()
+                .setMaxStreams(5)
+                .build()
+            
+            val soundEffectId = soundPool.load(this, soundId, 1)
+            soundPool.setOnLoadCompleteListener { _, _, status ->
+                if (status == 0) {
+                    soundPool.play(soundEffectId, volume, volume, 1, 0, 1.0f)
+                }
+            }
+            
+            return true
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "효과음 재생 오류: ${e.message}")
+            return false
+        }
+    }
 }

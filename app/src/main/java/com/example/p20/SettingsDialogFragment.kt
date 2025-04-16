@@ -19,6 +19,7 @@ import android.widget.Spinner
 import android.widget.ArrayAdapter
 import android.widget.TextView
 import android.widget.AdapterView
+import android.widget.SeekBar
 
 class SettingsDialogFragment : DialogFragment() {
 
@@ -57,16 +58,23 @@ class SettingsDialogFragment : DialogFragment() {
             }
         }
 
-        // 소리 설정 스위치
-        val soundSwitch = view.findViewById<Switch>(R.id.switchSound)
-        
         // SharedPreferences에서 설정 불러오기
         val prefs = requireActivity().getSharedPreferences("settings", Context.MODE_PRIVATE)
+        
+        // 배경음악 설정 스위치
+        val soundSwitch = view.findViewById<Switch>(R.id.switchSound)
         soundSwitch.isChecked = prefs.getBoolean("sound_enabled", true)
         
         soundSwitch.setOnCheckedChangeListener { _, isChecked ->
             // 설정 저장
             prefs.edit().putBoolean("sound_enabled", isChecked).apply()
+            
+            // 음소거 스위치와 동기화
+            val muteSwitch = view.findViewById<Switch>(R.id.switchMute)
+            if (isChecked && muteSwitch.isChecked) {
+                muteSwitch.isChecked = false
+                prefs.edit().putBoolean("mute_enabled", false).apply()
+            }
             
             // MainActivity의 배경음악 설정 변경
             (activity as? MainActivity)?.let { mainActivity ->
@@ -79,9 +87,94 @@ class SettingsDialogFragment : DialogFragment() {
                 }
             }
             
-            val message = if (isChecked) "소리가 켜졌습니다" else "소리가 꺼졌습니다"
+            val message = if (isChecked) "배경음악이 켜졌습니다" else "배경음악이 꺼졌습니다"
             Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
         }
+        
+        // 효과음 설정 스위치
+        val soundEffectSwitch = view.findViewById<Switch>(R.id.switchSoundEffect)
+        soundEffectSwitch.isChecked = prefs.getBoolean("sound_effect_enabled", true)
+        
+        soundEffectSwitch.setOnCheckedChangeListener { _, isChecked ->
+            // 설정 저장
+            prefs.edit().putBoolean("sound_effect_enabled", isChecked).apply()
+            
+            // 음소거 스위치와 동기화
+            val muteSwitch = view.findViewById<Switch>(R.id.switchMute)
+            if (isChecked && muteSwitch.isChecked) {
+                muteSwitch.isChecked = false
+                prefs.edit().putBoolean("mute_enabled", false).apply()
+            }
+            
+            // SoundManager 설정 업데이트 (구현 필요)
+            (activity as? MainActivity)?.let { mainActivity ->
+                // 효과음 설정 변경 - 구현 필요
+                mainActivity.updateSoundEffectSettings(isChecked)
+            }
+            
+            val message = if (isChecked) "효과음이 켜졌습니다" else "효과음이 꺼졌습니다"
+            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+        }
+        
+        // 음소거 설정 스위치
+        val muteSwitch = view.findViewById<Switch>(R.id.switchMute)
+        muteSwitch.isChecked = prefs.getBoolean("mute_enabled", false)
+        
+        muteSwitch.setOnCheckedChangeListener { _, isChecked ->
+            // 설정 저장
+            prefs.edit().putBoolean("mute_enabled", isChecked).apply()
+            
+            // 다른 소리 관련 스위치와 동기화
+            if (isChecked) {
+                soundSwitch.isChecked = false
+                soundEffectSwitch.isChecked = false
+                prefs.edit()
+                    .putBoolean("sound_enabled", false)
+                    .putBoolean("sound_effect_enabled", false)
+                    .apply()
+                
+                // 모든 소리 비활성화
+                (activity as? MainActivity)?.let { mainActivity ->
+                    mainActivity.stopBackgroundMusic()
+                    mainActivity.updateSoundEffectSettings(false)
+                }
+            }
+            
+            val message = if (isChecked) "모든 소리가 음소거 되었습니다" else "음소거가 해제되었습니다"
+            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+        }
+        
+        // 볼륨 조절 슬라이더
+        val volumeSeekBar = view.findViewById<SeekBar>(R.id.volumeSeekBar)
+        volumeSeekBar.progress = prefs.getInt("volume_level", 70)
+        
+        volumeSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                // 실시간으로 볼륨 조절 (선택적)
+                if (fromUser) {
+                    (activity as? MainActivity)?.let { mainActivity ->
+                        mainActivity.setVolume(progress.toFloat() / 100f)
+                    }
+                }
+            }
+            
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                // 필요 시 구현
+            }
+            
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                // 설정 저장
+                val progress = seekBar?.progress ?: 70
+                prefs.edit().putInt("volume_level", progress).apply()
+                
+                // 볼륨 조절 적용
+                (activity as? MainActivity)?.let { mainActivity ->
+                    mainActivity.setVolume(progress.toFloat() / 100f)
+                }
+                
+                Toast.makeText(requireContext(), "볼륨: ${progress}%", Toast.LENGTH_SHORT).show()
+            }
+        })
         
         // 배경음악 선택 Spinner 설정
         setupMusicSpinner(view, prefs)

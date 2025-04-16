@@ -54,7 +54,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="소리"
+                android:text="배경음악"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF"/>
@@ -68,6 +68,80 @@
                 android:thumbTint="#2196F3"
                 android:trackTint="#80DEEA"/>
         </LinearLayout>
+
+        <!-- 효과음 설정 추가 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="효과음"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"/>
+
+            <Switch
+                android:id="@+id/switchSoundEffect"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:theme="@style/SwitchTheme"
+                android:thumbTint="#2196F3"
+                android:trackTint="#80DEEA"/>
+        </LinearLayout>
+
+        <!-- 음소거 설정 추가 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="음소거"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"/>
+
+            <Switch
+                android:id="@+id/switchMute"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="false"
+                android:theme="@style/SwitchTheme"
+                android:thumbTint="#2196F3"
+                android:trackTint="#80DEEA"/>
+        </LinearLayout>
+
+        <!-- 볼륨 조절 슬라이더 추가 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="음량 조절"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:layout_marginBottom="4dp"/>
+
+        <SeekBar
+            android:id="@+id/volumeSeekBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:progress="70"
+            android:progressTint="#2196F3"
+            android:thumbTint="#2196F3"
+            android:layout_marginBottom="16dp"/>
 
         <!-- 진동 설정 -->
         <LinearLayout
