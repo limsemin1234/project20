@@ -835,9 +835,6 @@ class HackingAlbaFragment : Fragment() {
         // 게임 결과 저장
         saveGameResult(true)
         
-        // 성공 효과음
-        playSound(successSoundId)
-        
         // 레벨업 확인
         checkLevelUp()
     }
@@ -856,9 +853,6 @@ class HackingAlbaFragment : Fragment() {
         
         // 게임 결과 저장
         saveGameResult(false)
-        
-        // 실패 효과음
-        playSound(failSoundId)
     }
     
     /**
@@ -1148,9 +1142,6 @@ class HackingAlbaFragment : Fragment() {
         // 계속 진행
         resetInputDigits()
         feedbackText.setText("힌트: $correctPosition 개 숫자와 위치 일치, $correctDigit 개 숫자만 일치")
-        
-        // 틀린 입력 효과음
-        playSound(wrongSoundId)
     }
     
     /**
