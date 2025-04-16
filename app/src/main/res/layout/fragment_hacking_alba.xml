@@ -1,390 +1,409 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<androidx.drawerlayout.widget.DrawerLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawerLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/background_dark"
-    android:padding="16dp">
+    android:layout_height="match_parent">
 
-    <!-- 게임 상태 정보 영역 -->
-    <LinearLayout
-        android:id="@+id/statusLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <TextView
-            android:id="@+id/levelText"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textColor="@android:color/white"
-            android:textSize="16sp"
-            android:text="레벨: 1" />
-
-        <TextView
-            android:id="@+id/attemptsText"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textColor="@android:color/white"
-            android:textSize="16sp"
-            android:text="시도: 0/10" />
-    </LinearLayout>
-
-    <!-- 게임 컨테이너 -->
+    <!-- 메인 컨텐츠 영역 -->
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/gameContainer"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
-        android:background="@android:color/black"
-        android:padding="12dp"
-        app:layout_constraintTop_toBottomOf="@id/statusLayout"
-        app:layout_constraintBottom_toTopOf="@id/keypadContainer">
+        android:layout_height="match_parent"
+        android:background="@color/background_dark"
+        android:padding="16dp">
 
-        <!-- 피드백 메시지 -->
-        <TextView
-            android:id="@+id/feedbackText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:gravity="center"
-            android:textColor="@android:color/white"
-            android:textSize="18sp"
-            android:text="해킹을 시작하려면 시작 버튼을 누르세요."
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <!-- 코드 입력 컨테이너 -->
+        <!-- 게임 상태 정보 영역 -->
         <LinearLayout
-            android:id="@+id/codeInputContainer"
+            android:id="@+id/statusLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:background="@android:color/black"
-            android:gravity="center"
             android:orientation="horizontal"
-            android:padding="8dp"
-            app:layout_constraintTop_toBottomOf="@id/feedbackText">
+            app:layout_constraintTop_toTopOf="parent">
 
             <TextView
-                android:id="@+id/code_digit_0"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_margin="4dp"
-                android:background="@drawable/button_active"
-                android:gravity="center"
-                android:text="_"
+                android:id="@+id/levelText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:textColor="@android:color/white"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:textSize="16sp"
+                android:text="레벨: 1" />
 
             <TextView
-                android:id="@+id/code_digit_1"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_margin="4dp"
-                android:background="@drawable/button_active"
-                android:gravity="center"
-                android:text="_"
+                android:id="@+id/attemptsText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:textColor="@android:color/white"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/code_digit_2"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_margin="4dp"
-                android:background="@drawable/button_active"
-                android:gravity="center"
-                android:text="_"
-                android:textColor="@android:color/white"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/code_digit_3"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_margin="4dp"
-                android:background="@drawable/button_active"
-                android:gravity="center"
-                android:text="_"
-                android:textColor="@android:color/white"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:textSize="16sp"
+                android:text="시도: 0/10" />
         </LinearLayout>
 
-        <!-- 버튼 컨테이너 - 가로 정렬을 위한 추가 -->
-        <LinearLayout
-            android:id="@+id/buttonContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:orientation="horizontal"
-            android:gravity="center"
-            app:layout_constraintTop_toBottomOf="@id/codeInputContainer">
-
-            <!-- 시작 버튼 -->
-            <Button
-                android:id="@+id/startButton"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="40dp"
-                android:layout_marginEnd="4dp"
-                android:background="@drawable/button_active"
-                android:text="해킹 시작"
-                android:textSize="14sp"
-                android:textColor="@android:color/white" />
-
-            <!-- 제출 버튼 -->
-            <Button
-                android:id="@+id/submitButton"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="40dp"
-                android:layout_marginStart="4dp"
-                android:layout_marginEnd="4dp"
-                android:background="@drawable/button_active"
-                android:text="코드 입력"
-                android:textSize="14sp"
-                android:textColor="@android:color/white" />
-                
-            <!-- 결과 기록 보기 버튼 -->
-            <Button
-                android:id="@+id/toggleHistoryButton"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="40dp"
-                android:layout_marginStart="4dp"
-                android:background="@color/alba_start_button"
-                android:text="결과 기록"
-                android:textSize="14sp"
-                android:textColor="@android:color/white" />
-        </LinearLayout>
-
-        <!-- 이전 시도 결과 표시 영역 - 다이얼로그 형태로 표시할 예정이므로 숨김 -->
-        <FrameLayout
-            android:id="@+id/historyDialogContainer"
+        <!-- 게임 컨테이너 -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/gameContainer"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_marginTop="8dp"
-            android:visibility="gone"
-            android:background="#333333"
-            android:padding="16dp"
-            app:layout_constraintTop_toBottomOf="@id/buttonContainer"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
+            android:layout_marginBottom="8dp"
+            android:background="@android:color/black"
+            android:padding="12dp"
+            app:layout_constraintTop_toBottomOf="@id/statusLayout"
+            app:layout_constraintBottom_toTopOf="@id/keypadContainer">
 
-            <!-- 기록 헤더 -->
+            <!-- 피드백 메시지 -->
+            <TextView
+                android:id="@+id/feedbackText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:text="해킹을 시작하려면 시작 버튼을 누르세요."
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- 코드 입력 컨테이너 -->
+            <LinearLayout
+                android:id="@+id/codeInputContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@android:color/black"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:padding="8dp"
+                app:layout_constraintTop_toBottomOf="@id/feedbackText">
+
+                <TextView
+                    android:id="@+id/code_digit_0"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/button_active"
+                    android:gravity="center"
+                    android:text="_"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/code_digit_1"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/button_active"
+                    android:gravity="center"
+                    android:text="_"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/code_digit_2"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/button_active"
+                    android:gravity="center"
+                    android:text="_"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/code_digit_3"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/button_active"
+                    android:gravity="center"
+                    android:text="_"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- 버튼 컨테이너 - 가로 정렬을 위한 추가 -->
+            <LinearLayout
+                android:id="@+id/buttonContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal"
+                android:gravity="center"
+                app:layout_constraintTop_toBottomOf="@id/codeInputContainer">
+
+                <!-- 시작 버튼 -->
+                <Button
+                    android:id="@+id/startButton"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="45dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/button_active"
+                    android:text="해킹 시작"
+                    android:textSize="13sp"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:textColor="@android:color/white" />
+
+                <!-- 제출 버튼 -->
+                <Button
+                    android:id="@+id/submitButton"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="45dp"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/button_active"
+                    android:text="코드 입력"
+                    android:textSize="13sp"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:textColor="@android:color/white" />
+                    
+                <!-- 결과 기록 보기 버튼 -->
+                <Button
+                    android:id="@+id/toggleHistoryButton"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="45dp"
+                    android:layout_marginStart="4dp"
+                    android:background="@color/alba_start_button"
+                    android:text="결과 기록"
+                    android:textSize="13sp"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:textColor="@android:color/white" />
+            </LinearLayout>
+
+            <!-- 마지막 입력 결과를 표시할 TextView -->
+            <TextView
+                android:id="@+id/lastResultTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_marginHorizontal="8dp"
+                android:padding="6dp"
+                android:background="#33000000"
+                android:gravity="center"
+                android:textSize="16sp"
+                android:textColor="@android:color/white"
+                android:visibility="visible"
+                app:layout_constraintTop_toBottomOf="@id/buttonContainer" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- 숫자 키패드 컨테이너 -->
+        <LinearLayout
+            android:id="@+id/keypadContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
+            android:orientation="vertical"
+            android:background="@android:color/black"
+            android:padding="8dp"
+            app:layout_constraintTop_toBottomOf="@id/gameContainer"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <!-- 첫 번째 행: 1, 2, 3 -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
-                
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="8dp"
-                    android:background="#1A1A1A">
-                    
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="시도 기록"
-                        android:textColor="#FFFFFF"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-                        
-                    <Button
-                        android:id="@+id/closeHistoryButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="닫기"
-                        android:textColor="#FFFFFF"
-                        android:background="@drawable/button_active" />
-                </LinearLayout>
-                
-                <!-- 기록 내용 스크롤 -->
-                <ScrollView
-                    android:id="@+id/historyScrollView"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:padding="8dp">
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal">
 
-                    <LinearLayout
-                        android:id="@+id/historyContainer"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:paddingBottom="8dp" />
-                </ScrollView>
+                <TextView
+                    android:id="@+id/digit_1"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_margin="3dp"
+                    android:background="@drawable/button_active"
+                    android:gravity="center"
+                    android:text="1"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp" />
+
+                <TextView
+                    android:id="@+id/digit_2"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_margin="3dp"
+                    android:background="@drawable/button_active"
+                    android:gravity="center"
+                    android:text="2"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp" />
+
+                <TextView
+                    android:id="@+id/digit_3"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_margin="3dp"
+                    android:background="@drawable/button_active"
+                    android:gravity="center"
+                    android:text="3"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp" />
             </LinearLayout>
-        </FrameLayout>
+
+            <!-- 두 번째 행: 4, 5, 6 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/digit_4"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_margin="3dp"
+                    android:background="@drawable/button_active"
+                    android:gravity="center"
+                    android:text="4"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp" />
+
+                <TextView
+                    android:id="@+id/digit_5"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_margin="3dp"
+                    android:background="@drawable/button_active"
+                    android:gravity="center"
+                    android:text="5"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp" />
+
+                <TextView
+                    android:id="@+id/digit_6"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_margin="3dp"
+                    android:background="@drawable/button_active"
+                    android:gravity="center"
+                    android:text="6"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp" />
+            </LinearLayout>
+
+            <!-- 세 번째 행: 7, 8, 9 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/digit_7"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_margin="3dp"
+                    android:background="@drawable/button_active"
+                    android:gravity="center"
+                    android:text="7"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp" />
+
+                <TextView
+                    android:id="@+id/digit_8"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_margin="3dp"
+                    android:background="@drawable/button_active"
+                    android:gravity="center"
+                    android:text="8"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp" />
+
+                <TextView
+                    android:id="@+id/digit_9"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_margin="3dp"
+                    android:background="@drawable/button_active"
+                    android:gravity="center"
+                    android:text="9"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp" />
+            </LinearLayout>
+
+            <!-- 네 번째 행: 0 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/digit_0"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_margin="3dp"
+                    android:background="@drawable/button_active"
+                    android:gravity="center"
+                    android:text="0"
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp" />
+            </LinearLayout>
+        </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <!-- 숫자 키패드 컨테이너 -->
+    
+    <!-- 사이드 패널 (드로어) - 오른쪽에서 열리는 형태 -->
     <LinearLayout
-        android:id="@+id/keypadContainer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:layout_marginBottom="4dp"
+        android:id="@+id/historyPanelContainer"
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
         android:orientation="vertical"
-        android:background="@android:color/black"
-        android:padding="8dp"
-        app:layout_constraintTop_toBottomOf="@id/gameContainer"
-        app:layout_constraintBottom_toBottomOf="parent">
-
-        <!-- 첫 번째 행: 1, 2, 3 -->
+        android:background="#99333333"
+        android:elevation="8dp">
+        
+        <!-- 기록 패널 헤더 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal">
-
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:background="#CC1A1A1A">
+            
             <TextView
-                android:id="@+id/digit_1"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_margin="3dp"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="시도 기록"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+                
+            <Button
+                android:id="@+id/closeHistoryButton"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
                 android:background="@drawable/button_active"
-                android:gravity="center"
-                android:text="1"
-                android:textColor="@android:color/white"
-                android:textSize="20sp" />
-
-            <TextView
-                android:id="@+id/digit_2"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_margin="3dp"
-                android:background="@drawable/button_active"
-                android:gravity="center"
-                android:text="2"
-                android:textColor="@android:color/white"
-                android:textSize="20sp" />
-
-            <TextView
-                android:id="@+id/digit_3"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_margin="3dp"
-                android:background="@drawable/button_active"
-                android:gravity="center"
-                android:text="3"
-                android:textColor="@android:color/white"
-                android:textSize="20sp" />
+                android:text="X"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textSize="12sp" />
         </LinearLayout>
-
-        <!-- 두 번째 행: 4, 5, 6 -->
-        <LinearLayout
+        
+        <!-- 기록 내용 스크롤 -->
+        <ScrollView
+            android:id="@+id/historyScrollView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal">
+            android:layout_height="match_parent"
+            android:padding="6dp">
 
-            <TextView
-                android:id="@+id/digit_4"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_margin="3dp"
-                android:background="@drawable/button_active"
-                android:gravity="center"
-                android:text="4"
-                android:textColor="@android:color/white"
-                android:textSize="20sp" />
-
-            <TextView
-                android:id="@+id/digit_5"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_margin="3dp"
-                android:background="@drawable/button_active"
-                android:gravity="center"
-                android:text="5"
-                android:textColor="@android:color/white"
-                android:textSize="20sp" />
-
-            <TextView
-                android:id="@+id/digit_6"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_margin="3dp"
-                android:background="@drawable/button_active"
-                android:gravity="center"
-                android:text="6"
-                android:textColor="@android:color/white"
-                android:textSize="20sp" />
-        </LinearLayout>
-
-        <!-- 세 번째 행: 7, 8, 9 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/digit_7"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_margin="3dp"
-                android:background="@drawable/button_active"
-                android:gravity="center"
-                android:text="7"
-                android:textColor="@android:color/white"
-                android:textSize="20sp" />
-
-            <TextView
-                android:id="@+id/digit_8"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_margin="3dp"
-                android:background="@drawable/button_active"
-                android:gravity="center"
-                android:text="8"
-                android:textColor="@android:color/white"
-                android:textSize="20sp" />
-
-            <TextView
-                android:id="@+id/digit_9"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_margin="3dp"
-                android:background="@drawable/button_active"
-                android:gravity="center"
-                android:text="9"
-                android:textColor="@android:color/white"
-                android:textSize="20sp" />
-        </LinearLayout>
-
-        <!-- 네 번째 행: 0 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/digit_0"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_margin="3dp"
-                android:background="@drawable/button_active"
-                android:gravity="center"
-                android:text="0"
-                android:textColor="@android:color/white"
-                android:textSize="20sp" />
-        </LinearLayout>
+            <LinearLayout
+                android:id="@+id/historyContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="6dp" />
+        </ScrollView>
     </LinearLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout> 
+</androidx.drawerlayout.widget.DrawerLayout> 

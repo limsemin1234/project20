@@ -3,6 +3,7 @@ package com.example.p20
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ObjectAnimator
+import android.content.Context
 import android.content.res.ColorStateList
 import android.media.AudioAttributes
 import android.media.AudioManager
@@ -524,7 +525,8 @@ class HackingAlbaFragment : Fragment() {
     private lateinit var gameContainer: ViewGroup
     private lateinit var codeInputContainer: ViewGroup
     private lateinit var historyContainer: ViewGroup
-    private lateinit var historyDialogContainer: FrameLayout
+    private lateinit var drawerLayout: androidx.drawerlayout.widget.DrawerLayout
+    private lateinit var historyPanelContainer: ViewGroup
     private lateinit var historyScrollView: ScrollView
     private lateinit var startButton: Button
     private lateinit var submitButton: Button
@@ -533,17 +535,26 @@ class HackingAlbaFragment : Fragment() {
     private lateinit var levelText: TextView
     private lateinit var attemptsText: TextView
     private lateinit var feedbackText: TextView
+    private lateinit var lastResultTextView: TextView
     private lateinit var digitButtons: Array<TextView>
     private lateinit var codeDigits: Array<TextView>
     
     // 기록 창 표시 상태
     private var isHistoryShown = false
     
+    // 게임 데이터
+    private var reward: Long = 0L
+    
     // 효과음 재생을 위한 SoundPool
     private lateinit var soundPool: SoundPool
     private var correctSoundId: Int = 0
     private var wrongSoundId: Int = 0
     private var typingSoundId: Int = 0
+    private var startSoundId: Int = 0
+    private var successSoundId: Int = 0
+    private var failSoundId: Int = 0
+    private var hackingStartSoundId: Int = 0   // 해킹 시작 버튼 효과음
+    private var hackingButtonSoundId: Int = 0  // 코드 입력 버튼 효과음
     
     // 핸들러
     private val handler = Handler(Looper.getMainLooper())
@@ -570,9 +581,33 @@ class HackingAlbaFragment : Fragment() {
         isGameActive = false
         updateUIState(false)
         
-        // 기록 다이얼로그 초기 상태 설정
-        historyDialogContainer.visibility = View.GONE
-        isHistoryShown = false
+        // DrawerLayout 리스너 설정
+        drawerLayout.addDrawerListener(object : androidx.drawerlayout.widget.DrawerLayout.DrawerListener {
+            override fun onDrawerSlide(drawerView: View, slideOffset: Float) {
+                // 드로어가 슬라이드될 때의 동작
+            }
+
+            override fun onDrawerOpened(drawerView: View) {
+                // 드로어가 열렸을 때 isHistoryShown 상태 업데이트
+                isHistoryShown = true
+                
+                // 스크롤을 맨 위로 (최신 결과가 보이도록)
+                historyScrollView.fullScroll(ScrollView.FOCUS_UP)
+                
+                android.util.Log.d("HackingAlba", "기록 사이드 패널 열림")
+            }
+
+            override fun onDrawerClosed(drawerView: View) {
+                // 드로어가 닫혔을 때 isHistoryShown 상태 업데이트
+                isHistoryShown = false
+                
+                android.util.Log.d("HackingAlba", "기록 사이드 패널 닫힘")
+            }
+
+            override fun onDrawerStateChanged(newState: Int) {
+                // 드로어 상태가 변경되었을 때의 동작
+            }
+        })
         
         // 디버깅 로그 추가
         android.util.Log.d("HackingAlba", "프래그먼트 생성됨, 버튼 초기 상태: 시작=${startButton.isEnabled}, 제출=${submitButton.isEnabled}")
@@ -587,7 +622,8 @@ class HackingAlbaFragment : Fragment() {
         gameContainer = view.findViewById(R.id.gameContainer)
         codeInputContainer = view.findViewById(R.id.codeInputContainer)
         historyContainer = view.findViewById(R.id.historyContainer)
-        historyDialogContainer = view.findViewById(R.id.historyDialogContainer)
+        drawerLayout = view.findViewById(R.id.drawerLayout)
+        historyPanelContainer = view.findViewById(R.id.historyPanelContainer)
         historyScrollView = view.findViewById(R.id.historyScrollView)
         startButton = view.findViewById<Button>(R.id.startButton)
         submitButton = view.findViewById<Button>(R.id.submitButton)
@@ -596,6 +632,7 @@ class HackingAlbaFragment : Fragment() {
         levelText = view.findViewById(R.id.levelText)
         attemptsText = view.findViewById(R.id.attemptsText)
         feedbackText = view.findViewById(R.id.feedbackText)
+        lastResultTextView = view.findViewById(R.id.lastResultTextView)
         
         // 숫자 입력 버튼 초기화
         digitButtons = Array(10) { index ->
@@ -612,9 +649,10 @@ class HackingAlbaFragment : Fragment() {
         }
         
         // 초기 텍스트 설정
-        levelText.setText("레벨: $currentLevel")
-        attemptsText.setText("시도: 0/$maxAttempts")
+        levelText.setText("Lv.${currentLevel} 해킹 알바")
+        attemptsText.setText("시도: 0/${maxAttempts}")
         feedbackText.setText("해킹을 시작하려면 시작 버튼을 누르세요.")
+        lastResultTextView.visibility = View.GONE
     }
     
     /**
@@ -629,19 +667,26 @@ class HackingAlbaFragment : Fragment() {
                 .build()
             
             soundPool = SoundPool.Builder()
-                .setMaxStreams(4)  // 최대 동시 재생 수
+                .setMaxStreams(6)  // 최대 동시 재생 수 증가
                 .setAudioAttributes(audioAttributes)
                 .build()
         } else {
             // 하위 버전 호환성
             @Suppress("DEPRECATION")
-            soundPool = SoundPool(4, AudioManager.STREAM_MUSIC, 0)
+            soundPool = SoundPool(6, AudioManager.STREAM_MUSIC, 0)
         }
         
-        // 효과음 로드 - 리소스 ID는 실제 앱에 맞게 수정 필요
+        // 효과음 로드
         correctSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 사용
         wrongSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 사용
-        typingSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 사용
+        typingSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_number, 1)
+        startSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 사용
+        successSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 사용
+        failSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 사용
+        
+        // 새로운 효과음 로드
+        hackingStartSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_start, 1)
+        hackingButtonSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_button, 1)
     }
     
     /**
@@ -650,18 +695,27 @@ class HackingAlbaFragment : Fragment() {
     private fun setupEventListeners() {
         // 시작 버튼
         startButton.setOnClickListener {
+            // 해킹 시작 효과음
+            playSound(hackingStartSoundId)
             startNewGame()
         }
         
         // 제출 버튼 - 명시적으로 다시 설정
         submitButton.setOnClickListener { 
             android.util.Log.d("HackingAlba", "제출 버튼 클릭됨")
+            // 코드 입력 효과음
+            playSound(hackingButtonSoundId)
             checkCode() 
         }
         
-        // 기록 버튼 - 다이얼로그 형태로 표시
+        // 기록 버튼 - 사이드 패널 표시
         toggleHistoryButton.setOnClickListener {
-            showHistoryDialog()
+            // 패널 상태를 토글
+            if (drawerLayout.isDrawerOpen(androidx.core.view.GravityCompat.END)) {
+                hideHistoryDialog()
+            } else {
+                showHistoryDialog()
+            }
         }
         
         // 기록 닫기 버튼
@@ -681,14 +735,14 @@ class HackingAlbaFragment : Fragment() {
     }
     
     /**
-     * 기록 다이얼로그를 표시합니다.
+     * 기록 사이드 패널을 표시합니다.
      */
     private fun showHistoryDialog() {
         // 기록 컨테이너가 비어있으면 안내 메시지 추가
         if (historyContainer.childCount == 0) {
             val emptyView = layoutInflater.inflate(R.layout.item_hacking_result, historyContainer, false)
-            val codeText = emptyView.findViewById<TextView>(R.id.codeText)
-            val resultText = emptyView.findViewById<TextView>(R.id.resultText)
+            val codeText = emptyView.findViewById<TextView>(R.id.codeTextView)
+            val resultText = emptyView.findViewById<TextView>(R.id.resultTextView)
             
             codeText.text = "기록 없음"
             resultText.text = "아직 시도한 결과가 없습니다."
@@ -696,74 +750,297 @@ class HackingAlbaFragment : Fragment() {
             historyContainer.addView(emptyView)
         }
         
-        // 다이얼로그 표시 애니메이션
-        historyDialogContainer.visibility = View.VISIBLE
-        historyDialogContainer.alpha = 0f
+        // 드로어 레이아웃을 사용하여 오른쪽에서 슬라이드
+        drawerLayout.openDrawer(androidx.core.view.GravityCompat.END)
         
-        // 페이드 인 애니메이션
-        val fadeIn = ObjectAnimator.ofFloat(historyDialogContainer, "alpha", 0f, 1f)
-        fadeIn.duration = 300
-        fadeIn.start()
-        
-        // 다이얼로그가 전체 화면을 덮도록 설정
-        historyDialogContainer.bringToFront()
-        historyDialogContainer.elevation = 10f
+        // 스크롤 초기화
+        historyScrollView.fullScroll(ScrollView.FOCUS_UP)
         
         isHistoryShown = true
         
         // 디버깅 로그
-        android.util.Log.d("HackingAlba", "기록 다이얼로그 표시됨")
+        android.util.Log.d("HackingAlba", "기록 사이드 패널 표시됨")
     }
     
     /**
-     * 기록 다이얼로그를 숨깁니다.
+     * 기록 사이드 패널을 숨깁니다.
      */
     private fun hideHistoryDialog() {
-        // 페이드 아웃 애니메이션
-        val fadeOut = ObjectAnimator.ofFloat(historyDialogContainer, "alpha", 1f, 0f)
-        fadeOut.duration = 300
-        fadeOut.addListener(object : AnimatorListenerAdapter() {
-            override fun onAnimationEnd(animation: Animator) {
-                historyDialogContainer.visibility = View.GONE
-            }
-        })
-        fadeOut.start()
+        // 드로어 레이아웃을 사용하여 패널 닫기
+        drawerLayout.closeDrawer(androidx.core.view.GravityCompat.END)
         
         isHistoryShown = false
         
         // 디버깅 로그
-        android.util.Log.d("HackingAlba", "기록 다이얼로그 숨겨짐")
+        android.util.Log.d("HackingAlba", "기록 사이드 패널 숨겨짐")
     }
     
     /**
-     * 새 게임을 시작합니다.
+     * 게임이 시작될 때 호출됩니다.
      */
     private fun startNewGame() {
         isGameActive = true
         attemptCount = 0
+        
+        // 기록 컨테이너 초기화
         historyContainer.removeAllViews()
         
-        // 게임 시작 시 기록 영역 접기
-        if (isHistoryShown) {
-            hideHistoryDialog()
-        }
+        // 레벨에 따른 난이도 설정
+        difficultySetting()
         
-        // 4자리 랜덤 비밀번호 생성
-        for (i in secretCode.indices) {
-            secretCode[i] = (0..9).random()
-        }
+        // 4자리 비밀 코드 생성
+        generateSecretCode()
         
-        // UI 초기화
+        // UI 상태 업데이트
         updateUIState(true)
-        resetInputDigits()
+        
+        // 피드백 초기화
+        feedbackText.setText("숫자를 입력하세요. (${maxAttempts}번의 기회가 있습니다)")
         updateAttemptsText()
         
-        feedbackText.setText("4자리 비밀번호를 추측하세요.")
+        // 직전 결과 텍스트 초기화 및 숨기기
+        lastResultTextView.text = ""
+        lastResultTextView.visibility = View.GONE
         
-        // 개발용 로그 - 실제 배포 시 제거
-        android.util.Log.d("HackingAlba", "비밀 코드: ${secretCode.joinToString("")}")
+        // 레벨에 따른 난이도 설정
+        updateDifficultyByLevel()
+        
+        // 게임 카운터 초기화
+        for (digit in codeDigits) {
+            digit.setText("_")
+        }
+        
+        // 마지막 결과 있으면 불러오기
+        loadLastGameResult()
+        
+        // 게임 시작 로그
+        android.util.Log.d("HackingAlba", "게임 시작: 비밀번호 ${secretCode.joinToString("")}")
     }
     
+    /**
+     * 게임 성공 시 호출됩니다.
+     */
+    private fun gameSuccess() {
+        isGameActive = false
+        
+        // UI 상태 업데이트
+        updateUIState(false)
+        
+        // 피드백 업데이트
+        feedbackText.setText("해킹 성공! 보상: ${formatCurrency(reward)}원")
+        
+        // 보상 지급
+        assetViewModel.increaseAsset(reward)
+        
+        // 게임 결과 저장
+        saveGameResult(true)
+        
+        // 성공 효과음
+        playSound(successSoundId)
+        
+        // 레벨업 확인
+        checkLevelUp()
+    }
+    
+    /**
+     * 게임 실패 시 호출됩니다.
+     */
+    private fun gameFailed() {
+        isGameActive = false
+        
+        // UI 상태 업데이트
+        updateUIState(false)
+        
+        // 피드백 업데이트
+        feedbackText.setText("해킹 실패! 올바른 코드는 ${secretCode.joinToString("")}이었습니다.")
+        
+        // 게임 결과 저장
+        saveGameResult(false)
+        
+        // 실패 효과음
+        playSound(failSoundId)
+    }
+    
+    /**
+     * 게임 결과를 저장합니다.
+     */
+    private fun saveGameResult(isSuccess: Boolean) {
+        val sharedPreferences = requireActivity().getSharedPreferences("hacking_alba_prefs", Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+        
+        editor.putBoolean("last_game_result_exists", true)
+        editor.putBoolean("last_game_success", isSuccess)
+        editor.putInt("last_game_attempt_count", attemptCount)
+        editor.putString("last_game_secret_code", secretCode.joinToString(""))
+        editor.putLong("last_game_reward", reward)
+        editor.putInt("last_game_level", currentLevel)
+        
+        editor.apply()
+    }
+    
+    /**
+     * 마지막 게임 결과를 불러옵니다.
+     */
+    private fun loadLastGameResult() {
+        val sharedPreferences = requireActivity().getSharedPreferences("hacking_alba_prefs", Context.MODE_PRIVATE)
+        val resultExists = sharedPreferences.getBoolean("last_game_result_exists", false)
+        
+        if (resultExists) {
+            val isSuccess = sharedPreferences.getBoolean("last_game_success", false)
+            val lastAttemptCount = sharedPreferences.getInt("last_game_attempt_count", 0)
+            val lastSecretCode = sharedPreferences.getString("last_game_secret_code", "")
+            val lastReward = sharedPreferences.getLong("last_game_reward", 0)
+            val lastLevel = sharedPreferences.getInt("last_game_level", 1)
+            
+            // 마지막 게임 결과 표시
+            val resultMessage = if (isSuccess) {
+                "지난 게임: Lv.${lastLevel} 성공 (${lastAttemptCount}번 시도, +${formatCurrency(lastReward)}원)"
+            } else {
+                "지난 게임: Lv.${lastLevel} 실패 (비밀번호: ${lastSecretCode})"
+            }
+            
+            lastResultTextView.text = resultMessage
+            lastResultTextView.visibility = View.VISIBLE
+            
+            // 성공/실패에 따른 텍스트 색상 설정
+            if (isSuccess) {
+                lastResultTextView.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.holo_green_light))
+            } else {
+                lastResultTextView.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.holo_red_light))
+            }
+            
+            // 결과 데이터 초기화 (한 번만 표시)
+            val editor = sharedPreferences.edit()
+            editor.putBoolean("last_game_result_exists", false)
+            editor.apply()
+        }
+    }
+    
+    /**
+     * 숫자를 포맷팅합니다.
+     */
+    private fun formatCurrency(amount: Long): String {
+        return android.icu.text.NumberFormat.getInstance().format(amount)
+    }
+
+    /**
+     * UI 상태를 업데이트합니다.
+     * @param isPlaying 게임 진행 중 여부
+     */
+    private fun updateUIState(isPlaying: Boolean) {
+        // 게임 진행 상태에 따라 버튼 활성화/비활성화 설정
+        startButton.isEnabled = !isPlaying
+        submitButton.isEnabled = isPlaying
+        
+        // 버튼 색상 변경
+        val startButtonColor = if (!isPlaying) 
+            ContextCompat.getColor(requireContext(), R.color.alba_start_button)
+        else 
+            ContextCompat.getColor(requireContext(), R.color.button_disabled)
+            
+        val submitButtonColor = if (isPlaying) 
+            ContextCompat.getColor(requireContext(), R.color.alba_start_button)
+        else 
+            ContextCompat.getColor(requireContext(), R.color.button_disabled)
+        
+        // 버튼 배경색 변경 (API 레벨에 따라 다른 방식 사용)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            startButton.backgroundTintList = ColorStateList.valueOf(startButtonColor)
+            submitButton.backgroundTintList = ColorStateList.valueOf(submitButtonColor)
+        }
+        
+        // 키패드 버튼 활성화/비활성화
+        for (button in digitButtons) {
+            button.isEnabled = isPlaying
+        }
+        
+        // 로그 기록
+        android.util.Log.d("HackingAlba", "UI 상태 업데이트: 게임 활성화=$isPlaying")
+    }
+
+    /**
+     * 레벨에 따른 난이도를 설정합니다.
+     */
+    private fun difficultySetting() {
+        // 난이도에 따른 최대 시도 횟수 설정
+        maxAttempts = when {
+            currentLevel < 5 -> 10
+            currentLevel < 10 -> 8
+            else -> 6
+        }
+    }
+    
+    /**
+     * 4자리 비밀 코드를 생성합니다.
+     */
+    private fun generateSecretCode() {
+        // 레벨 10 이상에서는 숫자 중복을 허용
+        if (currentLevel >= 10) {
+            // 중복 허용하는 코드 생성
+            for (i in secretCode.indices) {
+                secretCode[i] = (0..9).random()
+            }
+        } else {
+            // 중복 없는 코드 생성
+            val numbers = (0..9).toMutableList()
+            numbers.shuffle()
+            for (i in secretCode.indices) {
+                secretCode[i] = numbers[i]
+            }
+        }
+    }
+    
+    /**
+     * 레벨에 따른 난이도를 업데이트합니다.
+     */
+    private fun updateDifficultyByLevel() {
+        // 레벨에 따른 난이도 표시 갱신
+        levelText.setText("Lv.${currentLevel} 해킹 알바")
+        
+        // 레벨에 따른 보상 계산
+        val baseReward = 10000L + (currentLevel - 1) * 5000L
+        reward = baseReward
+        
+        // 게임 피드백 메시지 업데이트
+        feedbackText.setText("4자리 비밀번호를 추측하세요.\n성공 시 최대 ${formatCurrency(baseReward * 2)}원 획득 가능")
+    }
+    
+    /**
+     * 현재 시도 횟수 텍스트를 업데이트합니다.
+     */
+    private fun updateAttemptsText() {
+        attemptsText.setText("시도: $attemptCount/$maxAttempts")
+    }
+    
+    /**
+     * 레벨업 확인 및 처리를 수행합니다.
+     */
+    private fun checkLevelUp() {
+        // 레벨 증가
+        currentLevel++
+        
+        // 레벨 텍스트 업데이트
+        levelText.setText("Lv.${currentLevel} 해킹 알바")
+        
+        // 레벨업 메시지 표시
+        feedbackText.setText("레벨업! Lv.${currentLevel} 달성")
+    }
+
+    /**
+     * 효과음을 재생합니다.
+     */
+    private fun playSound(soundId: Int) {
+        try {
+            // 효과음이 로드되었는지 확인
+            if (soundId > 0) {
+                // 효과음 재생 (좌우 볼륨은 0.5로 설정, 우선순위는 1, 반복 횟수 0, 속도 1.0)
+                soundPool.play(soundId, 0.5f, 0.5f, 1, 0, 1.0f)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("HackingAlbaFragment", "효과음 재생 오류: ${e.message}")
+        }
+    }
+
     /**
      * 입력한 코드를 확인합니다.
      */
@@ -815,20 +1092,37 @@ class HackingAlbaFragment : Fragment() {
             }
         }
         
+        // 직전 결과 텍스트뷰에 표시
+        val lastResultString = "입력: ${inputCode.joinToString("")} → ${correctPosition}S ${correctDigit}B"
+        lastResultTextView.text = lastResultString
+        lastResultTextView.visibility = View.VISIBLE
+        
+        // 색상 설정 - 정답일 경우 초록색, 아닐 경우 기본 흰색
+        if (correctPosition == 4) {
+            lastResultTextView.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.holo_green_light))
+        } else {
+            lastResultTextView.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
+        }
+        
         // 결과 피드백 생성
         val resultView = createResultView(inputCode, correctPosition, correctDigit)
         historyContainer.addView(resultView, 0) // 최신 결과를 상단에 추가
         
-        // 기록이 숨겨져 있으면 자동으로 다이얼로그 표시
+        // 기록이 표시되지 않은 상태면 자동으로 사이드 패널 표시
         if (!isHistoryShown) {
-            // 기록 다이얼로그 표시 시도 로그
-            android.util.Log.d("HackingAlba", "기록 자동 표시 시도")
-            
-            // 약간의 지연 후 기록 다이얼로그 표시
+            // 약간의 지연 후 기록 패널 표시
             handler.postDelayed({
                 showHistoryDialog()
-                // 스크롤을 맨 위로 (최신 결과가 보이도록)
-                historyScrollView.fullScroll(ScrollView.FOCUS_UP)
+                
+                // 정답이거나 게임 종료 시에만 자동 닫기 스케줄링
+                if (correctPosition == 4 || attemptCount >= maxAttempts) {
+                    // 3초 후에 자동으로 닫기
+                    handler.postDelayed({
+                        if (isHistoryShown) {
+                            hideHistoryDialog()
+                        }
+                    }, 3000)
+                }
             }, 200)
         } else {
             // 이미 표시되어 있는 경우 스크롤만 조정
@@ -837,6 +1131,10 @@ class HackingAlbaFragment : Fragment() {
         
         // 정답인 경우
         if (correctPosition == 4) {
+            // 보상 조정 - 시도 횟수가 적을수록 추가 보상
+            val efficiencyBonus = (maxAttempts - attemptCount + 1).toFloat() / maxAttempts
+            reward = (reward * (1 + efficiencyBonus)).toLong()
+            
             gameSuccess()
             return
         }
@@ -856,90 +1154,18 @@ class HackingAlbaFragment : Fragment() {
     }
     
     /**
-     * 게임 성공 처리
-     */
-    private fun gameSuccess() {
-        isGameActive = false
-        
-        // 보상 계산
-        val reward = calculateReward(true)
-        
-        // 자산 증가
-        assetViewModel.increaseAsset(reward)
-        
-        // 레벨 증가
-        currentLevel++
-        levelText.setText("레벨: $currentLevel")
-        
-        // 결과 표시
-        feedbackText.setText("성공! +${"%,d".format(reward)}원 획득")
-        
-        // 성공 효과음
-        playSound(correctSoundId)
-        
-        // UI 업데이트
-        updateUIState(false)
-        
-        // 정답 표시
-        for (i in secretCode.indices) {
-            codeDigits[i].setText(secretCode[i].toString())
-        }
-    }
-    
-    /**
-     * 게임 실패 처리
-     */
-    private fun gameFailed() {
-        isGameActive = false
-        
-        // 보상 계산 (최소 보상)
-        val reward = calculateReward(false)
-        
-        // 최소 보상 지급
-        if (reward > 0) {
-            assetViewModel.increaseAsset(reward)
-        }
-        
-        // 결과 표시
-        feedbackText.setText("실패! 정답: ${secretCode.joinToString("")}\n" +
-                            "위로금 +${"%,d".format(reward)}원")
-        
-        // UI 업데이트
-        updateUIState(false)
-        
-        // 정답 표시
-        for (i in secretCode.indices) {
-            codeDigits[i].setText(secretCode[i].toString())
-        }
-    }
-    
-    /**
-     * 보상을 계산합니다.
-     */
-    private fun calculateReward(isSuccess: Boolean): Long {
-        return if (isSuccess) {
-            // 성공 보상: 레벨 × 1000 × (1 + 효율 보너스)
-            val efficiencyBonus = (maxAttempts - attemptCount).toFloat() / maxAttempts
-            (currentLevel * 1000 * (1 + efficiencyBonus)).toLong()
-        } else {
-            // 실패 보상: 레벨 × 100
-            (currentLevel * 100).toLong()
-        }
-    }
-    
-    /**
      * 결과 표시를 위한 뷰를 생성합니다.
      */
     private fun createResultView(inputCode: IntArray, correctPosition: Int, correctDigit: Int): View {
         val resultView = layoutInflater.inflate(R.layout.item_hacking_result, historyContainer, false)
         
         // 입력 코드 표시
-        val codeText = resultView.findViewById<TextView>(R.id.codeText)
+        val codeText = resultView.findViewById<TextView>(R.id.codeTextView)
         codeText.setText(inputCode.joinToString(""))
         
         // 결과 표시
-        val resultText = resultView.findViewById<TextView>(R.id.resultText)
-        resultText.setText("$correctPosition 개 위치 일치, $correctDigit 개 숫자 일치")
+        val resultText = resultView.findViewById<TextView>(R.id.resultTextView)
+        resultText.setText("${correctPosition}S ${correctDigit}B")
         
         return resultView
     }
@@ -978,76 +1204,6 @@ class HackingAlbaFragment : Fragment() {
                 
                 return
             }
-        }
-    }
-    
-    /**
-     * 백스페이스 기능 - 마지막 입력된 숫자를 지웁니다.
-     * 키패드 영역에 이 메서드를 호출하는 버튼을 추가할 수 있습니다.
-     */
-    private fun deleteLastDigit() {
-        // 마지막으로 입력된 숫자 찾기 (가장 오른쪽부터 찾음)
-        for (i in codeDigits.indices.reversed()) {
-            if (codeDigits[i].text != "_" && codeDigits[i].text.toString() != "") {
-                codeDigits[i].setText("_")
-                return
-            }
-        }
-    }
-    
-    /**
-     * 현재 시도 횟수 텍스트를 업데이트합니다.
-     */
-    private fun updateAttemptsText() {
-        attemptsText.setText("시도: $attemptCount/$maxAttempts")
-    }
-    
-    /**
-     * UI 상태를 업데이트합니다.
-     */
-    private fun updateUIState(isPlaying: Boolean) {
-        // 모든 버튼을 항상 보이게 설정하고, 게임 상태에 따라 활성화/비활성화만 변경
-        startButton.visibility = View.VISIBLE
-        submitButton.visibility = View.VISIBLE
-        
-        // 게임 상태에 따라 버튼 활성화/비활성화
-        startButton.isEnabled = !isPlaying
-        submitButton.isEnabled = isPlaying
-        
-        // 버튼 활성화/비활성화에 따른 색상 변경
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            startButton.backgroundTintList = ColorStateList.valueOf(
-                if (!isPlaying) requireContext().getColor(R.color.alba_start_button) 
-                else requireContext().getColor(R.color.button_disabled)
-            )
-            
-            submitButton.backgroundTintList = ColorStateList.valueOf(
-                if (isPlaying) requireContext().getColor(R.color.alba_start_button) 
-                else requireContext().getColor(R.color.button_disabled)
-            )
-        }
-        
-        // 로그 추가
-        android.util.Log.d("HackingAlba", "UI 상태 업데이트: 게임 활성화=$isPlaying, 시작 버튼 enabled=${startButton.isEnabled}, 제출 버튼 enabled=${submitButton.isEnabled}")
-        
-        // 키패드 버튼도 게임 상태에 따라 활성화/비활성화
-        for (button in digitButtons) {
-            button.isEnabled = isPlaying
-        }
-    }
-    
-    /**
-     * 효과음을 재생합니다.
-     */
-    private fun playSound(soundId: Int) {
-        try {
-            // 효과음이 로드되었는지 확인
-            if (soundId > 0) {
-                // 효과음 재생 (좌우 볼륨은 0.5로 설정, 우선순위는 1, 반복 횟수 0, 속도 1.0)
-                soundPool.play(soundId, 0.5f, 0.5f, 1, 0, 1.0f)
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("HackingAlbaFragment", "효과음 재생 오류: ${e.message}")
         }
     }
 

@@ -4,26 +4,29 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="8dp"
-    android:background="#33FFFFFF">
+    android:background="#44000000"
+    android:layout_marginBottom="4dp"
+    android:padding="6dp">
 
     <TextView
-        android:id="@+id/codeText"
+        android:id="@+id/codeTextView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:textColor="@android:color/white"
-        android:textSize="16sp"
+        android:text="1234"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
         android:gravity="center"
-        android:text="1234" />
+        android:textStyle="bold" />
 
     <TextView
-        android:id="@+id/resultText"
+        android:id="@+id/resultTextView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="2"
-        android:textColor="@android:color/white"
-        android:textSize="16sp"
-        android:text="2개 위치 일치, 1개 숫자 일치" />
+        android:layout_weight="1"
+        android:text="2S 1B"
+        android:textColor="#AAAAAA"
+        android:textSize="14sp"
+        android:gravity="center" />
 
 </LinearLayout> 
