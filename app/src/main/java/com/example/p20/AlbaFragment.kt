@@ -16,9 +16,11 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.ProgressBar
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
@@ -55,17 +57,30 @@ class AlbaFragment : Fragment() {
         adapter = AlbaViewPagerAdapter(requireActivity())
         viewPager.adapter = adapter
 
-        // 타이밍 알바와 원 알바 제거로 인해 탭 레이아웃이 필요 없어졌으므로 숨김 처리
-        tabLayout.visibility = View.GONE
+        // 탭과 뷰페이저 연결 - 탭 레이아웃 표시 활성화
+        tabLayout.visibility = View.VISIBLE
+        
+        // TabLayoutMediator로 탭과 뷰페이저 연결
+        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
+            tab.text = when (position) {
+                0 -> "클릭 알바"
+                1 -> "해킹 알바"
+                else -> ""
+            }
+        }.attach()
     }
 
-    // 뷰페이저 어댑터 - 타이밍 알바와 원 알바 탭 제거
+    // 뷰페이저 어댑터 - 클릭 알바와 해킹 알바 탭 제공
     private inner class AlbaViewPagerAdapter(fa: FragmentActivity) : FragmentStateAdapter(fa) {
         
-        override fun getItemCount(): Int = 1 // 클릭 알바만 남김
+        override fun getItemCount(): Int = 2 // 클릭 알바와 해킹 알바
         
         override fun createFragment(position: Int): Fragment {
-            return ClickAlbaFragment()
+            return when (position) {
+                0 -> ClickAlbaFragment()
+                1 -> HackingAlbaFragment()
+                else -> ClickAlbaFragment()
+            }
         }
     }
 }
@@ -474,6 +489,565 @@ class ClickAlbaFragment : Fragment() {
         } catch (e: Exception) {
             // 효과음 재생 중 오류 발생 시 로그 출력 후 계속 진행
             android.util.Log.e("ClickAlbaFragment", "효과음 재생 오류: ${e.message}")
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        // 핸들러 콜백 제거
+        handler.removeCallbacksAndMessages(null)
+        
+        // SoundPool 리소스 해제
+        if (::soundPool.isInitialized) {
+            soundPool.release()
+        }
+    }
+}
+
+/**
+ * 해킹 알바 프래그먼트 클래스
+ * 숫자 비밀번호를 추측하는 논리 게임 제공
+ */
+class HackingAlbaFragment : Fragment() {
+
+    private lateinit var albaViewModel: AlbaViewModel
+    private lateinit var assetViewModel: AssetViewModel
+    
+    // 게임 관련 변수
+    private var secretCode = intArrayOf(0, 0, 0, 0) // 4자리 비밀번호
+    private var attemptCount = 0 // 시도 횟수
+    private var maxAttempts = 10 // 최대 시도 횟수
+    private var isGameActive = false // 게임 활성화 상태
+    private var currentLevel = 1 // 현재 레벨
+    
+    // UI 요소
+    private lateinit var gameContainer: ViewGroup
+    private lateinit var codeInputContainer: ViewGroup
+    private lateinit var historyContainer: ViewGroup
+    private lateinit var historyDialogContainer: FrameLayout
+    private lateinit var historyScrollView: ScrollView
+    private lateinit var startButton: Button
+    private lateinit var submitButton: Button
+    private lateinit var toggleHistoryButton: Button
+    private lateinit var closeHistoryButton: Button
+    private lateinit var levelText: TextView
+    private lateinit var attemptsText: TextView
+    private lateinit var feedbackText: TextView
+    private lateinit var digitButtons: Array<TextView>
+    private lateinit var codeDigits: Array<TextView>
+    
+    // 기록 창 표시 상태
+    private var isHistoryShown = false
+    
+    // 효과음 재생을 위한 SoundPool
+    private lateinit var soundPool: SoundPool
+    private var correctSoundId: Int = 0
+    private var wrongSoundId: Int = 0
+    private var typingSoundId: Int = 0
+    
+    // 핸들러
+    private val handler = Handler(Looper.getMainLooper())
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        val view = inflater.inflate(R.layout.fragment_hacking_alba, container, false)
+
+        albaViewModel = ViewModelProvider(requireActivity())[AlbaViewModel::class.java]
+        assetViewModel = ViewModelProvider(requireActivity())[AssetViewModel::class.java]
+        
+        // UI 요소 초기화
+        initializeViews(view)
+        
+        // SoundPool 초기화
+        initSoundPool()
+        
+        // 이벤트 리스너 설정
+        setupEventListeners()
+        
+        // 초기 UI 상태 설정 - 게임은 비활성화 상태로 시작
+        isGameActive = false
+        updateUIState(false)
+        
+        // 기록 다이얼로그 초기 상태 설정
+        historyDialogContainer.visibility = View.GONE
+        isHistoryShown = false
+        
+        // 디버깅 로그 추가
+        android.util.Log.d("HackingAlba", "프래그먼트 생성됨, 버튼 초기 상태: 시작=${startButton.isEnabled}, 제출=${submitButton.isEnabled}")
+        
+        return view
+    }
+    
+    /**
+     * UI 요소들을 초기화합니다.
+     */
+    private fun initializeViews(view: View) {
+        gameContainer = view.findViewById(R.id.gameContainer)
+        codeInputContainer = view.findViewById(R.id.codeInputContainer)
+        historyContainer = view.findViewById(R.id.historyContainer)
+        historyDialogContainer = view.findViewById(R.id.historyDialogContainer)
+        historyScrollView = view.findViewById(R.id.historyScrollView)
+        startButton = view.findViewById<Button>(R.id.startButton)
+        submitButton = view.findViewById<Button>(R.id.submitButton)
+        toggleHistoryButton = view.findViewById<Button>(R.id.toggleHistoryButton)
+        closeHistoryButton = view.findViewById<Button>(R.id.closeHistoryButton)
+        levelText = view.findViewById(R.id.levelText)
+        attemptsText = view.findViewById(R.id.attemptsText)
+        feedbackText = view.findViewById(R.id.feedbackText)
+        
+        // 숫자 입력 버튼 초기화
+        digitButtons = Array(10) { index ->
+            view.findViewById<TextView>(
+                resources.getIdentifier("digit_$index", "id", requireContext().packageName)
+            )
+        }
+        
+        // 코드 표시 텍스트뷰 초기화
+        codeDigits = Array(4) { index ->
+            view.findViewById<TextView>(
+                resources.getIdentifier("code_digit_$index", "id", requireContext().packageName)
+            )
+        }
+        
+        // 초기 텍스트 설정
+        levelText.setText("레벨: $currentLevel")
+        attemptsText.setText("시도: 0/$maxAttempts")
+        feedbackText.setText("해킹을 시작하려면 시작 버튼을 누르세요.")
+    }
+    
+    /**
+     * SoundPool을 초기화하고 효과음을 로드합니다.
+     */
+    private fun initSoundPool() {
+        // API 레벨 21 이상에서는 AudioAttributes 사용
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            val audioAttributes = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_GAME)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+            
+            soundPool = SoundPool.Builder()
+                .setMaxStreams(4)  // 최대 동시 재생 수
+                .setAudioAttributes(audioAttributes)
+                .build()
+        } else {
+            // 하위 버전 호환성
+            @Suppress("DEPRECATION")
+            soundPool = SoundPool(4, AudioManager.STREAM_MUSIC, 0)
+        }
+        
+        // 효과음 로드 - 리소스 ID는 실제 앱에 맞게 수정 필요
+        correctSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 사용
+        wrongSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 사용
+        typingSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 사용
+    }
+    
+    /**
+     * 이벤트 리스너를 설정합니다.
+     */
+    private fun setupEventListeners() {
+        // 시작 버튼
+        startButton.setOnClickListener {
+            startNewGame()
+        }
+        
+        // 제출 버튼 - 명시적으로 다시 설정
+        submitButton.setOnClickListener { 
+            android.util.Log.d("HackingAlba", "제출 버튼 클릭됨")
+            checkCode() 
+        }
+        
+        // 기록 버튼 - 다이얼로그 형태로 표시
+        toggleHistoryButton.setOnClickListener {
+            showHistoryDialog()
+        }
+        
+        // 기록 닫기 버튼
+        closeHistoryButton.setOnClickListener {
+            hideHistoryDialog()
+        }
+        
+        // 숫자 버튼
+        for (i in 0 until 10) {
+            digitButtons[i].setOnClickListener {
+                if (isGameActive) {
+                    inputDigit(i)
+                    playSound(typingSoundId)
+                }
+            }
+        }
+    }
+    
+    /**
+     * 기록 다이얼로그를 표시합니다.
+     */
+    private fun showHistoryDialog() {
+        // 기록 컨테이너가 비어있으면 안내 메시지 추가
+        if (historyContainer.childCount == 0) {
+            val emptyView = layoutInflater.inflate(R.layout.item_hacking_result, historyContainer, false)
+            val codeText = emptyView.findViewById<TextView>(R.id.codeText)
+            val resultText = emptyView.findViewById<TextView>(R.id.resultText)
+            
+            codeText.text = "기록 없음"
+            resultText.text = "아직 시도한 결과가 없습니다."
+            
+            historyContainer.addView(emptyView)
+        }
+        
+        // 다이얼로그 표시 애니메이션
+        historyDialogContainer.visibility = View.VISIBLE
+        historyDialogContainer.alpha = 0f
+        
+        // 페이드 인 애니메이션
+        val fadeIn = ObjectAnimator.ofFloat(historyDialogContainer, "alpha", 0f, 1f)
+        fadeIn.duration = 300
+        fadeIn.start()
+        
+        // 다이얼로그가 전체 화면을 덮도록 설정
+        historyDialogContainer.bringToFront()
+        historyDialogContainer.elevation = 10f
+        
+        isHistoryShown = true
+        
+        // 디버깅 로그
+        android.util.Log.d("HackingAlba", "기록 다이얼로그 표시됨")
+    }
+    
+    /**
+     * 기록 다이얼로그를 숨깁니다.
+     */
+    private fun hideHistoryDialog() {
+        // 페이드 아웃 애니메이션
+        val fadeOut = ObjectAnimator.ofFloat(historyDialogContainer, "alpha", 1f, 0f)
+        fadeOut.duration = 300
+        fadeOut.addListener(object : AnimatorListenerAdapter() {
+            override fun onAnimationEnd(animation: Animator) {
+                historyDialogContainer.visibility = View.GONE
+            }
+        })
+        fadeOut.start()
+        
+        isHistoryShown = false
+        
+        // 디버깅 로그
+        android.util.Log.d("HackingAlba", "기록 다이얼로그 숨겨짐")
+    }
+    
+    /**
+     * 새 게임을 시작합니다.
+     */
+    private fun startNewGame() {
+        isGameActive = true
+        attemptCount = 0
+        historyContainer.removeAllViews()
+        
+        // 게임 시작 시 기록 영역 접기
+        if (isHistoryShown) {
+            hideHistoryDialog()
+        }
+        
+        // 4자리 랜덤 비밀번호 생성
+        for (i in secretCode.indices) {
+            secretCode[i] = (0..9).random()
+        }
+        
+        // UI 초기화
+        updateUIState(true)
+        resetInputDigits()
+        updateAttemptsText()
+        
+        feedbackText.setText("4자리 비밀번호를 추측하세요.")
+        
+        // 개발용 로그 - 실제 배포 시 제거
+        android.util.Log.d("HackingAlba", "비밀 코드: ${secretCode.joinToString("")}")
+    }
+    
+    /**
+     * 입력한 코드를 확인합니다.
+     */
+    private fun checkCode() {
+        if (!isGameActive) return
+        
+        // 현재 입력된 코드 가져오기
+        val inputCode = IntArray(4) { i ->
+            codeDigits[i].text.toString().toIntOrNull() ?: -1
+        }
+        
+        // 모든 자리를 입력했는지 확인
+        if (inputCode.contains(-1)) {
+            feedbackText.setText("4자리 숫자를 모두 입력하세요.")
+            return
+        }
+        
+        // 시도 횟수 증가
+        attemptCount++
+        updateAttemptsText()
+        
+        // 정답 확인
+        var correctPosition = 0 // 숫자와 위치가 모두 맞는 개수
+        var correctDigit = 0 // 숫자는 맞지만 위치가 틀린 개수
+        
+        // 입력 코드와 비밀 코드의 중복 체크를 위한 배열
+        val secretChecked = BooleanArray(4) { false }
+        val inputChecked = BooleanArray(4) { false }
+        
+        // 숫자와 위치가 모두 맞는 경우 체크
+        for (i in secretCode.indices) {
+            if (inputCode[i] == secretCode[i]) {
+                correctPosition++
+                secretChecked[i] = true
+                inputChecked[i] = true
+            }
+        }
+        
+        // 숫자만 맞는 경우 체크
+        for (i in secretCode.indices) {
+            if (!inputChecked[i]) {
+                for (j in secretCode.indices) {
+                    if (!secretChecked[j] && inputCode[i] == secretCode[j]) {
+                        correctDigit++
+                        secretChecked[j] = true
+                        break
+                    }
+                }
+            }
+        }
+        
+        // 결과 피드백 생성
+        val resultView = createResultView(inputCode, correctPosition, correctDigit)
+        historyContainer.addView(resultView, 0) // 최신 결과를 상단에 추가
+        
+        // 기록이 숨겨져 있으면 자동으로 다이얼로그 표시
+        if (!isHistoryShown) {
+            // 기록 다이얼로그 표시 시도 로그
+            android.util.Log.d("HackingAlba", "기록 자동 표시 시도")
+            
+            // 약간의 지연 후 기록 다이얼로그 표시
+            handler.postDelayed({
+                showHistoryDialog()
+                // 스크롤을 맨 위로 (최신 결과가 보이도록)
+                historyScrollView.fullScroll(ScrollView.FOCUS_UP)
+            }, 200)
+        } else {
+            // 이미 표시되어 있는 경우 스크롤만 조정
+            historyScrollView.fullScroll(ScrollView.FOCUS_UP)
+        }
+        
+        // 정답인 경우
+        if (correctPosition == 4) {
+            gameSuccess()
+            return
+        }
+        
+        // 최대 시도 횟수 초과
+        if (attemptCount >= maxAttempts) {
+            gameFailed()
+            return
+        }
+        
+        // 계속 진행
+        resetInputDigits()
+        feedbackText.setText("힌트: $correctPosition 개 숫자와 위치 일치, $correctDigit 개 숫자만 일치")
+        
+        // 틀린 입력 효과음
+        playSound(wrongSoundId)
+    }
+    
+    /**
+     * 게임 성공 처리
+     */
+    private fun gameSuccess() {
+        isGameActive = false
+        
+        // 보상 계산
+        val reward = calculateReward(true)
+        
+        // 자산 증가
+        assetViewModel.increaseAsset(reward)
+        
+        // 레벨 증가
+        currentLevel++
+        levelText.setText("레벨: $currentLevel")
+        
+        // 결과 표시
+        feedbackText.setText("성공! +${"%,d".format(reward)}원 획득")
+        
+        // 성공 효과음
+        playSound(correctSoundId)
+        
+        // UI 업데이트
+        updateUIState(false)
+        
+        // 정답 표시
+        for (i in secretCode.indices) {
+            codeDigits[i].setText(secretCode[i].toString())
+        }
+    }
+    
+    /**
+     * 게임 실패 처리
+     */
+    private fun gameFailed() {
+        isGameActive = false
+        
+        // 보상 계산 (최소 보상)
+        val reward = calculateReward(false)
+        
+        // 최소 보상 지급
+        if (reward > 0) {
+            assetViewModel.increaseAsset(reward)
+        }
+        
+        // 결과 표시
+        feedbackText.setText("실패! 정답: ${secretCode.joinToString("")}\n" +
+                            "위로금 +${"%,d".format(reward)}원")
+        
+        // UI 업데이트
+        updateUIState(false)
+        
+        // 정답 표시
+        for (i in secretCode.indices) {
+            codeDigits[i].setText(secretCode[i].toString())
+        }
+    }
+    
+    /**
+     * 보상을 계산합니다.
+     */
+    private fun calculateReward(isSuccess: Boolean): Long {
+        return if (isSuccess) {
+            // 성공 보상: 레벨 × 1000 × (1 + 효율 보너스)
+            val efficiencyBonus = (maxAttempts - attemptCount).toFloat() / maxAttempts
+            (currentLevel * 1000 * (1 + efficiencyBonus)).toLong()
+        } else {
+            // 실패 보상: 레벨 × 100
+            (currentLevel * 100).toLong()
+        }
+    }
+    
+    /**
+     * 결과 표시를 위한 뷰를 생성합니다.
+     */
+    private fun createResultView(inputCode: IntArray, correctPosition: Int, correctDigit: Int): View {
+        val resultView = layoutInflater.inflate(R.layout.item_hacking_result, historyContainer, false)
+        
+        // 입력 코드 표시
+        val codeText = resultView.findViewById<TextView>(R.id.codeText)
+        codeText.setText(inputCode.joinToString(""))
+        
+        // 결과 표시
+        val resultText = resultView.findViewById<TextView>(R.id.resultText)
+        resultText.setText("$correctPosition 개 위치 일치, $correctDigit 개 숫자 일치")
+        
+        return resultView
+    }
+    
+    /**
+     * 입력 숫자를 리셋합니다.
+     */
+    private fun resetInputDigits() {
+        for (digit in codeDigits) {
+            digit.setText("_")
+        }
+    }
+    
+    /**
+     * 숫자를 입력합니다.
+     */
+    private fun inputDigit(value: Int) {
+        // 빈 자리 찾기
+        for (i in codeDigits.indices) {
+            if (codeDigits[i].text == "_" || codeDigits[i].text.toString() == "") {
+                codeDigits[i].setText(value.toString())
+                
+                // 모든 자리가 입력되었는지 확인
+                var allFilled = true
+                for (digit in codeDigits) {
+                    if (digit.text == "_" || digit.text.toString() == "") {
+                        allFilled = false
+                        break
+                    }
+                }
+                
+                // 모든 자리가 채워지면 로그 출력
+                if (allFilled) {
+                    android.util.Log.d("HackingAlba", "모든 자리 입력 완료")
+                }
+                
+                return
+            }
+        }
+    }
+    
+    /**
+     * 백스페이스 기능 - 마지막 입력된 숫자를 지웁니다.
+     * 키패드 영역에 이 메서드를 호출하는 버튼을 추가할 수 있습니다.
+     */
+    private fun deleteLastDigit() {
+        // 마지막으로 입력된 숫자 찾기 (가장 오른쪽부터 찾음)
+        for (i in codeDigits.indices.reversed()) {
+            if (codeDigits[i].text != "_" && codeDigits[i].text.toString() != "") {
+                codeDigits[i].setText("_")
+                return
+            }
+        }
+    }
+    
+    /**
+     * 현재 시도 횟수 텍스트를 업데이트합니다.
+     */
+    private fun updateAttemptsText() {
+        attemptsText.setText("시도: $attemptCount/$maxAttempts")
+    }
+    
+    /**
+     * UI 상태를 업데이트합니다.
+     */
+    private fun updateUIState(isPlaying: Boolean) {
+        // 모든 버튼을 항상 보이게 설정하고, 게임 상태에 따라 활성화/비활성화만 변경
+        startButton.visibility = View.VISIBLE
+        submitButton.visibility = View.VISIBLE
+        
+        // 게임 상태에 따라 버튼 활성화/비활성화
+        startButton.isEnabled = !isPlaying
+        submitButton.isEnabled = isPlaying
+        
+        // 버튼 활성화/비활성화에 따른 색상 변경
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            startButton.backgroundTintList = ColorStateList.valueOf(
+                if (!isPlaying) requireContext().getColor(R.color.alba_start_button) 
+                else requireContext().getColor(R.color.button_disabled)
+            )
+            
+            submitButton.backgroundTintList = ColorStateList.valueOf(
+                if (isPlaying) requireContext().getColor(R.color.alba_start_button) 
+                else requireContext().getColor(R.color.button_disabled)
+            )
+        }
+        
+        // 로그 추가
+        android.util.Log.d("HackingAlba", "UI 상태 업데이트: 게임 활성화=$isPlaying, 시작 버튼 enabled=${startButton.isEnabled}, 제출 버튼 enabled=${submitButton.isEnabled}")
+        
+        // 키패드 버튼도 게임 상태에 따라 활성화/비활성화
+        for (button in digitButtons) {
+            button.isEnabled = isPlaying
+        }
+    }
+    
+    /**
+     * 효과음을 재생합니다.
+     */
+    private fun playSound(soundId: Int) {
+        try {
+            // 효과음이 로드되었는지 확인
+            if (soundId > 0) {
+                // 효과음 재생 (좌우 볼륨은 0.5로 설정, 우선순위는 1, 반복 횟수 0, 속도 1.0)
+                soundPool.play(soundId, 0.5f, 0.5f, 1, 0, 1.0f)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("HackingAlbaFragment", "효과음 재생 오류: ${e.message}")
         }
     }
 

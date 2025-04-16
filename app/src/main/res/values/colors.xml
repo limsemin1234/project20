@@ -47,7 +47,7 @@
     <!-- 누락된 색상 추가 -->
     <color name="button_color">#212675</color>
     <color name="button_pressed">#00BCD4</color>
-    <color name="reward_text">#FFFF00</color>
+    <color name="reward_text">#FFD700</color>
     <color name="main_bottom_button">#212C64</color>
     <color name="fragment_lavel">#016666</color>
     <color name="realestate_reward">#F44336</color>
@@ -65,4 +65,5 @@
     
     <!-- 새로운 색상 추가 -->
     <color name="background">#FF1A1A1A</color>
+    <color name="background_dark">#121212</color>
 </resources>
