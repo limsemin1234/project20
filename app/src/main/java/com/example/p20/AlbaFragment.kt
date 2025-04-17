@@ -1218,6 +1218,14 @@ class HackingAlbaFragment : Fragment() {
             lastResultTextView.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.holo_green_light))
             // 성공 효과음 재생
             playSound(successSoundId)
+            
+            // 보상 조정 - 시도 횟수가 적을수록 추가 보상
+            val efficiencyBonus = (maxAttempts - attemptCount + 1).toFloat() / maxAttempts
+            reward = (reward * (1 + efficiencyBonus)).toLong()
+            
+            // 성공 처리 (효과음은 gameSuccess 내부에서 재생)
+            gameSuccess()
+            return
         } else {
             lastResultTextView.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
             // 부분 정답 또는 오답 효과음 재생
@@ -1253,19 +1261,11 @@ class HackingAlbaFragment : Fragment() {
             historyScrollView.fullScroll(ScrollView.FOCUS_UP)
         }
         
-        // 정답인 경우
-        if (correctPosition == 4) {
-            // 보상 조정 - 시도 횟수가 적을수록 추가 보상
-            val efficiencyBonus = (maxAttempts - attemptCount + 1).toFloat() / maxAttempts
-            reward = (reward * (1 + efficiencyBonus)).toLong()
-            
-            // 성공 처리 (효과음은 gameSuccess 내부에서 재생)
-            gameSuccess()
-            return
-        }
-        
         // 최대 시도 횟수 초과
         if (attemptCount >= maxAttempts) {
+            // 게임 UI 비활성화
+            fadeOutGameComponents()
+            
             // 실패 처리 (효과음은 gameFailed 내부에서 재생)
             gameFailed()
             return
@@ -1338,6 +1338,46 @@ class HackingAlbaFragment : Fragment() {
                 
                 return
             }
+        }
+    }
+
+    /**
+     * 게임 UI 컴포넌트들을 서서히 흐려지게 하는 애니메이션을 수행합니다.
+     * 최대 시도 횟수에 도달했을 때 게임 종료 효과로 사용됩니다.
+     */
+    private fun fadeOutGameComponents() {
+        try {
+            // 숫자 패드 애니메이션
+            for (button in digitButtons) {
+                button.animate()
+                    .alpha(0.5f)
+                    .setDuration(800)
+                    .start()
+            }
+            
+            // 코드 입력창 애니메이션
+            for (digit in codeDigits) {
+                digit.animate()
+                    .alpha(0.5f)
+                    .setDuration(800)
+                    .start()
+            }
+            
+            // 제출 버튼 애니메이션
+            submitButton.animate()
+                .alpha(0.5f)
+                .setDuration(800)
+                .start()
+            
+            // 코드 입력 컨테이너 흐려짐 효과
+            codeInputContainer.animate()
+                .alpha(0.7f)
+                .setDuration(1000)
+                .start()
+            
+            android.util.Log.d("HackingAlba", "게임 UI 페이드아웃 애니메이션 시작됨")
+        } catch (e: Exception) {
+            android.util.Log.e("HackingAlba", "페이드아웃 애니메이션 오류: ${e.message}")
         }
     }
 
