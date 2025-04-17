@@ -14,6 +14,7 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.ViewModelProvider
 import java.text.DecimalFormat
 
@@ -83,16 +84,10 @@ class GameOverDialogFragment : DialogFragment() {
 
         // 다시 시작 버튼 리스너
         restartButton.setOnClickListener {
-            // 버튼 비활성화 및 즉시 숨김
-            restartButton.isEnabled = false
-            restartButton.visibility = View.INVISIBLE
-            exitButton.isEnabled = false
-            exitButton.visibility = View.INVISIBLE
-
-            // 기존 내용 숨기기 (INVISIBLE 사용)
-            view.findViewById<TextView>(R.id.gameOverTitleText).visibility = View.INVISIBLE // 타이틀 숨김
-            finalAssetText.visibility = View.INVISIBLE // 최종 자산 숨김
-
+            // 컨텐츠 컨테이너 숨기기
+            val contentContainer = view.findViewById<View>(R.id.contentContainer)
+            contentContainer?.visibility = View.GONE
+            
             // 메시지 표시 및 깜빡임 애니메이션
             restartMessageText.visibility = View.VISIBLE
             val blinkAnimation = AlphaAnimation(1.0f, 0.0f).apply {
@@ -101,18 +96,56 @@ class GameOverDialogFragment : DialogFragment() {
                 repeatCount = Animation.INFINITE
             }
             restartMessageText.startAnimation(blinkAnimation)
-
+            
             // 3초 후 실행 (멤버 핸들러 사용)
             handler.postDelayed({
-                // MainActivity에 다시 시작 요청 (리셋 및 ExplanationFragment 표시 트리거)
-                resetGame()
-                timeViewModel.requestRestart()
-
-                // 배경음악 처음부터 다시 재생
-                (activity as? MainActivity)?.restartBackgroundMusic()
-                
-                // 다이얼로그 닫기
-                dismiss()
+                // 프래그먼트가 액티비티에 연결되어 있는지 확인
+                if (!isAdded) {
+                    android.util.Log.d("GameOverDialog", "프래그먼트가 더 이상 액티비티에 연결되어 있지 않음")
+                    return@postDelayed
+                }
+            
+                try {
+                    // MainActivity에 다시 시작 요청 (리셋 및 ExplanationFragment 표시 트리거)
+                    resetGame()
+                    
+                    // 리스너를 통해 ExplanationFragment가 표시될 때 배경음악을 재생하도록 설정
+                    val mainActivity = activity as? MainActivity
+                    mainActivity?.let { activity ->
+                        // ExplanationFragment 표시 감지를 위한 FragmentManager 리스너 등록
+                        activity.supportFragmentManager.registerFragmentLifecycleCallbacks(
+                            object : androidx.fragment.app.FragmentManager.FragmentLifecycleCallbacks() {
+                                override fun onFragmentStarted(fm: androidx.fragment.app.FragmentManager, f: androidx.fragment.app.Fragment) {
+                                    super.onFragmentStarted(fm, f)
+                                    if (f is ExplanationFragment) {
+                                        // ExplanationFragment가 시작되면 배경음악 재생
+                                        val prefs = activity.getSharedPreferences("settings", Context.MODE_PRIVATE)
+                                        val soundEnabled = prefs.getBoolean("sound_enabled", true)
+                                        
+                                        android.util.Log.d("GameOverDialog", "ExplanationFragment 시작: 배경음악 설정=$soundEnabled")
+                                        
+                                        if (soundEnabled) {
+                                            activity.restartBackgroundMusic()
+                                        }
+                                        
+                                        // 한 번만 실행하도록 리스너 제거
+                                        activity.supportFragmentManager.unregisterFragmentLifecycleCallbacks(this)
+                                    }
+                                }
+                            }, false
+                        )
+                    }
+                    
+                    // 게임 재시작 요청
+                    timeViewModel.requestRestart()
+                    
+                    // 다이얼로그 닫기
+                    if (dialog?.isShowing == true && !requireActivity().isFinishing) {
+                        dismiss()
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("GameOverDialog", "다시 시작 중 오류 발생: ${e.message}")
+                }
             }, 3000)
         }
 
@@ -168,6 +201,9 @@ class GameOverDialogFragment : DialogFragment() {
         
         // 아이템 초기화
         resetItems()
+        
+        // 해킹 알바 게임 초기화
+        resetHackingAlba()
     }
     
     // 아이템 초기화 함수
@@ -189,5 +225,22 @@ class GameOverDialogFragment : DialogFragment() {
         // 아이템 초기화 완료 표시
         itemEditor.putBoolean("has_initialized_stocks", true)
         itemEditor.apply()
+    }
+
+    // 해킹 알바 초기화 함수
+    private fun resetHackingAlba() {
+        val hackingPrefs = requireContext().getSharedPreferences("hacking_alba_prefs", Context.MODE_PRIVATE)
+        val hackingEditor = hackingPrefs.edit()
+        
+        // 해킹 알바 데이터 초기화
+        hackingEditor.clear()
+        
+        // 초기값 설정
+        hackingEditor.putBoolean("last_game_result_exists", false)
+        hackingEditor.putInt("last_game_level", 1)
+        
+        hackingEditor.apply()
+        
+        android.util.Log.d("GameOverDialog", "해킹 알바 데이터 초기화 완료")
     }
 } 

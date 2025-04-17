@@ -842,6 +842,9 @@ class HackingAlbaFragment : Fragment() {
         // 피드백 업데이트
         feedbackText.setText("해킹 성공! 보상: ${formatCurrency(reward)}원")
         
+        // 성공 효과음 재생
+        playSound(successSoundId)
+        
         // 보상 지급
         assetViewModel.increaseAsset(reward)
         
@@ -863,6 +866,9 @@ class HackingAlbaFragment : Fragment() {
         
         // 피드백 업데이트
         feedbackText.setText("해킹 실패! 올바른 코드는 ${secretCode.joinToString("")}이었습니다.")
+        
+        // 실패 효과음 재생
+        playSound(failSoundId)
         
         // 게임 결과 저장
         saveGameResult(false)
@@ -1074,19 +1080,34 @@ class HackingAlbaFragment : Fragment() {
                 soundPool = SoundPool(10, AudioManager.STREAM_MUSIC, 0)
             }
             
-            // 효과음 로드 - 기존에 있는 리소스 파일 사용
-            correctSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 효과음 사용
-            wrongSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 효과음 사용
-            typingSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_number, 1)
-            startSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 효과음 사용
-            successSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 효과음 사용
-            failSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 효과음 사용
-            hackingStartSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_start, 1)
-            hackingButtonSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_button, 1)
+            // 효과음 로드 - 게임에 맞는 효과음 사용
+            correctSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_fail, 1) // 부분 정답 효과음도 실패 효과음으로 변경
+            wrongSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_fail, 1) // 오답 효과음도 실패 효과음으로 변경
+            typingSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_number, 1) // 숫자 입력 효과음
+            startSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 기타 효과음
+            // 해킹 성공 및 실패 효과음 로드
+            successSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_success, 1) // 성공 효과음
+            failSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_fail, 1) // 실패 효과음
+            hackingStartSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_start, 1) // 해킹 시작 효과음
+            hackingButtonSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_button, 1) // 버튼 클릭 효과음
             
             android.util.Log.d("HackingAlba", "SoundPool 초기화 및 효과음 로드 완료")
         } catch (e: Exception) {
             android.util.Log.e("HackingAlba", "SoundPool 초기화 오류: ${e.message}")
+            // 오류 발생 시 fallback으로 기본 효과음 사용
+            try {
+                // 기본 효과음으로 fallback
+                correctSoundId = soundPool.load(requireContext(), R.raw.coin, 1)
+                wrongSoundId = soundPool.load(requireContext(), R.raw.coin, 1)
+                typingSoundId = soundPool.load(requireContext(), R.raw.coin, 1)
+                startSoundId = soundPool.load(requireContext(), R.raw.coin, 1)
+                successSoundId = soundPool.load(requireContext(), R.raw.coin, 1)
+                failSoundId = soundPool.load(requireContext(), R.raw.coin, 1)
+                hackingStartSoundId = soundPool.load(requireContext(), R.raw.coin, 1)
+                hackingButtonSoundId = soundPool.load(requireContext(), R.raw.coin, 1)
+            } catch (e2: Exception) {
+                android.util.Log.e("HackingAlba", "Fallback 효과음 로드 오류: ${e2.message}")
+            }
         }
     }
 
@@ -1238,14 +1259,15 @@ class HackingAlbaFragment : Fragment() {
             val efficiencyBonus = (maxAttempts - attemptCount + 1).toFloat() / maxAttempts
             reward = (reward * (1 + efficiencyBonus)).toLong()
             
+            // 성공 처리 (효과음은 gameSuccess 내부에서 재생)
             gameSuccess()
             return
         }
         
         // 최대 시도 횟수 초과
         if (attemptCount >= maxAttempts) {
+            // 실패 처리 (효과음은 gameFailed 내부에서 재생)
             gameFailed()
-            playSound(failSoundId)
             return
         }
         

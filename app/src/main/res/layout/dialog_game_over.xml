@@ -4,18 +4,9 @@
     android:layout_height="match_parent" 
     android:orientation="vertical"
     android:gravity="center"
+    android:id="@+id/dialogBackground"
     android:background="#E6212121"
     android:padding="32dp">
-
-    <TextView
-        android:id="@+id/gameOverTitleText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Game Over!"
-        android:textSize="32sp"
-        android:textColor="@android:color/holo_red_light"
-        android:textStyle="bold"
-        android:layout_marginBottom="24dp"/>
 
     <!-- 다시 시작 시 메시지 (초기에는 숨김) -->
     <TextView
@@ -27,32 +18,52 @@
         android:padding="16dp"
         android:text="시간을 되돌립니다..."
         android:textColor="@android:color/white"
-        android:textSize="18sp" />
+        android:textSize="24sp"
+        android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/dialogFinalAssetText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="최종 자산: 0원"
-        android:textSize="20sp"
-        android:textColor="@android:color/white"
-        android:layout_marginBottom="48dp"
-        android:gravity="center"
-        android:lineSpacingExtra="8dp"/>
-
-    <Button
-        android:id="@+id/dialogRestartButton"
+    <!-- 컨텐츠 컨테이너 -->
+    <LinearLayout
+        android:id="@+id/contentContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="다시 시작"
-        android:textSize="18sp"
-        android:layout_marginBottom="16dp"/>
+        android:orientation="vertical"
+        android:gravity="center">
 
-    <Button
-        android:id="@+id/dialogExitButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="종료"
-        android:textSize="18sp"/>
+        <TextView
+            android:id="@+id/gameOverTitleText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Game Over!"
+            android:textSize="32sp"
+            android:textColor="@android:color/holo_red_light"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp"/>
+
+        <TextView
+            android:id="@+id/dialogFinalAssetText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="최종 자산: 0원"
+            android:textSize="20sp"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="48dp"
+            android:gravity="center"
+            android:lineSpacingExtra="8dp"/>
+
+        <Button
+            android:id="@+id/dialogRestartButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="다시 시작"
+            android:textSize="18sp"
+            android:layout_marginBottom="16dp"/>
+
+        <Button
+            android:id="@+id/dialogExitButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="종료"
+            android:textSize="18sp"/>
+    </LinearLayout>
 
 </LinearLayout> 
