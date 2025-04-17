@@ -15,6 +15,10 @@ import android.view.animation.AlphaAnimation
 import androidx.fragment.app.DialogFragment
 import android.graphics.Color
 import android.media.MediaPlayer
+import android.media.AudioAttributes
+import android.media.AudioManager
+import android.media.SoundPool
+import android.os.Build
 
 class MainActivity : AppCompatActivity() {
 
@@ -59,39 +63,57 @@ class MainActivity : AppCompatActivity() {
     // 재생 완료 상태 추적
     private var isPlaybackCompleted = false
     
-    private fun startPeriodicLoopCheck() {
-        stopPeriodicLoopCheck()
-        
-        loopCheckRunnable = object : Runnable {
-            override fun run() {
-                backgroundMusic?.let { player ->
-                    if (player.isPlaying) {
-                        try {
-                            val duration = player.duration
-                            val position = player.currentPosition
-                            
-                            if (duration > 0 && position > duration - 5000) {
-                                if (!player.isLooping) {
-                                    player.isLooping = true
-                                }
-                            }
-                        } catch (e: Exception) {
-                            android.util.Log.e("MainActivity", "루핑 체크 오류: ${e.message}")
-                        }
-                    }
-                    
-                    loopCheckHandler.postDelayed(this, 10000)
-                }
+    // 버튼 효과음 재생을 위한 SoundPool 변수
+    private lateinit var buttonSoundPool: SoundPool
+    private var buttonSoundId: Int = 0
+    
+    // UI 요소에 대한 변수
+    private lateinit var slidePanel: LinearLayout
+
+    /**
+     * 버튼 효과음을 위한 SoundPool을 초기화합니다.
+     */
+    private fun initButtonSoundPool() {
+        try {
+            // AudioAttributes 설정
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                val audioAttributes = AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_GAME)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+                
+                buttonSoundPool = SoundPool.Builder()
+                    .setMaxStreams(5)  // 최대 동시 재생 수
+                    .setAudioAttributes(audioAttributes)
+                    .build()
+            } else {
+                // 하위 버전 호환성
+                @Suppress("DEPRECATION")
+                buttonSoundPool = SoundPool(5, AudioManager.STREAM_MUSIC, 0)
             }
+            
+            // 효과음 로드
+            buttonSoundId = buttonSoundPool.load(this, R.raw.main_button_1, 1)
+            
+            android.util.Log.d("MainActivity", "버튼 효과음 초기화 완료")
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "SoundPool 초기화 오류: ${e.message}")
         }
-        
-        loopCheckHandler.postDelayed(loopCheckRunnable!!, 10000)
     }
     
-    private fun stopPeriodicLoopCheck() {
-        loopCheckRunnable?.let {
-            loopCheckHandler.removeCallbacks(it)
-            loopCheckRunnable = null
+    /**
+     * 버튼 효과음을 재생합니다.
+     */
+    private fun playButtonSound() {
+        try {
+            // 효과음 설정이 활성화되어 있는지 확인
+            if (isSoundEffectEnabled()) {
+                val volume = getCurrentVolume()
+                buttonSoundPool.play(buttonSoundId, volume, volume, 1, 0, 1.0f)
+                android.util.Log.d("MainActivity", "버튼 효과음 재생: 볼륨=$volume")
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "효과음 재생 오류: ${e.message}")
         }
     }
 
@@ -101,6 +123,9 @@ class MainActivity : AppCompatActivity() {
 
         // 효과음 설정 변경을 수신하는 BroadcastReceiver 등록
         registerSoundSettingsReceiver()
+        
+        // 버튼 효과음 초기화
+        initButtonSoundPool()
 
         val contentFrame = findViewById<FrameLayout>(R.id.contentFrame)
         val timeInfo: TextView = findViewById(R.id.timeInfo)
@@ -266,7 +291,7 @@ class MainActivity : AppCompatActivity() {
         val buttonBank = findViewById<Button>(R.id.buttonBank)
         val buttonCasino = findViewById<Button>(R.id.buttonCasino)
         val buttonLotto = findViewById<Button>(R.id.buttonLotto)
-        val slidePanel = findViewById<LinearLayout>(R.id.slidePanel)
+        slidePanel = findViewById<LinearLayout>(R.id.slidePanel)
 
         // 앱 첫 시작 시 ExplanationFragment 추가
         if (savedInstanceState == null) { // 액티비티가 처음 생성될 때만
@@ -287,108 +312,8 @@ class MainActivity : AppCompatActivity() {
             slidePanel.startAnimation(slideDown)
         }
 
-        buttonAlba.setOnClickListener {
-            removeExplanationFragment()
-            slidePanel.visibility = View.GONE
-            // 임시 음악이 재생 중이고 15초 경고 음악이 아닐 경우에만 원래 음악으로 복귀
-            if (isTemporaryMusic && !isPlaying15SecondWarning()) {
-                restoreOriginalMusic()
-            }
-            showFragment(AlbaFragment(), "AlbaFragment")
-        }
-
-        buttonStock.setOnClickListener {
-            removeExplanationFragment()
-            slidePanel.visibility = View.GONE
-            // 임시 음악이 재생 중이고 15초 경고 음악이 아닐 경우에만 원래 음악으로 복귀
-            if (isTemporaryMusic && !isPlaying15SecondWarning()) {
-                restoreOriginalMusic()
-            }
-            showFragment(StockFragment(), "StockFragment")
-        }
-
-        buttonRealEstate.setOnClickListener {
-            removeExplanationFragment()
-            slidePanel.visibility = View.GONE
-            // 임시 음악이 재생 중이고 15초 경고 음악이 아닐 경우에만 원래 음악으로 복귀
-            if (isTemporaryMusic && !isPlaying15SecondWarning()) {
-                restoreOriginalMusic()
-            }
-            showFragment(RealEstateFragment(), "RealEstateFragment")
-        }
-
-        buttonCasino.setOnClickListener {
-            removeExplanationFragment()
-            slidePanel.visibility = View.GONE
-            
-            showFragment(CasinoFragment(), "CasinoFragment")
-        }
-
-        buttonLotto.setOnClickListener {
-            removeExplanationFragment()
-            slidePanel.visibility = View.GONE
-            // 임시 음악이 재생 중이고 15초 경고 음악이 아닐 경우에만 원래 음악으로 복귀
-            if (isTemporaryMusic && !isPlaying15SecondWarning()) {
-                restoreOriginalMusic()
-            }
-            showFragment(LottoFragment(), "LottoFragment")
-        }
-
-        buttonMyInfo.setOnClickListener {
-            removeExplanationFragment()
-            slidePanel.visibility = View.GONE
-            // 임시 음악이 재생 중이고 15초 경고 음악이 아닐 경우에만 원래 음악으로 복귀
-            if (isTemporaryMusic && !isPlaying15SecondWarning()) {
-                restoreOriginalMusic()
-            }
-            showFragment(MyInfoFragment(), "`MyInfoFragment`")
-        }
-
-        buttonBank.setOnClickListener {
-            removeExplanationFragment()
-            slidePanel.visibility = View.GONE
-            // 임시 음악이 재생 중이고 15초 경고 음악이 아닐 경우에만 원래 음악으로 복귀
-            if (isTemporaryMusic && !isPlaying15SecondWarning()) {
-                restoreOriginalMusic()
-            }
-            showFragment(BankFragment(), "BankFragment")
-        }
-
-        buttonItem.setOnClickListener {
-            removeExplanationFragment()
-            slidePanel.visibility = View.GONE
-            // 임시 음악이 재생 중이고 15초 경고 음악이 아닐 경우에만 원래 음악으로 복귀
-            if (isTemporaryMusic && !isPlaying15SecondWarning()) {
-                restoreOriginalMusic()
-            }
-            showFragment(ItemFragment(), "ItemFragment")
-        }
-
-        buttonEarnMoney.setOnClickListener {
-            if (slidePanel.visibility == View.VISIBLE) {
-                val slideDown = AnimationUtils.loadAnimation(this, R.anim.slide_down)
-                slideDown.setAnimationListener(object : Animation.AnimationListener {
-                    override fun onAnimationStart(animation: Animation?) {}
-                    override fun onAnimationEnd(animation: Animation?) {
-                        slidePanel.visibility = View.GONE
-                    }
-                    override fun onAnimationRepeat(animation: Animation?) {}
-                })
-                slidePanel.startAnimation(slideDown)
-            } else {
-                // 버튼 깜빡임 효과
-                val buttonFlash = AlphaAnimation(1.0f, 0.4f)
-                buttonFlash.duration = 200
-                buttonFlash.repeatCount = 1
-                buttonFlash.repeatMode = Animation.REVERSE
-                buttonEarnMoney.startAnimation(buttonFlash)
-
-                // 패널 나타나는 효과
-                slidePanel.visibility = View.VISIBLE
-                val slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up)
-                slidePanel.startAnimation(slideUp)
-            }
-        }
+        // 버튼 효과음 설정
+        setupButtonSounds()
 
         // 설정 버튼 클릭 리스너 설정
         val buttonSettings = findViewById<Button>(R.id.buttonSettings)
@@ -447,6 +372,11 @@ class MainActivity : AppCompatActivity() {
         // 배경음악 해제
         backgroundMusic?.release()
         backgroundMusic = null
+        
+        // 버튼 효과음 해제
+        if (::buttonSoundPool.isInitialized) {
+            buttonSoundPool.release()
+        }
         
         // BroadcastReceiver 해제 (메모리 누수 방지)
         try {
@@ -1336,5 +1266,135 @@ class MainActivity : AppCompatActivity() {
     fun togglePlaylistMode(enabled: Boolean) {
         isPlaylistMode = enabled
         android.util.Log.d("MainActivity", "플레이리스트 모드 ${if(enabled) "활성화" else "비활성화"}")
+    }
+
+    /**
+     * 모든 버튼에 효과음을 설정합니다.
+     */
+    private fun setupButtonSounds() {
+        // 메인 버튼들
+        findViewById<Button>(R.id.buttonMyInfo).setOnClickListener {
+            playButtonSound()
+            removeExplanationFragment()
+            showFragment(MyInfoFragment(), "MyInfoFragment")
+        }
+        
+        findViewById<Button>(R.id.buttonBank).setOnClickListener {
+            playButtonSound()
+            removeExplanationFragment()
+            showFragment(BankFragment(), "BankFragment")
+        }
+        
+        findViewById<Button>(R.id.buttonItem).setOnClickListener {
+            playButtonSound()
+            removeExplanationFragment()
+            showFragment(ItemFragment(), "ItemFragment")
+        }
+        
+        findViewById<Button>(R.id.buttonEarnMoney).setOnClickListener {
+            playButtonSound()
+            removeExplanationFragment()
+            
+            val slidePanel = findViewById<LinearLayout>(R.id.slidePanel)
+            if (slidePanel.visibility == View.VISIBLE) {
+                // 슬라이드 패널이 보이는 상태면 닫기
+                val slideDown = AnimationUtils.loadAnimation(this, R.anim.slide_down)
+                slideDown.setAnimationListener(object : Animation.AnimationListener {
+                    override fun onAnimationStart(animation: Animation?) {}
+                    override fun onAnimationEnd(animation: Animation?) {
+                        slidePanel.visibility = View.GONE
+                    }
+                    override fun onAnimationRepeat(animation: Animation?) {}
+                })
+                slidePanel.startAnimation(slideDown)
+            } else {
+                // 슬라이드 패널이 안 보이는 상태면 열기
+                slidePanel.visibility = View.VISIBLE
+                val slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up)
+                slidePanel.startAnimation(slideUp)
+            }
+        }
+        
+        findViewById<Button>(R.id.buttonSettings).setOnClickListener {
+            playButtonSound()
+            removeExplanationFragment()
+            SettingsDialogFragment().show(supportFragmentManager, "SettingsDialog")
+        }
+        
+        // 돈벌기 슬라이드 버튼들
+        findViewById<Button>(R.id.buttonAlba).setOnClickListener {
+            playButtonSound()
+            removeExplanationFragment()
+            slidePanel.visibility = View.GONE
+            // 임시 음악이 재생 중이고 15초 경고 음악이 아닐 경우에만 원래 음악으로 복귀
+            if (isTemporaryMusic && !isPlaying15SecondWarning()) {
+                restoreOriginalMusic()
+            }
+            showFragment(AlbaFragment(), "AlbaFragment")
+        }
+        
+        findViewById<Button>(R.id.buttonStock).setOnClickListener {
+            playButtonSound()
+            removeExplanationFragment()
+            slidePanel.visibility = View.GONE
+            showFragment(StockFragment(), "StockFragment")
+        }
+        
+        findViewById<Button>(R.id.buttonRealEstate).setOnClickListener {
+            playButtonSound()
+            removeExplanationFragment()
+            slidePanel.visibility = View.GONE
+            showFragment(RealEstateFragment(), "RealEstateFragment")
+        }
+        
+        findViewById<Button>(R.id.buttonCasino).setOnClickListener {
+            playButtonSound()
+            removeExplanationFragment()
+            slidePanel.visibility = View.GONE
+            showFragment(CasinoFragment(), "CasinoFragment")
+        }
+        
+        findViewById<Button>(R.id.buttonLotto).setOnClickListener {
+            playButtonSound()
+            removeExplanationFragment()
+            slidePanel.visibility = View.GONE
+            showFragment(LottoFragment(), "LottoFragment")
+        }
+    }
+
+    private fun startPeriodicLoopCheck() {
+        stopPeriodicLoopCheck()
+        
+        loopCheckRunnable = object : Runnable {
+            override fun run() {
+                backgroundMusic?.let { player ->
+                    if (player.isPlaying) {
+                        try {
+                            val duration = player.duration
+                            val position = player.currentPosition
+                            
+                            if (duration > 0 && position > duration - 5000) {
+                                if (!player.isLooping) {
+                                    player.isLooping = true
+                                }
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("MainActivity", "루핑 체크 오류: ${e.message}")
+                        }
+                    }
+                    
+                    loopCheckHandler.postDelayed(this, 10000)
+                }
+            }
+        }
+        
+        loopCheckHandler.postDelayed(loopCheckRunnable!!, 10000)
+    }
+    
+    private fun stopPeriodicLoopCheck() {
+        loopCheckRunnable?.let {
+            loopCheckHandler.removeCallbacks(it)
+            loopCheckRunnable = null
+        }
     }
 }
