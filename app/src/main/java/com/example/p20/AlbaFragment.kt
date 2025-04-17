@@ -481,25 +481,29 @@ class ClickAlbaFragment : Fragment() {
      * SoundPool 초기화 및 효과음 로드
      */
     private fun initSoundPool() {
-        // API 레벨 21 이상에서는 AudioAttributes 사용
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val audioAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_GAME)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build()
+        try {
+            // API 레벨 21 이상에서는 AudioAttributes 사용
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                val audioAttributes = AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_GAME)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+                
+                soundPool = SoundPool.Builder()
+                    .setMaxStreams(4)  // 최대 동시 재생 수
+                    .setAudioAttributes(audioAttributes)
+                    .build()
+            } else {
+                // 하위 버전 호환성
+                @Suppress("DEPRECATION")
+                soundPool = SoundPool(4, AudioManager.STREAM_MUSIC, 0)
+            }
             
-            soundPool = SoundPool.Builder()
-                .setMaxStreams(4)  // 최대 동시 재생 수
-                .setAudioAttributes(audioAttributes)
-                .build()
-        } else {
-            // 하위 버전 호환성
-            @Suppress("DEPRECATION")
-            soundPool = SoundPool(4, AudioManager.STREAM_MUSIC, 0)
+            // 효과음 로드
+            coinSoundId = soundPool.load(requireContext(), R.raw.coin, 1)
+        } catch (e: Exception) {
+            android.util.Log.e("ClickAlbaFragment", "SoundPool 초기화 오류: ${e.message}")
         }
-        
-        // 효과음 로드
-        coinSoundId = soundPool.load(requireContext(), R.raw.coin, 1)
     }
 
     /**
@@ -513,10 +517,19 @@ class ClickAlbaFragment : Fragment() {
                 return
             }
             
+            // 효과음 설정 확인 (MainActivity에서 설정 가져오기)
+            val mainActivity = activity as? MainActivity
+            if (mainActivity?.isSoundEffectEnabled() != true) {
+                return  // 효과음이 비활성화되어 있으면 재생하지 않음
+            }
+            
             // 효과음이 로드되었는지 확인
             if (coinSoundId > 0) {
-                // 효과음 재생 (좌우 볼륨은 0.5로 설정, 우선순위는 1, 반복 횟수 0, 속도 1.0)
-                soundPool.play(coinSoundId, 0.5f, 0.5f, 1, 0, 1.0f)
+                // 현재 볼륨 설정 가져오기 - 호출 시점에 최신 볼륨값 가져오기
+                val volume = mainActivity.getCurrentVolume()
+                // 효과음 재생 (좌우 볼륨을 현재 설정 볼륨으로 설정)
+                soundPool.play(coinSoundId, volume, volume, 1, 0, 1.0f)
+                android.util.Log.d("ClickAlbaFragment", "코인 효과음 재생: 볼륨=$volume")
             }
         } catch (e: Exception) {
             // 효과음 재생 중 오류 발생 시 로그 출력 후 계속 진행
@@ -602,8 +615,11 @@ class HackingAlbaFragment : Fragment() {
         // UI 요소 초기화
         initializeViews(view)
         
-        // SoundPool 초기화
+        // SoundPool 초기화 및 효과음 로드
         initSoundPool()
+        
+        // 효과음 설정 변경을 수신하는 리시버 등록
+        registerSoundSettingsReceiver()
         
         // 이벤트 리스너 설정
         setupEventListeners()
@@ -684,40 +700,6 @@ class HackingAlbaFragment : Fragment() {
         attemptsText.setText("시도: 0/${maxAttempts}")
         feedbackText.setText("해킹을 시작하려면 시작 버튼을 누르세요.")
         lastResultTextView.visibility = View.GONE
-    }
-    
-    /**
-     * SoundPool을 초기화하고 효과음을 로드합니다.
-     */
-    private fun initSoundPool() {
-        // API 레벨 21 이상에서는 AudioAttributes 사용
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val audioAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_GAME)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build()
-            
-            soundPool = SoundPool.Builder()
-                .setMaxStreams(6)  // 최대 동시 재생 수 증가
-                .setAudioAttributes(audioAttributes)
-                .build()
-        } else {
-            // 하위 버전 호환성
-            @Suppress("DEPRECATION")
-            soundPool = SoundPool(6, AudioManager.STREAM_MUSIC, 0)
-        }
-        
-        // 효과음 로드
-        correctSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 사용
-        wrongSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 사용
-        typingSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_number, 1)
-        startSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 사용
-        successSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 사용
-        failSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 사용
-        
-        // 새로운 효과음 로드
-        hackingStartSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_start, 1)
-        hackingButtonSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_button, 1)
     }
     
     /**
@@ -1052,17 +1034,84 @@ class HackingAlbaFragment : Fragment() {
     }
 
     /**
+     * 효과음 설정 변경을 처리하는 BroadcastReceiver를 등록합니다.
+     */
+    private fun registerSoundSettingsReceiver() {
+        try {
+            val filter = android.content.IntentFilter("com.example.p20.SOUND_SETTINGS_CHANGED")
+            val receiver = object : android.content.BroadcastReceiver() {
+                override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+                    android.util.Log.d("HackingAlba", "효과음 설정 변경 감지됨")
+                    // 특별한 액션은 필요 없음 - 다음 효과음 재생 시 MainActivity의 설정을 체크함
+                }
+            }
+            
+            requireActivity().registerReceiver(receiver, filter)
+        } catch (e: Exception) {
+            android.util.Log.e("HackingAlba", "BroadcastReceiver 등록 오류: ${e.message}")
+        }
+    }
+
+    /**
+     * SoundPool 초기화 및 효과음 로드
+     */
+    private fun initSoundPool() {
+        try {
+            // API 레벨 21 이상에서는 AudioAttributes 사용
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                val audioAttributes = AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_GAME)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+                
+                soundPool = SoundPool.Builder()
+                    .setMaxStreams(10)  // 최대 동시 재생 수
+                    .setAudioAttributes(audioAttributes)
+                    .build()
+            } else {
+                // 하위 버전 호환성
+                @Suppress("DEPRECATION")
+                soundPool = SoundPool(10, AudioManager.STREAM_MUSIC, 0)
+            }
+            
+            // 효과음 로드 - 기존에 있는 리소스 파일 사용
+            correctSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 효과음 사용
+            wrongSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 효과음 사용
+            typingSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_number, 1)
+            startSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 효과음 사용
+            successSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 효과음 사용
+            failSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 임시로 coin 효과음 사용
+            hackingStartSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_start, 1)
+            hackingButtonSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_button, 1)
+            
+            android.util.Log.d("HackingAlba", "SoundPool 초기화 및 효과음 로드 완료")
+        } catch (e: Exception) {
+            android.util.Log.e("HackingAlba", "SoundPool 초기화 오류: ${e.message}")
+        }
+    }
+
+    /**
      * 효과음을 재생합니다.
+     * @param soundId 재생할 효과음의 ID
      */
     private fun playSound(soundId: Int) {
         try {
-            // 효과음이 로드되었는지 확인
+            // MainActivity의 효과음 설정 확인
+            val mainActivity = activity as? MainActivity
+            if (mainActivity?.isSoundEffectEnabled() != true) {
+                return  // 효과음이 비활성화되어 있으면 재생하지 않음
+            }
+            
+            // 현재 볼륨 설정 가져오기 - 호출 시점에 최신 볼륨값 가져오기
+            val volume = mainActivity.getCurrentVolume()
+            
+            // 효과음 재생
             if (soundId > 0) {
-                // 효과음 재생 (좌우 볼륨은 0.5로 설정, 우선순위는 1, 반복 횟수 0, 속도 1.0)
-                soundPool.play(soundId, 0.5f, 0.5f, 1, 0, 1.0f)
+                soundPool.play(soundId, volume, volume, 1, 0, 1.0f)
+                android.util.Log.d("HackingAlba", "효과음 재생: ID=$soundId, 볼륨=$volume")
             }
         } catch (e: Exception) {
-            android.util.Log.e("HackingAlbaFragment", "효과음 재생 오류: ${e.message}")
+            android.util.Log.e("HackingAlba", "효과음 재생 오류: ${e.message}")
         }
     }
 
@@ -1087,6 +1136,27 @@ class HackingAlbaFragment : Fragment() {
         attemptCount++
         updateAttemptsText()
         
+        // 입력 확인 중 메시지 표시
+        feedbackText.setText("코드 확인 중...")
+        
+        // 제출 버튼 일시적으로 비활성화
+        submitButton.isEnabled = false
+        
+        // 숫자 키패드 일시적으로 비활성화
+        for (button in digitButtons) {
+            button.isEnabled = false
+        }
+        
+        // 1초 지연 후에 결과 처리
+        handler.postDelayed({
+            processCodeResult(inputCode)
+        }, 1000) // 1초 지연
+    }
+    
+    /**
+     * 코드 검증 결과를 처리합니다.
+     */
+    private fun processCodeResult(inputCode: IntArray) {
         // 정답 확인
         var correctPosition = 0 // 숫자와 위치가 모두 맞는 개수
         var correctDigit = 0 // 숫자는 맞지만 위치가 틀린 개수
@@ -1125,8 +1195,16 @@ class HackingAlbaFragment : Fragment() {
         // 색상 설정 - 정답일 경우 초록색, 아닐 경우 기본 흰색
         if (correctPosition == 4) {
             lastResultTextView.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.holo_green_light))
+            // 성공 효과음 재생
+            playSound(successSoundId)
         } else {
             lastResultTextView.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
+            // 부분 정답 또는 오답 효과음 재생
+            if (correctPosition > 0 || correctDigit > 0) {
+                playSound(correctSoundId)
+            } else {
+                playSound(wrongSoundId)
+            }
         }
         
         // 결과 피드백 생성
@@ -1167,7 +1245,19 @@ class HackingAlbaFragment : Fragment() {
         // 최대 시도 횟수 초과
         if (attemptCount >= maxAttempts) {
             gameFailed()
+            playSound(failSoundId)
             return
+        }
+        
+        // 게임이 계속되는 경우에만 버튼과 키패드 다시 활성화
+        if (isGameActive) {
+            // 다시 제출 버튼 활성화
+            submitButton.isEnabled = true
+            
+            // 숫자 키패드 다시 활성화
+            for (button in digitButtons) {
+                button.isEnabled = true
+            }
         }
         
         // 계속 진행
@@ -1231,12 +1321,17 @@ class HackingAlbaFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        // 핸들러 콜백 제거
-        handler.removeCallbacksAndMessages(null)
         
-        // SoundPool 리소스 해제
-        if (::soundPool.isInitialized) {
-            soundPool.release()
+        // 리소스 정리
+        try {
+            // SoundPool 해제
+            if (::soundPool.isInitialized) {
+                soundPool.release()
+            }
+            
+            // 등록된 리시버가 있다면 해제 (추가 구현 필요)
+        } catch (e: Exception) {
+            android.util.Log.e("HackingAlba", "리소스 정리 오류: ${e.message}")
         }
     }
 }

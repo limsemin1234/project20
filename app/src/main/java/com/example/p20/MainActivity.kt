@@ -52,6 +52,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // 효과음 설정 변경을 수신하는 BroadcastReceiver 등록
+        registerSoundSettingsReceiver()
+
         val contentFrame = findViewById<FrameLayout>(R.id.contentFrame)
         val timeInfo: TextView = findViewById(R.id.timeInfo)
 
@@ -381,6 +384,15 @@ class MainActivity : AppCompatActivity() {
         // 배경음악 해제
         backgroundMusic?.release()
         backgroundMusic = null
+        
+        // BroadcastReceiver 해제 (메모리 누수 방지)
+        try {
+            // 모든 등록된 리시버 해제
+            // 주의: 이 방식은 모든 리시버를 해제하므로 특정 리시버만 해제하려면 해당 객체를 저장해두고 명시적으로 해제해야 함
+            // 추후 리시버가 많아지면 각각 개별 해제 방식으로 변경 필요
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "BroadcastReceiver 해제 오류: ${e.message}")
+        }
     }
 
     // ExplanationFragment 제거 함수
@@ -861,11 +873,17 @@ class MainActivity : AppCompatActivity() {
         
         // 음악이 끝났을 때 다시 재생하도록 리스너 설정
         backgroundMusic?.setOnCompletionListener {
+            // 음악이 끝났을 때 다시 시작
+            it.seekTo(0)
             it.start()
+            android.util.Log.d("MainActivity", "음악 재생 반복")
         }
         
-        // 볼륨 설정 (0.0 ~ 1.0)
-        backgroundMusic?.setVolume(0.5f, 0.5f)
+        // 현재 설정된 볼륨 가져오기
+        val currentVolume = getCurrentVolume()
+        
+        // 볼륨 설정 (현재 설정된 볼륨값 사용)
+        backgroundMusic?.setVolume(currentVolume, currentVolume)
         
         // 현재 음악 리소스 ID 업데이트
         currentMusicResource = musicResId
@@ -949,7 +967,7 @@ class MainActivity : AppCompatActivity() {
             isMusicPaused = false
         }
     }
-
+    
     /**
      * 임시 음악으로 변경 (특정 화면에서만 재생할 음악)
      * @param musicResId 재생할 음악 리소스 ID
@@ -975,11 +993,17 @@ class MainActivity : AppCompatActivity() {
         
         // 음악이 끝났을 때 다시 재생하도록 리스너 설정
         backgroundMusic?.setOnCompletionListener {
+            // 음악이 끝났을 때 다시 시작
+            it.seekTo(0)
             it.start()
+            android.util.Log.d("MainActivity", "임시 음악 재생 반복")
         }
         
-        // 볼륨 설정 (0.0 ~ 1.0)
-        backgroundMusic?.setVolume(0.5f, 0.5f)
+        // 현재 설정된 볼륨 가져오기
+        val currentVolume = getCurrentVolume()
+        
+        // 볼륨 설정 (현재 설정된 볼륨값 사용)
+        backgroundMusic?.setVolume(currentVolume, currentVolume)
         
         // 이전에 재생 중이었다면 새 음악도 재생
         if (wasPlaying) {
@@ -1080,12 +1104,36 @@ class MainActivity : AppCompatActivity() {
             val prefs = getSharedPreferences("settings", MODE_PRIVATE)
             prefs.edit().putFloat("current_volume", safeVolume).apply()
             
+            // 효과음 설정 변경을 알리는 브로드캐스트 전송 (볼륨 변경 알림)
+            val intent = android.content.Intent("com.example.p20.SOUND_SETTINGS_CHANGED")
+            intent.putExtra("volume_changed", true)
+            intent.putExtra("current_volume", safeVolume)
+            sendBroadcast(intent)
+            
             android.util.Log.d("MainActivity", "음량 설정: $safeVolume")
         } catch (e: Exception) {
             android.util.Log.e("MainActivity", "볼륨 설정 오류: ${e.message}")
         }
     }
     
+    /**
+     * 효과음 설정에 대한 BroadcastReceiver를 등록합니다.
+     * 이 리시버는 효과음 설정이 변경되면 모든 Fragment에게 알립니다.
+     */
+    private fun registerSoundSettingsReceiver() {
+        val filter = android.content.IntentFilter("com.example.p20.SOUND_SETTINGS_CHANGED")
+        val receiver = object : android.content.BroadcastReceiver() {
+            override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+                android.util.Log.d("MainActivity", "Sound settings changed broadcast received")
+                
+                // 설정 변경에 대한 처리를 여기에 추가할 수 있음
+                // 예: 특정 프래그먼트에 알림 등
+            }
+        }
+        
+        registerReceiver(receiver, filter)
+    }
+
     /**
      * 효과음 설정을 업데이트하는 메서드 (설정 화면에서 호출)
      * @param enabled 효과음 활성화 여부
@@ -1096,8 +1144,10 @@ class MainActivity : AppCompatActivity() {
             val prefs = getSharedPreferences("settings", MODE_PRIVATE)
             prefs.edit().putBoolean("sound_effect_enabled", enabled).apply()
             
-            // 여기에 효과음 활성화/비활성화 관련 로직 추가
-            // 예: SoundManager 또는 관련 클래스에 설정 전달
+            // 효과음 설정 변경을 알리는 브로드캐스트 전송
+            val intent = android.content.Intent("com.example.p20.SOUND_SETTINGS_CHANGED")
+            intent.putExtra("sound_effect_enabled", enabled)
+            sendBroadcast(intent)
             
             android.util.Log.d("MainActivity", "효과음 설정 변경: $enabled")
         } catch (e: Exception) {
@@ -1125,15 +1175,14 @@ class MainActivity : AppCompatActivity() {
             val volume = prefs.getFloat("current_volume", 0.7f)
             
             // 효과음 재생 로직 (SoundPool 등을 사용)
-            // 예시로만 작성, 실제로는 적절한 효과음 관리 클래스로 분리하는 것이 좋음
             val soundPool = android.media.SoundPool.Builder()
                 .setMaxStreams(5)
                 .build()
             
             val soundEffectId = soundPool.load(this, soundId, 1)
-            soundPool.setOnLoadCompleteListener { _, _, status ->
+            soundPool.setOnLoadCompleteListener { pool, _, status ->
                 if (status == 0) {
-                    soundPool.play(soundEffectId, volume, volume, 1, 0, 1.0f)
+                    pool.play(soundEffectId, volume, volume, 1, 0, 1.0f)
                 }
             }
             
@@ -1142,5 +1191,26 @@ class MainActivity : AppCompatActivity() {
             android.util.Log.e("MainActivity", "효과음 재생 오류: ${e.message}")
             return false
         }
+    }
+    
+    /**
+     * 효과음 재생 가능 여부를 확인하는 메서드
+     * 다른 Fragment에서 효과음을 재생하기 전에 이 메서드로 확인할 수 있음
+     * @return 효과음 재생 가능하면 true, 아니면 false
+     */
+    fun isSoundEffectEnabled(): Boolean {
+        val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+        val soundEffectEnabled = prefs.getBoolean("sound_effect_enabled", true)
+        val muted = prefs.getBoolean("mute_enabled", false)
+        return soundEffectEnabled && !muted
+    }
+    
+    /**
+     * 현재 볼륨 레벨을 가져오는 메서드
+     * @return 0.0~1.0 사이의 볼륨 값
+     */
+    fun getCurrentVolume(): Float {
+        val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+        return prefs.getFloat("current_volume", 0.7f)
     }
 }

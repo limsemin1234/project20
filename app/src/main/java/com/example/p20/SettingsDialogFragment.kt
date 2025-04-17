@@ -65,15 +65,31 @@ class SettingsDialogFragment : DialogFragment() {
         val soundSwitch = view.findViewById<Switch>(R.id.switchSound)
         soundSwitch.isChecked = prefs.getBoolean("sound_enabled", true)
         
+        // 효과음 설정 스위치 
+        val soundEffectSwitch = view.findViewById<Switch>(R.id.switchSoundEffect)
+        soundEffectSwitch.isChecked = prefs.getBoolean("sound_effect_enabled", true)
+        
+        // 음소거 설정 스위치
+        val muteSwitch = view.findViewById<Switch>(R.id.switchMute)
+        muteSwitch.isChecked = prefs.getBoolean("mute_enabled", false)
+        
+        // 음소거 상태에 따라 스위치 초기 상태 설정
+        soundSwitch.isEnabled = !muteSwitch.isChecked
+        soundEffectSwitch.isEnabled = !muteSwitch.isChecked
+
+        // 배경음악 설정 스위치 리스너
         soundSwitch.setOnCheckedChangeListener { _, isChecked ->
             // 설정 저장
             prefs.edit().putBoolean("sound_enabled", isChecked).apply()
             
-            // 음소거 스위치와 동기화
-            val muteSwitch = view.findViewById<Switch>(R.id.switchMute)
+            // 음소거 스위치와 동기화 (배경음악 켰을 때 음소거 해제)
             if (isChecked && muteSwitch.isChecked) {
                 muteSwitch.isChecked = false
                 prefs.edit().putBoolean("mute_enabled", false).apply()
+                
+                // 다른 스위치들도 다시 활성화
+                soundSwitch.isEnabled = true
+                soundEffectSwitch.isEnabled = true
             }
             
             // MainActivity의 배경음악 설정 변경
@@ -91,24 +107,23 @@ class SettingsDialogFragment : DialogFragment() {
             Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
         }
         
-        // 효과음 설정 스위치
-        val soundEffectSwitch = view.findViewById<Switch>(R.id.switchSoundEffect)
-        soundEffectSwitch.isChecked = prefs.getBoolean("sound_effect_enabled", true)
-        
+        // 효과음 설정 스위치 리스너
         soundEffectSwitch.setOnCheckedChangeListener { _, isChecked ->
             // 설정 저장
             prefs.edit().putBoolean("sound_effect_enabled", isChecked).apply()
             
-            // 음소거 스위치와 동기화
-            val muteSwitch = view.findViewById<Switch>(R.id.switchMute)
+            // 음소거 스위치와 동기화 (효과음 켰을 때 음소거 해제)
             if (isChecked && muteSwitch.isChecked) {
                 muteSwitch.isChecked = false
                 prefs.edit().putBoolean("mute_enabled", false).apply()
+                
+                // 다른 스위치들도 다시 활성화
+                soundSwitch.isEnabled = true
+                soundEffectSwitch.isEnabled = true
             }
             
-            // SoundManager 설정 업데이트 (구현 필요)
+            // 효과음 설정 업데이트
             (activity as? MainActivity)?.let { mainActivity ->
-                // 효과음 설정 변경 - 구현 필요
                 mainActivity.updateSoundEffectSettings(isChecked)
             }
             
@@ -116,16 +131,14 @@ class SettingsDialogFragment : DialogFragment() {
             Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
         }
         
-        // 음소거 설정 스위치
-        val muteSwitch = view.findViewById<Switch>(R.id.switchMute)
-        muteSwitch.isChecked = prefs.getBoolean("mute_enabled", false)
-        
+        // 음소거 설정 스위치 리스너
         muteSwitch.setOnCheckedChangeListener { _, isChecked ->
             // 설정 저장
             prefs.edit().putBoolean("mute_enabled", isChecked).apply()
             
             // 다른 소리 관련 스위치와 동기화
             if (isChecked) {
+                // 음소거 켜면 다른 소리 설정 스위치 비활성화 (꺼짐 상태로)
                 soundSwitch.isChecked = false
                 soundEffectSwitch.isChecked = false
                 prefs.edit()
@@ -138,6 +151,21 @@ class SettingsDialogFragment : DialogFragment() {
                     mainActivity.stopBackgroundMusic()
                     mainActivity.updateSoundEffectSettings(false)
                 }
+                
+                // 스위치 시각적 비활성화 (선택 불가능하게)
+                soundSwitch.isEnabled = false
+                soundEffectSwitch.isEnabled = false
+            } else {
+                // 음소거 해제하면 소리 설정 스위치들 다시 활성화
+                soundSwitch.isEnabled = true
+                soundEffectSwitch.isEnabled = true
+            }
+            
+            // 효과음 설정 변경 알림 브로드캐스트 전송
+            (activity as? MainActivity)?.let { mainActivity ->
+                val intent = android.content.Intent("com.example.p20.SOUND_SETTINGS_CHANGED")
+                intent.putExtra("mute_enabled", isChecked)
+                mainActivity.sendBroadcast(intent)
             }
             
             val message = if (isChecked) "모든 소리가 음소거 되었습니다" else "음소거가 해제되었습니다"
