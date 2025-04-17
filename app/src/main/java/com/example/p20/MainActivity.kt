@@ -52,6 +52,13 @@ class MainActivity : AppCompatActivity() {
     private val loopCheckHandler = android.os.Handler(android.os.Looper.getMainLooper())
     private var loopCheckRunnable: Runnable? = null
     
+    // 플레이리스트 모드 여부
+    private var isPlaylistMode = false
+    // 마지막 재생 위치 기록
+    private var lastPlaybackPosition = 0
+    // 재생 완료 상태 추적
+    private var isPlaybackCompleted = false
+    
     private fun startPeriodicLoopCheck() {
         stopPeriodicLoopCheck()
         
@@ -891,6 +898,7 @@ class MainActivity : AppCompatActivity() {
             val prefs = getSharedPreferences("settings", MODE_PRIVATE)
             currentMusicIndex = prefs.getInt("selected_music", 0)
             
+            android.util.Log.d("MainActivity", "배경음악 시작: 인덱스=$currentMusicIndex")
             createMediaPlayer(currentMusicIndex)
             
             val soundEnabled = prefs.getBoolean("sound_enabled", true)
@@ -919,6 +927,7 @@ class MainActivity : AppCompatActivity() {
             }
             
             backgroundMusic = MediaPlayer.create(this, musicResId)
+            android.util.Log.d("MainActivity", "MediaPlayer 생성됨: 리소스ID=$musicResId")
             
             if (backgroundMusic == null) {
                 android.util.Log.e("MainActivity", "MediaPlayer 생성 실패")
@@ -928,6 +937,8 @@ class MainActivity : AppCompatActivity() {
             backgroundMusic?.isLooping = true
             
             backgroundMusic?.setOnPreparedListener { mp ->
+                android.util.Log.d("MainActivity", "음악 준비됨: 루핑=${mp.isLooping}, 길이=${mp.duration}ms")
+                isPlaybackCompleted = false
                 if (!mp.isLooping) {
                     mp.isLooping = true
                 }
@@ -935,16 +946,28 @@ class MainActivity : AppCompatActivity() {
             
             backgroundMusic?.setOnCompletionListener { mediaPlayer ->
                 try {
+                    isPlaybackCompleted = true
+                    android.util.Log.d("MainActivity", "음악 재생 완료. 플레이리스트 모드=$isPlaylistMode")
+                    
                     val prefs = getSharedPreferences("settings", MODE_PRIVATE)
                     val soundEnabled = prefs.getBoolean("sound_enabled", true)
                     
                     if (soundEnabled) {
-                        if (mediaPlayer != null && !mediaPlayer.isLooping) {
+                        if (isPlaylistMode) {
+                            // 플레이리스트 모드인 경우, 다음 곡으로 넘어감
+                            val nextIndex = (currentMusicIndex + 1) % 5  // 총 5개 음악 가정
+                            android.util.Log.d("MainActivity", "다음 곡으로 전환: $currentMusicIndex → $nextIndex")
+                            changeBackgroundMusic(nextIndex)
+                            backgroundMusic?.start()
+                        } else if (mediaPlayer != null && !mediaPlayer.isLooping) {
+                            // 일반 루핑 모드
+                            android.util.Log.d("MainActivity", "같은 곡 재시작")
                             mediaPlayer.seekTo(0)
                             mediaPlayer.start()
                         }
                     }
                 } catch (e: Exception) {
+                    android.util.Log.e("MainActivity", "재생 완료 처리 오류: ${e.message}")
                     try {
                         if (getSharedPreferences("settings", MODE_PRIVATE).getBoolean("sound_enabled", true)) {
                             createMediaPlayer(currentMusicIndex)
@@ -957,6 +980,7 @@ class MainActivity : AppCompatActivity() {
             }
             
             backgroundMusic?.setOnErrorListener { mp, what, extra ->
+                android.util.Log.e("MainActivity", "MediaPlayer 오류: what=$what, extra=$extra")
                 try {
                     mp.release()
                     createMediaPlayer(currentMusicIndex)
@@ -1012,28 +1036,51 @@ class MainActivity : AppCompatActivity() {
                             val currentPosition = player.currentPosition
                             val duration = player.duration
                             
-                            if (!isLooping || !isPlaying) {
+                            // 재생이 멈춘 경우 확인
+                            if (currentPosition == lastPlaybackPosition && !isPlaying && !isPlaybackCompleted) {
+                                android.util.Log.d("MainActivity", "재생이 중단됨 감지: 재시작 시도")
                                 player.seekTo(0)
                                 player.start()
                                 player.isLooping = true
                             }
                             
-                            if (duration > 0 && currentPosition > duration - 2000) {
-                                if (!isLooping) {
-                                    player.isLooping = true
+                            // OnCompletionListener가 작동하지 않는 경우 대비
+                            if (duration > 0 && currentPosition >= duration - 100 && !isPlaybackCompleted) {
+                                android.util.Log.d("MainActivity", "곡 종료 감지: 수동 처리")
+                                isPlaybackCompleted = true
+                                
+                                if (isPlaylistMode) {
+                                    // 플레이리스트 모드인 경우, 다음 곡으로 넘어감
+                                    val nextIndex = (currentMusicIndex + 1) % 5
+                                    changeBackgroundMusic(nextIndex)
+                                    backgroundMusic?.start()
+                                } else {
+                                    // 일반 루핑 모드
+                                    player.seekTo(0)
+                                    player.start()
                                 }
                             }
+                            
+                            // 루핑이 해제된 경우 다시 설정
+                            if (!isLooping || !isPlaying) {
+                                player.isLooping = true
+                                if (!isPlaying) {
+                                    player.start()
+                                }
+                            }
+                            
+                            lastPlaybackPosition = currentPosition
                         }
                     }
                 } catch (e: Exception) {
                     android.util.Log.e("MainActivity", "미디어 모니터링 오류: ${e.message}")
                 }
                 
-                mediaMonitorHandler.postDelayed(this, 3000)
+                mediaMonitorHandler.postDelayed(this, 1000) // 1초마다 체크
             }
         }
         
-        mediaMonitorHandler.postDelayed(mediaMonitorRunnable!!, 3000)
+        mediaMonitorHandler.postDelayed(mediaMonitorRunnable!!, 1000)
     }
 
     // 배경음악 시작
@@ -1267,8 +1314,9 @@ class MainActivity : AppCompatActivity() {
 
     // 설정에서 음악 변경
     fun changeBackgroundMusic(musicIndex: Int) {
-        if (currentMusicIndex == musicIndex) return
+        if (currentMusicIndex == musicIndex && backgroundMusic?.isPlaying == true) return
         
+        android.util.Log.d("MainActivity", "음악 변경: $currentMusicIndex → $musicIndex")
         val wasPlaying = backgroundMusic?.isPlaying ?: false
         
         createMediaPlayer(musicIndex)
@@ -1278,5 +1326,15 @@ class MainActivity : AppCompatActivity() {
         }
         
         currentMusicIndex = musicIndex
+        
+        // 설정에 저장
+        val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+        prefs.edit().putInt("selected_music", musicIndex).apply()
+    }
+
+    // 플레이리스트 모드 전환
+    fun togglePlaylistMode(enabled: Boolean) {
+        isPlaylistMode = enabled
+        android.util.Log.d("MainActivity", "플레이리스트 모드 ${if(enabled) "활성화" else "비활성화"}")
     }
 }
