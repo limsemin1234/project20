@@ -845,6 +845,9 @@ class HackingAlbaFragment : Fragment() {
         // 성공 효과음 재생
         playSound(successSoundId)
         
+        // 성공 시각적 효과 표시
+        showSuccessAnimation(reward)
+        
         // 보상 지급
         assetViewModel.increaseAsset(reward)
         
@@ -853,6 +856,111 @@ class HackingAlbaFragment : Fragment() {
         
         // 레벨업 확인
         checkLevelUp()
+    }
+    
+    /**
+     * 해킹 성공 시 시각적 효과를 표시합니다.
+     * @param rewardAmount 획득한 보상 금액
+     */
+    private fun showSuccessAnimation(rewardAmount: Long) {
+        try {
+            // 1. 배경 플래시 효과
+            val backgroundEffect = View(requireContext())
+            backgroundEffect.layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            backgroundEffect.setBackgroundColor(ContextCompat.getColor(requireContext(), android.R.color.holo_green_light))
+            backgroundEffect.alpha = 0f
+            
+            gameContainer.addView(backgroundEffect)
+            
+            // 플래시 효과 애니메이션
+            val fadeIn = ObjectAnimator.ofFloat(backgroundEffect, "alpha", 0f, 0.3f)
+            fadeIn.duration = 300
+            
+            val fadeOut = ObjectAnimator.ofFloat(backgroundEffect, "alpha", 0.3f, 0f)
+            fadeOut.duration = 700
+            fadeOut.startDelay = 300
+            
+            // 효과 종료 후 뷰 제거
+            fadeOut.addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) {
+                    gameContainer.removeView(backgroundEffect)
+                }
+            })
+            
+            // 애니메이션 시작
+            fadeIn.start()
+            fadeOut.start()
+            
+            // 2. 획득 금액 애니메이션
+            val rewardTextView = TextView(requireContext())
+            rewardTextView.apply {
+                text = "+${formatCurrency(rewardAmount)}원"
+                textSize = 30f
+                setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
+                setShadowLayer(10f, 2f, 2f, ContextCompat.getColor(requireContext(), android.R.color.black))
+                gravity = android.view.Gravity.CENTER
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+                alpha = 0f
+            }
+            
+            // 텍스트뷰 중앙에 배치
+            gameContainer.addView(rewardTextView)
+            rewardTextView.y = (gameContainer.height / 2 - rewardTextView.height / 2).toFloat()
+            
+            // 텍스트 애니메이션
+            val textFadeIn = ObjectAnimator.ofFloat(rewardTextView, "alpha", 0f, 1f)
+            textFadeIn.duration = 500
+            
+            val scaleX = ObjectAnimator.ofFloat(rewardTextView, "scaleX", 0.5f, 1.2f, 1f)
+            scaleX.duration = 1000
+            
+            val scaleY = ObjectAnimator.ofFloat(rewardTextView, "scaleY", 0.5f, 1.2f, 1f)
+            scaleY.duration = 1000
+            
+            val textFadeOut = ObjectAnimator.ofFloat(rewardTextView, "alpha", 1f, 0f)
+            textFadeOut.duration = 500
+            textFadeOut.startDelay = 2000
+            
+            // 효과 종료 후 뷰 제거
+            textFadeOut.addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) {
+                    gameContainer.removeView(rewardTextView)
+                }
+            })
+            
+            // 애니메이션 시작
+            textFadeIn.start()
+            scaleX.start()
+            scaleY.start()
+            textFadeOut.start()
+            
+            // 3. 코드 입력창 성공 효과
+            for (digit in codeDigits) {
+                // 색상 변경
+                digit.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.holo_green_light))
+                
+                // 펄스 애니메이션
+                val pulse = ObjectAnimator.ofFloat(digit, "scaleX", 1f, 1.3f, 1f)
+                pulse.duration = 600
+                pulse.repeatCount = 1
+                pulse.start()
+                
+                val pulseY = ObjectAnimator.ofFloat(digit, "scaleY", 1f, 1.3f, 1f)
+                pulseY.duration = 600
+                pulseY.repeatCount = 1
+                pulseY.start()
+            }
+            
+            android.util.Log.d("HackingAlba", "성공 애니메이션 시작됨: 보상=${formatCurrency(rewardAmount)}원")
+        } catch (e: Exception) {
+            android.util.Log.e("HackingAlba", "성공 애니메이션 오류: ${e.message}")
+        }
     }
     
     /**
@@ -1087,7 +1195,7 @@ class HackingAlbaFragment : Fragment() {
             startSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 기타 효과음
             // 해킹 성공 및 실패 효과음 로드
             successSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_success, 1) // 성공 효과음
-            failSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_fail, 1) // 실패 효과음
+            failSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_fail_end, 1) // 실패 효과음
             hackingStartSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_start, 1) // 해킹 시작 효과음
             hackingButtonSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_button, 1) // 버튼 클릭 효과음
             
