@@ -1,5 +1,6 @@
 package com.example.p20
 
+import android.media.MediaPlayer
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,6 +15,7 @@ class ItemAdapter(
 ) : RecyclerView.Adapter<ItemAdapter.ItemViewHolder>() {
 
     private var selectedPosition = -1
+    private var selectSound: MediaPlayer? = null
 
     /**
      * 아이템 목록을 업데이트합니다.
@@ -51,6 +53,12 @@ class ItemAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_row, parent, false)
+            
+        // 효과음 초기화
+        if (selectSound == null) {
+            selectSound = MediaPlayer.create(parent.context, R.raw.item_button_select)
+        }
+            
         return ItemViewHolder(view)
     }
 
@@ -58,12 +66,35 @@ class ItemAdapter(
         val item = items[position]
         holder.bind(item, position == selectedPosition)
         holder.itemView.setOnClickListener {
+            // 효과음 재생
+            playSelectSound()
             setSelectedPosition(position)
             onItemClick(item)
         }
     }
+    
+    /**
+     * 선택 효과음을 재생합니다.
+     */
+    private fun playSelectSound() {
+        selectSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+                it.prepare()
+            }
+            it.start()
+        }
+    }
 
     override fun getItemCount() = items.size
+    
+    /**
+     * 리소스 해제
+     */
+    fun release() {
+        selectSound?.release()
+        selectSound = null
+    }
 
     inner class ItemViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val nameTextView: TextView = itemView.findViewById(R.id.itemNameTextView)

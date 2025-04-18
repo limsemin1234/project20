@@ -2,6 +2,7 @@ package com.example.p20
 
 import android.content.Context // SharedPreferences 사용 위해 추가
 import android.content.SharedPreferences // SharedPreferences 사용 위해 추가
+import android.media.MediaPlayer // MediaPlayer 추가
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -32,6 +33,10 @@ class ItemFragment : Fragment() {
     private val assetViewModel: AssetViewModel by activityViewModels()
     private val timeViewModel: TimeViewModel by activityViewModels()
 
+    // MediaPlayer 객체 추가
+    private var buySound: MediaPlayer? = null
+    private var useSound: MediaPlayer? = null
+
     // SharedPreferences 관련 상수
     private val PREFS_FILENAME = "item_prefs"
     private val KEY_ITEM_QUANTITY_PREFIX = "item_quantity_"
@@ -58,6 +63,9 @@ class ItemFragment : Fragment() {
         // SharedPreferences 초기화
         prefs = requireContext().getSharedPreferences(PREFS_FILENAME, Context.MODE_PRIVATE)
 
+        // 효과음 초기화
+        initSounds()
+
         // 아이템 목록 초기화
         initItemList()
 
@@ -69,6 +77,30 @@ class ItemFragment : Fragment() {
 
         // 게임 리셋 이벤트 관찰
         observeGameResetEvent()
+    }
+
+    /**
+     * 효과음을 초기화합니다.
+     */
+    private fun initSounds() {
+        // 구매 버튼 효과음
+        buySound = MediaPlayer.create(requireContext(), R.raw.item_button_buy)
+        
+        // 사용 버튼 효과음
+        useSound = MediaPlayer.create(requireContext(), R.raw.item_button_use)
+    }
+
+    /**
+     * 효과음을 재생합니다.
+     */
+    private fun playSound(player: MediaPlayer?) {
+        player?.let {
+            if (it.isPlaying) {
+                it.stop()
+                it.prepare()
+            }
+            it.start()
+        }
     }
 
     /**
@@ -158,11 +190,13 @@ class ItemFragment : Fragment() {
     private fun setupButtons() {
         // 구매 버튼
         binding.buyButton.setOnClickListener {
+            playSound(buySound)
             buySelectedItem()
         }
 
         // 사용 버튼
         binding.useButton.setOnClickListener {
+            playSound(useSound)
             useSelectedItem()
         }
 
@@ -369,6 +403,15 @@ class ItemFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        // MediaPlayer 해제
+        buySound?.release()
+        useSound?.release()
+        buySound = null
+        useSound = null
+        // ItemAdapter의 리소스도 해제
+        if (::itemAdapter.isInitialized) {
+            itemAdapter.release()
+        }
         _binding = null
     }
 } 
