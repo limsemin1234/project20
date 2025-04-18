@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.core.content.ContextCompat
 import android.graphics.drawable.GradientDrawable
 import android.widget.ImageButton
+import android.media.MediaPlayer
 
 class StockAdapter(
     private val onItemClick: (Stock) -> Unit,
@@ -19,6 +20,9 @@ class StockAdapter(
     
     // 현재 선택된 주식을 추적
     private var selectedStockPosition: Int = -1
+    
+    // 효과음 재생을 위한 MediaPlayer
+    private var selectSound: MediaPlayer? = null
     
     // 기존 생성자 - 하위 호환성 유지
     constructor(
@@ -32,6 +36,12 @@ class StockAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StockViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.stock_item_layout, parent, false)
+        
+        // 효과음 초기화 (필요한 경우)
+        if (selectSound == null) {
+            selectSound = MediaPlayer.create(parent.context, R.raw.stock_select)
+        }
+        
         return StockViewHolder(view)
     }
 
@@ -118,6 +128,9 @@ class StockAdapter(
             val previousPosition = selectedStockPosition
             selectedStockPosition = position
             
+            // 효과음 재생
+            playSelectSound()
+            
             // 이전 선택 항목과 현재 선택 항목 갱신
             if (previousPosition != -1) {
                 notifyItemChanged(previousPosition)
@@ -131,6 +144,19 @@ class StockAdapter(
         // 그래프 버튼 클릭 이벤트 처리
         holder.stockGraphButton.setOnClickListener {
             onGraphClick(stock)
+        }
+    }
+
+    /**
+     * 선택 효과음을 재생합니다.
+     */
+    private fun playSelectSound() {
+        selectSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+                it.prepare()
+            }
+            it.start()
         }
     }
 
@@ -174,6 +200,14 @@ class StockAdapter(
             }
             notifyItemChanged(position)
         }
+    }
+    
+    /**
+     * 리소스 해제
+     */
+    fun release() {
+        selectSound?.release()
+        selectSound = null
     }
 
     class StockViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

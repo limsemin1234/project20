@@ -23,6 +23,7 @@ import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
+import android.media.MediaPlayer
 
 class StockFragment : BaseFragment() {
 
@@ -48,6 +49,10 @@ class StockFragment : BaseFragment() {
     private var isNegativeNewsFeatureAdded = false
 
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+
+    // 효과음 관련 변수 추가
+    private var selectSound: MediaPlayer? = null
+    private var buttonSound: MediaPlayer? = null
 
     // 수량 버튼 참조 변수
     private lateinit var quantityBtn1: Button
@@ -77,6 +82,9 @@ class StockFragment : BaseFragment() {
 
         stockViewModel = ViewModelProvider(requireActivity())[StockViewModel::class.java]
 
+        // 효과음 초기화
+        initSounds()
+        
         // 초기화
         initViews(view)
         observeViewModel()
@@ -163,6 +171,7 @@ class StockFragment : BaseFragment() {
         
         buyModeButton.setOnClickListener {
             if (!isBuyMode) {
+                playButtonSound()
                 isBuyMode = true
                 updateModeButtons()
                 // 모드 전환 확인 메시지
@@ -172,6 +181,7 @@ class StockFragment : BaseFragment() {
         
         sellModeButton.setOnClickListener {
             if (isBuyMode) {
+                playButtonSound()
                 isBuyMode = false
                 updateModeButtons()
                 // 모드 전환 확인 메시지
@@ -200,6 +210,7 @@ class StockFragment : BaseFragment() {
     // 매수/매도 전체 버튼 설정
     private fun setupAllButtons() {
         buyAllButton.setOnClickListener {
+            playButtonSound()
             if (executeTradeWithCheck()) {
                 selectedStock?.let { stock ->
                     val currentAsset = assetViewModel.asset.value ?: 0L
@@ -218,6 +229,7 @@ class StockFragment : BaseFragment() {
         }
 
         sellAllButton.setOnClickListener {
+            playButtonSound()
             if (executeTradeWithCheck()) {
                 selectedStock?.let { stock ->
                     if (stock.holding > 0) {
@@ -238,26 +250,32 @@ class StockFragment : BaseFragment() {
     // 수량 버튼 설정
     private fun setupQuantityButtons() {
         quantityBtn1.setOnClickListener { 
+            playButtonSound()
             executeTradeWithQuantity(1)
         }
         
         quantityBtn5.setOnClickListener { 
+            playButtonSound()
             executeTradeWithQuantity(5)
         }
         
         quantityBtn10.setOnClickListener { 
+            playButtonSound()
             executeTradeWithQuantity(10)
         }
         
         quantityBtn500.setOnClickListener { 
+            playButtonSound()
             executeTradeWithQuantity(500)  // 500주로 사용
         }
         
         quantityBtn50.setOnClickListener { 
+            playButtonSound()
             executeTradeWithQuantity(50)
         }
         
         quantityBtn100.setOnClickListener { 
+            playButtonSound()
             executeTradeWithQuantity(100)
         }
     }
@@ -360,6 +378,7 @@ class StockFragment : BaseFragment() {
 
     // 주식 선택 처리 함수
     private fun onStockClicked(stock: Stock) {
+        playSelectSound()
         selectedStock = stock
         stockViewModel.selectStock(stock)
         updateStockDetails(stock)
@@ -566,6 +585,15 @@ class StockFragment : BaseFragment() {
         featuresInfoText.text = featureText
     }
     
+    override fun onDestroyView() {
+        super.onDestroyView()
+        // 효과음 해제
+        selectSound?.release()
+        buttonSound?.release()
+        selectSound = null
+        buttonSound = null
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         handler.removeCallbacksAndMessages(null)
@@ -575,5 +603,42 @@ class StockFragment : BaseFragment() {
     private fun resetSelectedQuantity() {
         // 선택된 수량 초기화
         selectedQuantity = 0
+    }
+
+    /**
+     * 효과음을 초기화합니다.
+     */
+    private fun initSounds() {
+        // 주식 선택 효과음
+        selectSound = MediaPlayer.create(requireContext(), R.raw.stock_select)
+        
+        // 버튼 효과음
+        buttonSound = MediaPlayer.create(requireContext(), R.raw.stock_button)
+    }
+
+    /**
+     * 주식 선택 효과음을 재생합니다.
+     */
+    private fun playSelectSound() {
+        selectSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+                it.prepare()
+            }
+            it.start()
+        }
+    }
+
+    /**
+     * 버튼 효과음을 재생합니다.
+     */
+    private fun playButtonSound() {
+        buttonSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+                it.prepare()
+            }
+            it.start()
+        }
     }
 }
