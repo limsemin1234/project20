@@ -48,6 +48,7 @@ class BlackjackFragment : Fragment() {
     private var startGameSound: MediaPlayer? = null
     private var winSound: MediaPlayer? = null
     private var loseSound: MediaPlayer? = null
+    private var stopSound: MediaPlayer? = null
     
     // 게임 상태
     private var currentBet = 0L
@@ -177,6 +178,8 @@ class BlackjackFragment : Fragment() {
         winSound = null
         loseSound?.release()
         loseSound = null
+        stopSound?.release()
+        stopSound = null
         
         deck.clear()
         playerCards.clear()
@@ -253,6 +256,9 @@ class BlackjackFragment : Fragment() {
                 showCustomSnackbar("게임이 진행 중이 아닙니다.")
                 return@setOnClickListener
             }
+            
+            // 멈춤 효과음 재생
+            playStopSound()
             
             playerStand()
         }
@@ -725,6 +731,7 @@ class BlackjackFragment : Fragment() {
         startGameSound = MediaPlayer.create(requireContext(), R.raw.casino_start)
         winSound = MediaPlayer.create(requireContext(), R.raw.casino_win)
         loseSound = MediaPlayer.create(requireContext(), R.raw.casino_lose)
+        stopSound = MediaPlayer.create(requireContext(), R.raw.casino_stop)
     }
     
     /**
@@ -784,6 +791,19 @@ class BlackjackFragment : Fragment() {
      */
     private fun playLoseSound() {
         loseSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+                it.prepare()
+            }
+            it.start()
+        }
+    }
+
+    /**
+     * 멈춤 버튼 효과음을 재생합니다.
+     */
+    private fun playStopSound() {
+        stopSound?.let {
             if (it.isPlaying) {
                 it.stop()
                 it.prepare()

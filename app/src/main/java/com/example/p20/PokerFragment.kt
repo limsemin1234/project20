@@ -50,6 +50,8 @@ class PokerFragment : Fragment() {
     private var startGameSound: MediaPlayer? = null
     private var winSound: MediaPlayer? = null
     private var loseSound: MediaPlayer? = null
+    private var cardSelectSound: MediaPlayer? = null
+    private var stopSound: MediaPlayer? = null
     
     // 게임 상태
     private var currentBet = 0L
@@ -107,6 +109,9 @@ class PokerFragment : Fragment() {
             selectedCardIndices.remove(cardIndex)
             view.alpha = 1.0f
             view.background = defaultCardDrawable.constantState?.newDrawable()
+            
+            // 카드 선택/해제 효과음 재생
+            playCardSelectSound()
         } else {
             // 최대 5장까지만 선택 가능
             if (selectedCardIndices.size >= 5) {
@@ -118,6 +123,9 @@ class PokerFragment : Fragment() {
             selectedCardIndices.add(cardIndex)
             view.alpha = 0.7f
             view.background = selectedCardDrawable.constantState?.newDrawable()
+            
+            // 카드 선택/해제 효과음 재생
+            playCardSelectSound()
         }
         
         // 선택한 카드가 5장이면 자동으로 패 평가
@@ -234,6 +242,10 @@ class PokerFragment : Fragment() {
         winSound = null
         loseSound?.release()
         loseSound = null
+        cardSelectSound?.release()
+        cardSelectSound = null
+        stopSound?.release()
+        stopSound = null
         
         // 카드 뷰 정리
         cardViews.clear()
@@ -311,8 +323,12 @@ class PokerFragment : Fragment() {
         // 카드 교체 버튼
         changeButton.setOnClickListener { changeCards() }
         
-        // 게임 종료 버튼
-        endGameButton.setOnClickListener { endGame() }
+        // 카드 확정 버튼
+        endGameButton.setOnClickListener { 
+            // 카드확정 효과음 재생
+            playStopSound()
+            endGame() 
+        }
     }
     
     private fun addBet(amount: Long) {
@@ -1363,6 +1379,8 @@ class PokerFragment : Fragment() {
         startGameSound = MediaPlayer.create(requireContext(), R.raw.casino_start)
         winSound = MediaPlayer.create(requireContext(), R.raw.casino_win)
         loseSound = MediaPlayer.create(requireContext(), R.raw.casino_lose)
+        cardSelectSound = MediaPlayer.create(requireContext(), R.raw.casino_card_select)
+        stopSound = MediaPlayer.create(requireContext(), R.raw.casino_stop)
     }
     
     /**
@@ -1422,6 +1440,32 @@ class PokerFragment : Fragment() {
      */
     private fun playLoseSound() {
         loseSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+                it.prepare()
+            }
+            it.start()
+        }
+    }
+
+    /**
+     * 카드 선택 효과음을 재생합니다.
+     */
+    private fun playCardSelectSound() {
+        cardSelectSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+                it.prepare()
+            }
+            it.start()
+        }
+    }
+
+    /**
+     * 카드 확정 효과음을 재생합니다.
+     */
+    private fun playStopSound() {
+        stopSound?.let {
             if (it.isPlaying) {
                 it.stop()
                 it.prepare()
