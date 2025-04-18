@@ -631,6 +631,7 @@ class HackingAlbaFragment : Fragment() {
     private lateinit var lastResultTextView: TextView
     private lateinit var digitButtons: Array<TextView>
     private lateinit var codeDigits: Array<TextView>
+    private lateinit var deleteButton: TextView  // DEL 버튼 전역 변수로 추가
     
     // 기록 창 표시 상태
     private var isHistoryShown = false
@@ -729,6 +730,7 @@ class HackingAlbaFragment : Fragment() {
         attemptsText = view.findViewById(R.id.attemptsText)
         feedbackText = view.findViewById(R.id.feedbackText)
         lastResultTextView = view.findViewById(R.id.lastResultTextView)
+        deleteButton = view.findViewById(R.id.digit_delete)  // DEL 버튼 초기화
         
         // 숫자 입력 버튼 초기화
         digitButtons = Array(10) { index ->
@@ -792,6 +794,15 @@ class HackingAlbaFragment : Fragment() {
                     inputDigit(i)
                     playSound(typingSoundId)
                 }
+            }
+        }
+        
+        // 취소(DEL) 버튼 리스너 추가
+        deleteButton.setOnClickListener {
+            android.util.Log.d("HackingAlba", "DEL 버튼 클릭됨")
+            if (isGameActive) {
+                deleteLastDigit()
+                playSound(typingSoundId) // 타이핑 효과음 사용
             }
         }
     }
@@ -1535,6 +1546,22 @@ class HackingAlbaFragment : Fragment() {
             android.util.Log.d("HackingAlba", "게임 UI 페이드아웃 애니메이션 시작됨")
         } catch (e: Exception) {
             android.util.Log.e("HackingAlba", "페이드아웃 애니메이션 오류: ${e.message}")
+        }
+    }
+
+    /**
+     * 마지막으로 입력된 숫자를 삭제합니다.
+     */
+    private fun deleteLastDigit() {
+        // 맨 마지막에 입력된 숫자부터 거꾸로 찾아서 지웁니다
+        for (i in codeDigits.indices.reversed()) {
+            if (codeDigits[i].text != "_" && codeDigits[i].text.toString() != "") {
+                codeDigits[i].setText("_")
+                
+                // 로그 출력
+                android.util.Log.d("HackingAlba", "마지막 입력 숫자 삭제됨")
+                return
+            }
         }
     }
 

@@ -339,6 +339,19 @@
                 android:gravity="center"
                 android:orientation="horizontal">
 
+                <!-- 취소(DEL) 버튼 추가 -->
+                <TextView
+                    android:id="@+id/digit_delete"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_margin="3dp"
+                    android:background="#FF5555"
+                    android:gravity="center"
+                    android:text="DEL"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
                 <TextView
                     android:id="@+id/digit_0"
                     android:layout_width="50dp"
