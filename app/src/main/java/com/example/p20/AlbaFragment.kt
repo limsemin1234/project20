@@ -612,7 +612,7 @@ class HackingAlbaFragment : Fragment() {
     private var attemptCount = 0 // 시도 횟수
     private var maxAttempts = 10 // 최대 시도 횟수
     private var isGameActive = false // 게임 활성화 상태
-    private var currentLevel = 1 // 현재 레벨
+    private var currentLevel = 1 // 현재 레벨 (프래그먼트 생성 시 SharedPreferences에서 로드됨)
     
     // UI 요소
     private lateinit var gameContainer: ViewGroup
@@ -661,6 +661,9 @@ class HackingAlbaFragment : Fragment() {
 
         albaViewModel = ViewModelProvider(requireActivity())[AlbaViewModel::class.java]
         assetViewModel = ViewModelProvider(requireActivity())[AssetViewModel::class.java]
+        
+        // 저장된 레벨 불러오기
+        loadSavedLevel()
         
         // UI 요소 초기화
         initializeViews(view)
@@ -1205,6 +1208,29 @@ class HackingAlbaFragment : Fragment() {
         
         // 레벨업 메시지 표시
         feedbackText.setText("레벨업! Lv.${currentLevel} 달성")
+        
+        // 레벨 저장
+        saveCurrentLevel()
+    }
+
+    /**
+     * 현재 레벨을 불러옵니다.
+     */
+    private fun loadSavedLevel() {
+        val sharedPreferences = requireActivity().getSharedPreferences("hacking_alba_prefs", Context.MODE_PRIVATE)
+        currentLevel = sharedPreferences.getInt("current_level", 1)
+        android.util.Log.d("HackingAlba", "저장된 레벨 불러옴: $currentLevel")
+    }
+    
+    /**
+     * 현재 레벨을 저장합니다.
+     */
+    private fun saveCurrentLevel() {
+        val sharedPreferences = requireActivity().getSharedPreferences("hacking_alba_prefs", Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+        editor.putInt("current_level", currentLevel)
+        editor.apply()
+        android.util.Log.d("HackingAlba", "현재 레벨 저장됨: $currentLevel")
     }
 
     /**
