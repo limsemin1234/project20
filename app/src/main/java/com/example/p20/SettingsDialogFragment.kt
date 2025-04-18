@@ -204,9 +204,6 @@ class SettingsDialogFragment : DialogFragment() {
             }
         })
         
-        // 배경음악 선택 Spinner 설정
-        setupMusicSpinner(view, prefs)
-
         // 진동 설정 스위치
         val vibrationSwitch = view.findViewById<Switch>(R.id.switchVibration)
         vibrationSwitch.isChecked = prefs.getBoolean("vibration_enabled", true)
@@ -242,59 +239,6 @@ class SettingsDialogFragment : DialogFragment() {
         // 종료 버튼
         view.findViewById<Button>(R.id.btnExit).setOnClickListener {
             showExitConfirmationDialog()
-        }
-    }
-    
-    private fun setupMusicSpinner(view: View, prefs: android.content.SharedPreferences) {
-        try {
-            val musicSpinner = view.findViewById<Spinner>(R.id.musicSpinner)
-            
-            // 사용 가능한 배경음악 목록
-            val musicOptions = arrayOf(
-                "배경음악1",
-                "배경음악2",
-                "배경음악3",
-                "배경음악4",
-                "배경음악5"
-            )
-            
-            // 스피너 어댑터 설정
-            val adapter = ArrayAdapter(
-                requireContext(),
-                android.R.layout.simple_spinner_item,
-                musicOptions
-            )
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            musicSpinner.adapter = adapter
-            
-            // 저장된 설정 불러오기
-            val savedMusicIndex = prefs.getInt("selected_music", 0)
-            musicSpinner.setSelection(savedMusicIndex)
-            
-            // 음악 선택 리스너 설정
-            musicSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                    // 이전 선택값과 같으면 아무것도 하지 않음
-                    if (position == savedMusicIndex) return
-                    
-                    // 설정 저장
-                    prefs.edit().putInt("selected_music", position).apply()
-                    
-                    // 음악 전환
-                    (activity as? MainActivity)?.let { mainActivity ->
-                        mainActivity.changeBackgroundMusic(position)
-                    }
-                    
-                    // 선택한 음악 이름 메시지로 표시
-                    Toast.makeText(requireContext(), "${musicOptions[position]}(으)로 변경되었습니다", Toast.LENGTH_SHORT).show()
-                }
-                
-                override fun onNothingSelected(parent: AdapterView<*>?) {
-                    // 아무것도 하지 않음
-                }
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("SettingsDialog", "음악 스피너 설정 오류: ${e.message}")
         }
     }
 
