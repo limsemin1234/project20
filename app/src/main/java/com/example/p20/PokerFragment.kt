@@ -48,6 +48,8 @@ class PokerFragment : Fragment() {
     private var bettingSound: MediaPlayer? = null
     private var cardSound: MediaPlayer? = null
     private var startGameSound: MediaPlayer? = null
+    private var winSound: MediaPlayer? = null
+    private var loseSound: MediaPlayer? = null
     
     // 게임 상태
     private var currentBet = 0L
@@ -228,6 +230,10 @@ class PokerFragment : Fragment() {
         cardSound = null
         startGameSound?.release()
         startGameSound = null
+        winSound?.release()
+        winSound = null
+        loseSound?.release()
+        loseSound = null
         
         // 카드 뷰 정리
         cardViews.clear()
@@ -888,6 +894,9 @@ class PokerFragment : Fragment() {
         
         if (multiplier > 0) {
             // 승리
+            // 승리 효과음 재생
+            playWinSound()
+            
             assetViewModel.increaseAsset(payout)
             winCount++
             resultMessage = "축하합니다! ${score}점으로 ${multiplier}배 획득! (${handRank.koreanName}) +${formatCurrency(payout - currentBet)}"
@@ -905,6 +914,9 @@ class PokerFragment : Fragment() {
             )
         } else {
             // 패배
+            // 패배 효과음 재생
+            playLoseSound()
+            
             loseCount++
             resultMessage = "아쉽습니다. ${score}점으로 배당을 받지 못했습니다. (${handRank.koreanName}) -${formatCurrency(currentBet)}"
             snackbarColor = Color.argb(200, 244, 67, 54) // 빨간색
@@ -1345,10 +1357,12 @@ class PokerFragment : Fragment() {
     }
 
     private fun initSounds() {
-        // 배팅 효과음 초기화
+        // 효과음 초기화
         bettingSound = MediaPlayer.create(requireContext(), R.raw.casino_betting)
         cardSound = MediaPlayer.create(requireContext(), R.raw.casino_card_receive)
         startGameSound = MediaPlayer.create(requireContext(), R.raw.casino_start)
+        winSound = MediaPlayer.create(requireContext(), R.raw.casino_win)
+        loseSound = MediaPlayer.create(requireContext(), R.raw.casino_lose)
     }
     
     /**
@@ -1382,6 +1396,32 @@ class PokerFragment : Fragment() {
      */
     private fun playStartGameSound() {
         startGameSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+                it.prepare()
+            }
+            it.start()
+        }
+    }
+    
+    /**
+     * 승리 효과음을 재생합니다.
+     */
+    private fun playWinSound() {
+        winSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+                it.prepare()
+            }
+            it.start()
+        }
+    }
+    
+    /**
+     * 패배 효과음을 재생합니다.
+     */
+    private fun playLoseSound() {
+        loseSound?.let {
             if (it.isPlaying) {
                 it.stop()
                 it.prepare()

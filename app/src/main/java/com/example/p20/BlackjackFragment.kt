@@ -46,6 +46,8 @@ class BlackjackFragment : Fragment() {
     private var bettingSound: MediaPlayer? = null
     private var cardSound: MediaPlayer? = null
     private var startGameSound: MediaPlayer? = null
+    private var winSound: MediaPlayer? = null
+    private var loseSound: MediaPlayer? = null
     
     // 게임 상태
     private var currentBet = 0L
@@ -171,6 +173,10 @@ class BlackjackFragment : Fragment() {
         cardSound = null
         startGameSound?.release()
         startGameSound = null
+        winSound?.release()
+        winSound = null
+        loseSound?.release()
+        loseSound = null
         
         deck.clear()
         playerCards.clear()
@@ -573,6 +579,9 @@ class BlackjackFragment : Fragment() {
             rewardAmount = currentBet
             drawCount++
         } else if (playerWins) {
+            // 승리 효과음 재생
+            playWinSound()
+            
             val isBlackjack = playerScore == 21 && playerCards.size == 2
             val multiplier = if (isBlackjack) 2.5 else 2.0  // 블랙잭은 2.5배
             rewardAmount = (currentBet * multiplier).toLong()
@@ -594,6 +603,9 @@ class BlackjackFragment : Fragment() {
             val amountText = "+${formatCurrency(rewardAmount - currentBet)}"
             CasinoAnimationManager.showWinAnimation(rootView, winMessage, amountText)
         } else {
+            // 패배 효과음 재생
+            playLoseSound()
+            
             message = "패배했습니다. 베팅액을 잃었습니다."
             loseCount++
             rewardAmount = 0
@@ -707,10 +719,12 @@ class BlackjackFragment : Fragment() {
     }
 
     private fun initSounds() {
-        // 배팅 효과음 초기화
+        // 효과음 초기화
         bettingSound = MediaPlayer.create(requireContext(), R.raw.casino_betting)
         cardSound = MediaPlayer.create(requireContext(), R.raw.casino_card_receive)
         startGameSound = MediaPlayer.create(requireContext(), R.raw.casino_start)
+        winSound = MediaPlayer.create(requireContext(), R.raw.casino_win)
+        loseSound = MediaPlayer.create(requireContext(), R.raw.casino_lose)
     }
     
     /**
@@ -744,6 +758,32 @@ class BlackjackFragment : Fragment() {
      */
     private fun playStartGameSound() {
         startGameSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+                it.prepare()
+            }
+            it.start()
+        }
+    }
+    
+    /**
+     * 승리 효과음을 재생합니다.
+     */
+    private fun playWinSound() {
+        winSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+                it.prepare()
+            }
+            it.start()
+        }
+    }
+    
+    /**
+     * 패배 효과음을 재생합니다.
+     */
+    private fun playLoseSound() {
+        loseSound?.let {
             if (it.isPlaying) {
                 it.stop()
                 it.prepare()
