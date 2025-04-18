@@ -39,6 +39,9 @@ class AlbaFragment : Fragment() {
     private lateinit var tabLayout: TabLayout
     private lateinit var viewPager: ViewPager2
     private lateinit var adapter: AlbaViewPagerAdapter
+    
+    // 탭 선택 효과음을 위한 MediaPlayer
+    private var tabSelectSound: MediaPlayer? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -49,6 +52,9 @@ class AlbaFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // 효과음 초기화
+        initTabSelectSound()
 
         // 탭 레이아웃과 뷰페이저 초기화
         tabLayout = view.findViewById(R.id.albaTabLayout)
@@ -69,6 +75,49 @@ class AlbaFragment : Fragment() {
                 else -> ""
             }
         }.attach()
+        
+        // 탭 선택 리스너 설정
+        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab) {
+                // 탭 선택 시 효과음 재생
+                playTabSelectSound()
+            }
+
+            override fun onTabUnselected(tab: TabLayout.Tab) {
+                // 사용하지 않음
+            }
+
+            override fun onTabReselected(tab: TabLayout.Tab) {
+                // 사용하지 않음
+            }
+        })
+    }
+    
+    /**
+     * 탭 선택 효과음을 초기화합니다.
+     */
+    private fun initTabSelectSound() {
+        tabSelectSound = MediaPlayer.create(requireContext(), R.raw.tab_select)
+    }
+    
+    /**
+     * 탭 선택 효과음을 재생합니다.
+     */
+    private fun playTabSelectSound() {
+        tabSelectSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+                it.prepare()
+            }
+            it.start()
+        }
+    }
+    
+    override fun onDestroyView() {
+        super.onDestroyView()
+        // MediaPlayer 해제
+        tabSelectSound?.release()
+        tabSelectSound = null
     }
 
     // 뷰페이저 어댑터 - 클릭 알바와 해킹 알바 탭 제공

@@ -1,6 +1,7 @@
 package com.example.p20
 
 import android.graphics.Color
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -28,6 +29,9 @@ class BankFragment : Fragment() {
     private lateinit var loanRemainingTimeText: TextView
     private lateinit var tabLayout: TabLayout
     
+    // 탭 선택 효과음을 위한 MediaPlayer
+    private var tabSelectSound: MediaPlayer? = null
+    
     // 마지막으로 처리한 알림의 타임스탬프
     private var lastProcessedNotificationTime: Long = 0
 
@@ -42,6 +46,9 @@ class BankFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         viewModel = ViewModelProvider(requireActivity())[AssetViewModel::class.java]
+
+        // 효과음 초기화
+        initTabSelectSound()
 
         depositInfoText = view.findViewById(R.id.depositInfoText)
         loanInfoText = view.findViewById(R.id.loanInfoText)
@@ -62,8 +69,44 @@ class BankFragment : Fragment() {
                 else -> null
             }
         }.attach()
+        
+        // 탭 선택 리스너 설정
+        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab) {
+                // 탭 선택 시 효과음 재생
+                playTabSelectSound()
+            }
+
+            override fun onTabUnselected(tab: TabLayout.Tab) {
+                // 사용하지 않음
+            }
+
+            override fun onTabReselected(tab: TabLayout.Tab) {
+                // 사용하지 않음
+            }
+        })
 
         setupObservers()
+    }
+    
+    /**
+     * 탭 선택 효과음을 초기화합니다.
+     */
+    private fun initTabSelectSound() {
+        tabSelectSound = MediaPlayer.create(requireContext(), R.raw.tab_select)
+    }
+    
+    /**
+     * 탭 선택 효과음을 재생합니다.
+     */
+    private fun playTabSelectSound() {
+        tabSelectSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+                it.prepare()
+            }
+            it.start()
+        }
     }
 
     private fun setupObservers() {
@@ -135,5 +178,12 @@ class BankFragment : Fragment() {
         } else {
             loanRemainingTimeText.setTextColor(Color.parseColor("#FF5722")) // 주황색
         }
+    }
+    
+    override fun onDestroyView() {
+        super.onDestroyView()
+        // MediaPlayer 해제
+        tabSelectSound?.release()
+        tabSelectSound = null
     }
 } 

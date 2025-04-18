@@ -1,5 +1,6 @@
 package com.example.p20
 
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
 import android.view.LayoutInflater
@@ -29,6 +30,9 @@ class CasinoFragment : Fragment(), LifecycleObserver {
     private lateinit var viewPager: ViewPager2
     private lateinit var casinoInfoText: TextView
     
+    // 탭 선택 효과음을 위한 MediaPlayer
+    private var tabSelectSound: MediaPlayer? = null
+    
     // 어댑터 참조 - 프래그먼트가 재생성될 때 메모리 누수 방지를 위해 lazy 초기화
     private val adapter: CasinoViewPagerAdapter by lazy { 
         CasinoViewPagerAdapter(requireActivity())
@@ -53,11 +57,50 @@ class CasinoFragment : Fragment(), LifecycleObserver {
         // 프래그먼트 라이프사이클 관리
         viewLifecycleOwner.lifecycle.addObserver(this)
 
+        // 효과음 초기화
+        initTabSelectSound()
+
         // 뷰 초기화 (지연시키지 않고 즉시 초기화)
         initializeViews(view)
         
         // 탭 레이아웃 및 뷰페이저 설정
         setupTabLayoutWithViewPager()
+        
+        // 탭 선택 리스너 설정
+        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab) {
+                // 탭 선택 시 효과음 재생
+                playTabSelectSound()
+            }
+
+            override fun onTabUnselected(tab: TabLayout.Tab) {
+                // 사용하지 않음
+            }
+
+            override fun onTabReselected(tab: TabLayout.Tab) {
+                // 사용하지 않음
+            }
+        })
+    }
+    
+    /**
+     * 탭 선택 효과음을 초기화합니다.
+     */
+    private fun initTabSelectSound() {
+        tabSelectSound = MediaPlayer.create(requireContext(), R.raw.tab_select)
+    }
+    
+    /**
+     * 탭 선택 효과음을 재생합니다.
+     */
+    private fun playTabSelectSound() {
+        tabSelectSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+                it.prepare()
+            }
+            it.start()
+        }
     }
     
     /**
@@ -127,6 +170,10 @@ class CasinoFragment : Fragment(), LifecycleObserver {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        
+        // MediaPlayer 해제
+        tabSelectSound?.release()
+        tabSelectSound = null
         
         // 라이프사이클 옵저버 제거
         viewLifecycleOwner.lifecycle.removeObserver(this)

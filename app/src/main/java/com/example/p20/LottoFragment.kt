@@ -3,6 +3,7 @@ package com.example.p20
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -29,6 +30,9 @@ class LottoFragment : BaseFragment() {
 
     private var _binding: FragmentLottoBinding? = null
     private val binding get() = _binding!!
+
+    private var buySound: MediaPlayer? = null
+    private var openSound: MediaPlayer? = null
 
     private val lottoPrice = 10000L
     private var currentPrize = 0L
@@ -79,6 +83,8 @@ class LottoFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        initSounds()
+
         binding.lottoPriceText.text = "티켓 가격: ${formatCurrency(lottoPrice)}"
 
         // 구매 버튼 초기 상태 설정
@@ -91,11 +97,15 @@ class LottoFragment : BaseFragment() {
                 showErrorMessage("잠시 후 다시 시도해주세요. 남은 시간: ${remainingCooldownTime / 1000}초")
                 return@setOnClickListener
             }
+            // 구매 효과음 재생
+            playSound(buySound)
             buyLottoTicket()
         }
 
         binding.scratchCoatingImage.setOnTouchListener { v, event ->
             if (event.action == MotionEvent.ACTION_DOWN && isLottoPurchased) {
+                // 스크래치 효과음 재생
+                playSound(openSound)
                 revealPrize()
                 true
             } else {
@@ -343,10 +353,39 @@ class LottoFragment : BaseFragment() {
         updateCooldownDisplay()
     }
 
+    /**
+     * 효과음을 초기화합니다.
+     */
+    private fun initSounds() {
+        // 구매 버튼 효과음
+        buySound = MediaPlayer.create(requireContext(), R.raw.lotto_button_buy)
+        
+        // 스크래치 효과음
+        openSound = MediaPlayer.create(requireContext(), R.raw.lotto_button_open)
+    }
+
+    /**
+     * 효과음을 재생합니다.
+     */
+    private fun playSound(player: MediaPlayer?) {
+        player?.let {
+            if (it.isPlaying) {
+                it.stop()
+                it.prepare()
+            }
+            it.start()
+        }
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         // 핸들러 콜백 제거
         buyCooldownHandler.removeCallbacks(cooldownCountdownRunnable)
+        // MediaPlayer 해제
+        buySound?.release()
+        openSound?.release()
+        buySound = null
+        openSound = null
         _binding = null
     }
 }
