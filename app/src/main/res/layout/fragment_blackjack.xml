@@ -159,26 +159,39 @@
                 android:id="@+id/bet10kButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="4dp"
                 android:layout_weight="1"
-                android:text="10,000원"
+                android:text="만원"
+                android:textSize="12sp"
                 android:backgroundTint="#400080" />
 
             <Button
                 android:id="@+id/bet50kButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="4dp"
                 android:layout_weight="1"
-                android:text="50,000원"
+                android:text="5만원"
+                android:textSize="12sp"
                 android:backgroundTint="#400080" />
 
             <Button
                 android:id="@+id/bet100kButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="4dp"
                 android:layout_weight="1"
-                android:text="100,000원"
+                android:text="10만원"
+                android:textSize="12sp"
+                android:backgroundTint="#400080" />
+                
+            <Button
+                android:id="@+id/bet500kButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="50만원"
+                android:textSize="12sp" 
                 android:backgroundTint="#400080" />
         </LinearLayout>
 

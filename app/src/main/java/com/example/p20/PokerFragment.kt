@@ -27,6 +27,7 @@ import android.util.SparseArray
 import android.view.View.OnClickListener
 import androidx.collection.ArrayMap
 import android.util.LruCache
+import android.media.MediaPlayer
 
 class PokerFragment : Fragment() {
 
@@ -42,6 +43,11 @@ class PokerFragment : Fragment() {
     private lateinit var bet50kButton: Button
     private lateinit var bet100kButton: Button
     private lateinit var bet500kButton: Button
+    
+    // 효과음 재생을 위한 MediaPlayer
+    private var bettingSound: MediaPlayer? = null
+    private var cardSound: MediaPlayer? = null
+    private var startGameSound: MediaPlayer? = null
     
     // 게임 상태
     private var currentBet = 0L
@@ -179,6 +185,9 @@ class PokerFragment : Fragment() {
         bet100kButton = view.findViewById(R.id.bet100kButton)
         bet500kButton = view.findViewById(R.id.bet500kButton)
         
+        // 효과음 초기화
+        initSounds()
+        
         // 게임 설명 버튼 설정
         val helpButton = view.findViewById<Button>(R.id.helpButton)
         helpButton.setOnClickListener {
@@ -212,6 +221,14 @@ class PokerFragment : Fragment() {
         mainHandler.removeCallbacksAndMessages(null)
         cleanupRunnable = null
         
+        // 효과음 해제
+        bettingSound?.release()
+        bettingSound = null
+        cardSound?.release()
+        cardSound = null
+        startGameSound?.release()
+        startGameSound = null
+        
         // 카드 뷰 정리
         cardViews.clear()
         selectedCardIndices.clear()
@@ -222,10 +239,22 @@ class PokerFragment : Fragment() {
     
     private fun setupButtonListeners() {
         // 베팅 버튼
-        bet10kButton.setOnClickListener { addBet(10_000L) }
-        bet50kButton.setOnClickListener { addBet(50_000L) }
-        bet100kButton.setOnClickListener { addBet(100_000L) }
-        bet500kButton.setOnClickListener { addBet(500_000L) }
+        bet10kButton.setOnClickListener { 
+            playBettingSound()
+            addBet(10_000L) 
+        }
+        bet50kButton.setOnClickListener { 
+            playBettingSound()
+            addBet(50_000L) 
+        }
+        bet100kButton.setOnClickListener { 
+            playBettingSound()
+            addBet(100_000L) 
+        }
+        bet500kButton.setOnClickListener { 
+            playBettingSound()
+            addBet(500_000L) 
+        }
         
         // 베팅 금액 초기화 기능 (0가 아닐 때 bet10kButton 길게 누르면 초기화)
         bet10kButton.setOnLongClickListener {
@@ -265,6 +294,9 @@ class PokerFragment : Fragment() {
             // 업데이트
             updateBalanceText()
             updateBetAmountText()
+            
+            // 새 게임 효과음 재생
+            playStartGameSound()
             
             // 게임 시작
             startNewGame()
@@ -466,6 +498,9 @@ class PokerFragment : Fragment() {
             assetViewModel.decreaseAsset(changeCost)
             updateBalanceText()
         }
+        
+        // 카드 교체 효과음 재생
+        playCardSound()
         
         // 선택된 카드만 교체
         val selectedIndices = selectedCardIndices.toList() // 복사본 생성
@@ -1307,5 +1342,51 @@ class PokerFragment : Fragment() {
         bet100kButton.isEnabled = true
         bet500kButton.isEnabled = true
         newGameButton.isEnabled = true
+    }
+
+    private fun initSounds() {
+        // 배팅 효과음 초기화
+        bettingSound = MediaPlayer.create(requireContext(), R.raw.casino_betting)
+        cardSound = MediaPlayer.create(requireContext(), R.raw.casino_card_receive)
+        startGameSound = MediaPlayer.create(requireContext(), R.raw.casino_start)
+    }
+    
+    /**
+     * 배팅 효과음을 재생합니다.
+     */
+    private fun playBettingSound() {
+        bettingSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+                it.prepare()
+            }
+            it.start()
+        }
+    }
+    
+    /**
+     * 카드 교체 효과음을 재생합니다.
+     */
+    private fun playCardSound() {
+        cardSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+                it.prepare()
+            }
+            it.start()
+        }
+    }
+    
+    /**
+     * 새 게임 효과음을 재생합니다.
+     */
+    private fun playStartGameSound() {
+        startGameSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+                it.prepare()
+            }
+            it.start()
+        }
     }
 } 
