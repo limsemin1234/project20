@@ -50,9 +50,8 @@ class StockFragment : BaseFragment() {
 
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
 
-    // 효과음 관련 변수 추가
-    private var selectSound: MediaPlayer? = null
-    private var buttonSound: MediaPlayer? = null
+    // SoundManager 사용으로 변경
+    private lateinit var soundManager: SoundManager
 
     // 수량 버튼 참조 변수
     private lateinit var quantityBtn1: Button
@@ -307,11 +306,15 @@ class StockFragment : BaseFragment() {
             val totalCost = it.price.toLong() * quantity
             
             if (currentAsset >= totalCost) {
-                val buyCount = stockViewModel.buyStocks(it, quantity)
-                assetViewModel.decreaseAsset(totalCost)
-                showMessage("${it.name}을(를) ${buyCount}주 매수했습니다! 보유량: ${it.holding}주")
-                stockAdapter.notifyDataSetChanged()
-                updateStockDetails(it) // 주식 상세 정보 업데이트
+                val success = stockViewModel.buyStock(it, quantity)
+                if (success) {
+                    assetViewModel.decreaseAsset(totalCost)
+                    showMessage("${it.name}을(를) ${quantity}주 매수했습니다! 보유량: ${it.holding}주")
+                    stockAdapter.notifyDataSetChanged()
+                    updateStockDetails(it) // 주식 상세 정보 업데이트
+                } else {
+                    showErrorMessage("매수에 실패했습니다.")
+                }
             } else {
                 showErrorMessage("자산이 부족합니다! 필요 금액: ${formatCurrency(totalCost)}")
             }
@@ -322,12 +325,16 @@ class StockFragment : BaseFragment() {
     private fun executeSell(quantity: Int) {
         selectedStock?.let {
             if (it.holding >= quantity) {
-                val sellCount = stockViewModel.sellStocks(it, quantity)
-                val totalGain = it.price.toLong() * sellCount
-                assetViewModel.increaseAsset(totalGain)
-                showMessage("${it.name} ${sellCount}주 매도! 총액: ${formatCurrency(totalGain)}원")
-                stockAdapter.notifyDataSetChanged()
-                updateStockDetails(it) // 주식 상세 정보 업데이트
+                val success = stockViewModel.sellStock(it, quantity)
+                if (success) {
+                    val totalGain = it.price.toLong() * quantity
+                    assetViewModel.increaseAsset(totalGain)
+                    showMessage("${it.name} ${quantity}주 매도! 총액: ${formatCurrency(totalGain)}원")
+                    stockAdapter.notifyDataSetChanged()
+                    updateStockDetails(it) // 주식 상세 정보 업데이트
+                } else {
+                    showErrorMessage("매도에 실패했습니다.")
+                }
             } else {
                 showErrorMessage("보유한 주식이 부족합니다! 현재 보유량: ${it.holding}주")
             }
@@ -587,11 +594,7 @@ class StockFragment : BaseFragment() {
     
     override fun onDestroyView() {
         super.onDestroyView()
-        // 효과음 해제
-        selectSound?.release()
-        buttonSound?.release()
-        selectSound = null
-        buttonSound = null
+        // 효과음 관련 리소스 해제 제거 (SoundManager에서 관리)
     }
 
     override fun onDestroy() {
@@ -609,23 +612,26 @@ class StockFragment : BaseFragment() {
      * 효과음을 초기화합니다.
      */
     private fun initSounds() {
-        // 주식 선택 효과음
-        selectSound = MediaPlayer.create(requireContext(), R.raw.stock_select)
-        
-        // 버튼 효과음
-        buttonSound = MediaPlayer.create(requireContext(), R.raw.stock_button)
+        try {
+            // SoundManager 인스턴스 가져오기
+            soundManager = SoundManager.getInstance(requireContext())
+            
+            // 필요한 효과음 로드
+            soundManager.loadSound(SoundManager.SOUND_STOCK_SELECT)
+            soundManager.loadSound(SoundManager.SOUND_STOCK_BUTTON)
+        } catch (e: Exception) {
+            android.util.Log.e("StockFragment", "효과음 초기화 오류: ${e.message}")
+        }
     }
 
     /**
      * 주식 선택 효과음을 재생합니다.
      */
     private fun playSelectSound() {
-        selectSound?.let {
-            if (it.isPlaying) {
-                it.stop()
-                it.prepare()
-            }
-            it.start()
+        try {
+            soundManager.playSound(SoundManager.SOUND_STOCK_SELECT)
+        } catch (e: Exception) {
+            android.util.Log.e("StockFragment", "선택 효과음 재생 오류: ${e.message}")
         }
     }
 
@@ -633,12 +639,10 @@ class StockFragment : BaseFragment() {
      * 버튼 효과음을 재생합니다.
      */
     private fun playButtonSound() {
-        buttonSound?.let {
-            if (it.isPlaying) {
-                it.stop()
-                it.prepare()
-            }
-            it.start()
+        try {
+            soundManager.playSound(SoundManager.SOUND_STOCK_BUTTON)
+        } catch (e: Exception) {
+            android.util.Log.e("StockFragment", "버튼 효과음 재생 오류: ${e.message}")
         }
     }
 }

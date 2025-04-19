@@ -826,17 +826,54 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // 배경음악 초기화 및 재생 메소드
+    /**
+     * 배경음악 초기화 및 재생 메소드
+     */
     private fun setupBackgroundMusic() {
         try {
             val prefs = getSharedPreferences("settings", MODE_PRIVATE)
-            val soundEnabled = prefs.getBoolean("sound_enabled", true)
             
-            if (backgroundMusic == null) {
-                initializeMediaPlayer()
+            // 기본 설정 초기화 - 모든 소리를 켜고 음소거를 해제합니다
+            prefs.edit()
+                .putBoolean("sound_enabled", true)
+                .putBoolean("sound_effect_enabled", true)
+                .putBoolean("mute_enabled", false)
+                .putFloat("current_volume", 0.8f)
+                .putInt("volume_level", 80)
+                .apply()
+            
+            // 이전에 생성된 배경음악이 있다면 해제
+            backgroundMusic?.release()
+            backgroundMusic = null
+            
+            // 배경음악 초기화
+            backgroundMusic = MediaPlayer.create(this, R.raw.main_music_loop)
+            backgroundMusic?.isLooping = true
+            
+            // 볼륨 설정
+            val currentVolume = getCurrentVolume()
+            backgroundMusic?.setVolume(currentVolume, currentVolume)
+            
+            // 오류 리스너 설정
+            backgroundMusic?.setOnErrorListener { mp, what, extra ->
+                android.util.Log.e("MainActivity", "MediaPlayer 오류: what=$what, extra=$extra")
+                
+                try {
+                    mp.release()
+                    backgroundMusic = MediaPlayer.create(this, R.raw.main_music_loop)
+                    backgroundMusic?.isLooping = true
+                    
+                    if (isSoundEnabled()) {
+                        backgroundMusic?.start()
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("MainActivity", "MediaPlayer 오류 복구 실패: ${e.message}")
+                }
+                true
             }
             
-            if (soundEnabled && (backgroundMusic?.isPlaying == false)) {
+            // 음악 재생
+            if (backgroundMusic?.isPlaying == false) {
                 backgroundMusic?.start()
             }
         } catch (e: Exception) {
