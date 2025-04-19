@@ -30,6 +30,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var albaViewModel: AlbaViewModel // 알바 뷰모델 추가
     private lateinit var globalRemainingTimeTextView: TextView // 전역 남은 시간 표시 텍스트뷰
     private lateinit var viewModelFactory: ViewModelFactory // viewModelFactory 클래스 변수로 선언
+    
+    // SoundManager와 AnimationManager 인스턴스
+    private lateinit var soundManager: SoundManager
+    private lateinit var animationManager: AnimationManager
+    
     private var initialX: Float = 0f
     private var initialY: Float = 0f
     private var initialGravity: Int = 0
@@ -317,6 +322,10 @@ class MainActivity : AppCompatActivity() {
 
         // 배경음악 초기화 및 재생
         setupBackgroundMusic()
+
+        // SoundManager와 AnimationManager 초기화
+        soundManager = SoundManager.getInstance(this)
+        animationManager = AnimationManager.getInstance()
     }
 
     private fun showFragment(fragment: Fragment, tag: String) {
@@ -379,6 +388,8 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             android.util.Log.e("MainActivity", "BroadcastReceiver 해제 오류: ${e.message}")
         }
+
+        soundManager.release()
     }
 
     // ExplanationFragment 제거 함수
@@ -898,6 +909,7 @@ class MainActivity : AppCompatActivity() {
             backgroundMusic?.pause()
             isMusicPaused = true
         }
+        soundManager.pauseBackgroundMusic()
     }
 
     override fun onResume() {
@@ -906,6 +918,7 @@ class MainActivity : AppCompatActivity() {
             backgroundMusic?.start()
             isMusicPaused = false
         }
+        soundManager.resumeBackgroundMusic()
     }
     
     // 볼륨 조절
