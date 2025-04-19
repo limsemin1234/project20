@@ -389,7 +389,17 @@ class MainActivity : AppCompatActivity() {
             android.util.Log.e("MainActivity", "BroadcastReceiver 해제 오류: ${e.message}")
         }
 
+        // SoundManager 리소스 해제
         soundManager.release()
+        
+        // AnimationManager 리소스 해제
+        animationManager.release()
+        
+        // 핸들러 콜백 제거
+        loopCheckHandler.removeCallbacksAndMessages(null)
+        
+        // 안전한 정리를 위해 모든 애니메이션 종료
+        stopAllAnimations()
     }
 
     // ExplanationFragment 제거 함수

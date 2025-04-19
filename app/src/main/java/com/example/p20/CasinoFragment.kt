@@ -7,23 +7,21 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
-import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
-import java.lang.ref.WeakReference
+import androidx.fragment.app.Fragment
 
 /**
  * 카지노 기능을 담당하는 메인 프래그먼트
  * 블랙잭과 포커 게임을 탭 레이아웃과 뷰페이저로 전환하여 제공
  */
-class CasinoFragment : Fragment(), LifecycleObserver {
+class CasinoFragment : BaseFragment() {
 
     // UI 컴포넌트 - 초기화가 필요한 뷰들
     private lateinit var tabLayout: TabLayout
@@ -53,9 +51,6 @@ class CasinoFragment : Fragment(), LifecycleObserver {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        
-        // 프래그먼트 라이프사이클 관리
-        viewLifecycleOwner.lifecycle.addObserver(this)
 
         // 효과음 초기화
         initTabSelectSound()
@@ -87,7 +82,8 @@ class CasinoFragment : Fragment(), LifecycleObserver {
      * 탭 선택 효과음을 초기화합니다.
      */
     private fun initTabSelectSound() {
-        tabSelectSound = MediaPlayer.create(requireContext(), R.raw.tab_select)
+        // MediaPlayer 생성 및 자동 추적
+        tabSelectSound = trackMediaPlayer(MediaPlayer.create(requireContext(), R.raw.tab_select))
     }
     
     /**
@@ -119,8 +115,8 @@ class CasinoFragment : Fragment(), LifecycleObserver {
         }
         casinoInfoText.text = warningText.toString()
         
-        // 5초 후에 주의 문구를 애니메이션과 함께 사라지게 함
-        Handler(android.os.Looper.getMainLooper()).postDelayed({
+        // 5초 후에 주의 문구를 애니메이션과 함께 사라지게 함 - 자동 추적 핸들러 사용
+        postDelayed(5000) {
             // 페이드아웃 애니메이션 생성
             val fadeOut = android.view.animation.AlphaAnimation(1.0f, 0.0f)
             fadeOut.duration = 1000 // 1초 동안 페이드아웃
@@ -132,7 +128,7 @@ class CasinoFragment : Fragment(), LifecycleObserver {
                 
                 override fun onAnimationEnd(animation: android.view.animation.Animation?) {
                     // 애니메이션 종료 후 뷰 완전히 숨김
-                    casinoInfoText.visibility = android.view.View.GONE
+                    casinoInfoText.visibility = View.GONE
                 }
                 
                 override fun onAnimationRepeat(animation: android.view.animation.Animation?) {}
@@ -140,7 +136,7 @@ class CasinoFragment : Fragment(), LifecycleObserver {
             
             // 애니메이션 시작
             casinoInfoText.startAnimation(fadeOut)
-        }, 5000) // 5초 후 실행
+        }
         
         // 어댑터 설정
         viewPager.adapter = adapter
@@ -160,23 +156,37 @@ class CasinoFragment : Fragment(), LifecycleObserver {
     }
     
     /**
-     * 프래그먼트 라이프사이클 관리 - 리소스 해제
+     * 탭 애니메이션을 생성하는 메서드 예시
      */
-    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-    fun onViewDestroyed() {
-        // 뷰페이저에서 어댑터 분리
-        viewPager.adapter = null
+    private fun createTabAnimation(view: View) {
+        // 애니메이터 생성 및 자동 추적
+        val scaleX = android.animation.ObjectAnimator.ofFloat(view, "scaleX", 1.0f, 1.2f, 1.0f)
+        val scaleY = android.animation.ObjectAnimator.ofFloat(view, "scaleY", 1.0f, 1.2f, 1.0f)
+        
+        val animatorSet = android.animation.AnimatorSet().apply {
+            playTogether(scaleX, scaleY)
+            duration = 300
+        }
+        
+        // 자동 추적되는 애니메이터 시작
+        trackAnimator(animatorSet).start()
     }
-
+    
     override fun onDestroyView() {
+        // 뷰페이저에서 어댑터 분리 - 메모리 누수 방지
+        viewPager.adapter = null
+        
+        // BaseFragment의 onDestroyView가 리소스 정리 담당
         super.onDestroyView()
-        
-        // MediaPlayer 해제
-        tabSelectSound?.release()
-        tabSelectSound = null
-        
-        // 라이프사이클 옵저버 제거
-        viewLifecycleOwner.lifecycle.removeObserver(this)
+    }
+    
+    /**
+     * 게임 오버 시 호출되는 메서드
+     * 게임 오버 상태에서 필요한 추가 처리
+     */
+    override fun onGameOver() {
+        // 진행 중인 어떤 작업이든 중단
+        showMessage("카지노 게임이 중단되었습니다.")
     }
     
     /**
