@@ -11,20 +11,35 @@ import android.graphics.drawable.GradientDrawable
 import android.widget.ImageButton
 import android.media.MediaPlayer
 
+/**
+ * 주식 목록을 표시하기 위한 RecyclerView 어댑터
+ * 
+ * 주식 목록을 표시하고 주식 선택, 시각적 효과 및 상태 관리를 담당합니다.
+ * 
+ * @property onItemClick 주식 항목 클릭 시 호출되는 콜백 함수
+ * @property onGraphClick 그래프 버튼 클릭 시 호출되는 콜백 함수
+ */
 class StockAdapter(
     private val onItemClick: (Stock) -> Unit,
     private val onGraphClick: (Stock) -> Unit
 ) : RecyclerView.Adapter<StockAdapter.StockViewHolder>() {
 
+    /** 표시할 주식 목록 */
     private var stockList: List<Stock> = listOf()
     
-    // 현재 선택된 주식을 추적
+    /** 현재 선택된 주식의 위치 (-1은 선택된 항목 없음) */
     private var selectedStockPosition: Int = -1
     
-    // 효과음 재생을 위한 MediaPlayer
+    /** 효과음 재생을 위한 MediaPlayer */
     private var selectSound: MediaPlayer? = null
     
-    // 기존 생성자 - 하위 호환성 유지
+    /**
+     * 기존 생성자 - 하위 호환성 유지
+     * 
+     * @param stockList 표시할 주식 목록
+     * @param onItemClick 주식 항목 클릭 시 호출되는 콜백 함수
+     * @param onGraphClick 그래프 버튼 클릭 시 호출되는 콜백 함수
+     */
     constructor(
         stockList: List<Stock>,
         onItemClick: (Stock) -> Unit,
@@ -33,6 +48,13 @@ class StockAdapter(
         this.stockList = stockList
     }
     
+    /**
+     * ViewHolder를 생성하고 레이아웃을 inflate합니다.
+     * 
+     * @param parent 상위 ViewGroup
+     * @param viewType 뷰 타입
+     * @return 새 StockViewHolder 인스턴스
+     */
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StockViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.stock_item_layout, parent, false)
@@ -45,6 +67,12 @@ class StockAdapter(
         return StockViewHolder(view)
     }
 
+    /**
+     * 지정된 위치의 데이터를 ViewHolder에 바인딩합니다.
+     * 
+     * @param holder 데이터를 바인딩할 ViewHolder
+     * @param position 바인딩할 데이터의 위치
+     */
     override fun onBindViewHolder(holder: StockViewHolder, position: Int) {
         val stock = stockList[position]
 
@@ -66,9 +94,10 @@ class StockAdapter(
         holder.stockChangeRate.text = "${"%.2f".format(stock.changeRate)}%"
         holder.stockHolding.text = "${String.format("%,d", stock.holding)}주"
 
-        val riseColor = Color.parseColor("#FF5733")
-        val fallColor = Color.parseColor("#3385FF")
-        val neutralColor = Color.parseColor("#333333")
+        // 상승/하락에 따른 색상 설정
+        val riseColor = ContextCompat.getColor(holder.itemView.context, R.color.red)
+        val fallColor = ContextCompat.getColor(holder.itemView.context, R.color.blue)
+        val neutralColor = ContextCompat.getColor(holder.itemView.context, R.color.text_primary)
 
         val color = when {
             stock.changeValue > 0 -> riseColor
@@ -87,14 +116,14 @@ class StockAdapter(
         // 선택된 항목인 경우
         if (position == selectedStockPosition) {
             // 선택된 항목은 테두리와 함께 약간 어두운 배경색으로 표시
-            background.setStroke(4, Color.parseColor("#303F9F"))  // 진한 파란색 테두리
-            background.setColor(Color.parseColor("#DDEEEEEE"))    // 연한 회색 배경
+            background.setStroke(4, ContextCompat.getColor(holder.itemView.context, R.color.colorPrimary))
+            background.setColor(ContextCompat.getColor(holder.itemView.context, R.color.gray))
             
             // 선택 표시기(좌측 세로 막대) 추가
             val selectionIndicator = View(holder.itemView.context)
             selectionIndicator.layoutParams = ViewGroup.LayoutParams(
                 8, ViewGroup.LayoutParams.MATCH_PARENT)
-            selectionIndicator.setBackgroundColor(Color.parseColor("#303F9F"))
+            selectionIndicator.setBackgroundColor(ContextCompat.getColor(holder.itemView.context, R.color.colorPrimary))
             
             // 이미 자식 뷰가 있으면 제거
             if (holder.itemView is ViewGroup && (holder.itemView as ViewGroup).childCount > 0) {
@@ -113,8 +142,8 @@ class StockAdapter(
             holder.stockName.setTypeface(null, android.graphics.Typeface.BOLD)
         } else {
             // 선택되지 않은 항목
-            background.setStroke(1, Color.parseColor("#DDDDDD"))  // 연한 회색 테두리
-            background.setColor(Color.WHITE)  // 기본 흰색 배경
+            background.setStroke(1, ContextCompat.getColor(holder.itemView.context, R.color.button_disabled))
+            background.setColor(ContextCompat.getColor(holder.itemView.context, R.color.white))
             
             // 텍스트 일반 스타일로 복원
             holder.stockName.setTypeface(null, android.graphics.Typeface.NORMAL)
@@ -149,6 +178,7 @@ class StockAdapter(
 
     /**
      * 선택 효과음을 재생합니다.
+     * 이미 재생 중인 경우 중지하고 다시 시작합니다.
      */
     private fun playSelectSound() {
         selectSound?.let {
@@ -160,8 +190,19 @@ class StockAdapter(
         }
     }
 
+    /**
+     * 데이터 목록의 항목 수를 반환합니다.
+     * 
+     * @return 주식 목록의 크기
+     */
     override fun getItemCount(): Int = stockList.size
     
+    /**
+     * 주식 목록 데이터를 업데이트합니다.
+     * 선택된 주식의 위치를 유지하려고 시도합니다.
+     * 
+     * @param newStockList 새 주식 목록
+     */
     fun updateData(newStockList: List<Stock>) {
         // 현재 선택된 주식 객체 유지
         val selectedStock = if (selectedStockPosition != -1 && selectedStockPosition < stockList.size) {
@@ -181,13 +222,17 @@ class StockAdapter(
     
     /**
      * updateData 메서드의 별칭 (코드 일관성을 위해 추가)
+     * 
+     * @param newStockList 새 주식 목록
      */
     fun updateItems(newStockList: List<Stock>) {
         updateData(newStockList)
     }
     
     /**
-     * 특정 주식을 선택 상태로 설정
+     * 특정 주식을 선택 상태로 설정합니다.
+     * 
+     * @param stock 선택할 주식 객체
      */
     fun setSelectedStock(stock: Stock) {
         val position = stockList.indexOfFirst { it.name == stock.name }
@@ -203,13 +248,24 @@ class StockAdapter(
     }
     
     /**
-     * 리소스 해제
+     * 어댑터의 리소스를 해제합니다.
+     * 사용이 끝나거나 어댑터가 소멸될 때 호출해야 합니다.
      */
     fun release() {
         selectSound?.release()
         selectSound = null
     }
 
+    /**
+     * 주식 항목의 뷰를 보유하는 ViewHolder 클래스
+     * 
+     * @property stockName 주식 이름 TextView
+     * @property stockPrice 주식 가격 TextView
+     * @property stockChangeValue 주식 변동 가치 TextView
+     * @property stockChangeRate 주식 변동률 TextView
+     * @property stockHolding 주식 보유량 TextView
+     * @property stockGraphButton 그래프 버튼
+     */
     class StockViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val stockName: TextView = itemView.findViewById(R.id.stockName)
         val stockPrice: TextView = itemView.findViewById(R.id.stockPrice)

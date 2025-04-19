@@ -19,24 +19,18 @@ class InterestCalculator(
 ) {
     
     companion object {
-        const val DEPOSIT_INTEREST_RATE = 0.01 // 1%
-        const val LOAN_INTEREST_RATE = 0.05 // 5%
-        
-        // 이자 발생 주기 (밀리초)
-        const val INTEREST_PERIOD_MS = 30_000L // 30초
-        
-        // 알림 제한 시간 (밀리초)
-        private const val NOTIFICATION_LIMIT_MS = 10_000L // 10초
-        
-        // 게임 내 시간 가속 계수 (현실의 1년을 게임에서 몇 초로 압축할지)
-        private const val TIME_ACCELERATION = 2160.0 // 1년을 4시간(14400초)으로 압축
-
         // SharedPreferences 키
         private const val PREF_DEPOSIT_TIME_REMAINING = "deposit_time_remaining"
         private const val PREF_LOAN_TIME_REMAINING = "loan_time_remaining"
         private const val PREF_LAST_SAVE_TIME = "last_save_time"
         private const val PREF_TOTAL_DEPOSIT_INTEREST = "total_deposit_interest"
         private const val PREF_TOTAL_LOAN_INTEREST = "total_loan_interest"
+        
+        // 알림 제한 시간 (밀리초)
+        private const val NOTIFICATION_LIMIT_MS = 10_000L // 10초
+        
+        // 게임 내 시간 가속 계수 (현실의 1년을 게임에서 몇 초로 압축할지)
+        private const val TIME_ACCELERATION = 2160.0 // 1년을 4시간(14400초)으로 압축
     }
     
     // 메인 스레드 핸들러 (백그라운드 스레드에서 메인 스레드로 작업을 전달하기 위함)
@@ -91,12 +85,15 @@ class InterestCalculator(
     private fun restoreInterestTimes() {
         val prefs = application.getSharedPreferences("interest_times", Context.MODE_PRIVATE)
         
+        // 이자 간격을 초 단위로 변환
+        val interestIntervalSeconds = Constants.INTEREST_INTERVAL_SECONDS
+        
         // 예금 쿨타임 복원
-        val savedDepositTime = prefs?.getLong(PREF_DEPOSIT_TIME_REMAINING, INTEREST_PERIOD_MS / 1000) ?: (INTEREST_PERIOD_MS / 1000)
+        val savedDepositTime = prefs?.getLong(PREF_DEPOSIT_TIME_REMAINING, interestIntervalSeconds) ?: interestIntervalSeconds
         _depositTimeRemaining.value = savedDepositTime
         
         // 대출 쿨타임 복원
-        val savedLoanTime = prefs?.getLong(PREF_LOAN_TIME_REMAINING, INTEREST_PERIOD_MS / 1000) ?: (INTEREST_PERIOD_MS / 1000)
+        val savedLoanTime = prefs?.getLong(PREF_LOAN_TIME_REMAINING, interestIntervalSeconds) ?: interestIntervalSeconds
         _loanTimeRemaining.value = savedLoanTime
     }
     
@@ -121,8 +118,8 @@ class InterestCalculator(
     private fun saveInterestTimes() {
         val prefs = application.getSharedPreferences("interest_times", Context.MODE_PRIVATE)
         prefs?.edit()?.apply {
-            putLong(PREF_DEPOSIT_TIME_REMAINING, _depositTimeRemaining.value ?: (INTEREST_PERIOD_MS / 1000))
-            putLong(PREF_LOAN_TIME_REMAINING, _loanTimeRemaining.value ?: (INTEREST_PERIOD_MS / 1000))
+            putLong(PREF_DEPOSIT_TIME_REMAINING, _depositTimeRemaining.value ?: Constants.INTEREST_INTERVAL_SECONDS)
+            putLong(PREF_LOAN_TIME_REMAINING, _loanTimeRemaining.value ?: Constants.INTEREST_INTERVAL_SECONDS)
             apply()
         }
     }
@@ -203,69 +200,88 @@ class InterestCalculator(
      * 예금 이자 계산
      */
     private fun calculateDepositInterest() {
+        // 현재 예금 및 쿨타임 가져오기
         val deposit = repository.deposit.value ?: 0L
+        var timeRemaining = _depositTimeRemaining.value ?: Constants.INTEREST_INTERVAL_SECONDS
         
-        if (deposit > 0) {
-            val remainingTime = (_depositTimeRemaining.value ?: 0L) - 1
-            _depositTimeRemaining.postValue(remainingTime)
-            
-            if (remainingTime <= 0) {
-                val interest = (deposit * DEPOSIT_INTEREST_RATE).roundToLong()
-                mainHandler.post {
-                    repository.increaseAsset(interest)  // 이자를 자산에 추가
-                    
-                    // 총 예금 이자 업데이트
-                    val currentTotal = _totalDepositInterest.value ?: 0L
-                    _totalDepositInterest.value = currentTotal + interest
-                    saveTotalInterestData()
-                    
-                    val message = "예금 이자 ${repository.formatNumber(interest)}원이 자산에 추가되었습니다"
-                    _interestNotification.postValue(message)
-                    _lastNotificationTimestamp.postValue(System.currentTimeMillis())
-                    MessageManager.showMessage(application, message)
-                }
-                resetDepositTimer()
-            }
+        // 예금이 없으면 계산하지 않음
+        if (deposit <= 0) {
+            _depositTimeRemaining.postValue(Constants.INTEREST_INTERVAL_SECONDS)
+            return
         }
+        
+        // 쿨타임 감소
+        timeRemaining--
+        _depositTimeRemaining.postValue(timeRemaining)
+        
+        // 쿨타임이 0이 되면 이자 발생
+        if (timeRemaining <= 0) {
+            // 이자 계산 (1%)
+            val interest = (deposit * Constants.DEPOSIT_INTEREST_RATE).roundToLong()
+            
+            // 자산에 이자 추가
+            mainHandler.post {
+                repository.increaseAsset(interest)
+                
+                // 이자 발생 메시지 표시
+                showInterestNotification("예금 이자 +${FormatUtils.formatCurrency(interest)}원이 추가되었습니다")
+                
+                // 누적 이자 정보 갱신
+                val currentTotalInterest = _totalDepositInterest.value ?: 0L
+                _totalDepositInterest.value = currentTotalInterest + interest
+                saveTotalInterestData()
+            }
+            
+            // 쿨타임 리셋
+            _depositTimeRemaining.postValue(Constants.INTEREST_INTERVAL_SECONDS)
+        }
+        
+        // 쿨타임 저장
+        saveInterestTimes()
     }
     
     /**
      * 대출 이자 계산
      */
     private fun calculateLoanInterest() {
+        // 현재 대출 및 쿨타임 가져오기
         val loan = repository.loan.value ?: 0L
+        var timeRemaining = _loanTimeRemaining.value ?: Constants.INTEREST_INTERVAL_SECONDS
         
-        if (loan > 0) {
-            val remainingTime = (_loanTimeRemaining.value ?: 0L) - 1
-            _loanTimeRemaining.postValue(remainingTime)
-            
-            if (remainingTime <= 0) {
-                val interest = (loan * LOAN_INTEREST_RATE).roundToLong()
-                mainHandler.post {
-                    val currentAsset = repository.asset.value ?: 0L
-                    
-                    // 이자를 항상 차감 (마이너스가 될 수 있음)
-                    repository.decreaseAsset(interest)
-                    
-                    // 총 대출 이자 업데이트
-                    val currentTotal = _totalLoanInterest.value ?: 0L
-                    _totalLoanInterest.value = currentTotal + interest
-                    saveTotalInterestData()
-                    
-                    // 메시지 내용 변경
-                    val message = if (currentAsset < interest) {
-                        "대출 이자 ${repository.formatNumber(interest)}원이 발생했습니다. 자산이 부족하여 마이너스 상태가 되었습니다."
-                    } else {
-                        "대출 이자 ${repository.formatNumber(interest)}원이 자산에서 차감되었습니다"
-                    }
-                    
-                    _interestNotification.postValue(message)
-                    _lastNotificationTimestamp.postValue(System.currentTimeMillis())
-                    MessageManager.showMessage(application, message)
-                }
-                resetLoanTimer()
-            }
+        // 대출이 없으면 계산하지 않음
+        if (loan <= 0) {
+            _loanTimeRemaining.postValue(Constants.INTEREST_INTERVAL_SECONDS)
+            return
         }
+        
+        // 쿨타임 감소
+        timeRemaining--
+        _loanTimeRemaining.postValue(timeRemaining)
+        
+        // 쿨타임이 0이 되면 이자 발생
+        if (timeRemaining <= 0) {
+            // 이자 계산 (5%)
+            val interest = (loan * Constants.LOAN_INTEREST_RATE).roundToLong()
+            
+            // 자산에서 이자 차감
+            mainHandler.post {
+                repository.decreaseAsset(interest)
+                
+                // 이자 발생 메시지 표시
+                showInterestNotification("대출 이자 -${FormatUtils.formatCurrency(interest)}원이 차감되었습니다")
+                
+                // 누적 이자 정보 갱신
+                val currentTotalInterest = _totalLoanInterest.value ?: 0L
+                _totalLoanInterest.value = currentTotalInterest + interest
+                saveTotalInterestData()
+            }
+            
+            // 쿨타임 리셋
+            _loanTimeRemaining.postValue(Constants.INTEREST_INTERVAL_SECONDS)
+        }
+        
+        // 쿨타임 저장
+        saveInterestTimes()
     }
     
     /**
@@ -273,7 +289,7 @@ class InterestCalculator(
      */
     fun calculateNextDepositInterest(): Long {
         val deposit = repository.deposit.value ?: 0L
-        return (deposit * DEPOSIT_INTEREST_RATE).roundToLong()
+        return (deposit * Constants.DEPOSIT_INTEREST_RATE).roundToLong()
     }
     
     /**
@@ -281,7 +297,7 @@ class InterestCalculator(
      */
     fun calculateNextLoanInterest(): Long {
         val loan = repository.loan.value ?: 0L
-        return (loan * LOAN_INTEREST_RATE).roundToLong()
+        return (loan * Constants.LOAN_INTEREST_RATE).roundToLong()
     }
     
     /**
@@ -301,14 +317,14 @@ class InterestCalculator(
         if (depositAmount > 0) {
             // 예금이 있으면 타이머 활성화 및 재설정
             isDepositTimerActive = true
-            _depositTimeRemaining.postValue(INTEREST_PERIOD_MS / 1000)
+            _depositTimeRemaining.postValue(Constants.INTEREST_INTERVAL_SECONDS)
             if (depositTimer == null) {
                 startDepositTimer()
             }
         } else {
             // 예금이 없으면 타이머 비활성화 및 쿨타임 초기화
             stopDepositTimer()
-            _depositTimeRemaining.postValue(INTEREST_PERIOD_MS / 1000)
+            _depositTimeRemaining.postValue(Constants.INTEREST_INTERVAL_SECONDS)
         }
     }
     
@@ -320,14 +336,14 @@ class InterestCalculator(
         if (loanAmount > 0) {
             // 대출이 있으면 타이머 활성화 및 재설정
             isLoanTimerActive = true
-            _loanTimeRemaining.postValue(INTEREST_PERIOD_MS / 1000)
+            _loanTimeRemaining.postValue(Constants.INTEREST_INTERVAL_SECONDS)
             if (loanTimer == null) {
                 startLoanTimer()
             }
         } else {
             // 대출이 없으면 타이머 비활성화 및 쿨타임 초기화
             stopLoanTimer()
-            _loanTimeRemaining.postValue(INTEREST_PERIOD_MS / 1000)
+            _loanTimeRemaining.postValue(Constants.INTEREST_INTERVAL_SECONDS)
         }
     }
     
@@ -346,7 +362,7 @@ class InterestCalculator(
      * 예금 이자 발생까지 남은 시간 포맷팅
      */
     fun formatDepositRemainingTime(): String {
-        val timeRemaining = _depositTimeRemaining.value ?: (INTEREST_PERIOD_MS / 1000)
+        val timeRemaining = _depositTimeRemaining.value ?: Constants.INTEREST_INTERVAL_SECONDS
         return "$timeRemaining"
     }
     
@@ -354,7 +370,7 @@ class InterestCalculator(
      * 대출 이자 발생까지 남은 시간 포맷팅
      */
     fun formatLoanRemainingTime(): String {
-        val timeRemaining = _loanTimeRemaining.value ?: (INTEREST_PERIOD_MS / 1000)
+        val timeRemaining = _loanTimeRemaining.value ?: Constants.INTEREST_INTERVAL_SECONDS
         return "$timeRemaining"
     }
     
@@ -366,5 +382,16 @@ class InterestCalculator(
         stopLoanTimer()
         // 마지막으로 쿨타임 저장
         saveInterestTimes()
+    }
+    
+    /**
+     * 이자 알림 메시지를 표시합니다.
+     * 
+     * @param message 표시할 알림 메시지
+     */
+    private fun showInterestNotification(message: String) {
+        _interestNotification.postValue(message)
+        _lastNotificationTimestamp.postValue(System.currentTimeMillis())
+        MessageManager.showMessage(application, message)
     }
 } 

@@ -167,12 +167,12 @@ class MainActivity : AppCompatActivity() {
             // 텍스트 업데이트 (초 단위)
             globalRemainingTimeTextView.text = "남은 시간: ${remainingSeconds}초"
 
-            // 15초 이하일 때 효과 적용
-            if (remainingSeconds <= 15) {
+            // 시간 임계값에 따른 효과 적용
+            if (remainingSeconds <= Constants.WARNING_TIME_THRESHOLD) {
                 // 텍스트 깜빡임 애니메이션
                 if (timeBlinkAnimation == null) {
                     timeBlinkAnimation = AlphaAnimation(0.0f, 1.0f).apply {
-                        duration = 500
+                        duration = Constants.ANIMATION_DURATION_MEDIUM
                         repeatMode = Animation.REVERSE
                         repeatCount = Animation.INFINITE
                     }
@@ -180,9 +180,9 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 // 위급 상황 효과 적용
-                setupEmergencyEffects(remainingSeconds)
+                setupEmergencyEffects(remainingSeconds.toLong())
             } else {
-                // 15초 이상일 때는 모든 효과 제거
+                // 임계값 이상일 때는 모든 효과 제거
                 stopAllAnimations()
             }
         }
@@ -605,8 +605,11 @@ class MainActivity : AppCompatActivity() {
         buttonSettings.alpha = alpha
     }
 
-    // 심장박동 및 화면 흔들림 효과 구현
-    private fun setupEmergencyEffects(remainingSeconds: Int) {
+    /**
+     * 남은 시간에 따른 위급 상황 효과를 설정합니다.
+     * @param remainingSeconds 남은 시간(초)
+     */
+    private fun setupEmergencyEffects(remainingSeconds: Long) {
         // contentContainer 참조 가져오기
         val contentContainer = findViewById<FrameLayout>(R.id.contentContainer)
         val timeWarningEffect = findViewById<View>(R.id.timeWarningEffect)
@@ -614,9 +617,9 @@ class MainActivity : AppCompatActivity() {
         
         // 효과 레벨 결정
         val newEffectLevel = when {
-            remainingSeconds > 15 -> 0 // 효과 없음
+            remainingSeconds > Constants.WARNING_TIME_THRESHOLD -> 0 // 효과 없음
             remainingSeconds > 10 -> 1 // 약한 효과
-            remainingSeconds > 5 -> 2  // 중간 효과
+            remainingSeconds > Constants.CRITICAL_TIME_THRESHOLD -> 2  // 중간 효과
             else -> 3                  // 강한 효과
         }
         
@@ -646,7 +649,7 @@ class MainActivity : AppCompatActivity() {
                     heartbeatAnimator = android.animation.ObjectAnimator.ofFloat(
                         contentContainer, "scaleX", 1.0f, 1.01f
                     ).apply {
-                        duration = 800
+                        duration = Constants.ANIMATION_DURATION_LONG
                         repeatCount = android.animation.ObjectAnimator.INFINITE
                         repeatMode = android.animation.ObjectAnimator.REVERSE
                         
@@ -661,7 +664,7 @@ class MainActivity : AppCompatActivity() {
                     
                     // 약한 빨간색 효과
                     timeWarningEffect.visibility = View.VISIBLE
-                    timeWarningEffect.animate().alpha(0.2f).setDuration(500).start()
+                    timeWarningEffect.animate().alpha(0.2f).setDuration(Constants.ANIMATION_DURATION_MEDIUM).start()
                     
                     // 15초 효과 음악 재생 (임시 음악이 아닐 경우에만)
                     if (!isTemporaryMusic) {
@@ -673,7 +676,7 @@ class MainActivity : AppCompatActivity() {
                     heartbeatAnimator = android.animation.ObjectAnimator.ofFloat(
                         contentContainer, "scaleX", 1.0f, 1.02f
                     ).apply {
-                        duration = 500
+                        duration = Constants.ANIMATION_DURATION_MEDIUM
                         repeatCount = android.animation.ObjectAnimator.INFINITE
                         repeatMode = android.animation.ObjectAnimator.REVERSE
                         
@@ -689,7 +692,7 @@ class MainActivity : AppCompatActivity() {
                     shakeAnimation = android.view.animation.TranslateAnimation(
                         -2f, 2f, -1f, 1f
                     ).apply {
-                        duration = 100
+                        duration = Constants.ANIMATION_DURATION_SHORT / 3
                         repeatCount = android.view.animation.Animation.INFINITE
                         repeatMode = android.view.animation.Animation.REVERSE
                     }
@@ -697,7 +700,7 @@ class MainActivity : AppCompatActivity() {
                     
                     // 중간 빨간색 효과
                     timeWarningEffect.visibility = View.VISIBLE
-                    timeWarningEffect.animate().alpha(0.4f).setDuration(500).start()
+                    timeWarningEffect.animate().alpha(0.4f).setDuration(Constants.ANIMATION_DURATION_MEDIUM).start()
                     
                     // 간헐적 플래시 효과 (10초에 한번)
                     scheduleFlashEffect(10000)
@@ -707,7 +710,7 @@ class MainActivity : AppCompatActivity() {
                     heartbeatAnimator = android.animation.ObjectAnimator.ofFloat(
                         contentContainer, "scaleX", 1.0f, 1.04f
                     ).apply {
-                        duration = 300
+                        duration = Constants.ANIMATION_DURATION_SHORT
                         repeatCount = android.animation.ObjectAnimator.INFINITE
                         repeatMode = android.animation.ObjectAnimator.REVERSE
                         
@@ -731,7 +734,7 @@ class MainActivity : AppCompatActivity() {
                     
                     // 강한 빨간색 효과
                     timeWarningEffect.visibility = View.VISIBLE
-                    timeWarningEffect.animate().alpha(0.6f).setDuration(500).start()
+                    timeWarningEffect.animate().alpha(0.6f).setDuration(Constants.ANIMATION_DURATION_MEDIUM).start()
                     
                     // 빈번한 플래시 효과 (3초에 한번)
                     scheduleFlashEffect(3000)
