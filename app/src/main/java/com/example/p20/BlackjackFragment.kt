@@ -23,6 +23,7 @@ import android.os.Looper
 import android.content.Context
 import androidx.lifecycle.Observer
 import android.graphics.drawable.Drawable
+import com.example.p20.helpers.ButtonHelper
 
 class BlackjackFragment : Fragment() {
 
@@ -78,6 +79,9 @@ class BlackjackFragment : Fragment() {
     // 재사용 가능한 카드 배경 드로어블
     private lateinit var cardBackgroundDrawable: Drawable
     
+    // SoundManager 인스턴스
+    private lateinit var soundManager: SoundManager
+    
     // ViewModel 공유
     private val assetViewModel: AssetViewModel by activityViewModels()
 
@@ -125,6 +129,9 @@ class BlackjackFragment : Fragment() {
         bet100kButton = view.findViewById(R.id.bet100kButton)
         bet500kButton = view.findViewById(R.id.bet500kButton)  // 50만원 버튼 초기화
         statsTextView = view.findViewById(R.id.statsTextView)
+        
+        // SoundManager 초기화
+        soundManager = SoundManager.getInstance(requireContext())
         
         // 효과음 초기화
         initSounds()
@@ -186,120 +193,46 @@ class BlackjackFragment : Fragment() {
         dealerCards.clear()
     }
     
+    /**
+     * 게임 버튼 리스너 설정
+     */
     private fun setupButtonListeners() {
-        // 베팅 버튼 리스너 - 벌크 세팅
-        bet10kButton.setOnClickListener { 
-            playBettingSound()
-            addBet(10000) 
-        }
-        bet50kButton.setOnClickListener { 
-            playBettingSound()
-            addBet(50000) 
-        }
-        bet100kButton.setOnClickListener { 
-            playBettingSound()
-            addBet(100000) 
-        }
-        bet500kButton.setOnClickListener { 
-            playBettingSound()
-            addBet(500000) 
-        }
+        // 게임 버튼
+        val gameButtonsMap = mapOf<Button, () -> Unit>(
+            hitButton to { onHitButtonClicked() },
+            standButton to { onStandButtonClicked() },
+            doubleDownButton to { onDoubleDownButtonClicked() },
+            newGameButton to { onNewGameButtonClicked() }
+        )
         
-        // 새 게임 시작 버튼
-        newGameButton.setOnClickListener {
-            if (isGameActive) {
-                showCustomSnackbar("현재 게임이 진행 중입니다.")
-                return@setOnClickListener
-            }
-            
-            if (tempBetAmount <= 0) {
-                showCustomSnackbar("베팅 금액을 설정해주세요.")
-                return@setOnClickListener
-            }
-            
-            val currentAsset = assetViewModel.asset.value ?: 0L
-            if (tempBetAmount > currentAsset) {
-                showCustomSnackbar("베팅 금액이 보유 자산을 초과합니다.")
-                return@setOnClickListener
-            }
-            
-            // 베팅 금액 설정 및 자산 감소
-            currentBet = tempBetAmount
-            tempBetAmount = 0L
-            assetViewModel.decreaseAsset(currentBet)
-            updateBalanceText()
-            updateBetAmountText()
-            
-            // 새 게임 효과음 재생
-            playStartGameSound()
-            
-            // 게임 시작
-            startNewGame()
-        }
+        // 베팅 버튼
+        val betButtonsMap = mapOf<Button, Long>(
+            bet10kButton to 10_000L,
+            bet50kButton to 50_000L,
+            bet100kButton to 100_000L,
+            bet500kButton to 500_000L
+        )
         
-        // 히트 버튼 - 카드 추가
-        hitButton.setOnClickListener {
-            if (!isGameActive) {
-                showCustomSnackbar("게임이 진행 중이 아닙니다.")
-                return@setOnClickListener
-            }
-            
-            playerHit()
-            
-            // 히트 후 더블다운 비활성화
-            doubleDownButton.isEnabled = false
-        }
+        // ButtonHelper를 사용하여 게임 버튼 설정
+        com.example.p20.helpers.ButtonHelper.setupButtons(gameButtonsMap, soundManager, SoundManager.SOUND_BLACKJACK_BUTTON)
         
-        // 스탠드 버튼 - 턴 종료
-        standButton.setOnClickListener {
-            if (!isGameActive) {
-                showCustomSnackbar("게임이 진행 중이 아닙니다.")
-                return@setOnClickListener
-            }
-            
-            // 멈춤 효과음 재생
-            playStopSound()
-            
-            playerStand()
-        }
+        // ButtonHelper를 사용하여 베팅 버튼 설정
+        com.example.p20.helpers.ButtonHelper.setupBettingButtons(
+            betButtonsMap,
+            { amount -> placeBet(amount) },
+            soundManager,
+            SoundManager.SOUND_BLACKJACK_BET
+        )
         
-        // 더블다운 버튼 - 베팅 2배 및 카드 1장 추가
-        doubleDownButton.setOnClickListener {
-            if (!isGameActive) {
-                showCustomSnackbar("게임이 진행 중이 아닙니다.")
-                return@setOnClickListener
+        // 베팅 금액 초기화 기능 (0가 아닐 때 bet10kButton 길게 누르면 초기화)
+        com.example.p20.helpers.ButtonHelper.setLongClickListener(bet10kButton) {
+            if (tempBetAmount > 0 && !isGameActive) {
+                tempBetAmount = 0L
+                updateBetAmountText()
+                showCustomSnackbar("베팅 금액이 초기화되었습니다.")
+                return@setLongClickListener true
             }
-            
-            val currentAsset = assetViewModel.asset.value ?: 0L
-            if (currentBet > currentAsset) {
-                showCustomSnackbar("더블다운할 만큼의 자산이 부족합니다.")
-                return@setOnClickListener
-            }
-            
-            // 자산에서 추가 베팅액 차감
-            assetViewModel.decreaseAsset(currentBet)
-            
-            // 베팅액 2배로 증가
-            currentBet *= 2
-            updateBalanceText()
-            updateBetAmountText()
-            
-            // 더블다운 사용 플래그 설정
-            hasDoubledDown = true
-            
-            // 카드 1장 추가 후 턴 종료
-            playerHit()
-            
-            // 버튼 비활성화
-            doubleDownButton.isEnabled = false
-            hitButton.isEnabled = false
-            
-            // 0.5초 후 자동으로 스탠드
-            mainHandler.postDelayed({
-                if (isGameActive && !isGameOver) {
-                    playerStand()
-                }
-            }, 500)
+            false
         }
     }
     
@@ -810,5 +743,125 @@ class BlackjackFragment : Fragment() {
             }
             it.start()
         }
+    }
+
+    /**
+     * 히트 버튼 클릭 처리
+     */
+    private fun onHitButtonClicked() {
+        if (!isGameActive) {
+            showCustomSnackbar("게임이 진행 중이 아닙니다.")
+            return
+        }
+        
+        playerHit()
+        
+        // 히트 후 더블다운 비활성화
+        doubleDownButton.isEnabled = false
+    }
+    
+    /**
+     * 스탠드 버튼 클릭 처리
+     */
+    private fun onStandButtonClicked() {
+        if (!isGameActive) {
+            showCustomSnackbar("게임이 진행 중이 아닙니다.")
+            return
+        }
+        
+        // 멈춤 효과음 재생
+        playStopSound()
+        
+        playerStand()
+    }
+    
+    /**
+     * 더블다운 버튼 클릭 처리
+     */
+    private fun onDoubleDownButtonClicked() {
+        if (!isGameActive) {
+            showCustomSnackbar("게임이 진행 중이 아닙니다.")
+            return
+        }
+        
+        val currentAsset = assetViewModel.asset.value ?: 0L
+        if (currentBet > currentAsset) {
+            showCustomSnackbar("더블다운할 만큼의 자산이 부족합니다.")
+            return
+        }
+        
+        // 자산에서 추가 베팅액 차감
+        assetViewModel.decreaseAsset(currentBet)
+        
+        // 베팅액 2배로 증가
+        currentBet *= 2
+        updateBalanceText()
+        updateBetAmountText()
+        
+        // 더블다운 사용 플래그 설정
+        hasDoubledDown = true
+        
+        // 카드 1장 추가 후 턴 종료
+        playerHit()
+        
+        // 버튼 비활성화
+        doubleDownButton.isEnabled = false
+        hitButton.isEnabled = false
+        
+        // 0.5초 후 자동으로 스탠드
+        mainHandler.postDelayed({
+            if (isGameActive && !isGameOver) {
+                playerStand()
+            }
+        }, 500)
+    }
+    
+    /**
+     * 새 게임 버튼 클릭 처리
+     */
+    private fun onNewGameButtonClicked() {
+        if (isGameActive) {
+            showCustomSnackbar("현재 게임이 진행 중입니다.")
+            return
+        }
+        
+        if (tempBetAmount <= 0) {
+            showCustomSnackbar("베팅 금액을 설정해주세요.")
+            return
+        }
+        
+        val currentAsset = assetViewModel.asset.value ?: 0L
+        if (tempBetAmount > currentAsset) {
+            showCustomSnackbar("베팅 금액이 보유 자산을 초과합니다.")
+            return
+        }
+        
+        // 베팅 금액 설정 및 자산 감소
+        currentBet = tempBetAmount
+        tempBetAmount = 0L
+        assetViewModel.decreaseAsset(currentBet)
+        updateBalanceText()
+        updateBetAmountText()
+        
+        // 새 게임 효과음 재생
+        playStartGameSound()
+        
+        // 게임 시작
+        startNewGame()
+    }
+    
+    /**
+     * 베팅 처리
+     */
+    private fun placeBet(amount: Long) {
+        if (isGameActive) {
+            showCustomSnackbar("게임 진행 중에는 베팅할 수 없습니다.")
+            return
+        }
+        
+        // 베팅 효과음 재생
+        playBettingSound()
+        
+        addBet(amount)
     }
 } 

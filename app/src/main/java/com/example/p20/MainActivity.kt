@@ -589,30 +589,12 @@ class MainActivity : AppCompatActivity() {
         val buttonLotto = findViewById<Button>(R.id.buttonLotto)
         val buttonSettings = findViewById<Button>(R.id.buttonSettings)
         
-        // 모든 버튼의 활성화 상태 설정
-        buttonAlba.isEnabled = enabled
-        buttonStock.isEnabled = enabled
-        buttonRealEstate.isEnabled = enabled
-        buttonEarnMoney.isEnabled = enabled
-        buttonMyInfo.isEnabled = enabled
-        buttonItem.isEnabled = enabled
-        buttonBank.isEnabled = enabled
-        buttonCasino.isEnabled = enabled
-        buttonLotto.isEnabled = enabled
-        buttonSettings.isEnabled = enabled
-        
-        // 비활성화 시 버튼 투명도 조정으로 시각적 피드백 제공
-        val alpha = if (enabled) 1.0f else 0.5f
-        buttonAlba.alpha = alpha
-        buttonStock.alpha = alpha
-        buttonRealEstate.alpha = alpha
-        buttonEarnMoney.alpha = alpha
-        buttonMyInfo.alpha = alpha
-        buttonItem.alpha = alpha
-        buttonBank.alpha = alpha
-        buttonCasino.alpha = alpha
-        buttonLotto.alpha = alpha
-        buttonSettings.alpha = alpha
+        // ButtonHelper를 사용하여 버튼 상태 설정
+        val buttons = listOf(
+            buttonAlba, buttonStock, buttonRealEstate, buttonEarnMoney,
+            buttonMyInfo, buttonItem, buttonBank, buttonCasino, buttonLotto, buttonSettings
+        )
+        com.example.p20.helpers.ButtonHelper.setButtonsEnabled(buttons, enabled)
     }
 
     /**
@@ -1073,89 +1055,84 @@ class MainActivity : AppCompatActivity() {
      * 모든 버튼에 효과음을 설정합니다.
      */
     private fun setupButtonSounds() {
-        // 메인 버튼들
-        findViewById<Button>(R.id.buttonMyInfo).setOnClickListener {
-            playButtonSound()
-            removeExplanationFragment()
-            showFragment(MyInfoFragment(), "MyInfoFragment")
-        }
+        // ButtonHelper를 사용하여 버튼과 액션 매핑
+        val buttonsMap = mapOf<Button, () -> Unit>(
+            findViewById<Button>(R.id.buttonMyInfo) to {
+                removeExplanationFragment()
+                showFragment(MyInfoFragment(), "MyInfoFragment")
+            },
+            findViewById<Button>(R.id.buttonBank) to {
+                removeExplanationFragment()
+                showFragment(BankFragment(), "BankFragment")
+            },
+            findViewById<Button>(R.id.buttonItem) to {
+                removeExplanationFragment()
+                showFragment(ItemFragment(), "ItemFragment")
+            },
+            findViewById<Button>(R.id.buttonEarnMoney) to {
+                removeExplanationFragment()
+                toggleSlidePanel()
+            },
+            findViewById<Button>(R.id.buttonSettings) to {
+                removeExplanationFragment()
+                SettingsDialogFragment().show(supportFragmentManager, "SettingsDialog")
+            },
+            findViewById<Button>(R.id.buttonAlba) to {
+                removeExplanationFragment()
+                slidePanel.visibility = View.GONE
+                showFragment(AlbaFragment(), "AlbaFragment")
+            },
+            findViewById<Button>(R.id.buttonStock) to {
+                removeExplanationFragment()
+                slidePanel.visibility = View.GONE
+                showFragment(StockFragment(), "StockFragment")
+            },
+            findViewById<Button>(R.id.buttonRealEstate) to {
+                removeExplanationFragment()
+                slidePanel.visibility = View.GONE
+                showFragment(RealEstateFragment(), "RealEstateFragment")
+            },
+            findViewById<Button>(R.id.buttonCasino) to {
+                removeExplanationFragment()
+                slidePanel.visibility = View.GONE
+                showFragment(CasinoFragment(), "CasinoFragment")
+            },
+            findViewById<Button>(R.id.buttonLotto) to {
+                removeExplanationFragment()
+                slidePanel.visibility = View.GONE
+                showFragment(LottoFragment(), "LottoFragment")
+            }
+        )
         
-        findViewById<Button>(R.id.buttonBank).setOnClickListener {
-            playButtonSound()
-            removeExplanationFragment()
-            showFragment(BankFragment(), "BankFragment")
-        }
-        
-        findViewById<Button>(R.id.buttonItem).setOnClickListener {
-            playButtonSound()
-            removeExplanationFragment()
-            showFragment(ItemFragment(), "ItemFragment")
-        }
-        
-        findViewById<Button>(R.id.buttonEarnMoney).setOnClickListener {
-            playButtonSound()
-            removeExplanationFragment()
-            
-            val slidePanel = findViewById<LinearLayout>(R.id.slidePanel)
-            if (slidePanel.visibility == View.VISIBLE) {
-                // 슬라이드 패널이 보이는 상태면 닫기
-                val slideDown = AnimationUtils.loadAnimation(this, R.anim.slide_down)
-                slideDown.setAnimationListener(object : Animation.AnimationListener {
-                    override fun onAnimationStart(animation: Animation?) {}
-                    override fun onAnimationEnd(animation: Animation?) {
-                        slidePanel.visibility = View.GONE
-                    }
-                    override fun onAnimationRepeat(animation: Animation?) {}
-                })
-                slidePanel.startAnimation(slideDown)
-            } else {
-                // 슬라이드 패널이 안 보이는 상태면 열기
-                slidePanel.visibility = View.VISIBLE
-                val slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up)
-                slidePanel.startAnimation(slideUp)
+        // 모든 버튼에 동일한 효과음 적용 (기존 playButtonSound)
+        buttonsMap.forEach { (button, action) ->
+            button.setOnClickListener {
+                playButtonSound()
+                action()
             }
         }
-        
-        findViewById<Button>(R.id.buttonSettings).setOnClickListener {
-            playButtonSound()
-            removeExplanationFragment()
-            SettingsDialogFragment().show(supportFragmentManager, "SettingsDialog")
-        }
-        
-        // 돈벌기 슬라이드 버튼들
-        findViewById<Button>(R.id.buttonAlba).setOnClickListener {
-            playButtonSound()
-            removeExplanationFragment()
-            slidePanel.visibility = View.GONE
-            showFragment(AlbaFragment(), "AlbaFragment")
-        }
-        
-        findViewById<Button>(R.id.buttonStock).setOnClickListener {
-            playButtonSound()
-            removeExplanationFragment()
-            slidePanel.visibility = View.GONE
-            showFragment(StockFragment(), "StockFragment")
-        }
-        
-        findViewById<Button>(R.id.buttonRealEstate).setOnClickListener {
-            playButtonSound()
-            removeExplanationFragment()
-            slidePanel.visibility = View.GONE
-            showFragment(RealEstateFragment(), "RealEstateFragment")
-        }
-        
-        findViewById<Button>(R.id.buttonCasino).setOnClickListener {
-            playButtonSound()
-            removeExplanationFragment()
-            slidePanel.visibility = View.GONE
-            showFragment(CasinoFragment(), "CasinoFragment")
-        }
-        
-        findViewById<Button>(R.id.buttonLotto).setOnClickListener {
-            playButtonSound()
-            removeExplanationFragment()
-            slidePanel.visibility = View.GONE
-            showFragment(LottoFragment(), "LottoFragment")
+    }
+
+    /**
+     * 슬라이드 패널 토글 메서드
+     */
+    private fun toggleSlidePanel() {
+        if (slidePanel.visibility == View.VISIBLE) {
+            // 슬라이드 패널이 보이는 상태면 닫기
+            val slideDown = AnimationUtils.loadAnimation(this, R.anim.slide_down)
+            slideDown.setAnimationListener(object : Animation.AnimationListener {
+                override fun onAnimationStart(animation: Animation?) {}
+                override fun onAnimationEnd(animation: Animation?) {
+                    slidePanel.visibility = View.GONE
+                }
+                override fun onAnimationRepeat(animation: Animation?) {}
+            })
+            slidePanel.startAnimation(slideDown)
+        } else {
+            // 슬라이드 패널이 안 보이는 상태면 열기
+            slidePanel.visibility = View.VISIBLE
+            val slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up)
+            slidePanel.startAnimation(slideUp)
         }
     }
 

@@ -25,6 +25,10 @@ class SoundManager private constructor(private val context: Context) {
         val SOUND_STOCK_SELECT = R.raw.stock_select
         val SOUND_STOCK_BUTTON = R.raw.stock_button
         
+        // 카지노 관련 효과음
+        val SOUND_BLACKJACK_BUTTON = R.raw.casino_card_select
+        val SOUND_BLACKJACK_BET = R.raw.casino_betting
+        
         fun getInstance(context: Context): SoundManager {
             return instance ?: synchronized(this) {
                 instance ?: SoundManager(context.applicationContext).also { instance = it }
@@ -74,6 +78,10 @@ class SoundManager private constructor(private val context: Context) {
             // 주식 관련 효과음
             loadSound(SOUND_STOCK_SELECT)
             loadSound(SOUND_STOCK_BUTTON)
+            
+            // 카지노 관련 효과음
+            loadSound(SOUND_BLACKJACK_BUTTON)
+            loadSound(SOUND_BLACKJACK_BET)
             
             Log.d("SoundManager", "공통 효과음 로드 완료")
         } catch (e: Exception) {
