@@ -5,12 +5,15 @@ import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Color
+import android.graphics.Typeface
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.OvershootInterpolator
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
@@ -50,8 +53,8 @@ class AnimationManager private constructor() {
         }
     }
     
-    // 특수 효과 애니메이션
-    fun createWinAnimation(container: ViewGroup, message: String, amount: String): AnimatorSet {
+    // 카지노 특화 애니메이션
+    fun createCasinoWinAnimation(container: ViewGroup, message: String, amount: String): AnimatorSet {
         val context = container.context
         val animatorSet = AnimatorSet()
         
@@ -67,7 +70,8 @@ class AnimationManager private constructor() {
             text = message
             textSize = 24f
             setTextColor(Color.WHITE)
-            gravity = android.view.Gravity.CENTER
+            gravity = Gravity.CENTER
+            typeface = Typeface.DEFAULT_BOLD
         }
         container.addView(messageView)
         
@@ -76,7 +80,8 @@ class AnimationManager private constructor() {
             text = amount
             textSize = 32f
             setTextColor(Color.YELLOW)
-            gravity = android.view.Gravity.CENTER
+            gravity = Gravity.CENTER
+            typeface = Typeface.DEFAULT_BOLD
         }
         container.addView(amountView)
         
@@ -89,7 +94,7 @@ class AnimationManager private constructor() {
         return animatorSet
     }
     
-    fun createLoseAnimation(container: ViewGroup, message: String): AnimatorSet {
+    fun createCasinoLoseAnimation(container: ViewGroup, message: String): AnimatorSet {
         val context = container.context
         val animatorSet = AnimatorSet()
         
@@ -105,7 +110,8 @@ class AnimationManager private constructor() {
             text = message
             textSize = 24f
             setTextColor(Color.WHITE)
-            gravity = android.view.Gravity.CENTER
+            gravity = Gravity.CENTER
+            typeface = Typeface.DEFAULT_BOLD
         }
         container.addView(messageView)
         
@@ -119,7 +125,7 @@ class AnimationManager private constructor() {
         return animatorSet
     }
     
-    // 게임별 특화 애니메이션
+    // 카드 관련 애니메이션
     fun createCardFlipAnimation(view: View): AnimatorSet {
         val flipOut = ObjectAnimator.ofFloat(view, "rotationY", 0f, 90f)
         val flipIn = ObjectAnimator.ofFloat(view, "rotationY", 270f, 360f)
@@ -137,5 +143,14 @@ class AnimationManager private constructor() {
         return AnimatorSet().apply {
             playSequentially(scaleUp, scaleDown)
         }
+    }
+    
+    // 특수 효과 애니메이션
+    fun createWinAnimation(container: ViewGroup, message: String, amount: String): AnimatorSet {
+        return createCasinoWinAnimation(container, message, amount)
+    }
+    
+    fun createLoseAnimation(container: ViewGroup, message: String): AnimatorSet {
+        return createCasinoLoseAnimation(container, message)
     }
 } 
