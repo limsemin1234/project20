@@ -68,6 +68,9 @@ class MainActivity : AppCompatActivity() {
     // UI 요소에 대한 변수
     private lateinit var slidePanel: LinearLayout
 
+    // 효과음 설정 변경 리시버 등록
+    private lateinit var soundSettingsReceiver: android.content.BroadcastReceiver
+    
     /**
      * 버튼 효과음을 위한 SoundPool을 초기화합니다.
      */
@@ -382,9 +385,9 @@ class MainActivity : AppCompatActivity() {
         
         // BroadcastReceiver 해제 (메모리 누수 방지)
         try {
-            // 모든 등록된 리시버 해제
-            // 주의: 이 방식은 모든 리시버를 해제하므로 특정 리시버만 해제하려면 해당 객체를 저장해두고 명시적으로 해제해야 함
-            // 추후 리시버가 많아지면 각각 개별 해제 방식으로 변경 필요
+            if (::soundSettingsReceiver.isInitialized) {
+                unregisterReceiver(soundSettingsReceiver)
+            }
         } catch (e: Exception) {
             android.util.Log.e("MainActivity", "BroadcastReceiver 해제 오류: ${e.message}")
         }
@@ -989,13 +992,13 @@ class MainActivity : AppCompatActivity() {
     // 효과음 설정 변경 리시버 등록
     private fun registerSoundSettingsReceiver() {
         val filter = android.content.IntentFilter("com.example.p20.SOUND_SETTINGS_CHANGED")
-        val receiver = object : android.content.BroadcastReceiver() {
+        soundSettingsReceiver = object : android.content.BroadcastReceiver() {
             override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
                 // 설정 변경 감지
             }
         }
         
-        registerReceiver(receiver, filter)
+        registerReceiver(soundSettingsReceiver, filter)
     }
 
     // 효과음 설정 업데이트

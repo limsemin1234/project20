@@ -12,6 +12,8 @@ import android.animation.ObjectAnimator
 import android.media.MediaPlayer
 import android.os.Handler
 import android.os.Looper
+import android.view.animation.Animation
+import com.example.p20.helpers.AnimationHelper
 
 /**
  * 모든 Fragment의 기본 클래스
@@ -20,8 +22,12 @@ import android.os.Looper
 abstract class BaseFragment : Fragment() {
     
     // 공통으로 사용하는 ViewModel
-    protected lateinit var assetViewModel: AssetViewModel
-    protected lateinit var timeViewModel: TimeViewModel
+    protected val assetViewModel: AssetViewModel by lazy {
+        ViewModelProvider(requireActivity()).get(AssetViewModel::class.java)
+    }
+    protected val timeViewModel: TimeViewModel by lazy {
+        ViewModelProvider(requireActivity()).get(TimeViewModel::class.java)
+    }
     
     // 프래그먼트 내에서 사용하는 리소스 추적
     private val activeAnimators = mutableListOf<Animator>()
@@ -30,10 +36,6 @@ abstract class BaseFragment : Fragment() {
     
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        
-        // 공통 ViewModel 초기화
-        assetViewModel = ViewModelProvider(requireActivity())[AssetViewModel::class.java]
-        timeViewModel = ViewModelProvider(requireActivity())[TimeViewModel::class.java]
         
         // 게임 오버 상태 관찰
         observeGameOverState()
@@ -49,6 +51,50 @@ abstract class BaseFragment : Fragment() {
     protected fun <T : Animator> trackAnimator(animator: T): T {
         activeAnimators.add(animator)
         return animator
+    }
+    
+    /**
+     * Android View Animation을 추적 목록에 추가합니다.
+     * 이 메서드를 통해 애니메이션을 관리하면 프래그먼트가 소멸될 때 자동으로 정리됩니다.
+     * 
+     * @param view 애니메이션이 적용된 뷰
+     * @param animation 추적할 애니메이션
+     * @return 추가된 애니메이션
+     */
+    protected fun <T : Animation> trackAnimation(view: View, animation: T): T {
+        // 애니메이션 종료 시 정리할 수 있도록 리스너 추가
+        animation.setAnimationListener(object : Animation.AnimationListener {
+            override fun onAnimationStart(animation: Animation) {}
+            override fun onAnimationEnd(animation: Animation) {
+                // 필요하다면 종료 후 추가 작업 수행
+            }
+            override fun onAnimationRepeat(animation: Animation) {}
+        })
+        
+        // 애니메이터도 추가하여 onDestroyView에서 정리할 수 있도록 처리
+        val emptyAnimator = ObjectAnimator.ofFloat(view, "alpha", 1f, 1f)
+        emptyAnimator.duration = 1
+        emptyAnimator.addListener(object : Animator.AnimatorListener {
+            override fun onAnimationStart(animation: Animator) {}
+            override fun onAnimationEnd(animation: Animator) {
+                try {
+                    view.clearAnimation()
+                } catch (e: Exception) {
+                    Log.e("BaseFragment", "애니메이션 정리 오류: ${e.message}")
+                }
+            }
+            override fun onAnimationCancel(animation: Animator) {
+                try {
+                    view.clearAnimation()
+                } catch (e: Exception) {
+                    Log.e("BaseFragment", "애니메이션 정리 오류: ${e.message}")
+                }
+            }
+            override fun onAnimationRepeat(animation: Animator) {}
+        })
+        activeAnimators.add(emptyAnimator)
+        
+        return animation
     }
     
     /**
@@ -297,5 +343,67 @@ abstract class BaseFragment : Fragment() {
         clearAnimations()
         clearMediaPlayers()
         clearHandlers()
+    }
+    
+    /**
+     * 애니메이션 헬퍼를 사용하여 뷰에 애니메이션을 적용합니다.
+     * 애니메이션은 자동으로 추적되어 프래그먼트가 소멸될 때 정리됩니다.
+     *
+     * @param view 애니메이션을 적용할 뷰
+     * @param animationType 애니메이션 유형 (fade_in, fade_out, scale, heartbeat 등)
+     * @param duration 애니메이션 시간(밀리초), 기본값은 300ms
+     * @param params 애니메이션 유형에 따른 추가 파라미터
+     * @return 생성된 애니메이션 객체
+     */
+    protected fun applyAnimation(
+        view: View,
+        animationType: String,
+        duration: Long = 300,
+        vararg params: Float
+    ): Any {
+        // AnimationHelper를 사용하여 애니메이션 생성
+        val animator = when (animationType.lowercase()) {
+            "fade_in" -> AnimationHelper.createFadeInAnimation(view, duration)
+            "fade_out" -> AnimationHelper.createFadeOutAnimation(view, duration)
+            "scale" -> {
+                val from = if (params.isNotEmpty()) params[0] else 0f
+                val to = if (params.size > 1) params[1] else 1f
+                AnimationHelper.createScaleAnimation(view, from, to, duration)
+            }
+            "heartbeat" -> {
+                val intensity = if (params.isNotEmpty()) params[0] else 0.1f
+                AnimationHelper.createHeartbeatAnimation(view, intensity, duration)
+            }
+            "shake" -> {
+                val intensity = if (params.isNotEmpty()) params[0] else 10f
+                AnimationHelper.createShakeAnimation(intensity, duration, 3)
+            }
+            "blink" -> {
+                AnimationHelper.createBlinkAnimation(duration, 3)
+            }
+            else -> AnimationHelper.createFadeInAnimation(view, duration)
+        }
+        
+        // 애니메이터 객체를 적절히 추적
+        when (animator) {
+            is android.animation.Animator -> trackAnimator(animator)
+            is Animation -> {
+                view.startAnimation(animator)
+                trackAnimation(view, animator)
+            }
+        }
+        
+        return animator
+    }
+    
+    /**
+     * 뷰 가시성을 애니메이션과 함께 변경합니다.
+     * 
+     * @param view 가시성을 변경할 뷰
+     * @param visible 가시성 여부 (true: 보임, false: 숨김)
+     * @param duration 애니메이션 시간(밀리초)
+     */
+    protected fun animateVisibility(view: View, visible: Boolean, duration: Long = 300) {
+        AnimationHelper.animateVisibility(view, visible, duration)
     }
 } 

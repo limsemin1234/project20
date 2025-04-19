@@ -650,6 +650,9 @@ class HackingAlbaFragment : Fragment() {
     private var hackingStartSoundId: Int = 0   // 해킹 시작 버튼 효과음
     private var hackingButtonSoundId: Int = 0  // 코드 입력 버튼 효과음
     
+    // 리시버 변수 추가
+    private var soundSettingsReceiver: android.content.BroadcastReceiver? = null
+    
     // 핸들러
     private val handler = Handler(Looper.getMainLooper())
 
@@ -1239,14 +1242,14 @@ class HackingAlbaFragment : Fragment() {
     private fun registerSoundSettingsReceiver() {
         try {
             val filter = android.content.IntentFilter("com.example.p20.SOUND_SETTINGS_CHANGED")
-            val receiver = object : android.content.BroadcastReceiver() {
+            soundSettingsReceiver = object : android.content.BroadcastReceiver() {
                 override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
                     android.util.Log.d("HackingAlba", "효과음 설정 변경 감지됨")
                     // 특별한 액션은 필요 없음 - 다음 효과음 재생 시 MainActivity의 설정을 체크함
                 }
             }
             
-            requireActivity().registerReceiver(receiver, filter)
+            requireActivity().registerReceiver(soundSettingsReceiver, filter)
         } catch (e: Exception) {
             android.util.Log.e("HackingAlba", "BroadcastReceiver 등록 오류: ${e.message}")
         }
@@ -1596,12 +1599,23 @@ class HackingAlbaFragment : Fragment() {
         
         // 리소스 정리
         try {
+            // 핸들러 콜백 제거
+            handler.removeCallbacksAndMessages(null)
+            
             // SoundPool 해제
             if (::soundPool.isInitialized) {
                 soundPool.release()
             }
             
-            // 등록된 리시버가 있다면 해제 (추가 구현 필요)
+            // 등록된 리시버 해제
+            soundSettingsReceiver?.let { receiver ->
+                try {
+                    requireActivity().unregisterReceiver(receiver)
+                    soundSettingsReceiver = null
+                } catch (e: Exception) {
+                    android.util.Log.e("HackingAlba", "리시버 해제 오류: ${e.message}")
+                }
+            }
         } catch (e: Exception) {
             android.util.Log.e("HackingAlba", "리소스 정리 오류: ${e.message}")
         }

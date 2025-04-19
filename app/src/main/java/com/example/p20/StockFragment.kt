@@ -594,7 +594,10 @@ class StockFragment : BaseFragment() {
     
     override fun onDestroyView() {
         super.onDestroyView()
-        // 효과음 관련 리소스 해제 제거 (SoundManager에서 관리)
+        // 어댑터의 리소스 해제
+        if (::stockAdapter.isInitialized) {
+            stockAdapter.release()
+        }
     }
 
     override fun onDestroy() {
