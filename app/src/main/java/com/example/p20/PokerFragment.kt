@@ -1237,14 +1237,19 @@ class PokerFragment : Fragment() {
         // 잠재적 족보 카드 시각적으로 표시
         for (index in potentialCardIndices) {
             if (index < cardViews.size) {
-                // 연한 노란색 배경으로 강조
+                // 더 선명하고 밝은 노란색 배경으로 강조
                 val strokeDrawable = GradientDrawable().apply {
-                    setStroke(3, Color.argb(255, 218, 165, 32)) // 금색 테두리
+                    setStroke(4, Color.argb(255, 255, 165, 0)) // 주황-금색 테두리
                     cornerRadius = 8f
-                    setColor(Color.argb(50, 255, 223, 0)) // 연한 노란색 배경
+                    setColor(Color.argb(80, 255, 255, 0)) // 더 선명한 노란색 배경
                 }
                 cardViews[index].background = strokeDrawable
                 cardViews[index].setTypeface(null, Typeface.BOLD)
+                
+                // 테마에 상관없이 텍스트 색상 유지하기 위해 명시적으로 설정
+                val card = cards[index]
+                val textColor = if (card.suit == "♥" || card.suit == "♦") Color.RED else Color.BLACK
+                cardViews[index].setTextColor(textColor)
             }
         }
     }
