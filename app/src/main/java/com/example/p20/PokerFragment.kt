@@ -314,7 +314,7 @@ class PokerFragment : Fragment() {
             updateChangeButtonText(count)
         }
     }
-
+    
     private fun setupButtonListeners() {
         // 베팅 버튼
         bet10kButton.setOnClickListener { 
@@ -323,7 +323,7 @@ class PokerFragment : Fragment() {
                 showCustomSnackbar("베팅 금액: ${formatCurrency(pokerViewModel.tempBetAmount.value ?: 0L)}")
             } else {
                 showCustomSnackbar("게임 진행 중에는 베팅할 수 없습니다.")
-            }
+        }
         }
         
         bet50kButton.setOnClickListener { 
@@ -332,7 +332,7 @@ class PokerFragment : Fragment() {
                 showCustomSnackbar("베팅 금액: ${formatCurrency(pokerViewModel.tempBetAmount.value ?: 0L)}")
             } else {
                 showCustomSnackbar("게임 진행 중에는 베팅할 수 없습니다.")
-            }
+        }
         }
         
         bet100kButton.setOnClickListener { 
@@ -341,7 +341,7 @@ class PokerFragment : Fragment() {
                 showCustomSnackbar("베팅 금액: ${formatCurrency(pokerViewModel.tempBetAmount.value ?: 0L)}")
             } else {
                 showCustomSnackbar("게임 진행 중에는 베팅할 수 없습니다.")
-            }
+        }
         }
         
         bet500kButton.setOnClickListener { 
@@ -385,14 +385,14 @@ class PokerFragment : Fragment() {
             // 베팅 금액 설정 및 자산 감소
             if (pokerViewModel.placeBet()) {
                 assetViewModel.decreaseAsset(pokerViewModel.currentBet.value ?: 0L)
-                
-                // 업데이트
-                updateBalanceText()
-                
-                // 새 게임 효과음 재생
-                playStartGameSound()
-                
-                // 게임 시작
+            
+            // 업데이트
+            updateBalanceText()
+            
+            // 새 게임 효과음 재생
+            playStartGameSound()
+            
+            // 게임 시작
                 pokerViewModel.startNewGame()
                 
                 // UI 업데이트
@@ -413,7 +413,7 @@ class PokerFragment : Fragment() {
             
             // 비용이 있을 경우 자산 확인
             if (changeCost > 0) {
-                val currentAsset = assetViewModel.asset.value ?: 0L
+        val currentAsset = assetViewModel.asset.value ?: 0L
                 if (changeCost > currentAsset) {
                     showCustomSnackbar("카드 교체 비용이 부족합니다. 필요 금액: ${formatCurrency(changeCost)}")
                     return@setOnClickListener
@@ -563,7 +563,7 @@ class PokerFragment : Fragment() {
         
         // 선택된 카드 강조
         for (index in selectedIndices) {
-            if (index < cardViews.size) {
+        if (index < cardViews.size) {
                 cardViews[index].alpha = 0.7f
                 cardViews[index].background = selectedCardDrawable.constantState?.newDrawable()
             }
@@ -1092,15 +1092,15 @@ class PokerFragment : Fragment() {
     
     private fun playBettingSound() {
         try {
-            bettingSound?.let {
-                if (it.isPlaying) {
-                    it.stop()
-                }
+        bettingSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+            }
                 it.reset()
                 it.setDataSource(requireContext(), android.net.Uri.parse(
                     "android.resource://" + requireContext().packageName + "/" + R.raw.casino_betting))
                 it.prepare()
-                it.start()
+            it.start()
             }
         } catch (e: Exception) {
             android.util.Log.e("PokerFragment", "Error playing betting sound: ${e.message}")
@@ -1109,15 +1109,15 @@ class PokerFragment : Fragment() {
     
     private fun playCardSound() {
         try {
-            cardSound?.let {
-                if (it.isPlaying) {
-                    it.stop()
-                }
+        cardSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+            }
                 it.reset()
                 it.setDataSource(requireContext(), android.net.Uri.parse(
                     "android.resource://" + requireContext().packageName + "/" + R.raw.casino_card_receive))
                 it.prepare()
-                it.start()
+            it.start()
             }
         } catch (e: Exception) {
             android.util.Log.e("PokerFragment", "Error playing card sound: ${e.message}")
@@ -1126,15 +1126,15 @@ class PokerFragment : Fragment() {
     
     private fun playStartGameSound() {
         try {
-            startGameSound?.let {
-                if (it.isPlaying) {
-                    it.stop()
-                }
+        startGameSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+            }
                 it.reset()
                 it.setDataSource(requireContext(), android.net.Uri.parse(
                     "android.resource://" + requireContext().packageName + "/" + R.raw.casino_start))
                 it.prepare()
-                it.start()
+            it.start()
             }
         } catch (e: Exception) {
             android.util.Log.e("PokerFragment", "Error playing start game sound: ${e.message}")
@@ -1143,15 +1143,15 @@ class PokerFragment : Fragment() {
     
     private fun playWinSound() {
         try {
-            winSound?.let {
-                if (it.isPlaying) {
-                    it.stop()
-                }
+        winSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+            }
                 it.reset()
                 it.setDataSource(requireContext(), android.net.Uri.parse(
                     "android.resource://" + requireContext().packageName + "/" + R.raw.casino_win))
                 it.prepare()
-                it.start()
+            it.start()
             }
         } catch (e: Exception) {
             android.util.Log.e("PokerFragment", "Error playing win sound: ${e.message}")
@@ -1160,15 +1160,15 @@ class PokerFragment : Fragment() {
     
     private fun playLoseSound() {
         try {
-            loseSound?.let {
-                if (it.isPlaying) {
-                    it.stop()
-                }
+        loseSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+            }
                 it.reset()
                 it.setDataSource(requireContext(), android.net.Uri.parse(
                     "android.resource://" + requireContext().packageName + "/" + R.raw.casino_lose))
                 it.prepare()
-                it.start()
+            it.start()
             }
         } catch (e: Exception) {
             android.util.Log.e("PokerFragment", "Error playing lose sound: ${e.message}")
@@ -1177,15 +1177,15 @@ class PokerFragment : Fragment() {
 
     private fun playCardSelectSound() {
         try {
-            cardSelectSound?.let {
-                if (it.isPlaying) {
-                    it.stop()
-                }
+        cardSelectSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+            }
                 it.reset()
                 it.setDataSource(requireContext(), android.net.Uri.parse(
                     "android.resource://" + requireContext().packageName + "/" + R.raw.casino_card_select))
                 it.prepare()
-                it.start()
+            it.start()
             }
         } catch (e: Exception) {
             // 오류 로깅
@@ -1195,15 +1195,15 @@ class PokerFragment : Fragment() {
 
     private fun playStopSound() {
         try {
-            stopSound?.let {
-                if (it.isPlaying) {
-                    it.stop()
-                }
+        stopSound?.let {
+            if (it.isPlaying) {
+                it.stop()
+            }
                 it.reset()
                 it.setDataSource(requireContext(), android.net.Uri.parse(
                     "android.resource://" + requireContext().packageName + "/" + R.raw.casino_stop))
                 it.prepare()
-                it.start()
+            it.start()
             }
         } catch (e: Exception) {
             // 오류 로깅
