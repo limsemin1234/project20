@@ -21,17 +21,25 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
-import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import android.content.BroadcastReceiver
+import android.content.Intent
+import android.content.IntentFilter
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.drawerlayout.widget.DrawerLayout
 
 /**
  * 해킹 알바 프래그먼트 클래스
  * 숫자 비밀번호를 추측하는 논리 게임 제공
  */
-class HackingAlbaFragment : Fragment() {
+class HackingAlbaFragment : BaseFragment() {
 
     private lateinit var albaViewModel: AlbaViewModel
-    private lateinit var assetViewModel: AssetViewModel
+    
+    // 핸들러 추가
+    private val handler = Handler(Looper.getMainLooper())
+    
+    // 드로어 리스너 객체 저장
+    private var drawerListener: DrawerLayout.DrawerListener? = null
     
     // 게임 관련 변수
     private var secretCode = intArrayOf(0, 0, 0, 0) // 4자리 비밀번호
@@ -77,10 +85,7 @@ class HackingAlbaFragment : Fragment() {
     private var hackingButtonSoundId: Int = 0  // 코드 입력 버튼 효과음
     
     // 리시버 변수 추가
-    private var soundSettingsReceiver: android.content.BroadcastReceiver? = null
-    
-    // 핸들러
-    private val handler = Handler(Looper.getMainLooper())
+    private var soundSettingsReceiver: BroadcastReceiver? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -88,8 +93,7 @@ class HackingAlbaFragment : Fragment() {
     ): View {
         val view = inflater.inflate(R.layout.fragment_hacking_alba, container, false)
 
-        albaViewModel = ViewModelProvider(requireActivity())[AlbaViewModel::class.java]
-        assetViewModel = ViewModelProvider(requireActivity())[AssetViewModel::class.java]
+        albaViewModel = androidx.lifecycle.ViewModelProvider(requireActivity())[AlbaViewModel::class.java]
         
         // 저장된 레벨 불러오기
         loadSavedLevel()
@@ -111,7 +115,7 @@ class HackingAlbaFragment : Fragment() {
         updateUIState(false)
         
         // DrawerLayout 리스너 설정
-        drawerLayout.addDrawerListener(object : androidx.drawerlayout.widget.DrawerLayout.DrawerListener {
+        drawerListener = object : DrawerLayout.DrawerListener {
             override fun onDrawerSlide(drawerView: View, slideOffset: Float) {
                 // 드로어가 슬라이드될 때의 동작
             }
@@ -136,7 +140,9 @@ class HackingAlbaFragment : Fragment() {
             override fun onDrawerStateChanged(newState: Int) {
                 // 드로어 상태가 변경되었을 때의 동작
             }
-        })
+        }
+        
+        drawerLayout.addDrawerListener(drawerListener!!)
         
         // 디버깅 로그 추가
         android.util.Log.d("HackingAlba", "프래그먼트 생성됨, 버튼 초기 상태: 시작=${startButton.isEnabled}, 제출=${submitButton.isEnabled}")
@@ -530,13 +536,6 @@ class HackingAlbaFragment : Fragment() {
     }
     
     /**
-     * 숫자를 포맷팅합니다.
-     */
-    private fun formatCurrency(amount: Long): String {
-        return android.icu.text.NumberFormat.getInstance().format(amount)
-    }
-
-    /**
      * UI 상태를 업데이트합니다.
      * @param isPlaying 게임 진행 중 여부
      */
@@ -666,18 +665,19 @@ class HackingAlbaFragment : Fragment() {
      * 효과음 설정 변경을 처리하는 BroadcastReceiver를 등록합니다.
      */
     private fun registerSoundSettingsReceiver() {
-        try {
-            val filter = android.content.IntentFilter("com.example.p20.SOUND_SETTINGS_CHANGED")
-            soundSettingsReceiver = object : android.content.BroadcastReceiver() {
-                override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
-                    android.util.Log.d("HackingAlba", "효과음 설정 변경 감지됨")
-                    // 특별한 액션은 필요 없음 - 다음 효과음 재생 시 MainActivity의 설정을 체크함
+        soundSettingsReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                if (intent.action == "SOUND_SETTING_CHANGED") {
+                    // 필요한 처리
                 }
             }
-            
-            requireActivity().registerReceiver(soundSettingsReceiver, filter)
-        } catch (e: Exception) {
-            android.util.Log.e("HackingAlba", "BroadcastReceiver 등록 오류: ${e.message}")
+        }
+        
+        context?.let { ctx ->
+            LocalBroadcastManager.getInstance(ctx).registerReceiver(
+                soundSettingsReceiver!!,
+                IntentFilter("SOUND_SETTING_CHANGED")
+            )
         }
     }
 
@@ -685,74 +685,46 @@ class HackingAlbaFragment : Fragment() {
      * SoundPool 초기화 및 효과음 로드
      */
     private fun initSoundPool() {
+        soundPool = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            val audioAttributes = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_GAME)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+            SoundPool.Builder()
+                .setMaxStreams(5)
+                .setAudioAttributes(audioAttributes)
+                .build()
+        } else {
+            SoundPool(5, AudioManager.STREAM_MUSIC, 0)
+        }
+        
         try {
-            // API 레벨 21 이상에서는 AudioAttributes 사용
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                val audioAttributes = AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_GAME)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build()
-                
-                soundPool = SoundPool.Builder()
-                    .setMaxStreams(10)  // 최대 동시 재생 수
-                    .setAudioAttributes(audioAttributes)
-                    .build()
-            } else {
-                // 하위 버전 호환성
-                @Suppress("DEPRECATION")
-                soundPool = SoundPool(10, AudioManager.STREAM_MUSIC, 0)
+            // 효과음 로드
+            context?.let { ctx ->
+                correctSoundId = soundPool.load(ctx, R.raw.alba_hacking_success, 1)
+                wrongSoundId = soundPool.load(ctx, R.raw.alba_hacking_fail, 1)
+                typingSoundId = soundPool.load(ctx, R.raw.alba_hacking_number, 1)
+                startSoundId = soundPool.load(ctx, R.raw.alba_hacking_start, 1)
+                successSoundId = soundPool.load(ctx, R.raw.alba_hacking_success, 1)
+                failSoundId = soundPool.load(ctx, R.raw.alba_hacking_fail_end, 1)
+                hackingStartSoundId = soundPool.load(ctx, R.raw.alba_hacking_start, 1)
+                hackingButtonSoundId = soundPool.load(ctx, R.raw.alba_hacking_button, 1)
             }
-            
-            // 효과음 로드 - 게임에 맞는 효과음 사용
-            correctSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_fail, 1) // 부분 정답 효과음도 실패 효과음으로 변경
-            wrongSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_fail, 1) // 오답 효과음도 실패 효과음으로 변경
-            typingSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_number, 1) // 숫자 입력 효과음
-            startSoundId = soundPool.load(requireContext(), R.raw.coin, 1) // 기타 효과음
-            // 해킹 성공 및 실패 효과음 로드
-            successSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_success, 1) // 성공 효과음
-            failSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_fail_end, 1) // 실패 효과음
-            hackingStartSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_start, 1) // 해킹 시작 효과음
-            hackingButtonSoundId = soundPool.load(requireContext(), R.raw.alba_hacking_button, 1) // 버튼 클릭 효과음
-            
-            android.util.Log.d("HackingAlba", "SoundPool 초기화 및 효과음 로드 완료")
         } catch (e: Exception) {
-            android.util.Log.e("HackingAlba", "SoundPool 초기화 오류: ${e.message}")
-            // 오류 발생 시 fallback으로 기본 효과음 사용
-            try {
-                // 기본 효과음으로 fallback
-                correctSoundId = soundPool.load(requireContext(), R.raw.coin, 1)
-                wrongSoundId = soundPool.load(requireContext(), R.raw.coin, 1)
-                typingSoundId = soundPool.load(requireContext(), R.raw.coin, 1)
-                startSoundId = soundPool.load(requireContext(), R.raw.coin, 1)
-                successSoundId = soundPool.load(requireContext(), R.raw.coin, 1)
-                failSoundId = soundPool.load(requireContext(), R.raw.coin, 1)
-                hackingStartSoundId = soundPool.load(requireContext(), R.raw.coin, 1)
-                hackingButtonSoundId = soundPool.load(requireContext(), R.raw.coin, 1)
-            } catch (e2: Exception) {
-                android.util.Log.e("HackingAlba", "Fallback 효과음 로드 오류: ${e2.message}")
-            }
+            android.util.Log.e("HackingAlba", "효과음 로드 오류: ${e.message}")
+            showErrorMessage("효과음 로드 중 오류가 발생했습니다.")
         }
     }
 
     /**
      * 효과음을 재생합니다.
-     * @param soundId 재생할 효과음의 ID
      */
     private fun playSound(soundId: Int) {
         try {
-            // MainActivity의 효과음 설정 확인
-            val mainActivity = activity as? MainActivity
-            if (mainActivity?.isSoundEffectEnabled() != true) {
-                return  // 효과음이 비활성화되어 있으면 재생하지 않음
-            }
-            
-            // 현재 볼륨 설정 가져오기 - 호출 시점에 최신 볼륨값 가져오기
-            val volume = mainActivity.getCurrentVolume()
-            
-            // 효과음 재생
             if (soundId > 0) {
+                val mainActivity = activity as? MainActivity
+                val volume = mainActivity?.getCurrentVolume() ?: 0.5f
                 soundPool.play(soundId, volume, volume, 1, 0, 1.0f)
-                android.util.Log.d("HackingAlba", "효과음 재생: ID=$soundId, 볼륨=$volume")
             }
         } catch (e: Exception) {
             android.util.Log.e("HackingAlba", "효과음 재생 오류: ${e.message}")
@@ -1020,30 +992,94 @@ class HackingAlbaFragment : Fragment() {
         }
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
+    /**
+     * 게임이 종료되었을 때 호출되는 메서드입니다.
+     */
+    override fun onGameOver() {
+        super.onGameOver()
         
-        // 리소스 정리
-        try {
-            // 핸들러 콜백 제거
-            handler.removeCallbacksAndMessages(null)
-            
-            // SoundPool 해제
-            if (::soundPool.isInitialized) {
-                soundPool.release()
+        // 게임 진행 중인 경우 강제 종료
+        if (isGameActive) {
+            isGameActive = false
+            updateUIState(false)
+            showMessage("해킹 작업이 중단되었습니다.")
+        }
+        
+        // 드로어가 열려있으면 닫기
+        if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
+            drawerLayout.closeDrawer(GravityCompat.END)
+        }
+    }
+    
+    /**
+     * 프래그먼트가 일시정지될 때 호출됩니다.
+     */
+    override fun onPause() {
+        super.onPause()
+        
+        // 필요한 상태 저장
+        saveCurrentLevel()
+    }
+    
+    /**
+     * 프래그먼트의 뷰가 소멸될 때 호출됩니다.
+     */
+    override fun onDestroyView() {
+        // 드로어 리스너 제거
+        if (::drawerLayout.isInitialized && drawerListener != null) {
+            drawerLayout.removeDrawerListener(drawerListener!!)
+            drawerListener = null
+        }
+        
+        // 버튼 클릭 리스너 제거
+        if (::startButton.isInitialized) {
+            startButton.setOnClickListener(null)
+        }
+        
+        if (::submitButton.isInitialized) {
+            submitButton.setOnClickListener(null)
+        }
+        
+        if (::toggleHistoryButton.isInitialized) {
+            toggleHistoryButton.setOnClickListener(null)
+        }
+        
+        if (::closeHistoryButton.isInitialized) {
+            closeHistoryButton.setOnClickListener(null)
+        }
+        
+        // 디지트 버튼 리스너 제거
+        if (::digitButtons.isInitialized) {
+            for (button in digitButtons) {
+                button.setOnClickListener(null)
             }
-            
-            // 등록된 리시버 해제
-            soundSettingsReceiver?.let { receiver ->
-                try {
-                    requireActivity().unregisterReceiver(receiver)
-                    soundSettingsReceiver = null
-                } catch (e: Exception) {
-                    android.util.Log.e("HackingAlba", "리시버 해제 오류: ${e.message}")
-                }
+        }
+        
+        if (::deleteButton.isInitialized) {
+            deleteButton.setOnClickListener(null)
+        }
+        
+        // SoundPool 리소스 해제
+        if (::soundPool.isInitialized) {
+            soundPool.release()
+        }
+        
+        // 부모 클래스의 onDestroyView 호출 (BaseFragment에서 나머지 리소스 정리)
+        super.onDestroyView()
+    }
+    
+    /**
+     * 프래그먼트가 소멸될 때 호출됩니다.
+     */
+    override fun onDestroy() {
+        super.onDestroy()
+        
+        // BroadcastReceiver 해제
+        if (soundSettingsReceiver != null) {
+            context?.let { ctx ->
+                LocalBroadcastManager.getInstance(ctx).unregisterReceiver(soundSettingsReceiver!!)
+                soundSettingsReceiver = null
             }
-        } catch (e: Exception) {
-            android.util.Log.e("HackingAlba", "리소스 정리 오류: ${e.message}")
         }
     }
 } 

@@ -1373,26 +1373,59 @@ class PokerFragment : Fragment() {
     }
 
     private fun initSounds() {
-        // 효과음 초기화
-        bettingSound = MediaPlayer.create(requireContext(), R.raw.casino_betting)
-        cardSound = MediaPlayer.create(requireContext(), R.raw.casino_card_receive)
-        startGameSound = MediaPlayer.create(requireContext(), R.raw.casino_start)
-        winSound = MediaPlayer.create(requireContext(), R.raw.casino_win)
-        loseSound = MediaPlayer.create(requireContext(), R.raw.casino_lose)
-        cardSelectSound = MediaPlayer.create(requireContext(), R.raw.casino_card_select)
-        stopSound = MediaPlayer.create(requireContext(), R.raw.casino_stop)
+        try {
+            // 효과음 객체 생성
+            bettingSound = MediaPlayer()
+            cardSound = MediaPlayer()
+            startGameSound = MediaPlayer()
+            winSound = MediaPlayer()
+            loseSound = MediaPlayer()
+            cardSelectSound = MediaPlayer()
+            stopSound = MediaPlayer()
+            
+            // 각 효과음 초기 설정 한 번만 수행
+            initSoundResource(bettingSound, R.raw.casino_betting)
+            initSoundResource(cardSound, R.raw.casino_card_receive)
+            initSoundResource(startGameSound, R.raw.casino_start)
+            initSoundResource(winSound, R.raw.casino_win)
+            initSoundResource(loseSound, R.raw.casino_lose)
+            initSoundResource(cardSelectSound, R.raw.casino_card_select)
+            initSoundResource(stopSound, R.raw.casino_stop)
+        } catch (e: Exception) {
+            android.util.Log.e("PokerFragment", "Error initializing sounds: ${e.message}")
+        }
+    }
+    
+    private fun initSoundResource(mediaPlayer: MediaPlayer?, resourceId: Int) {
+        try {
+            mediaPlayer?.apply {
+                reset()
+                setDataSource(requireContext(), android.net.Uri.parse(
+                    "android.resource://" + requireContext().packageName + "/" + resourceId))
+                prepare()
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("PokerFragment", "Error initializing sound resource: ${e.message}")
+        }
     }
     
     /**
      * 배팅 효과음을 재생합니다.
      */
     private fun playBettingSound() {
-        bettingSound?.let {
-            if (it.isPlaying) {
-                it.stop()
+        try {
+            bettingSound?.let {
+                if (it.isPlaying) {
+                    it.stop()
+                }
+                it.reset()
+                it.setDataSource(requireContext(), android.net.Uri.parse(
+                    "android.resource://" + requireContext().packageName + "/" + R.raw.casino_betting))
                 it.prepare()
+                it.start()
             }
-            it.start()
+        } catch (e: Exception) {
+            android.util.Log.e("PokerFragment", "Error playing betting sound: ${e.message}")
         }
     }
     
@@ -1400,12 +1433,19 @@ class PokerFragment : Fragment() {
      * 카드 교체 효과음을 재생합니다.
      */
     private fun playCardSound() {
-        cardSound?.let {
-            if (it.isPlaying) {
-                it.stop()
+        try {
+            cardSound?.let {
+                if (it.isPlaying) {
+                    it.stop()
+                }
+                it.reset()
+                it.setDataSource(requireContext(), android.net.Uri.parse(
+                    "android.resource://" + requireContext().packageName + "/" + R.raw.casino_card_receive))
                 it.prepare()
+                it.start()
             }
-            it.start()
+        } catch (e: Exception) {
+            android.util.Log.e("PokerFragment", "Error playing card sound: ${e.message}")
         }
     }
     
@@ -1413,12 +1453,19 @@ class PokerFragment : Fragment() {
      * 새 게임 효과음을 재생합니다.
      */
     private fun playStartGameSound() {
-        startGameSound?.let {
-            if (it.isPlaying) {
-                it.stop()
+        try {
+            startGameSound?.let {
+                if (it.isPlaying) {
+                    it.stop()
+                }
+                it.reset()
+                it.setDataSource(requireContext(), android.net.Uri.parse(
+                    "android.resource://" + requireContext().packageName + "/" + R.raw.casino_start))
                 it.prepare()
+                it.start()
             }
-            it.start()
+        } catch (e: Exception) {
+            android.util.Log.e("PokerFragment", "Error playing start game sound: ${e.message}")
         }
     }
     
@@ -1426,12 +1473,19 @@ class PokerFragment : Fragment() {
      * 승리 효과음을 재생합니다.
      */
     private fun playWinSound() {
-        winSound?.let {
-            if (it.isPlaying) {
-                it.stop()
+        try {
+            winSound?.let {
+                if (it.isPlaying) {
+                    it.stop()
+                }
+                it.reset()
+                it.setDataSource(requireContext(), android.net.Uri.parse(
+                    "android.resource://" + requireContext().packageName + "/" + R.raw.casino_win))
                 it.prepare()
+                it.start()
             }
-            it.start()
+        } catch (e: Exception) {
+            android.util.Log.e("PokerFragment", "Error playing win sound: ${e.message}")
         }
     }
     
@@ -1439,12 +1493,19 @@ class PokerFragment : Fragment() {
      * 패배 효과음을 재생합니다.
      */
     private fun playLoseSound() {
-        loseSound?.let {
-            if (it.isPlaying) {
-                it.stop()
+        try {
+            loseSound?.let {
+                if (it.isPlaying) {
+                    it.stop()
+                }
+                it.reset()
+                it.setDataSource(requireContext(), android.net.Uri.parse(
+                    "android.resource://" + requireContext().packageName + "/" + R.raw.casino_lose))
                 it.prepare()
+                it.start()
             }
-            it.start()
+        } catch (e: Exception) {
+            android.util.Log.e("PokerFragment", "Error playing lose sound: ${e.message}")
         }
     }
 
@@ -1452,12 +1513,20 @@ class PokerFragment : Fragment() {
      * 카드 선택 효과음을 재생합니다.
      */
     private fun playCardSelectSound() {
-        cardSelectSound?.let {
-            if (it.isPlaying) {
-                it.stop()
+        try {
+            cardSelectSound?.let {
+                if (it.isPlaying) {
+                    it.stop()
+                }
+                it.reset()
+                it.setDataSource(requireContext(), android.net.Uri.parse(
+                    "android.resource://" + requireContext().packageName + "/" + R.raw.casino_card_select))
                 it.prepare()
+                it.start()
             }
-            it.start()
+        } catch (e: Exception) {
+            // 오류 로깅
+            android.util.Log.e("PokerFragment", "Error playing card select sound: ${e.message}")
         }
     }
 
@@ -1465,12 +1534,20 @@ class PokerFragment : Fragment() {
      * 카드 확정 효과음을 재생합니다.
      */
     private fun playStopSound() {
-        stopSound?.let {
-            if (it.isPlaying) {
-                it.stop()
+        try {
+            stopSound?.let {
+                if (it.isPlaying) {
+                    it.stop()
+                }
+                it.reset()
+                it.setDataSource(requireContext(), android.net.Uri.parse(
+                    "android.resource://" + requireContext().packageName + "/" + R.raw.casino_stop))
                 it.prepare()
+                it.start()
             }
-            it.start()
+        } catch (e: Exception) {
+            // 오류 로깅
+            android.util.Log.e("PokerFragment", "Error playing stop sound: ${e.message}")
         }
     }
 } 

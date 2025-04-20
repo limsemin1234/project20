@@ -20,18 +20,15 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
 
 /**
  * 클릭알바 프래그먼트 클래스
  * 이미지를 클릭하여 돈을 버는 간단한 게임 제공
  */
-class ClickAlbaFragment : Fragment() {
+class ClickAlbaFragment : BaseFragment() {
 
     private lateinit var albaViewModel: AlbaViewModel
-    private lateinit var assetViewModel: AssetViewModel
     private lateinit var earnText: TextView
     private lateinit var levelText: TextView
     private lateinit var cooldownText: TextView
@@ -46,7 +43,6 @@ class ClickAlbaFragment : Fragment() {
     private var isExpAnimating = false
     private var lastShownExp = 0
     private val expUpdateQueue = mutableListOf<Int>()
-    private val handler = Handler(Looper.getMainLooper())
     
     // 날아가는 텍스트 애니메이션 추적용 카운터
     private var pendingAnimationCount = 0
@@ -68,8 +64,7 @@ class ClickAlbaFragment : Fragment() {
     ): View {
         val view = inflater.inflate(R.layout.fragment_click_alba, container, false)
 
-        albaViewModel = ViewModelProvider(requireActivity())[AlbaViewModel::class.java]
-        assetViewModel = ViewModelProvider(requireActivity())[AssetViewModel::class.java]
+        albaViewModel = androidx.lifecycle.ViewModelProvider(requireActivity())[AlbaViewModel::class.java]
 
         // SoundPool 초기화
         initSoundPool()
@@ -212,31 +207,33 @@ class ClickAlbaFragment : Fragment() {
         
         // 프로그레스바를 점진적으로 0으로 설정
         val startValue = lastShownExp
-        val anim = ObjectAnimator.ofInt(expProgressBar, "progress", startValue, 0)
-        anim.duration = 500 // 0.5초
-        
-        anim.addUpdateListener { animation ->
-            val animatedValue = animation.animatedValue as Int
-            expTextView.text = "$animatedValue/20"
+        val anim = ObjectAnimator.ofInt(expProgressBar, "progress", startValue, 0).apply {
+            duration = 500 // 0.5초
+            
+            addUpdateListener { animation ->
+                val animatedValue = animation.animatedValue as Int
+                expTextView.text = "$animatedValue/20"
+            }
+            
+            addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) {
+                    // 애니메이션 종료 후 상태 업데이트
+                    isExpAnimating = false
+                    lastShownExp = 0
+                    
+                    // 큐에 대기 중인 다음 애니메이션이 있으면 실행
+                    if (expUpdateQueue.isNotEmpty()) {
+                        postDelayed(100) {
+                            val nextExp = expUpdateQueue.removeAt(0)
+                            updateExpBar(nextExp)
+                        }
+                    }
+                }
+            })
         }
         
-        anim.addListener(object : AnimatorListenerAdapter() {
-            override fun onAnimationEnd(animation: Animator) {
-                // 애니메이션 종료 후 상태 업데이트
-                isExpAnimating = false
-                lastShownExp = 0
-                
-                // 큐에 대기 중인 다음 애니메이션이 있으면 실행
-                if (expUpdateQueue.isNotEmpty()) {
-                    handler.postDelayed({
-                        val nextExp = expUpdateQueue.removeAt(0)
-                        updateExpBar(nextExp)
-                    }, 100)
-                }
-            }
-        })
-        
-        anim.start()
+        // 애니메이션 추적 및 실행
+        trackAnimator(anim).start()
     }
     
     /**
@@ -446,10 +443,16 @@ class ClickAlbaFragment : Fragment() {
         pendingAnimationCount = 0
     }
 
+    override fun onGameOver() {
+        super.onGameOver()
+        // 게임 오버 시 모든 애니메이션 정리
+        clearAnimations()
+        // 사용자에게 알림
+        showMessage("알바가 중단되었습니다.")
+    }
+
     override fun onDestroyView() {
-        super.onDestroyView()
-        // 핸들러 콜백 제거
-        handler.removeCallbacksAndMessages(null)
+        // 핸들러는 BaseFragment가 자동 처리
         
         // 모든 애니메이션 정리
         clearAnimations()
@@ -474,6 +477,8 @@ class ClickAlbaFragment : Fragment() {
             albaViewModel.clickCounterResetEvent.removeObservers(viewLifecycleOwner)
             albaViewModel.itemRewardEvent.removeObservers(viewLifecycleOwner)
         }
+        
+        super.onDestroyView()
     }
     
     override fun onPause() {
