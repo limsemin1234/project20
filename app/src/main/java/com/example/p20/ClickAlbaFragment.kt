@@ -58,6 +58,9 @@ class ClickAlbaFragment : Fragment() {
     // 디바운싱을 위한 변수
     private var lastClickTime = 0L
     private val MIN_CLICK_INTERVAL = 80L // 밀리초 (0.08초)
+    
+    // 애니메이션 리소스 관리를 위한 변수
+    private val animatingViews = mutableListOf<View>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -286,6 +289,9 @@ class ClickAlbaFragment : Fragment() {
         // 애니메이션 컨테이너에 추가
         animationContainer.addView(rewardText)
         
+        // 뷰 추적 목록에 추가
+        animatingViews.add(rewardText)
+        
         // 상승 애니메이션
         rewardText.animate()
             .translationY(-150f) // 위로 150dp 이동
@@ -294,7 +300,12 @@ class ClickAlbaFragment : Fragment() {
             .setListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: Animator) {
                     // 애니메이션 끝나면 뷰 제거
-                    animationContainer.removeView(rewardText)
+                    if (view != null && isAdded) {
+                        animationContainer.removeView(rewardText)
+                    }
+                    
+                    // 애니메이션 목록에서 제거
+                    animatingViews.remove(rewardText)
                     
                     // 카운터 감소
                     pendingAnimationCount--
@@ -321,13 +332,21 @@ class ClickAlbaFragment : Fragment() {
         // 애니메이션 컨테이너에 추가
         animationContainer.addView(flashView)
         
+        // 뷰 추적 목록에 추가
+        animatingViews.add(flashView)
+        
         // 깜빡임 애니메이션
         flashView.animate()
             .alpha(0f)
             .setDuration(500)
             .setListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: Animator) {
-                    animationContainer.removeView(flashView)
+                    if (view != null && isAdded) {
+                        animationContainer.removeView(flashView)
+                    }
+                    
+                    // 애니메이션 목록에서 제거
+                    animatingViews.remove(flashView)
                 }
             })
             .start()
@@ -404,14 +423,63 @@ class ClickAlbaFragment : Fragment() {
         }
     }
 
+    /**
+     * 모든 진행 중인 애니메이션을 중지합니다.
+     */
+    private fun clearAnimations() {
+        // 애니메이션 중인 모든 뷰 제거
+        val viewsToRemove = ArrayList(animatingViews)
+        for (view in viewsToRemove) {
+            view.clearAnimation()
+            if (::animationContainer.isInitialized && this.view != null && isAdded) {
+                animationContainer.removeView(view)
+            }
+        }
+        
+        animatingViews.clear()
+        
+        // 애니메이션 컨테이너의 모든 자식 뷰 제거
+        if (::animationContainer.isInitialized && view != null && isAdded) {
+            animationContainer.removeAllViews()
+        }
+        
+        pendingAnimationCount = 0
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         // 핸들러 콜백 제거
         handler.removeCallbacksAndMessages(null)
         
+        // 모든 애니메이션 정리
+        clearAnimations()
+        
         // SoundPool 리소스 해제
         if (::soundPool.isInitialized) {
             soundPool.release()
         }
+        
+        // 모든 뷰 참조 제거 작업
+        if (::albaImage.isInitialized) {
+            albaImage.setOnTouchListener(null)
+        }
+        
+        // ViewModel 관찰자 정리
+        if (::albaViewModel.isInitialized) {
+            albaViewModel.isCooldown.removeObservers(viewLifecycleOwner)
+            albaViewModel.cooldownTime.removeObservers(viewLifecycleOwner)
+            albaViewModel.isActivePhase.removeObservers(viewLifecycleOwner)
+            albaViewModel.activePhaseTime.removeObservers(viewLifecycleOwner)
+            albaViewModel.albaLevel.removeObservers(viewLifecycleOwner)
+            albaViewModel.clickCounterResetEvent.removeObservers(viewLifecycleOwner)
+            albaViewModel.itemRewardEvent.removeObservers(viewLifecycleOwner)
+        }
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        
+        // 포그라운드에 없을 때 애니메이션 정리
+        clearAnimations()
     }
 } 
