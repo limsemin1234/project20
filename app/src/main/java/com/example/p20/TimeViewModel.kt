@@ -48,6 +48,7 @@ class TimeViewModel(application: Application) : AndroidViewModel(application) {
     private val sharedPreferences = application.getSharedPreferences("time_data", Context.MODE_PRIVATE)
     private var startTimeInSeconds = 0L
     private var startTime: Long = 0
+    private var timerRunnable: Runnable? = null
 
     init {
         loadTimeData()
@@ -177,10 +178,17 @@ class TimeViewModel(application: Application) : AndroidViewModel(application) {
         startTimer()
     }
 
+    fun clearResources() {
+        timerRunnable?.let { handler.removeCallbacks(it) }
+        handler.removeCallbacks(updateTimeRunnable)
+        timerRunnable = null
+        isTimerRunning = false
+        saveTimeData()
+    }
+
     override fun onCleared() {
         super.onCleared()
-        stopTimer()
-        saveTimeData()
+        clearResources()
     }
 
     fun updateAsset(newAsset: Long) {
