@@ -40,6 +40,7 @@ class ClickAlbaFragment : Fragment() {
     private lateinit var activePhaseText: TextView
     private lateinit var expProgressBar: ProgressBar
     private lateinit var expTextView: TextView
+    private lateinit var rewardAmountText: TextView
     
     // 경험치 애니메이션 관련 변수
     private var isExpAnimating = false
@@ -76,6 +77,7 @@ class ClickAlbaFragment : Fragment() {
         cooldownText = view.findViewById(R.id.cooldownText)
         animationContainer = view.findViewById(R.id.animationContainer)
         activePhaseText = view.findViewById(R.id.cooldownText)
+        rewardAmountText = view.findViewById(R.id.rewardAmountText)
         
         // 경험치 바 초기화
         expProgressBar = view.findViewById(R.id.expProgressBar)
@@ -150,6 +152,7 @@ class ClickAlbaFragment : Fragment() {
         })
         albaViewModel.albaLevel.observe(viewLifecycleOwner, Observer { level ->
             levelText.text = "레벨: $level"
+            updateRewardAmountText()
         })
         
         // 클릭 카운터 리셋 이벤트 관찰
@@ -171,6 +174,9 @@ class ClickAlbaFragment : Fragment() {
                 albaViewModel.consumeItemRewardEvent()
             }
         })
+        
+        // 초기 보상 금액 표시 업데이트
+        updateRewardAmountText()
 
         return view
     }
@@ -357,6 +363,14 @@ class ClickAlbaFragment : Fragment() {
                 earnText.text = "터치!! 터치!!"
             }
         }
+    }
+    
+    /**
+     * 보상 금액 텍스트를 업데이트합니다.
+     */
+    private fun updateRewardAmountText() {
+        val rewardAmount = albaViewModel.getRewardAmount()
+        rewardAmountText.text = "클릭 보상: ${rewardAmount}원"
     }
     
     /**
