@@ -24,14 +24,14 @@ import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
-class ItemFragment : Fragment() {
+/**
+ * 아이템 관리 Fragment
+ * 게임 시간 증가를 위한 아이템의 구매와 사용을 담당합니다.
+ */
+class ItemFragment : BaseFragment() {
 
     private var _binding: FragmentItemBinding? = null
     private val binding get() = _binding!!
-
-    // ViewModel 공유
-    private val assetViewModel: AssetViewModel by activityViewModels()
-    private val timeViewModel: TimeViewModel by activityViewModels()
 
     // MediaPlayer 객체 추가
     private var buySound: MediaPlayer? = null
@@ -77,6 +77,11 @@ class ItemFragment : Fragment() {
 
         // 게임 리셋 이벤트 관찰
         observeGameResetEvent()
+
+        // 자산 변화 관찰하여 버튼 상태 업데이트
+        assetViewModel.asset.observe(viewLifecycleOwner) { _ ->
+            updateButtonStates()
+        }
     }
 
     /**
@@ -85,9 +90,11 @@ class ItemFragment : Fragment() {
     private fun initSounds() {
         // 구매 버튼 효과음
         buySound = MediaPlayer.create(requireContext(), R.raw.item_button_buy)
+        buySound?.let { trackMediaPlayer(it) }
         
         // 사용 버튼 효과음
         useSound = MediaPlayer.create(requireContext(), R.raw.item_button_use)
+        useSound?.let { trackMediaPlayer(it) }
     }
 
     /**
@@ -259,12 +266,15 @@ class ItemFragment : Fragment() {
             updateSelectedItemInfo(selectedItem)
             updateButtonStates()
 
+            // 애니메이션 효과 추가
+            applyAnimation(binding.buyButton, "scale", 300, 0.8f, 1.0f)
+
             // 안내 메시지
-            showCustomSnackbar("${selectedItem.name}을(를) 구매했습니다.")
+            showMessage("${selectedItem.name}을(를) 구매했습니다.")
         } else if (selectedItem.stock <= 0) {
-            showCustomSnackbar("아이템 재고가 없습니다.")
+            showMessage("아이템 재고가 없습니다.")
         } else {
-            showCustomSnackbar("자산이 부족합니다.")
+            showMessage("자산이 부족합니다.")
         }
     }
 
@@ -289,8 +299,11 @@ class ItemFragment : Fragment() {
             updateSelectedItemInfo(selectedItem)
             updateButtonStates()
 
+            // 애니메이션 효과 추가
+            applyAnimation(binding.useButton, "scale", 300, 0.8f, 1.0f)
+
             // 안내 메시지
-            showCustomSnackbar("${selectedItem.name}을(를) 사용했습니다. 남은 시간이 ${selectedItem.effect}초 증가합니다.")
+            showMessage("${selectedItem.name}을(를) 사용했습니다. 남은 시간이 ${selectedItem.effect}초 증가합니다.")
         }
     }
 
@@ -360,18 +373,12 @@ class ItemFragment : Fragment() {
     }
 
     /**
-     * 커스텀 스낵바를 표시합니다.
+     * 게임 오버 처리를 위한 메서드
      */
-    private fun showCustomSnackbar(message: String) {
-        MessageManager.showMessage(requireContext(), message)
-    }
-
-    /**
-     * 통화 포맷을 적용합니다.
-     */
-    private fun formatCurrency(amount: Long): String {
-        val formatter = NumberFormat.getCurrencyInstance(Locale.KOREA)
-        return formatter.format(amount)
+    override fun onGameOver() {
+        super.onGameOver()
+        // 게임 오버 시 아이템 관련 UI 비활성화 추가 처리
+        showMessage("아이템 사용이 중단되었습니다.")
     }
 
     override fun onResume() {
@@ -402,16 +409,11 @@ class ItemFragment : Fragment() {
     }
 
     override fun onDestroyView() {
-        super.onDestroyView()
-        // MediaPlayer 해제
-        buySound?.release()
-        useSound?.release()
-        buySound = null
-        useSound = null
-        // ItemAdapter의 리소스도 해제
+        // 리소스 해제는 BaseFragment가 처리하므로 추가적인 MediaPlayer 해제는 제거
         if (::itemAdapter.isInitialized) {
             itemAdapter.release()
         }
         _binding = null
+        super.onDestroyView()
     }
 } 
