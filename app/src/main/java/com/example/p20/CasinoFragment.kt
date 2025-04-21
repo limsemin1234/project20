@@ -1,6 +1,5 @@
 package com.example.p20
 
-import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
 import android.view.LayoutInflater
@@ -28,8 +27,8 @@ class CasinoFragment : BaseFragment() {
     private lateinit var viewPager: ViewPager2
     private lateinit var casinoInfoText: TextView
     
-    // 탭 선택 효과음을 위한 MediaPlayer
-    private var tabSelectSound: MediaPlayer? = null
+    // SoundManager 인스턴스
+    private lateinit var soundManager: SoundManager
     
     // 어댑터 참조 - 프래그먼트가 재생성될 때 메모리 누수 방지를 위해 lazy 초기화
     private val adapter: CasinoViewPagerAdapter by lazy { 
@@ -39,6 +38,7 @@ class CasinoFragment : BaseFragment() {
     // 탭 타이틀 - 상수로 분리
     private companion object {
         private val TAB_TITLES = arrayOf("블랙잭", "포커(1인발라트로)")
+        private val SOUND_TAB_SELECT = R.raw.tab_select
     }
 
     override fun onCreateView(
@@ -52,8 +52,8 @@ class CasinoFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 효과음 초기화
-        initTabSelectSound()
+        // SoundManager 초기화
+        soundManager = SoundManager.getInstance(requireContext())
 
         // 뷰 초기화 (지연시키지 않고 즉시 초기화)
         initializeViews(view)
@@ -79,24 +79,10 @@ class CasinoFragment : BaseFragment() {
     }
     
     /**
-     * 탭 선택 효과음을 초기화합니다.
-     */
-    private fun initTabSelectSound() {
-        // MediaPlayer 생성 및 자동 추적
-        tabSelectSound = trackMediaPlayer(MediaPlayer.create(requireContext(), R.raw.tab_select))
-    }
-    
-    /**
      * 탭 선택 효과음을 재생합니다.
      */
     private fun playTabSelectSound() {
-        tabSelectSound?.let {
-            if (it.isPlaying) {
-                it.stop()
-                it.prepare()
-            }
-            it.start()
-        }
+        soundManager.playSound(SOUND_TAB_SELECT)
     }
     
     /**

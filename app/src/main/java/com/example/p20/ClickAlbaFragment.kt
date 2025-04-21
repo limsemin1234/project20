@@ -4,10 +4,6 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ObjectAnimator
 import android.content.Context
-import android.media.AudioAttributes
-import android.media.AudioManager
-import android.media.SoundPool
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -47,9 +43,8 @@ class ClickAlbaFragment : BaseFragment() {
     // 날아가는 텍스트 애니메이션 추적용 카운터
     private var pendingAnimationCount = 0
     
-    // 효과음 재생을 위한 SoundPool
-    private lateinit var soundPool: SoundPool
-    private var coinSoundId: Int = 0
+    // SoundManager 인스턴스
+    private lateinit var soundManager: SoundManager
     
     // 디바운싱을 위한 변수
     private var lastClickTime = 0L
@@ -66,8 +61,8 @@ class ClickAlbaFragment : BaseFragment() {
 
         albaViewModel = androidx.lifecycle.ViewModelProvider(requireActivity())[AlbaViewModel::class.java]
 
-        // SoundPool 초기화
-        initSoundPool()
+        // SoundManager 초기화
+        soundManager = SoundManager.getInstance(requireContext())
 
         albaImage = view.findViewById(R.id.albaImage)
         earnText = view.findViewById(R.id.earnText)
@@ -237,25 +232,22 @@ class ClickAlbaFragment : BaseFragment() {
     }
     
     /**
-     * SoundPool을 초기화하고 효과음을 로드합니다.
+     * 코인 효과음을 재생합니다.
+     * SoundManager를 사용하여 효율적으로 효과음을 재생합니다.
      */
-    private fun initSoundPool() {
-        soundPool = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val audioAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_GAME)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build()
-            SoundPool.Builder()
-                .setMaxStreams(5)
-                .setAudioAttributes(audioAttributes)
-                .build()
-        } else {
-            SoundPool(5, AudioManager.STREAM_MUSIC, 0)
+    private fun playCoinSound() {
+        try {
+            // 활성 시간이 끝났으면 소리 재생하지 않음
+            if (albaViewModel.isActivePhase.value == true && (albaViewModel.activePhaseTime.value ?: 0) <= 0) {
+                return
+            }
+            
+            // 코인 효과음 재생
+            soundManager.playSound(R.raw.coin)
+        } catch (e: Exception) {
+            // 효과음 재생 중 오류 발생 시 로그 출력 후 계속 진행
+            android.util.Log.e("ClickAlbaFragment", "효과음 재생 오류: ${e.message}")
         }
-        
-        // 코인 효과음 로드
-        coinSoundId = soundPool.load(requireContext(), R.raw.coin, 1)
-        android.util.Log.d("ClickAlba", "코인 효과음 로드됨: $coinSoundId")
     }
     
     /**
@@ -388,37 +380,6 @@ class ClickAlbaFragment : BaseFragment() {
         val rewardAmount = albaViewModel.getRewardAmount()
         rewardAmountText.text = "클릭 보상: ${rewardAmount}원"
     }
-    
-    /**
-     * 코인 효과음을 재생합니다.
-     * SoundPool을 사용하여 효율적으로 효과음을 중첩 재생합니다.
-     */
-    private fun playCoinSound() {
-        try {
-            // 활성 시간이 끝났으면 소리 재생하지 않음
-            if (albaViewModel.isActivePhase.value == true && (albaViewModel.activePhaseTime.value ?: 0) <= 0) {
-                return
-            }
-            
-            // 효과음 설정 확인 (MainActivity에서 설정 가져오기)
-            val mainActivity = activity as? MainActivity
-            if (mainActivity?.isSoundEffectEnabled() != true) {
-                return  // 효과음이 비활성화되어 있으면 재생하지 않음
-            }
-            
-            // 효과음이 로드되었는지 확인
-            if (coinSoundId > 0) {
-                // 현재 볼륨 설정 가져오기 - 호출 시점에 최신 볼륨값 가져오기
-                val volume = mainActivity.getCurrentVolume()
-                // 효과음 재생 (좌우 볼륨을 현재 설정 볼륨으로 설정)
-                soundPool.play(coinSoundId, volume, volume, 1, 0, 1.0f)
-                android.util.Log.d("ClickAlbaFragment", "코인 효과음 재생: 볼륨=$volume")
-            }
-        } catch (e: Exception) {
-            // 효과음 재생 중 오류 발생 시 로그 출력 후 계속 진행
-            android.util.Log.e("ClickAlbaFragment", "효과음 재생 오류: ${e.message}")
-        }
-    }
 
     /**
      * 모든 진행 중인 애니메이션을 중지합니다.
@@ -456,11 +417,6 @@ class ClickAlbaFragment : BaseFragment() {
         
         // 모든 애니메이션 정리
         clearAnimations()
-        
-        // SoundPool 리소스 해제
-        if (::soundPool.isInitialized) {
-            soundPool.release()
-        }
         
         // 모든 뷰 참조 제거 작업
         if (::albaImage.isInitialized) {

@@ -2,7 +2,6 @@ package com.example.p20
 
 import android.content.Context // SharedPreferences 사용 위해 추가
 import android.content.SharedPreferences // SharedPreferences 사용 위해 추가
-import android.media.MediaPlayer // MediaPlayer 추가
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -33,15 +32,20 @@ class ItemFragment : BaseFragment() {
     private var _binding: FragmentItemBinding? = null
     private val binding get() = _binding!!
 
-    // MediaPlayer 객체 추가
-    private var buySound: MediaPlayer? = null
-    private var useSound: MediaPlayer? = null
+    // SoundManager 인스턴스
+    private lateinit var soundManager: SoundManager
 
     // SharedPreferences 관련 상수
     private val PREFS_FILENAME = "item_prefs"
     private val KEY_ITEM_QUANTITY_PREFIX = "item_quantity_"
     private val KEY_ITEM_STOCK_PREFIX = "item_stock_"
     private lateinit var prefs: SharedPreferences
+
+    // 효과음 리소스 ID
+    companion object {
+        private val SOUND_BUY = R.raw.item_button_buy
+        private val SOUND_USE = R.raw.item_button_use
+    }
 
     // 아이템 어댑터
     private lateinit var itemAdapter: ItemAdapter
@@ -63,8 +67,8 @@ class ItemFragment : BaseFragment() {
         // SharedPreferences 초기화
         prefs = requireContext().getSharedPreferences(PREFS_FILENAME, Context.MODE_PRIVATE)
 
-        // 효과음 초기화
-        initSounds()
+        // SoundManager 초기화
+        soundManager = SoundManager.getInstance(requireContext())
 
         // 아이템 목록 초기화
         initItemList()
@@ -85,29 +89,17 @@ class ItemFragment : BaseFragment() {
     }
 
     /**
-     * 효과음을 초기화합니다.
+     * 구매 효과음을 재생합니다.
      */
-    private fun initSounds() {
-        // 구매 버튼 효과음
-        buySound = MediaPlayer.create(requireContext(), R.raw.item_button_buy)
-        buySound?.let { trackMediaPlayer(it) }
-        
-        // 사용 버튼 효과음
-        useSound = MediaPlayer.create(requireContext(), R.raw.item_button_use)
-        useSound?.let { trackMediaPlayer(it) }
+    private fun playBuySound() {
+        soundManager.playSound(SOUND_BUY)
     }
 
     /**
-     * 효과음을 재생합니다.
+     * 사용 효과음을 재생합니다.
      */
-    private fun playSound(player: MediaPlayer?) {
-        player?.let {
-            if (it.isPlaying) {
-                it.stop()
-                it.prepare()
-            }
-            it.start()
-        }
+    private fun playUseSound() {
+        soundManager.playSound(SOUND_USE)
     }
 
     /**
@@ -197,13 +189,13 @@ class ItemFragment : BaseFragment() {
     private fun setupButtons() {
         // 구매 버튼
         binding.buyButton.setOnClickListener {
-            playSound(buySound)
+            playBuySound()
             buySelectedItem()
         }
 
         // 사용 버튼
         binding.useButton.setOnClickListener {
-            playSound(useSound)
+            playUseSound()
             useSelectedItem()
         }
 
@@ -409,11 +401,7 @@ class ItemFragment : BaseFragment() {
     }
 
     override fun onDestroyView() {
-        // 리소스 해제는 BaseFragment가 처리하므로 추가적인 MediaPlayer 해제는 제거
-        if (::itemAdapter.isInitialized) {
-            itemAdapter.release()
-        }
-        _binding = null
         super.onDestroyView()
+        _binding = null
     }
 } 

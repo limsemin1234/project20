@@ -42,13 +42,8 @@ class BlackjackFragment : BaseFragment() {
     private lateinit var bet500kButton: Button    // 50만원 버튼 추가
     private lateinit var statsTextView: TextView   // 승률 통계 표시용 TextView 추가
     
-    // 효과음 재생을 위한 MediaPlayer
-    private var bettingSound: MediaPlayer? = null
-    private var cardSound: MediaPlayer? = null
-    private var startGameSound: MediaPlayer? = null
-    private var winSound: MediaPlayer? = null
-    private var loseSound: MediaPlayer? = null
-    private var stopSound: MediaPlayer? = null
+    // SoundManager 인스턴스
+    private lateinit var soundManager: SoundManager
     
     // 게임 상태
     private var currentBet = 0L
@@ -77,12 +72,6 @@ class BlackjackFragment : BaseFragment() {
     // 재사용 가능한 카드 배경 드로어블
     private lateinit var cardBackgroundDrawable: Drawable
     
-    // SoundManager 인스턴스
-    private lateinit var soundManager: SoundManager
-    
-    // ViewModel 공유 - BaseFragment에서 assetViewModel이 제공되므로 제거
-    // private val assetViewModel: AssetViewModel by activityViewModels()
-
     // 데이터 클래스 최적화
     data class Card(val rank: String, val suit: String) {
         // 텍스트 값을 한 번만 계산
@@ -94,12 +83,21 @@ class BlackjackFragment : BaseFragment() {
         val value = cardValues[rank] ?: 0
     }
     
+    // 효과음 리소스 ID
     companion object {
         // 카드 값 매핑을 companion object로 이동
         private val cardValues = mapOf(
             "A" to 11, "2" to 2, "3" to 3, "4" to 4, "5" to 5, "6" to 6, "7" to 7, "8" to 8, "9" to 9,
             "10" to 10, "J" to 10, "Q" to 10, "K" to 10
         )
+        
+        // 효과음 리소스 ID
+        private val SOUND_BETTING = R.raw.casino_betting
+        private val SOUND_CARD = R.raw.casino_card_receive
+        private val SOUND_START_GAME = R.raw.casino_start
+        private val SOUND_WIN = R.raw.casino_win
+        private val SOUND_LOSE = R.raw.casino_lose
+        private val SOUND_BUTTON = R.raw.casino_card_select
     }
     
     override fun onCreateView(
@@ -130,9 +128,6 @@ class BlackjackFragment : BaseFragment() {
         
         // SoundManager 초기화
         soundManager = SoundManager.getInstance(requireContext())
-        
-        // 효과음 초기화
-        initSounds()
         
         // 카드 배경 드로어블 초기화
         cardBackgroundDrawable = ContextCompat.getDrawable(requireContext(), android.R.drawable.btn_default)!!
@@ -628,95 +623,44 @@ class BlackjackFragment : BaseFragment() {
     }
 
     private fun initSounds() {
-        try {
-            // 효과음 초기화
-            bettingSound = trackMediaPlayer(MediaPlayer.create(requireContext(), R.raw.casino_betting))
-            cardSound = trackMediaPlayer(MediaPlayer.create(requireContext(), R.raw.casino_card_receive))
-            startGameSound = trackMediaPlayer(MediaPlayer.create(requireContext(), R.raw.casino_start))
-            winSound = trackMediaPlayer(MediaPlayer.create(requireContext(), R.raw.casino_win))
-            loseSound = trackMediaPlayer(MediaPlayer.create(requireContext(), R.raw.casino_lose))
-            stopSound = trackMediaPlayer(MediaPlayer.create(requireContext(), R.raw.casino_stop))
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        // SoundManager에서 필요한 효과음 미리 로드
+        soundManager.loadSound(SOUND_BETTING)
+        soundManager.loadSound(SOUND_CARD)
+        soundManager.loadSound(SOUND_START_GAME)
+        soundManager.loadSound(SOUND_WIN)
+        soundManager.loadSound(SOUND_LOSE)
+        soundManager.loadSound(SOUND_BUTTON)
     }
     
-    /**
-     * 배팅 효과음을 재생합니다.
-     */
     private fun playBettingSound() {
-        bettingSound?.let {
-            if (it.isPlaying) {
-                it.stop()
-                it.prepare()
-            }
-            it.start()
-        }
+        soundManager.playSound(SOUND_BETTING)
     }
     
-    /**
-     * 카드 받기 효과음을 재생합니다.
-     */
     private fun playCardSound() {
-        cardSound?.let {
-            if (it.isPlaying) {
-                it.stop()
-                it.prepare()
-            }
-            it.start()
-        }
+        soundManager.playSound(SOUND_CARD)
     }
     
-    /**
-     * 새 게임 시작 효과음을 재생합니다.
-     */
     private fun playStartGameSound() {
-        startGameSound?.let {
-            if (it.isPlaying) {
-                it.stop()
-                it.prepare()
-            }
-            it.start()
-        }
+        soundManager.playSound(SOUND_START_GAME)
     }
     
-    /**
-     * 승리 효과음을 재생합니다.
-     */
     private fun playWinSound() {
-        winSound?.let {
-            if (it.isPlaying) {
-                it.stop()
-                it.prepare()
-            }
-            it.start()
-        }
+        soundManager.playSound(SOUND_WIN)
     }
     
-    /**
-     * 패배 효과음을 재생합니다.
-     */
     private fun playLoseSound() {
-        loseSound?.let {
-            if (it.isPlaying) {
-                it.stop()
-                it.prepare()
-            }
-            it.start()
-        }
+        soundManager.playSound(SOUND_LOSE)
     }
-
-    /**
-     * 멈춤 버튼 효과음을 재생합니다.
-     */
-    private fun playStopSound() {
-        stopSound?.let {
-            if (it.isPlaying) {
-                it.stop()
-                it.prepare()
-            }
-            it.start()
-        }
+    
+    private fun playButtonSound() {
+        soundManager.playSound(SOUND_BUTTON)
+    }
+    
+    override fun onDestroyView() {
+        super.onDestroyView()
+        
+        // 정리 작업
+        cleanupRunnable = null
     }
 
     /**
@@ -744,7 +688,7 @@ class BlackjackFragment : BaseFragment() {
         }
         
         // 멈춤 효과음 재생
-        playStopSound()
+        playButtonSound()
         
         playerStand()
     }

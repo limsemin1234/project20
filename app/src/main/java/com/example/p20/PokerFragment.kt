@@ -50,14 +50,8 @@ class PokerFragment : BaseFragment() {
     private lateinit var bet100kButton: Button
     private lateinit var bet500kButton: Button
     
-    // 효과음 재생을 위한 MediaPlayer
-    private var bettingSound: MediaPlayer? = null
-    private var cardSound: MediaPlayer? = null
-    private var startGameSound: MediaPlayer? = null
-    private var winSound: MediaPlayer? = null
-    private var loseSound: MediaPlayer? = null
-    private var cardSelectSound: MediaPlayer? = null
-    private var stopSound: MediaPlayer? = null
+    // SoundManager 인스턴스
+    private lateinit var soundManager: SoundManager
     
     // 게임 상태
     private var currentBet = 0L
@@ -154,6 +148,15 @@ class PokerFragment : BaseFragment() {
             200 to 1,
             0 to 0
         )
+        
+        // 효과음 리소스 ID
+        private val SOUND_BETTING = R.raw.casino_betting
+        private val SOUND_CARD = R.raw.casino_card_receive
+        private val SOUND_START_GAME = R.raw.casino_start
+        private val SOUND_WIN = R.raw.casino_win
+        private val SOUND_LOSE = R.raw.casino_lose
+        private val SOUND_CARD_SELECT = R.raw.casino_card_select
+        private val SOUND_BUTTON = R.raw.casino_stop
     }
 
     // 데이터 클래스 최적화 - equals 및 hashCode 최적화
@@ -188,6 +191,9 @@ class PokerFragment : BaseFragment() {
         bet50kButton = view.findViewById(R.id.bet50kButton)
         bet100kButton = view.findViewById(R.id.bet100kButton)
         bet500kButton = view.findViewById(R.id.bet500kButton)
+        
+        // SoundManager 초기화
+        soundManager = SoundManager.getInstance(requireContext())
         
         // 효과음 초기화
         initSounds()
@@ -466,105 +472,67 @@ class PokerFragment : BaseFragment() {
         }
     }
     
-    // MediaPlayer 관련 메서드들을 BaseFragment의 trackMediaPlayer 사용하도록 수정
+    /**
+     * 효과음을 초기화합니다.
+     */
     private fun initSounds() {
-        try {
-            // 효과음 객체 생성 및 트래킹
-            bettingSound = trackMediaPlayer(MediaPlayer.create(requireContext(), R.raw.casino_betting))
-            cardSound = trackMediaPlayer(MediaPlayer.create(requireContext(), R.raw.casino_card_receive))
-            startGameSound = trackMediaPlayer(MediaPlayer.create(requireContext(), R.raw.casino_start))
-            winSound = trackMediaPlayer(MediaPlayer.create(requireContext(), R.raw.casino_win))
-            loseSound = trackMediaPlayer(MediaPlayer.create(requireContext(), R.raw.casino_lose))
-            cardSelectSound = trackMediaPlayer(MediaPlayer.create(requireContext(), R.raw.casino_card_select))
-            stopSound = trackMediaPlayer(MediaPlayer.create(requireContext(), R.raw.casino_stop))
-        } catch (e: Exception) {
-            Log.e("PokerFragment", "Error initializing sounds: ${e.message}")
-        }
+        // SoundManager에서 필요한 효과음 미리 로드
+        soundManager.loadSound(SOUND_BETTING)
+        soundManager.loadSound(SOUND_CARD)
+        soundManager.loadSound(SOUND_START_GAME)
+        soundManager.loadSound(SOUND_WIN)
+        soundManager.loadSound(SOUND_LOSE)
+        soundManager.loadSound(SOUND_CARD_SELECT)
+        soundManager.loadSound(SOUND_BUTTON)
     }
     
-    private fun initSoundResource(mediaPlayer: MediaPlayer?, resourceId: Int) {
-        // 이 메서드는 더 이상 필요하지 않음 - BaseFragment의 trackMediaPlayer가 처리
-        try {
-            mediaPlayer?.apply {
-                reset()
-                setDataSource(requireContext(), android.net.Uri.parse(
-                    "android.resource://" + requireContext().packageName + "/" + resourceId))
-                prepare()
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("PokerFragment", "Error initializing sound resource: ${e.message}")
-        }
-    }
-    
-    // 기존 재생 메서드 간소화 - 예외 처리는 BaseFragment에서 담당
+    /**
+     * 베팅 효과음을 재생합니다.
+     */
     private fun playBettingSound() {
-        bettingSound?.let {
-            if (it.isPlaying) {
-                it.stop()
-                it.prepare()
-            }
-            it.start()
-        }
+        soundManager.playSound(SOUND_BETTING)
     }
     
+    /**
+     * 카드 효과음을 재생합니다.
+     */
     private fun playCardSound() {
-        cardSound?.let {
-            if (it.isPlaying) {
-                it.stop()
-                it.prepare()
-            }
-            it.start()
-        }
+        soundManager.playSound(SOUND_CARD)
     }
     
+    /**
+     * 게임 시작 효과음을 재생합니다.
+     */
     private fun playStartGameSound() {
-        startGameSound?.let {
-            if (it.isPlaying) {
-                it.stop()
-                it.prepare()
-            }
-            it.start()
-        }
+        soundManager.playSound(SOUND_START_GAME)
     }
     
+    /**
+     * 승리 효과음을 재생합니다.
+     */
     private fun playWinSound() {
-        winSound?.let {
-            if (it.isPlaying) {
-                it.stop()
-                it.prepare()
-            }
-            it.start()
-        }
+        soundManager.playSound(SOUND_WIN)
     }
     
+    /**
+     * 패배 효과음을 재생합니다.
+     */
     private fun playLoseSound() {
-        loseSound?.let {
-            if (it.isPlaying) {
-                it.stop()
-                it.prepare()
-            }
-            it.start()
-        }
+        soundManager.playSound(SOUND_LOSE)
     }
     
+    /**
+     * 카드 선택 효과음을 재생합니다.
+     */
     private fun playCardSelectSound() {
-        cardSelectSound?.let {
-            if (it.isPlaying) {
-                it.stop()
-                it.prepare()
-            }
-            it.start()
-        }
+        soundManager.playSound(SOUND_CARD_SELECT)
     }
     
+    /**
+     * 버튼 효과음을 재생합니다.
+     */
     private fun playStopSound() {
-        stopSound?.let {
-            if (it.isPlaying) {
-                it.stop()
-                it.prepare()
-            }
-            it.start()
-        }
+        soundManager.playSound(SOUND_BUTTON)
     }
     
     // 메시지 표시 메서드를 BaseFragment에서 제공하는 메서드로 교체

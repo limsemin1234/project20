@@ -1,14 +1,17 @@
 package com.example.p20
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
-import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.LayoutInflater
 import android.view.MotionEvent
+import android.view.MotionEvent.ACTION_DOWN
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
@@ -18,6 +21,7 @@ import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.GridLayout
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
@@ -31,8 +35,8 @@ class LottoFragment : BaseFragment() {
     private var _binding: FragmentLottoBinding? = null
     private val binding get() = _binding!!
 
-    private var buySound: MediaPlayer? = null
-    private var openSound: MediaPlayer? = null
+    // SoundManager 인스턴스
+    private lateinit var soundManager: SoundManager
 
     private val lottoPrice = 10000L
     private var currentPrize = 0L
@@ -58,18 +62,29 @@ class LottoFragment : BaseFragment() {
         }
     }
 
-    private lateinit var buyLottoButton: Button
-    private lateinit var cooldownText: TextView
-    private lateinit var scratchAreaLayout: FrameLayout
-    private lateinit var scratchCoatingImage: ImageView
-    private lateinit var prizeText: TextView
-    private lateinit var resultMessageText: TextView
-    private lateinit var scratchInstructionText: TextView
-    private lateinit var scratchAreaCard: CardView
-
-    private val scratchCooldownMs = 10000L // 10초 쿨다운
-    private var lastPurchaseTime = 0L
     private var isScratchable = false
+    
+    // 로또 번호를 저장할 배열
+    private val selectedNumbers = mutableSetOf<Int>()
+    private val winningNumbers = mutableSetOf<Int>()
+    private val numberButtons = arrayOfNulls<Button>(45)
+    
+    // 로또 당첨금 등급별 배당률
+    private val lottoRewards = mapOf(
+        6 to 2000000000L, // 1등: 20억
+        5 to 50000000L,   // 2등: 5천만원
+        4 to 5000000L,    // 3등: 500만원
+        3 to 50000L,      // 4등: 5만원
+        2 to 5000L,       // 5등: 5천원
+        1 to 0L,          // 꽝
+        0 to 0L           // 꽝
+    )
+    
+    // 소리 리소스 ID
+    companion object {
+        private val SOUND_BUY = R.raw.lotto_button_buy
+        private val SOUND_OPEN = R.raw.lotto_button_open
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -83,7 +98,8 @@ class LottoFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        initSounds()
+        // SoundManager 초기화
+        soundManager = SoundManager.getInstance(requireContext())
 
         binding.lottoPriceText.text = "티켓 가격: ${formatCurrency(lottoPrice)}"
 
@@ -98,14 +114,14 @@ class LottoFragment : BaseFragment() {
                 return@setOnClickListener
             }
             // 구매 효과음 재생
-            playSound(buySound)
+            playBuySound()
             buyLottoTicket()
         }
 
         binding.scratchCoatingImage.setOnTouchListener { v, event ->
-            if (event.action == MotionEvent.ACTION_DOWN && isLottoPurchased) {
+            if (event.action == ACTION_DOWN && isLottoPurchased) {
                 // 스크래치 효과음 재생
-                playSound(openSound)
+                playOpenSound()
                 revealPrize()
                 true
             } else {
@@ -116,22 +132,13 @@ class LottoFragment : BaseFragment() {
         // 스크래치 영역 초기 상태 설정
         binding.scratchCoatingImage.visibility = View.VISIBLE
 
-        buyLottoButton = binding.buyLottoButton
-        cooldownText = binding.cooldownText
-        scratchAreaLayout = binding.scratchAreaLayout
-        scratchCoatingImage = binding.scratchCoatingImage
-        prizeText = binding.prizeText
-        resultMessageText = binding.resultMessageText
-        scratchInstructionText = binding.scratchInstructionText
-        scratchAreaCard = binding.scratchAreaCard
-
         // 초기 애니메이션 적용
         applyInitialAnimations(view)
     }
 
     private fun applyInitialAnimations(view: View) {
         // 제목 카드 애니메이션
-        val titleCard = view.findViewById<CardView>(R.id.lottoTitleCard)
+        val titleCard = binding.lottoTitleCard
         titleCard.alpha = 0f
         titleCard.translationY = -50f
         titleCard.animate()
@@ -146,11 +153,11 @@ class LottoFragment : BaseFragment() {
         pulseAnim.duration = 1000
         pulseAnim.repeatCount = 3
         pulseAnim.repeatMode = android.view.animation.Animation.REVERSE
-        buyLottoButton.startAnimation(pulseAnim)
+        binding.buyLottoButton.startAnimation(pulseAnim)
         
         // 스크래치 영역 애니메이션
-        scratchAreaCard.alpha = 0.7f
-        scratchAreaCard.animate()
+        binding.scratchAreaCard.alpha = 0.7f
+        binding.scratchAreaCard.animate()
             .alpha(1f)
             .setDuration(1000)
             .setStartDelay(500)
@@ -197,9 +204,9 @@ class LottoFragment : BaseFragment() {
     }
     
     private fun animatePurchaseButton() {
-        val scaleX = ObjectAnimator.ofFloat(buyLottoButton, "scaleX", 1f, 1.2f, 1f)
-        val scaleY = ObjectAnimator.ofFloat(buyLottoButton, "scaleY", 1f, 1.2f, 1f)
-        val rotate = ObjectAnimator.ofFloat(buyLottoButton, "rotation", 0f, 5f, -5f, 0f)
+        val scaleX = ObjectAnimator.ofFloat(binding.buyLottoButton, "scaleX", 1f, 1.2f, 1f)
+        val scaleY = ObjectAnimator.ofFloat(binding.buyLottoButton, "scaleY", 1f, 1.2f, 1f)
+        val rotate = ObjectAnimator.ofFloat(binding.buyLottoButton, "rotation", 0f, 5f, -5f, 0f)
         
         val animSet = AnimatorSet()
         animSet.playTogether(scaleX, scaleY, rotate)
@@ -210,11 +217,11 @@ class LottoFragment : BaseFragment() {
     
     private fun animateScratchArea() {
         // 스크래치 코팅 반짝임 효과
-        val coatingFadeIn = ObjectAnimator.ofFloat(scratchCoatingImage, "alpha", 0.5f, 1f)
+        val coatingFadeIn = ObjectAnimator.ofFloat(binding.scratchCoatingImage, "alpha", 0.5f, 1f)
         coatingFadeIn.duration = 300
         
-        val scaleX = ObjectAnimator.ofFloat(scratchAreaCard, "scaleX", 1f, 1.05f, 1f)
-        val scaleY = ObjectAnimator.ofFloat(scratchAreaCard, "scaleY", 1f, 1.05f, 1f)
+        val scaleX = ObjectAnimator.ofFloat(binding.scratchAreaCard, "scaleX", 1f, 1.05f, 1f)
+        val scaleY = ObjectAnimator.ofFloat(binding.scratchAreaCard, "scaleY", 1f, 1.05f, 1f)
         
         val animSet = AnimatorSet()
         animSet.playTogether(coatingFadeIn, scaleX, scaleY)
@@ -222,9 +229,9 @@ class LottoFragment : BaseFragment() {
         animSet.start()
         
         // 스크래치 지시 텍스트 강조
-        scratchInstructionText.visibility = View.VISIBLE
-        scratchInstructionText.alpha = 0f
-        scratchInstructionText.animate()
+        binding.scratchInstructionText.visibility = View.VISIBLE
+        binding.scratchInstructionText.alpha = 0f
+        binding.scratchInstructionText.animate()
             .alpha(1f)
             .setDuration(500)
             .setStartDelay(300)
@@ -233,19 +240,19 @@ class LottoFragment : BaseFragment() {
 
     private fun revealPrize() {
         // 스크래치 효과 애니메이션
-        val fadeOut = ObjectAnimator.ofFloat(scratchCoatingImage, "alpha", 1f, 0f)
+        val fadeOut = ObjectAnimator.ofFloat(binding.scratchCoatingImage, "alpha", 1f, 0f)
         fadeOut.duration = 800
         
         // 지시 텍스트 페이드 아웃
-        scratchInstructionText.animate()
+        binding.scratchInstructionText.animate()
             .alpha(0f)
             .setDuration(300)
             .start()
         
         // 복권 결과 애니메이션
-        prizeText.alpha = 0f
-        prizeText.scaleX = 0.8f
-        prizeText.scaleY = 0.8f
+        binding.prizeText.alpha = 0f
+        binding.prizeText.scaleX = 0.8f
+        binding.prizeText.scaleY = 0.8f
         
         fadeOut.start()
         
@@ -253,7 +260,7 @@ class LottoFragment : BaseFragment() {
         binding.prizeText.visibility = View.VISIBLE
         
         // 결과 텍스트 애니메이션
-        prizeText.animate()
+        binding.prizeText.animate()
             .alpha(1f)
             .scaleX(1f)
             .scaleY(1f)
@@ -276,9 +283,9 @@ class LottoFragment : BaseFragment() {
             
             // 당첨 효과 애니메이션
             val celebrateAnim = AnimatorSet()
-            val scaleX = ObjectAnimator.ofFloat(resultMessageText, "scaleX", 0.8f, 1.2f, 1f)
-            val scaleY = ObjectAnimator.ofFloat(resultMessageText, "scaleY", 0.8f, 1.2f, 1f)
-            val rotate = ObjectAnimator.ofFloat(resultMessageText, "rotation", -5f, 5f, 0f)
+            val scaleX = ObjectAnimator.ofFloat(binding.resultMessageText, "scaleX", 0.8f, 1.2f, 1f)
+            val scaleY = ObjectAnimator.ofFloat(binding.resultMessageText, "scaleY", 0.8f, 1.2f, 1f)
+            val rotate = ObjectAnimator.ofFloat(binding.resultMessageText, "rotation", -5f, 5f, 0f)
             
             celebrateAnim.playTogether(scaleX, scaleY, rotate)
             celebrateAnim.duration = 1000
@@ -354,38 +361,23 @@ class LottoFragment : BaseFragment() {
     }
 
     /**
-     * 효과음을 초기화합니다.
-     */
-    private fun initSounds() {
-        // 구매 버튼 효과음
-        buySound = MediaPlayer.create(requireContext(), R.raw.lotto_button_buy)
-        
-        // 스크래치 효과음
-        openSound = MediaPlayer.create(requireContext(), R.raw.lotto_button_open)
-    }
-
-    /**
      * 효과음을 재생합니다.
      */
-    private fun playSound(player: MediaPlayer?) {
-        player?.let {
-            if (it.isPlaying) {
-                it.stop()
-                it.prepare()
-            }
-            it.start()
-        }
+    private fun playBuySound() {
+        soundManager.playSound(SOUND_BUY)
+    }
+    
+    /**
+     * 당첨 확인 효과음을 재생합니다.
+     */
+    private fun playOpenSound() {
+        soundManager.playSound(SOUND_OPEN)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         // 핸들러 콜백 제거
         buyCooldownHandler.removeCallbacks(cooldownCountdownRunnable)
-        // MediaPlayer 해제
-        buySound?.release()
-        openSound?.release()
-        buySound = null
-        openSound = null
         _binding = null
     }
 }
