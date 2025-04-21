@@ -555,15 +555,61 @@ class PokerFragment : Fragment() {
     }
     
     private fun updateSelectedCards(selectedIndices: Set<Int>) {
-        // 모든 카드 기본 상태로 초기화
+        // 잠재적 족보 카드 인덱스 저장 (노란색 배경으로 표시된 카드)
+        val potentialHandRankIndices = mutableSetOf<Int>()
+        val cards = pokerViewModel.playerCards.value ?: return
+        
+        // 현재 노란색 배경으로 표시된 카드 찾기
         for (i in 0 until cardViews.size) {
-            cardViews[i].alpha = 1.0f
-            cardViews[i].background = defaultCardDrawable.constantState?.newDrawable()
+            val background = cardViews[i].background
+            if (background is GradientDrawable) {
+                val color = background.color?.defaultColor
+                // 노란색 배경(잠재적 족보 카드) 확인
+                if (color != null && (color == Color.argb(255, 255, 255, 0) || color == Color.argb(100, 255, 215, 0))) {
+                    potentialHandRankIndices.add(i)
+                }
+            }
         }
         
-        // 선택된 카드 강조
+        // 족보 카드 인덱스 가져오기 (파란색 배경으로 표시된 카드)
+        val handRankIndices = pokerViewModel.handRankCardIndices.value ?: emptySet()
+        
+        // 모든 카드를 일단 기본 상태로 초기화하되 족보 카드와 잠재적 족보 카드는 유지
+        for (i in 0 until cardViews.size) {
+            if (!handRankIndices.contains(i) && !selectedIndices.contains(i) && !potentialHandRankIndices.contains(i)) {
+                // 족보 카드도 아니고, 선택된 카드도 아니고, 잠재적 족보 카드도 아닌 경우에만 기본 스타일 적용
+                cardViews[i].alpha = 1.0f
+                cardViews[i].background = defaultCardDrawable.constantState?.newDrawable()
+                cardViews[i].setTypeface(null, Typeface.NORMAL)
+            }
+        }
+        
+        // 잠재적 족보 카드 스타일 유지 (노란색 배경)
+        for (i in potentialHandRankIndices) {
+            if (i < cardViews.size && !selectedIndices.contains(i)) {
+                // 이미 노란색 배경이 적용된 카드는 그대로 유지
+                // 별도 스타일 적용이 필요하지 않음, 원래 스타일 유지
+            }
+        }
+        
+        // 족보 카드 강조 표시 (파란색 배경)
+        for (i in handRankIndices) {
+            if (i < cardViews.size && !selectedIndices.contains(i) && !potentialHandRankIndices.contains(i)) {
+                val strokeDrawable = GradientDrawable().apply {
+                    setStroke(3, Color.BLACK)
+                    cornerRadius = 8f
+                    setColor(Color.argb(200, 135, 206, 250)) // 연한 파란색
+                }
+                cardViews[i].background = strokeDrawable
+                cardViews[i].setTypeface(null, Typeface.BOLD)
+                cardViews[i].alpha = 1.0f
+            }
+        }
+        
+        // 선택된 카드 강조 - 항상 최상위 우선순위
         for (index in selectedIndices) {
-        if (index < cardViews.size) {
+            if (index < cardViews.size) {
+                // 선택 스타일 적용 (족보 카드 여부와 상관없이)
                 cardViews[index].alpha = 0.7f
                 cardViews[index].background = selectedCardDrawable.constantState?.newDrawable()
             }
