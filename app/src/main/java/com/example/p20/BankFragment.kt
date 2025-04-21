@@ -115,11 +115,11 @@ class BankFragment : BaseFragment() {
     }
 
     private fun updateDepositInfo(deposit: Long) {
-        depositInfoText.text = "예금: ${formatCurrency(deposit)}원"
+        depositInfoText.text = "예금: ${formatCurrency(deposit)}"
     }
 
     private fun updateLoanInfo(loan: Long) {
-        loanInfoText.text = "대출: ${formatCurrency(loan)}원"
+        loanInfoText.text = "대출: ${formatCurrency(loan)}"
     }
 
     private fun updateDepositRemainingTime(remainingTime: Long) {
