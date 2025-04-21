@@ -17,8 +17,7 @@ import java.util.Locale
 /**
  * 대출 기능을 담당하는 Fragment
  */
-class LoanFragment : Fragment() {
-    private lateinit var viewModel: AssetViewModel
+class LoanFragment : BaseFragment() {
     private lateinit var loanAmountInput: TextView
     private lateinit var loanButton: Button
     private lateinit var repayButton: Button
@@ -56,7 +55,6 @@ class LoanFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel = ViewModelProvider(requireActivity())[AssetViewModel::class.java]
 
         loanAmountInput = view.findViewById(R.id.loanAmountInput)
         loanButton = view.findViewById(R.id.loanButton)
@@ -113,11 +111,11 @@ class LoanFragment : Fragment() {
         repayButton.text = "전체상환하기"
 
         // 대출 금액에 따라 UI 업데이트
-        updateLoanUI(viewModel.loan.value ?: 0L)
+        updateLoanUI(assetViewModel.loan.value ?: 0L)
         
         // 대출 금액 변경 감지
-        viewModel.loan.observe(viewLifecycleOwner) { loanAmount ->
-            loanAmountInput.text = "대출: ${NumberFormat.getNumberInstance(Locale.KOREA).format(loanAmount)}원"
+        assetViewModel.loan.observe(viewLifecycleOwner) { loanAmount ->
+            loanAmountInput.text = "대출: ${formatCurrency(loanAmount)}"
             updateLoanUI(loanAmount)
             updateInterestInfoTexts()
         }
@@ -126,12 +124,12 @@ class LoanFragment : Fragment() {
         updateAmountInput(0L)
         
         // 이자 발생 타이머 관찰
-        viewModel.loanRemainingTime.observe(viewLifecycleOwner) { _ ->
+        assetViewModel.loanRemainingTime.observe(viewLifecycleOwner) { _ ->
             updateInterestInfoTexts()
         }
         
         // 누적 이자 정보 관찰
-        viewModel.totalLoanInterest.observe(viewLifecycleOwner) { totalInterest ->
+        assetViewModel.totalLoanInterest.observe(viewLifecycleOwner) { totalInterest ->
             updateAccumulatedInterestText(totalInterest)
         }
 
@@ -150,19 +148,19 @@ class LoanFragment : Fragment() {
         updateNextInterestText()
         
         // 누적 이자 정보 표시
-        val totalAccumulated = viewModel.totalLoanInterest.value ?: 0L
+        val totalAccumulated = assetViewModel.totalLoanInterest.value ?: 0L
         updateAccumulatedInterestText(totalAccumulated)
     }
     
     // 추가: 다음 이자 금액 계산 및 텍스트 업데이트
     private fun updateNextInterestText() {
-        val nextInterest = viewModel.calculateNextLoanInterest()
-        nextInterestText.text = "다음 이자 금액: ${NumberFormat.getNumberInstance(Locale.KOREA).format(nextInterest)}원"
+        val nextInterest = assetViewModel.calculateNextLoanInterest()
+        nextInterestText.text = "다음 이자 금액: ${formatCurrency(nextInterest)}"
     }
     
     // 추가: 누적 이자 정보 텍스트 업데이트
     private fun updateAccumulatedInterestText(totalInterest: Long) {
-        accumulatedInterestText.text = "총 대출 이자: ${NumberFormat.getNumberInstance(Locale.KOREA).format(totalInterest)}원"
+        accumulatedInterestText.text = "총 대출 이자: ${formatCurrency(totalInterest)}"
     }
     
     /**
@@ -171,7 +169,7 @@ class LoanFragment : Fragment() {
     private fun setupPercentButtons() {
         // 자산 퍼센트 버튼 이벤트
         percent25Button.setOnClickListener {
-            val currentAsset = viewModel.asset.value ?: 0L
+            val currentAsset = assetViewModel.asset.value ?: 0L
             val amount = (currentAsset * 0.25).toLong()
             // 백의 자리로 올림 처리
             val roundedAmount = roundToHundreds(amount)
@@ -179,7 +177,7 @@ class LoanFragment : Fragment() {
         }
         
         percent50Button.setOnClickListener {
-            val currentAsset = viewModel.asset.value ?: 0L
+            val currentAsset = assetViewModel.asset.value ?: 0L
             val amount = (currentAsset * 0.5).toLong()
             // 백의 자리로 올림 처리
             val roundedAmount = roundToHundreds(amount)
@@ -187,7 +185,7 @@ class LoanFragment : Fragment() {
         }
         
         percent75Button.setOnClickListener {
-            val currentAsset = viewModel.asset.value ?: 0L
+            val currentAsset = assetViewModel.asset.value ?: 0L
             val amount = (currentAsset * 0.75).toLong()
             // 백의 자리로 올림 처리
             val roundedAmount = roundToHundreds(amount)
@@ -195,7 +193,7 @@ class LoanFragment : Fragment() {
         }
         
         percent100Button.setOnClickListener {
-            val currentAsset = viewModel.asset.value ?: 0L
+            val currentAsset = assetViewModel.asset.value ?: 0L
             // 백의 자리로 올림 처리
             val roundedAmount = roundToHundreds(currentAsset)
             updateAmountInput(roundedAmount)
@@ -263,18 +261,18 @@ class LoanFragment : Fragment() {
         loanButton.setOnClickListener {
             val amount = getSelectedAmount()
             if (amount <= 0) {
-                MessageManager.showMessage(requireContext(), "올바른 금액을 입력해주세요")
+                showMessage("올바른 금액을 입력해주세요")
                 return@setOnClickListener
             }
 
-            val currentLoan = viewModel.loan.value ?: 0L
+            val currentLoan = assetViewModel.loan.value ?: 0L
             // 이미 대출이 있는 경우 추가 대출 불가 (이미 버튼이 비활성화되어 있어야 함)
             if (currentLoan > 0) {
-                MessageManager.showMessage(requireContext(), "기존 대출금을 전액 상환해야 새로운 대출이 가능합니다")
+                showMessage("기존 대출금을 전액 상환해야 새로운 대출이 가능합니다")
                 return@setOnClickListener
             }
             
-            viewModel.addLoan(amount)
+            assetViewModel.addLoan(amount)
             // 대출 처리 후 입력값 초기화
             updateAmountInput(0L)
             // 숫자 버튼 값도 초기화
@@ -287,15 +285,15 @@ class LoanFragment : Fragment() {
 
         repayButton.setOnClickListener {
             // 전체 대출금 가져오기
-            val currentLoan = viewModel.loan.value ?: 0L
+            val currentLoan = assetViewModel.loan.value ?: 0L
             
             if (currentLoan <= 0) {
-                MessageManager.showMessage(requireContext(), "상환할 대출이 없습니다")
+                showMessage("상환할 대출이 없습니다")
                 return@setOnClickListener
             }
             
             // 대출 상환
-            if (viewModel.subtractLoan(currentLoan)) {
+            if (assetViewModel.subtractLoan(currentLoan)) {
                 updateAmountInput(0L)
             }
         }
@@ -332,14 +330,14 @@ class LoanFragment : Fragment() {
      */
     private fun updateAmountInput() {
         val amount = calculateAmount()
-        loanAmountInput.text = "대출: ${NumberFormat.getNumberInstance(Locale.KOREA).format(amount)}원"
+        loanAmountInput.text = "대출: ${formatCurrency(amount)}"
     }
 
     /**
      * 금액 입력 필드에 특정 금액 설정
      */
     private fun updateAmountInput(amount: Long) {
-        loanAmountInput.text = "대출: ${NumberFormat.getNumberInstance(Locale.KOREA).format(amount)}원"
+        loanAmountInput.text = "대출: ${formatCurrency(amount)}"
     }
 
     /**

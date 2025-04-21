@@ -19,8 +19,7 @@ import java.util.Locale
 /**
  * 예금 기능을 담당하는 Fragment
  */
-class DepositFragment : Fragment() {
-    private lateinit var viewModel: AssetViewModel
+class DepositFragment : BaseFragment() {
     private lateinit var depositAmountInput: TextView
     private lateinit var depositButton: Button
     private lateinit var withdrawButton: Button
@@ -51,7 +50,6 @@ class DepositFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel = ViewModelProvider(requireActivity())[AssetViewModel::class.java]
 
         // 기본 UI 요소 초기화
         depositAmountInput = view.findViewById(R.id.depositAmountInput)
@@ -89,18 +87,18 @@ class DepositFragment : Fragment() {
         btn1000Eok = view.findViewById(R.id.btn1000Eok)
 
         // 예금 금액 변경 감지
-        viewModel.deposit.observe(viewLifecycleOwner) { amount ->
-            depositAmountInput.text = "예금: ${NumberFormat.getNumberInstance(Locale.KOREA).format(amount)}원"
+        assetViewModel.deposit.observe(viewLifecycleOwner) { amount ->
+            depositAmountInput.text = "예금: ${formatCurrency(amount)}"
             updateInterestInfoTexts()
         }
         
         // 이자 발생 타이머 관찰
-        viewModel.depositRemainingTime.observe(viewLifecycleOwner) { _ ->
+        assetViewModel.depositRemainingTime.observe(viewLifecycleOwner) { _ ->
             updateInterestInfoTexts()
         }
         
         // 누적 이자 정보 관찰
-        viewModel.totalDepositInterest.observe(viewLifecycleOwner) { totalInterest ->
+        assetViewModel.totalDepositInterest.observe(viewLifecycleOwner) { totalInterest ->
             updateAccumulatedInterestText(totalInterest)
         }
 
@@ -122,20 +120,19 @@ class DepositFragment : Fragment() {
         updateTotalInterestText()
         
         // 누적 이자 정보 표시
-        val totalAccumulated = viewModel.totalDepositInterest.value ?: 0L
+        val totalAccumulated = assetViewModel.totalDepositInterest.value ?: 0L
         updateAccumulatedInterestText(totalAccumulated)
     }
     
     // 다음 이자 금액 계산 및 텍스트 업데이트
     private fun updateTotalInterestText() {
-        val nextInterest = viewModel.calculateNextDepositInterest()
-        
-        totalInterestText.text = "다음 이자 금액: ${NumberFormat.getNumberInstance(Locale.KOREA).format(nextInterest)}원"
+        val nextInterest = assetViewModel.calculateNextDepositInterest()
+        totalInterestText.text = "다음 이자 금액: ${formatCurrency(nextInterest)}"
     }
     
     // 누적 이자 정보 텍스트 업데이트
     private fun updateAccumulatedInterestText(totalInterest: Long) {
-        accumulatedInterestText.text = "총 받은 이자: ${NumberFormat.getNumberInstance(Locale.KOREA).format(totalInterest)}원"
+        accumulatedInterestText.text = "총 받은 이자: ${formatCurrency(totalInterest)}"
     }
     
     private fun setupAmountButtons() {
@@ -178,19 +175,18 @@ class DepositFragment : Fragment() {
             val amount = getAmount()
             if (amount > 0) {
                 // 현재 자산 확인
-                val currentAsset = viewModel.asset.value ?: 0L
+                val currentAsset = assetViewModel.asset.value ?: 0L
                 
                 // 자산보다 많은 금액 예금 시도 시 경고 메시지
                 if (amount > currentAsset) {
-                    MessageManager.showMessage(
-                        requireContext(),
-                        "보유 자산(${NumberFormat.getNumberInstance(Locale.KOREA).format(currentAsset)}원)보다 많은 금액은 예금할 수 없습니다."
+                    showMessage(
+                        "보유 자산(${formatCurrency(currentAsset)})보다 많은 금액은 예금할 수 없습니다."
                     )
                     return@setOnClickListener
                 }
                 
                 // 입금 처리
-                if (viewModel.addDeposit(amount)) {
+                if (assetViewModel.addDeposit(amount)) {
                     resetInputAmount()
                 } else {
                     // 입금 실패해도 입력값은 초기화
@@ -204,7 +200,7 @@ class DepositFragment : Fragment() {
             val amount = getAmount()
             if (amount > 0) {
                 // 출금 처리
-                if (viewModel.subtractDeposit(amount)) {
+                if (assetViewModel.subtractDeposit(amount)) {
                     resetInputAmount()
                 } else {
                     // 출금 실패해도 입력값은 초기화
@@ -215,35 +211,33 @@ class DepositFragment : Fragment() {
 
         // 전액출금 버튼 클릭 이벤트
         withdrawAllButton.setOnClickListener {
-            val currentDeposit = viewModel.deposit.value ?: 0L
+            val currentDeposit = assetViewModel.deposit.value ?: 0L
             if (currentDeposit <= 0) {
-                MessageManager.showMessage(requireContext(), "출금할 예금이 없습니다")
+                showMessage("출금할 예금이 없습니다")
                 return@setOnClickListener
             }
             
-            if (viewModel.subtractDeposit(currentDeposit)) {
+            if (assetViewModel.subtractDeposit(currentDeposit)) {
                 setAmount(0L)
             }
         }
 
         // 천단위 출금 버튼 클릭 이벤트
         withdrawThousandButton.setOnClickListener {
-            val currentDeposit = viewModel.deposit.value ?: 0L
+            val currentDeposit = assetViewModel.deposit.value ?: 0L
             if (currentDeposit > 0) {
                 // 만단위 이하 금액 계산 (예: 12345 -> 2345)
                 val tenThousandRemainder = currentDeposit % 10000
                 if (tenThousandRemainder > 0) {
                     // 만단위 이하 금액 출금
-                    if (viewModel.subtractDeposit(tenThousandRemainder)) {
+                    if (assetViewModel.subtractDeposit(tenThousandRemainder)) {
                         updateAmountInput(0L)
-                        MessageManager.showMessage(
-                            requireContext(),
-                            "만단위 이하 ${NumberFormat.getNumberInstance(Locale.KOREA).format(tenThousandRemainder)}원을 출금했습니다."
+                        showMessage(
+                            "만단위 이하 ${formatCurrency(tenThousandRemainder)}을 출금했습니다."
                         )
                     }
                 } else {
-                    MessageManager.showMessage(
-                        requireContext(),
+                    showMessage(
                         "출금할 만단위 이하 금액이 없습니다."
                     )
                 }
@@ -268,7 +262,7 @@ class DepositFragment : Fragment() {
 
     private fun setAmount(amount: Long) {
         // 천 단위 구분자 추가하고 접두사 및 접미사 추가
-        depositAmountInput.text = "예금: ${NumberFormat.getNumberInstance(Locale.KOREA).format(amount)}원"
+        depositAmountInput.text = "예금: ${formatCurrency(amount)}"
     }
 
     private fun addAmount(amount: Long) {
