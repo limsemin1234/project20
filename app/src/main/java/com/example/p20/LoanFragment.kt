@@ -13,11 +13,15 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import java.text.NumberFormat
 import java.util.Locale
+import com.example.p20.databinding.FragmentLoanBinding
 
 /**
  * 대출 기능을 담당하는 Fragment
  */
 class LoanFragment : BaseFragment() {
+    private var _binding: FragmentLoanBinding? = null
+    private val binding get() = _binding!!
+
     private lateinit var loanAmountInput: TextView
     private lateinit var loanButton: Button
     private lateinit var repayButton: Button
@@ -49,8 +53,9 @@ class LoanFragment : BaseFragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_loan, container, false)
+    ): View {
+        _binding = FragmentLoanBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -383,5 +388,10 @@ class LoanFragment : BaseFragment() {
         selectedNumber100 = 0
         selectedNumber1000 = 0
         updateNumberButtons()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 } 
