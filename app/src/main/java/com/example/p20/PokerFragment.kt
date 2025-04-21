@@ -578,8 +578,8 @@ class PokerFragment : Fragment() {
         for (i in 0 until cardViews.size) {
             if (!handRankIndices.contains(i) && !selectedIndices.contains(i) && !potentialHandRankIndices.contains(i)) {
                 // 족보 카드도 아니고, 선택된 카드도 아니고, 잠재적 족보 카드도 아닌 경우에만 기본 스타일 적용
-                cardViews[i].alpha = 1.0f
-                cardViews[i].background = defaultCardDrawable.constantState?.newDrawable()
+            cardViews[i].alpha = 1.0f
+            cardViews[i].background = defaultCardDrawable.constantState?.newDrawable()
                 cardViews[i].setTypeface(null, Typeface.NORMAL)
             }
         }
@@ -1250,7 +1250,7 @@ class PokerFragment : Fragment() {
                     "android.resource://" + requireContext().packageName + "/" + R.raw.casino_stop))
                 it.prepare()
             it.start()
-            }
+        }
         } catch (e: Exception) {
             // 오류 로깅
             android.util.Log.e("PokerFragment", "Error playing stop sound: ${e.message}")
