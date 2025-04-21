@@ -5,18 +5,14 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.AlphaAnimation
-import android.view.animation.Animation
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import java.text.NumberFormat
-import java.util.Locale
 
-class MyInfoFragment : Fragment() {
-    private lateinit var viewModel: TimeViewModel
-    private lateinit var assetViewModel: AssetViewModel
+/**
+ * 사용자의 자산 정보를 종합적으로 표시하는 Fragment
+ */
+class MyInfoFragment : BaseFragment() {
     private lateinit var stockViewModel: StockViewModel
     private lateinit var realEstateViewModel: RealEstateViewModel
 
@@ -40,9 +36,7 @@ class MyInfoFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // ViewModel 초기화
-        viewModel = ViewModelProvider(requireActivity())[TimeViewModel::class.java]
-        assetViewModel = ViewModelProvider(requireActivity())[AssetViewModel::class.java]
+        // BaseFragment에서 제공되지 않는 ViewModel 초기화
         stockViewModel = ViewModelProvider(requireActivity())[StockViewModel::class.java]
         realEstateViewModel = ViewModelProvider(requireActivity())[RealEstateViewModel::class.java]
 
@@ -54,14 +48,11 @@ class MyInfoFragment : Fragment() {
         val depositTextView = view.findViewById<TextView>(R.id.depositTextView)
         val loanTextView = view.findViewById<TextView>(R.id.loanTextView)
         
-        // 배경 이미지에 애니메이션 적용
+        // 배경 이미지에 애니메이션 적용 - BaseFragment의 애니메이션 유틸리티 활용
         val backgroundImageView = view.findViewById<ImageView>(R.id.backgroundImageView)
         if (backgroundImageView != null) {
-            val fadeAnimation = AlphaAnimation(0.8f, 1.0f)
-            fadeAnimation.duration = 1500
-            fadeAnimation.repeatCount = Animation.INFINITE
-            fadeAnimation.repeatMode = Animation.REVERSE
-            backgroundImageView.startAnimation(fadeAnimation)
+            // trackAnimation을 통해 애니메이션 리소스 관리
+            applyAnimation(backgroundImageView, "heartbeat", 1500, 0.1f)
         }
 
         // 자산 정보 표시
@@ -132,11 +123,5 @@ class MyInfoFragment : Fragment() {
         } else {
             totalAssetTextView.setTextColor(Color.WHITE) // 기존 색상 유지
         }
-    }
-    
-    // 통화 형식 포맷팅 함수
-    private fun formatCurrency(amount: Long): String {
-        val formatter = NumberFormat.getCurrencyInstance(Locale.KOREA)
-        return formatter.format(amount)
     }
 } 
