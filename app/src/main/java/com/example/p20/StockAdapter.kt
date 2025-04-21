@@ -9,7 +9,6 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.core.content.ContextCompat
 import android.graphics.drawable.GradientDrawable
 import android.widget.ImageButton
-import android.media.MediaPlayer
 
 /**
  * 주식 목록을 표시하기 위한 RecyclerView 어댑터
@@ -30,8 +29,13 @@ class StockAdapter(
     /** 현재 선택된 주식의 위치 (-1은 선택된 항목 없음) */
     private var selectedStockPosition: Int = -1
     
-    /** 효과음 재생을 위한 MediaPlayer */
-    private var selectSound: MediaPlayer? = null
+    /** SoundManager 인스턴스 */
+    private lateinit var soundManager: SoundManager
+    
+    /** 효과음 ID */
+    companion object {
+        private val SOUND_SELECT = R.raw.stock_select
+    }
     
     /**
      * 기존 생성자 - 하위 호환성 유지
@@ -59,10 +63,8 @@ class StockAdapter(
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.stock_item_layout, parent, false)
         
-        // 효과음 초기화 (필요한 경우)
-        if (selectSound == null) {
-            selectSound = MediaPlayer.create(parent.context, R.raw.stock_select)
-        }
+        // SoundManager 초기화
+        soundManager = SoundManager.getInstance(parent.context)
         
         return StockViewHolder(view)
     }
@@ -178,16 +180,9 @@ class StockAdapter(
 
     /**
      * 선택 효과음을 재생합니다.
-     * 이미 재생 중인 경우 중지하고 다시 시작합니다.
      */
     private fun playSelectSound() {
-        selectSound?.let {
-            if (it.isPlaying) {
-                it.stop()
-                it.prepare()
-            }
-            it.start()
-        }
+        soundManager.playSound(SOUND_SELECT)
     }
 
     /**
@@ -252,8 +247,7 @@ class StockAdapter(
      * 사용이 끝나거나 어댑터가 소멸될 때 호출해야 합니다.
      */
     fun release() {
-        selectSound?.release()
-        selectSound = null
+        // 리소스 해제는 SoundManager에서 처리되므로 여기서 필요 없음
     }
 
     /**

@@ -16,6 +16,10 @@ class SoundManager private constructor(private val context: Context) {
     private var soundPool: SoundPool? = null
     private val soundMap = HashMap<Int, Int>()
     
+    // 임시 음악 관련 변수
+    private var isTemporaryMusic = false
+    private var originalMusicResId = R.raw.main_music_loop
+    
     companion object {
         @Volatile
         private var instance: SoundManager? = null
@@ -89,7 +93,78 @@ class SoundManager private constructor(private val context: Context) {
         }
     }
     
+    /**
+     * MediaPlayer 초기화
+     */
+    fun initializeMediaPlayer() {
+        try {
+            stopBackgroundMusic()
+            backgroundMusic = MediaPlayer.create(context, R.raw.main_music_loop)
+            backgroundMusic?.isLooping = true
+            Log.d("SoundManager", "MediaPlayer 초기화 완료")
+        } catch (e: Exception) {
+            Log.e("SoundManager", "MediaPlayer 초기화 오류: ${e.message}")
+        }
+    }
+    
+    /**
+     * 오류 리스너 설정
+     */
+    fun setOnErrorListener(listener: MediaPlayer.OnErrorListener) {
+        backgroundMusic?.setOnErrorListener(listener)
+    }
+    
+    /**
+     * 배경 음악의 재생 중 여부 반환
+     */
+    val isPlaying: Boolean
+        get() = backgroundMusic?.isPlaying ?: false
+        
+    /**
+     * 배경 음악의 총 길이 반환
+     */
+    val duration: Int
+        get() = backgroundMusic?.duration ?: 0
+        
+    /**
+     * 배경 음악의 현재 재생 위치 반환
+     */
+    val currentPosition: Int
+        get() = backgroundMusic?.currentPosition ?: 0
+        
+    /**
+     * 배경 음악의 루핑 상태 설정/반환
+     */
+    var isLooping: Boolean
+        get() = backgroundMusic?.isLooping ?: false
+        set(value) {
+            backgroundMusic?.isLooping = value
+        }
+    
+    /**
+     * 볼륨 설정
+     */
+    fun setVolume(volume: Float, volume2: Float) {
+        try {
+            backgroundMusic?.setVolume(volume, volume2)
+        } catch (e: Exception) {
+            Log.e("SoundManager", "볼륨 설정 오류: ${e.message}")
+        }
+    }
+    
     // 배경음악 관리
+    fun startBackgroundMusic() {
+        try {
+            if (backgroundMusic == null) {
+                initializeMediaPlayer()
+            }
+            backgroundMusic?.start()
+            Log.d("SoundManager", "배경음악 재생 시작")
+        } catch (e: Exception) {
+            Log.e("SoundManager", "배경음악 재생 오류: ${e.message}")
+        }
+    }
+    
     fun playBackgroundMusic(resId: Int) {
         try {
             stopBackgroundMusic()
@@ -128,6 +203,62 @@ class SoundManager private constructor(private val context: Context) {
         } catch (e: Exception) {
             Log.e("SoundManager", "배경음악 정지 오류: ${e.message}")
         }
+    }
+    
+    /**
+     * 임시 배경음악 설정 (특정 이벤트 시)
+     */
+    fun setTemporaryMusic(musicResId: Int) {
+        try {
+            if (!isTemporaryMusic && isSoundEnabled()) {
+                // 현재 재생 중인 음악 정보 저장
+                if (backgroundMusic?.isPlaying == true) {
+                    backgroundMusic?.pause()
+                }
+                
+                // 임시 음악 설정
+                backgroundMusic?.release()
+                backgroundMusic = MediaPlayer.create(context, musicResId)
+                backgroundMusic?.isLooping = true
+                
+                val currentVolume = getCurrentVolume()
+                backgroundMusic?.setVolume(currentVolume, currentVolume)
+                
+                backgroundMusic?.start()
+                isTemporaryMusic = true
+            }
+        } catch (e: Exception) {
+            Log.e("SoundManager", "임시 음악 설정 오류: ${e.message}")
+        }
+    }
+    
+    /**
+     * 원래 배경음악으로 복원
+     */
+    fun restoreOriginalMusic() {
+        try {
+            if (isTemporaryMusic && isSoundEnabled()) {
+                backgroundMusic?.release()
+                backgroundMusic = MediaPlayer.create(context, originalMusicResId)
+                backgroundMusic?.isLooping = true
+                
+                val currentVolume = getCurrentVolume()
+                backgroundMusic?.setVolume(currentVolume, currentVolume)
+                
+                backgroundMusic?.start()
+                isTemporaryMusic = false
+            }
+        } catch (e: Exception) {
+            Log.e("SoundManager", "원래 음악 복원 오류: ${e.message}")
+        }
+    }
+    
+    /**
+     * 사운드 활성화 여부 확인
+     */
+    private fun isSoundEnabled(): Boolean {
+        return context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+            .getBoolean("sound_enabled", true)
     }
     
     // 효과음 관리
@@ -182,6 +313,7 @@ class SoundManager private constructor(private val context: Context) {
             soundPool?.release()
             soundPool = null
             soundMap.clear()
+            isTemporaryMusic = false
             Log.d("SoundManager", "리소스 해제 완료")
         } catch (e: Exception) {
             Log.e("SoundManager", "리소스 해제 오류: ${e.message}")

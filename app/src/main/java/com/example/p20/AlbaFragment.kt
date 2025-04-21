@@ -7,8 +7,6 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.media.AudioAttributes
 import android.media.AudioManager
-import android.media.MediaPlayer
-import android.media.SoundPool
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -44,8 +42,13 @@ class AlbaFragment : BaseFragment() {
     private lateinit var viewPager: ViewPager2
     private lateinit var adapter: AlbaViewPagerAdapter
     
-    // 탭 선택 효과음을 위한 MediaPlayer
-    private var tabSelectSound: MediaPlayer? = null
+    // SoundManager 인스턴스
+    private lateinit var soundManager: SoundManager
+    
+    // 효과음 ID
+    companion object {
+        private val SOUND_TAB_SELECT = R.raw.tab_select
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -57,8 +60,8 @@ class AlbaFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 효과음 초기화
-        initTabSelectSound()
+        // SoundManager 초기화
+        soundManager = SoundManager.getInstance(requireContext())
 
         // 탭 레이아웃과 뷰페이저 초기화
         tabLayout = view.findViewById(R.id.albaTabLayout)
@@ -98,23 +101,10 @@ class AlbaFragment : BaseFragment() {
     }
     
     /**
-     * 탭 선택 효과음을 초기화합니다.
-     */
-    private fun initTabSelectSound() {
-        tabSelectSound = trackMediaPlayer(MediaPlayer.create(requireContext(), R.raw.tab_select))
-    }
-    
-    /**
      * 탭 선택 효과음을 재생합니다.
      */
     private fun playTabSelectSound() {
-        tabSelectSound?.let {
-            if (it.isPlaying) {
-                it.stop()
-                it.prepare()
-            }
-            it.start()
-        }
+        soundManager.playSound(SOUND_TAB_SELECT)
     }
 
     // 뷰페이저 어댑터 - 클릭 알바와 해킹 알바 탭 제공
