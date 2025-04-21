@@ -273,12 +273,15 @@ class PokerViewModel : ViewModel() {
         
         // 교체 완료 메시지
         val nextCost = getChangeCost()
-        val message = if (nextCost == 0L && (currentChangeCount + 1) < 3) {
-            "카드가 교체되었습니다. 교체 횟수: ${currentChangeCount + 1}/5 (무료 교체 ${3-(currentChangeCount + 1)}회 남음)"
-        } else if (nextCost > 0 && (currentChangeCount + 1) < 5) {
-            "카드가 교체되었습니다. 교체 횟수: ${currentChangeCount + 1}/5 (다음 교체 비용: ${nextCost})"
+        val newCount = currentChangeCount + 1
+        val message = if (newCount < 3) {
+            "카드가 교체되었습니다. 교체 횟수: ${newCount}/5 (무료 교체 ${3-newCount}회 남음)"
+        } else if (newCount == 3) {
+            "카드가 교체되었습니다. 교체 횟수: ${newCount}/5 (다음 교체 비용: 배팅금액의 절반)"
+        } else if (newCount == 4) {
+            "카드가 교체되었습니다. 교체 횟수: ${newCount}/5 (다음 교체 비용: 배팅금액 전액)"
         } else {
-            "카드가 교체되었습니다. 교체 횟수: ${currentChangeCount + 1}/5 (더 이상 교체할 수 없습니다)"
+            "카드가 교체되었습니다. 교체 횟수: ${newCount}/5 (더 이상 교체할 수 없습니다)"
         }
         
         return Pair(true, message)

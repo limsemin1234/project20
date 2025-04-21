@@ -12,9 +12,7 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.LinearLayout
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import com.google.android.material.snackbar.Snackbar
 import java.text.NumberFormat
 import java.util.Locale
 import java.util.Random
@@ -25,7 +23,8 @@ import androidx.lifecycle.Observer
 import android.graphics.drawable.Drawable
 import com.example.p20.helpers.ButtonHelper
 
-class BlackjackFragment : Fragment() {
+// Fragment를 BaseFragment로 변경
+class BlackjackFragment : BaseFragment() {
 
     // UI 컴포넌트
     private lateinit var dealerCardsLayout: LinearLayout
@@ -73,7 +72,6 @@ class BlackjackFragment : Fragment() {
     
     // 공유 자원 캐싱
     private val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.KOREA)
-    private val mainHandler = Handler(Looper.getMainLooper())
     private var cleanupRunnable: Runnable? = null
     
     // 재사용 가능한 카드 배경 드로어블
@@ -82,8 +80,8 @@ class BlackjackFragment : Fragment() {
     // SoundManager 인스턴스
     private lateinit var soundManager: SoundManager
     
-    // ViewModel 공유
-    private val assetViewModel: AssetViewModel by activityViewModels()
+    // ViewModel 공유 - BaseFragment에서 assetViewModel이 제공되므로 제거
+    // private val assetViewModel: AssetViewModel by activityViewModels()
 
     // 데이터 클래스 최적화
     data class Card(val rank: String, val suit: String) {
@@ -158,7 +156,7 @@ class BlackjackFragment : Fragment() {
         setupButtonListeners()
         
         // 환영 메시지 표시
-        showCustomSnackbar("배팅 후 블랙잭 게임을 시작해주세요!")
+        showMessage("배팅 후 블랙잭 게임을 시작해주세요!")
         
         // 정리 작업 런너블 한 번만 생성
         cleanupRunnable = Runnable {
@@ -166,31 +164,6 @@ class BlackjackFragment : Fragment() {
                 cleanupGame()
             }
         }
-    }
-    
-    override fun onDestroyView() {
-        super.onDestroyView()
-        // 리소스 정리
-        mainHandler.removeCallbacksAndMessages(null)
-        cleanupRunnable = null
-        
-        // 효과음 해제
-        bettingSound?.release()
-        bettingSound = null
-        cardSound?.release()
-        cardSound = null
-        startGameSound?.release()
-        startGameSound = null
-        winSound?.release()
-        winSound = null
-        loseSound?.release()
-        loseSound = null
-        stopSound?.release()
-        stopSound = null
-        
-        deck.clear()
-        playerCards.clear()
-        dealerCards.clear()
     }
     
     /**
@@ -229,7 +202,7 @@ class BlackjackFragment : Fragment() {
             if (tempBetAmount > 0 && !isGameActive) {
                 tempBetAmount = 0L
                 updateBetAmountText()
-                showCustomSnackbar("베팅 금액이 초기화되었습니다.")
+                showMessage("베팅 금액이 초기화되었습니다.")
                 return@setLongClickListener true
             }
             false
@@ -238,18 +211,18 @@ class BlackjackFragment : Fragment() {
     
     private fun addBet(amount: Long) {
         if (isGameActive) {
-            showCustomSnackbar("게임 진행 중에는 베팅할 수 없습니다.")
+            showMessage("게임 진행 중에는 베팅할 수 없습니다.")
             return
         }
         
         if (isWaitingForCleanup) {
-            showCustomSnackbar("이전 게임 정리 중입니다. 잠시 기다려주세요.")
+            showMessage("이전 게임 정리 중입니다. 잠시 기다려주세요.")
             return
         }
         
         val currentAsset = assetViewModel.asset.value ?: 0L
         if (tempBetAmount + amount > currentAsset) {
-            showCustomSnackbar("보유 자산을 초과하는 금액을 베팅할 수 없습니다.")
+            showMessage("보유 자산을 초과하는 금액을 베팅할 수 없습니다.")
             return
         }
         
@@ -258,7 +231,7 @@ class BlackjackFragment : Fragment() {
         updateBetAmountText()
         
         // 메시지 표시
-        showCustomSnackbar("베팅 금액: ${formatCurrency(tempBetAmount)}")
+        showMessage("베팅 금액: ${formatCurrency(tempBetAmount)}")
     }
     
     private fun updateBetAmountText() {
@@ -568,7 +541,7 @@ class BlackjackFragment : Fragment() {
         }
         
         // 게임 결과 메시지 표시
-        showCustomSnackbar(message)
+        showMessage(message)
         
         // 잔액 업데이트
         updateBalanceText()
@@ -577,9 +550,10 @@ class BlackjackFragment : Fragment() {
         isWaitingForCleanup = true
         
         // 정리 작업 지연 (애니메이션을 위해 더 긴 시간 대기)
-        cleanupRunnable?.let { runnable ->
-            mainHandler.removeCallbacks(runnable) // 기존에 예약된 정리 작업 취소
-            mainHandler.postDelayed(runnable, 3000) // 3초 지연으로 수정
+        postDelayed(3000) {
+            if (isWaitingForCleanup) {
+                cleanupGame()
+            }
         }
     }
     
@@ -593,9 +567,9 @@ class BlackjackFragment : Fragment() {
         // 아이템을 획득했으면 메시지 표시
         itemReward?.let {
             // 0.5초 지연 후 아이템 획득 메시지 표시 (기존 승리 메시지와 겹치지 않게)
-            mainHandler.postDelayed({
-                showCustomSnackbar("🎁 ${it.itemName} 아이템을 획득했습니다!")
-            }, 1500)
+            postDelayed(1500) {
+                showMessage("🎁 ${it.itemName} 아이템을 획득했습니다!")
+            }
         }
     }
     
@@ -603,12 +577,8 @@ class BlackjackFragment : Fragment() {
         // UI 요소 제거됨 - 메서드만 유지
     }
     
-    private fun formatCurrency(amount: Long): String {
-        return currencyFormatter.format(amount)
-    }
-    
     private fun showCustomSnackbar(message: String) {
-        MessageManager.showMessage(requireContext(), message)
+        showMessage(message)
     }
     
     // 승률 통계 저장 - 메모리 최적화
@@ -654,17 +624,21 @@ class BlackjackFragment : Fragment() {
         isWaitingForCleanup = false
         
         // 게임 준비 메시지
-        showCustomSnackbar("새 게임을 위해 베팅해주세요")
+        showMessage("새 게임을 위해 베팅해주세요")
     }
 
     private fun initSounds() {
-        // 효과음 초기화
-        bettingSound = MediaPlayer.create(requireContext(), R.raw.casino_betting)
-        cardSound = MediaPlayer.create(requireContext(), R.raw.casino_card_receive)
-        startGameSound = MediaPlayer.create(requireContext(), R.raw.casino_start)
-        winSound = MediaPlayer.create(requireContext(), R.raw.casino_win)
-        loseSound = MediaPlayer.create(requireContext(), R.raw.casino_lose)
-        stopSound = MediaPlayer.create(requireContext(), R.raw.casino_stop)
+        try {
+            // 효과음 초기화
+            bettingSound = trackMediaPlayer(MediaPlayer.create(requireContext(), R.raw.casino_betting))
+            cardSound = trackMediaPlayer(MediaPlayer.create(requireContext(), R.raw.casino_card_receive))
+            startGameSound = trackMediaPlayer(MediaPlayer.create(requireContext(), R.raw.casino_start))
+            winSound = trackMediaPlayer(MediaPlayer.create(requireContext(), R.raw.casino_win))
+            loseSound = trackMediaPlayer(MediaPlayer.create(requireContext(), R.raw.casino_lose))
+            stopSound = trackMediaPlayer(MediaPlayer.create(requireContext(), R.raw.casino_stop))
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
     
     /**
@@ -750,7 +724,7 @@ class BlackjackFragment : Fragment() {
      */
     private fun onHitButtonClicked() {
         if (!isGameActive) {
-            showCustomSnackbar("게임이 진행 중이 아닙니다.")
+            showMessage("게임이 진행 중이 아닙니다.")
             return
         }
         
@@ -765,7 +739,7 @@ class BlackjackFragment : Fragment() {
      */
     private fun onStandButtonClicked() {
         if (!isGameActive) {
-            showCustomSnackbar("게임이 진행 중이 아닙니다.")
+            showMessage("게임이 진행 중이 아닙니다.")
             return
         }
         
@@ -780,13 +754,13 @@ class BlackjackFragment : Fragment() {
      */
     private fun onDoubleDownButtonClicked() {
         if (!isGameActive) {
-            showCustomSnackbar("게임이 진행 중이 아닙니다.")
+            showMessage("게임이 진행 중이 아닙니다.")
             return
         }
         
         val currentAsset = assetViewModel.asset.value ?: 0L
         if (currentBet > currentAsset) {
-            showCustomSnackbar("더블다운할 만큼의 자산이 부족합니다.")
+            showMessage("더블다운할 만큼의 자산이 부족합니다.")
             return
         }
         
@@ -809,11 +783,11 @@ class BlackjackFragment : Fragment() {
         hitButton.isEnabled = false
         
         // 0.5초 후 자동으로 스탠드
-        mainHandler.postDelayed({
+        postDelayed(500) {
             if (isGameActive && !isGameOver) {
                 playerStand()
             }
-        }, 500)
+        }
     }
     
     /**
@@ -821,18 +795,18 @@ class BlackjackFragment : Fragment() {
      */
     private fun onNewGameButtonClicked() {
         if (isGameActive) {
-            showCustomSnackbar("현재 게임이 진행 중입니다.")
+            showMessage("현재 게임이 진행 중입니다.")
             return
         }
         
         if (tempBetAmount <= 0) {
-            showCustomSnackbar("베팅 금액을 설정해주세요.")
+            showMessage("베팅 금액을 설정해주세요.")
             return
         }
         
         val currentAsset = assetViewModel.asset.value ?: 0L
         if (tempBetAmount > currentAsset) {
-            showCustomSnackbar("베팅 금액이 보유 자산을 초과합니다.")
+            showMessage("베팅 금액이 보유 자산을 초과합니다.")
             return
         }
         
@@ -855,7 +829,7 @@ class BlackjackFragment : Fragment() {
      */
     private fun placeBet(amount: Long) {
         if (isGameActive) {
-            showCustomSnackbar("게임 진행 중에는 베팅할 수 없습니다.")
+            showMessage("게임 진행 중에는 베팅할 수 없습니다.")
             return
         }
         

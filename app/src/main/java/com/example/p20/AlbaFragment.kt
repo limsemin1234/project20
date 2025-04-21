@@ -38,7 +38,7 @@ import com.google.android.material.tabs.TabLayoutMediator
  * 알바 프래그먼트 클래스
  * 클릭알바와 해킹알바 탭을 포함하는 컨테이너 역할
  */
-class AlbaFragment : Fragment() {
+class AlbaFragment : BaseFragment() {
 
     private lateinit var tabLayout: TabLayout
     private lateinit var viewPager: ViewPager2
@@ -101,7 +101,7 @@ class AlbaFragment : Fragment() {
      * 탭 선택 효과음을 초기화합니다.
      */
     private fun initTabSelectSound() {
-        tabSelectSound = MediaPlayer.create(requireContext(), R.raw.tab_select)
+        tabSelectSound = trackMediaPlayer(MediaPlayer.create(requireContext(), R.raw.tab_select))
     }
     
     /**
@@ -115,13 +115,6 @@ class AlbaFragment : Fragment() {
             }
             it.start()
         }
-    }
-    
-    override fun onDestroyView() {
-        super.onDestroyView()
-        // MediaPlayer 해제
-        tabSelectSound?.release()
-        tabSelectSound = null
     }
 
     // 뷰페이저 어댑터 - 클릭 알바와 해킹 알바 탭 제공
