@@ -497,11 +497,11 @@ class PokerFragment : Fragment() {
         val cardMarginDp = 1
         val cardMargin = (cardMarginDp * displayMetrics.density).toInt()
         
-        // 화면 좌우 패딩 및 여백을 고려하여 조정
-        val totalHorizontalPadding = (48 * displayMetrics.density).toInt()
+        // 화면 좌우 패딩 및 여백을 고려하여 조정 - 여백 증가
+        val totalHorizontalPadding = (64 * displayMetrics.density).toInt()
         
-        // 카드 7장과 간격이 화면에 딱 맞도록 카드 너비 계산
-        val cardWidth = (screenWidth - (6 * cardMargin) - totalHorizontalPadding) / 7
+        // 카드 7장과 간격이 화면에 딱 맞도록 카드 너비 계산 - 여백 고려
+        val cardWidth = ((screenWidth - totalHorizontalPadding) / 7) - cardMargin
         
         // 카드 높이는 너비의 1.5배 (일반적인 카드 비율)
         val cardHeight = (cardWidth * 1.5).toInt()
@@ -1278,7 +1278,7 @@ class PokerFragment : Fragment() {
                 val strokeDrawable = GradientDrawable().apply {
                     setStroke(4, Color.argb(255, 255, 165, 0)) // 주황-금색 테두리
                     cornerRadius = 8f
-                    setColor(Color.argb(80, 255, 255, 0)) // 더 선명한 노란색 배경
+                    setColor(Color.argb(255, 255, 255, 0)) // 더 선명한 노란색 배경
                 }
                 cardViews[index].background = strokeDrawable
                 cardViews[index].setTypeface(null, Typeface.BOLD)
