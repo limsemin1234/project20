@@ -1225,14 +1225,51 @@ class PokerFragment : Fragment() {
         // 분석 결과 저장할 카드 인덱스 세트
         val potentialCardIndices = mutableSetOf<Int>()
         
-        // 1. 같은 무늬 카드 강조 (플러시 가능성)
-        highlightPotentialFlush(cards, potentialCardIndices)
+        // 족보 검출 여부 플래그 - 높은 족보가 발견되면 true로 설정
+        var highRankDetected = false
         
-        // 2. 연속된 숫자 강조 (스트레이트 가능성)
-        highlightPotentialStraight(cards, potentialCardIndices)
+        // 1. 로얄 스트레이트 플러시 또는 스트레이트 플러시 체크 (최상위 족보)
+        if (highlightRoyalStraightFlush(cards, potentialCardIndices) || 
+            highlightStraightFlush(cards, potentialCardIndices)) {
+            highRankDetected = true
+        }
         
-        // 3. 같은 숫자 카드 강조 (페어, 트리플, 포카드 가능성)
-        highlightPotentialSameRanks(cards, potentialCardIndices)
+        // 2. 포카드 체크 (두 번째 높은 족보)
+        else if (highlightFourOfAKind(cards, potentialCardIndices)) {
+            highRankDetected = true
+        }
+        
+        // 3. 풀하우스 체크
+        else if (highlightFullHouse(cards, potentialCardIndices)) {
+            highRankDetected = true
+        }
+        
+        // 4. 플러시 체크
+        else if (highlightFlush(cards, potentialCardIndices)) {
+            highRankDetected = true
+        }
+        
+        // 5. 스트레이트 체크
+        else if (highlightStraight(cards, potentialCardIndices)) {
+            highRankDetected = true
+        }
+        
+        // 6. 트리플 체크
+        else if (highlightThreeOfAKind(cards, potentialCardIndices)) {
+            highRankDetected = true
+        }
+        
+        // 7. 투페어 체크
+        else if (highlightTwoPair(cards, potentialCardIndices)) {
+            highRankDetected = true
+        }
+        
+        // 8. 원페어 체크
+        else if (highlightOnePair(cards, potentialCardIndices)) {
+            highRankDetected = true
+        }
+        
+        // 9. 하이카드는 표시하지 않음 (너무 많은 카드가 표시될 수 있음)
         
         // 잠재적 족보 카드 시각적으로 표시
         for (index in potentialCardIndices) {
@@ -1252,29 +1289,199 @@ class PokerFragment : Fragment() {
                 cardViews[index].setTextColor(textColor)
             }
         }
-    }
-
-    /**
-     * 플러시 가능성 분석 - 같은 무늬가 4장 이상인 경우
-     */
-    private fun highlightPotentialFlush(cards: List<PokerViewModel.Card>, potentialIndices: MutableSet<Int>) {
-        // 무늬별로 그룹화
-        val suitGroups = cards.mapIndexed { index, card -> index to card }.groupBy { it.second.suit }
         
-        // 5장 이상 같은 무늬면 플러시
-        suitGroups.forEach { (_, group) ->
-            if (group.size >= 4) { // 4장 이상이면 가능성 있음
-                group.forEach { (index, _) ->
-                    potentialIndices.add(index)
-                }
-            }
+        // 족보가 발견되었다면 적절한 메시지 표시
+        if (potentialCardIndices.isNotEmpty()) {
+            MessageManager.showMessage(requireContext(), "완성된 가장 높은 족보를 강조 표시합니다.")
+        } else {
+            MessageManager.showMessage(requireContext(), "완성된 족보가 없습니다.")
         }
     }
 
     /**
-     * 스트레이트 가능성 분석 - 연속된 숫자가 4장 이상인 경우
+     * 로얄 스트레이트 플러시 체크 (A, K, Q, J, 10이 같은 무늬)
      */
-    private fun highlightPotentialStraight(cards: List<PokerViewModel.Card>, potentialIndices: MutableSet<Int>) {
+    private fun highlightRoyalStraightFlush(cards: List<PokerViewModel.Card>, potentialIndices: MutableSet<Int>): Boolean {
+        // 무늬별로 그룹화
+        val suitGroups = cards.mapIndexed { index, card -> index to card }.groupBy { it.second.suit }
+        
+        // 각 무늬별로 로얄 스트레이트 플러시 확인
+        for ((_, group) in suitGroups) {
+            if (group.size >= 5) {
+                val ranks = group.map { it.second.rank }.toSet()
+                
+                // 로얄 스트레이트 플러시 조건 확인 (10, J, Q, K, A가 모두 있는지)
+                if (ranks.containsAll(listOf("A", "K", "Q", "J", "10"))) {
+                    // 조건에 맞는 카드들 인덱스 추가
+                    group.forEach { (index, cardItem) ->
+                        if (cardItem.rank in listOf("A", "K", "Q", "J", "10")) {
+                            potentialIndices.add(index)
+                        }
+                    }
+                    return true
+                }
+            }
+        }
+        return false
+    }
+    
+    /**
+     * 스트레이트 플러시 체크 (같은 무늬의 연속된 5장)
+     */
+    private fun highlightStraightFlush(cards: List<PokerViewModel.Card>, potentialIndices: MutableSet<Int>): Boolean {
+        // 무늬별로 그룹화
+        val suitGroups = cards.mapIndexed { index, card -> index to card }.groupBy { it.second.suit }
+        
+        // 각 무늬별로 스트레이트 플러시 확인
+        for ((_, group) in suitGroups) {
+            if (group.size >= 5) {
+                // 같은 무늬 카드들을 값으로 정렬
+                val sortedCards = group.sortedBy { it.second.value() }
+                
+                // 연속된 5장 체크
+                val straightFlushIndices = mutableSetOf<Int>()
+                var consecutiveCount = 1
+                
+                for (i in 1 until sortedCards.size) {
+                    if (sortedCards[i].second.value() == sortedCards[i-1].second.value() + 1) {
+                        consecutiveCount++
+                        if (consecutiveCount >= 5) {
+                            // 연속된 5장 발견, 인덱스 수집
+                            for (j in (i-4)..i) {
+                                straightFlushIndices.add(sortedCards[j].first)
+                            }
+                            break
+                        }
+                    } else if (sortedCards[i].second.value() != sortedCards[i-1].second.value()) {
+                        // 값이 중복되지 않고 연속되지 않으면 리셋
+                        consecutiveCount = 1
+                    }
+                }
+                
+                // A-2-3-4-5 스트레이트 플러시 특별 케이스 처리
+                if (straightFlushIndices.isEmpty()) {
+                    val hasAce = group.any { it.second.rank == "A" }
+                    val has2 = group.any { it.second.rank == "2" }
+                    val has3 = group.any { it.second.rank == "3" }
+                    val has4 = group.any { it.second.rank == "4" }
+                    val has5 = group.any { it.second.rank == "5" }
+                    
+                    if (hasAce && has2 && has3 && has4 && has5) {
+                        // A-2-3-4-5 스트레이트 플러시 완성
+                        group.forEach { (index, cardItem) ->
+                            if (cardItem.rank in listOf("A", "2", "3", "4", "5")) {
+                                straightFlushIndices.add(index)
+                            }
+                        }
+                    }
+                }
+                
+                if (straightFlushIndices.isNotEmpty()) {
+                    potentialIndices.addAll(straightFlushIndices)
+                    return true
+                }
+            }
+        }
+        return false
+    }
+    
+    /**
+     * 포카드 체크 (같은 숫자 4장)
+     */
+    private fun highlightFourOfAKind(cards: List<PokerViewModel.Card>, potentialIndices: MutableSet<Int>): Boolean {
+        // 랭크별로 그룹화
+        val rankGroups = cards.mapIndexed { index, card -> index to card }.groupBy { it.second.rank }
+        
+        // 4장 있는 랭크 찾기
+        val fourOfAKind = rankGroups.filter { it.value.size >= 4 }
+        
+        if (fourOfAKind.isNotEmpty()) {
+            // 가장 높은 포카드 선택 (여러 개가 있을 경우 가능성 낮음)
+            val highestFourOfAKind = fourOfAKind.maxByOrNull { 
+                rankValues[it.key] ?: 0 
+            }
+            
+            highestFourOfAKind?.value?.forEach { (index, _) ->
+                potentialIndices.add(index)
+            }
+            
+            return true
+        }
+        
+        return false
+    }
+    
+    /**
+     * 풀하우스 체크 (트리플 + 페어)
+     */
+    private fun highlightFullHouse(cards: List<PokerViewModel.Card>, potentialIndices: MutableSet<Int>): Boolean {
+        // 랭크별로 그룹화
+        val rankGroups = cards.mapIndexed { index, card -> index to card }.groupBy { it.second.rank }
+        
+        // 3장 이상인 랭크들
+        val triples = rankGroups.filter { it.value.size >= 3 }
+        
+        // 2장 이상인 랭크들
+        val pairs = rankGroups.filter { it.value.size >= 2 }
+        
+        // 풀하우스 조건: 트리플 1개 + 다른 페어 1개 이상
+        if (triples.isNotEmpty() && pairs.size >= 2) {
+            // 가장 높은 트리플 선택
+            val highestTriple = triples.maxByOrNull { rankValues[it.key] ?: 0 }
+            
+            // 트리플과 다른 가장 높은 페어 선택
+            val pairsExceptTriple = pairs.filter { it.key != highestTriple?.key }
+            val highestPair = pairsExceptTriple.maxByOrNull { rankValues[it.key] ?: 0 }
+            
+            if (highestTriple != null && highestPair != null) {
+                // 트리플 카드들 추가
+                highestTriple.value.take(3).forEach { (index, _) ->
+                    potentialIndices.add(index)
+                }
+                
+                // 페어 카드들 추가
+                highestPair.value.take(2).forEach { (index, _) ->
+                    potentialIndices.add(index)
+                }
+                
+                return true
+            }
+        }
+        
+        return false
+    }
+    
+    /**
+     * 플러시 체크 (같은 무늬 5장)
+     */
+    private fun highlightFlush(cards: List<PokerViewModel.Card>, potentialIndices: MutableSet<Int>): Boolean {
+        // 무늬별로 그룹화
+        val suitGroups = cards.mapIndexed { index, card -> index to card }.groupBy { it.second.suit }
+        
+        // 5장 이상 같은 무늬 찾기
+        val flushes = suitGroups.filter { it.value.size >= 5 }
+        
+        if (flushes.isNotEmpty()) {
+            // 가장 높은 카드 값을 가진 플러시 선택
+            val highestFlush = flushes.maxByOrNull { group ->
+                group.value.maxOf { it.second.value() }
+            }
+            
+            // 해당 플러시의 모든 카드 추가
+            highestFlush?.value?.forEach { (index, _) ->
+                potentialIndices.add(index)
+            }
+            
+            return true
+        }
+        
+        return false
+    }
+    
+    /**
+     * 스트레이트 체크 (연속된 숫자 5장)
+     */
+    private fun highlightStraight(cards: List<PokerViewModel.Card>, potentialIndices: MutableSet<Int>): Boolean {
         // 카드 값으로 인덱스 맵 만들기
         val valueToIndexMap = cards.mapIndexed { index, card -> card.value() to index }.toMap()
         
@@ -1283,49 +1490,121 @@ class PokerFragment : Fragment() {
         
         // 연속된 숫자 찾기
         var consecutiveCount = 1
-        var start = 0
+        var straightFound = false
+        val straightIndices = mutableSetOf<Int>()
         
         for (i in 1 until cardValues.size) {
             if (cardValues[i] == cardValues[i-1] + 1) {
                 consecutiveCount++
-                if (consecutiveCount >= 4) { // 4개 이상 연속된 숫자면 가능성 있음
-                    // 연속된 숫자에 해당하는 카드 강조
-                    for (j in (i-consecutiveCount+1)..i) {
+                if (consecutiveCount >= 5) {
+                    // 연속된 5장 발견
+                    straightFound = true
+                    for (j in (i-4)..i) {
                         valueToIndexMap[cardValues[j]]?.let { index ->
-                            potentialIndices.add(index)
+                            straightIndices.add(index)
                         }
                     }
+                    break
                 }
             } else {
                 consecutiveCount = 1
-                start = i
             }
         }
         
-        // A-2-3-4-5 스트레이트 케이스 검사 (A가 1인 경우)
-        if (cardValues.contains(14) && cardValues.contains(2) && cardValues.contains(3) && cardValues.contains(4)) {
-            valueToIndexMap[14]?.let { potentialIndices.add(it) } // A
-            valueToIndexMap[2]?.let { potentialIndices.add(it) } // 2
-            valueToIndexMap[3]?.let { potentialIndices.add(it) } // 3
-            valueToIndexMap[4]?.let { potentialIndices.add(it) } // 4
-            valueToIndexMap[5]?.let { potentialIndices.add(it) } // 5 (있으면)
+        // A-2-3-4-5 스트레이트 체크 (A가 1인 경우)
+        if (!straightFound && 
+            cardValues.contains(14) && cardValues.contains(2) && 
+            cardValues.contains(3) && cardValues.contains(4) && cardValues.contains(5)) {
+            
+            valueToIndexMap[14]?.let { straightIndices.add(it) } // A
+            valueToIndexMap[2]?.let { straightIndices.add(it) } // 2
+            valueToIndexMap[3]?.let { straightIndices.add(it) } // 3
+            valueToIndexMap[4]?.let { straightIndices.add(it) } // 4
+            valueToIndexMap[5]?.let { straightIndices.add(it) } // 5
+            straightFound = true
         }
+        
+        if (straightFound) {
+            potentialIndices.addAll(straightIndices)
+            return true
+        }
+        
+        return false
     }
-
+    
     /**
-     * 같은 숫자 패턴 분석 - 같은 숫자가 2장 이상인 경우 (페어, 트리플, 포카드)
+     * 트리플 체크 (같은 숫자 3장)
      */
-    private fun highlightPotentialSameRanks(cards: List<PokerViewModel.Card>, potentialIndices: MutableSet<Int>) {
+    private fun highlightThreeOfAKind(cards: List<PokerViewModel.Card>, potentialIndices: MutableSet<Int>): Boolean {
         // 랭크별로 그룹화
         val rankGroups = cards.mapIndexed { index, card -> index to card }.groupBy { it.second.rank }
         
-        // 2장 이상 같은 숫자면 가능성 있음 (페어, 트리플, 포카드)
-        rankGroups.forEach { (_, group) ->
-            if (group.size >= 2) {
-                group.forEach { (index, _) ->
+        // 3장 이상인 랭크들
+        val triples = rankGroups.filter { it.value.size >= 3 }
+        
+        if (triples.isNotEmpty()) {
+            // 가장 높은 트리플 선택
+            val highestTriple = triples.maxByOrNull { rankValues[it.key] ?: 0 }
+            
+            highestTriple?.value?.take(3)?.forEach { (index, _) ->
+                potentialIndices.add(index)
+            }
+            
+            return true
+        }
+        
+        return false
+    }
+    
+    /**
+     * 투페어 체크 (같은 숫자 2장 × 2쌍)
+     */
+    private fun highlightTwoPair(cards: List<PokerViewModel.Card>, potentialIndices: MutableSet<Int>): Boolean {
+        // 랭크별로 그룹화
+        val rankGroups = cards.mapIndexed { index, card -> index to card }.groupBy { it.second.rank }
+        
+        // 2장 이상인 랭크들
+        val pairs = rankGroups.filter { it.value.size >= 2 }
+        
+        if (pairs.size >= 2) {
+            // 값이 높은 상위 두 페어 선택
+            val topPairs = pairs.toList().sortedByDescending { (key, _) -> 
+                rankValues[key] ?: 0 
+            }.take(2)
+            
+            topPairs.forEach { pair ->
+                pair.second.take(2).forEach { (index, _) ->
                     potentialIndices.add(index)
                 }
             }
+            
+            return true
         }
+        
+        return false
+    }
+    
+    /**
+     * 원페어 체크 (같은 숫자 2장)
+     */
+    private fun highlightOnePair(cards: List<PokerViewModel.Card>, potentialIndices: MutableSet<Int>): Boolean {
+        // 랭크별로 그룹화
+        val rankGroups = cards.mapIndexed { index, card -> index to card }.groupBy { it.second.rank }
+        
+        // 2장 이상인 랭크들
+        val pairs = rankGroups.filter { it.value.size >= 2 }
+        
+        if (pairs.isNotEmpty()) {
+            // 가장 높은 페어 선택
+            val highestPair = pairs.maxByOrNull { rankValues[it.key] ?: 0 }
+            
+            highestPair?.value?.take(2)?.forEach { (index, _) ->
+                potentialIndices.add(index)
+            }
+            
+            return true
+        }
+        
+        return false
     }
 } 
