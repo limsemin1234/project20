@@ -68,6 +68,10 @@ class MainActivity : AppCompatActivity() {
     // 효과음 설정 변경 리시버 등록
     private lateinit var soundSettingsReceiver: android.content.BroadcastReceiver
     
+    // 클래스 멤버 변수로 핸들러들을 추적하기 위한 목록 추가
+    private val activeHandlers = mutableListOf<android.os.Handler>()
+    private val activeRunnables = mutableMapOf<android.os.Handler, Runnable>()
+    
     /**
      * 버튼 효과음을 위한 SoundPool을 초기화합니다.
      */
@@ -359,11 +363,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        super.onDestroy()
-        
         // 앱이 완전히 종료될 때 데이터 저장
-        stockViewModel.saveStockData()
-        assetViewModel.saveAssetToPreferences()
+        try {
+            stockViewModel.saveStockData()
+            assetViewModel.saveAssetToPreferences()
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "데이터 저장 오류: ${e.message}")
+        }
         
         // 주기적 루핑 체크 중지
         stopPeriodicLoopCheck()
@@ -371,14 +377,54 @@ class MainActivity : AppCompatActivity() {
         // 미디어 모니터링 중지
         stopMediaMonitoring()
         
-        // 배경음악 해제
+        // 모든 애니메이션 종료
+        stopAllAnimations()
+        
+        // 모든 핸들러 정리
+        for (handler in activeHandlers) {
+            handler.removeCallbacksAndMessages(null)
+        }
+        activeHandlers.clear()
+        activeRunnables.clear()
+        
+        // 루프 체크 핸들러 정리
+        loopCheckHandler.removeCallbacksAndMessages(null)
+        loopCheckRunnable = null
+        
+        // SoundManager 정리
         soundManager.release()
         
-        // 핸들러 콜백 제거
-        loopCheckHandler.removeCallbacksAndMessages(null)
+        // 버튼 효과음 정리
+        try {
+            buttonSoundPool.release()
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "SoundPool 해제 오류: ${e.message}")
+        }
         
-        // 안전한 정리를 위해 모든 애니메이션 종료
-        stopAllAnimations()
+        // 효과음 설정 리시버 등록 해제
+        try {
+            unregisterReceiver(soundSettingsReceiver)
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "리시버 해제 오류: ${e.message}")
+        }
+        
+        // 남은 애니메이션 정리
+        try {
+            val contentContainer = findViewById<FrameLayout>(R.id.contentContainer)
+            contentContainer?.clearAnimation()
+            
+            val flashEffect = findViewById<View>(R.id.flashEffect)
+            flashEffect?.clearAnimation()
+            
+            val timeWarningEffect = findViewById<View>(R.id.timeWarningEffect)
+            timeWarningEffect?.clearAnimation()
+            
+            globalRemainingTimeTextView.clearAnimation()
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "애니메이션 정리 오류: ${e.message}")
+        }
+        
+        super.onDestroy()
     }
 
     // ExplanationFragment 제거 함수
@@ -714,9 +760,21 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // 번쩍임 효과를 주기적으로 실행
+    // 번쩍임 효과를 주기적으로 실행 - 수정된 버전
     private fun scheduleFlashEffect(intervalMs: Int) {
+        // 기존 핸들러가 있다면 취소
+        val existingHandlers = activeHandlers.toList() // 복사본 생성 (ConcurrentModificationException 방지)
+        for (handler in existingHandlers) {
+            val runnable = activeRunnables[handler]
+            if (runnable != null) {
+                handler.removeCallbacks(runnable)
+                activeRunnables.remove(handler)
+            }
+        }
+        
+        // 새 핸들러 생성
         val handler = android.os.Handler(android.os.Looper.getMainLooper())
+        activeHandlers.add(handler) // 추적 목록에 추가
         
         val flashEffect = findViewById<View>(R.id.flashEffect)
         
@@ -736,12 +794,15 @@ class MainActivity : AppCompatActivity() {
                         .start()
                     
                     // 다음 번쩍임 예약
-                    handler.postDelayed(this, intervalMs.toLong())
+                    if (warningEffectLevel >= 2) {
+                        handler.postDelayed(this, intervalMs.toLong())
+                    }
                 }
             }
         }
         
-        // 첫 번쩍임 예약
+        // 첫 번쩍임 예약 및 추적
+        activeRunnables[handler] = flashRunnable
         handler.postDelayed(flashRunnable, intervalMs.toLong())
     }
 
@@ -749,6 +810,14 @@ class MainActivity : AppCompatActivity() {
     private fun stopAllAnimations() {
         // 효과 레벨 초기화
         warningEffectLevel = 0
+        
+        // 모든 핸들러 및 Runnable 중지
+        val handlersCopy = activeHandlers.toList() // 복사본 생성
+        for (handler in handlersCopy) {
+            handler.removeCallbacksAndMessages(null)
+            activeRunnables.remove(handler)
+        }
+        activeHandlers.clear()
         
         // 시간 텍스트뷰 애니메이션 중지
         globalRemainingTimeTextView.clearAnimation()

@@ -9,18 +9,21 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.core.content.ContextCompat
 import android.graphics.drawable.GradientDrawable
 import android.widget.ImageButton
+import java.lang.ref.WeakReference
+import android.util.Log
 
 /**
  * 주식 목록을 표시하기 위한 RecyclerView 어댑터
  * 
  * 주식 목록을 표시하고 주식 선택, 시각적 효과 및 상태 관리를 담당합니다.
+ * 메모리 누수 방지를 위해 WeakReference 사용
  * 
  * @property onItemClick 주식 항목 클릭 시 호출되는 콜백 함수
  * @property onGraphClick 그래프 버튼 클릭 시 호출되는 콜백 함수
  */
 class StockAdapter(
-    private val onItemClick: (Stock) -> Unit,
-    private val onGraphClick: (Stock) -> Unit
+    onItemClick: (Stock) -> Unit,
+    onGraphClick: (Stock) -> Unit
 ) : RecyclerView.Adapter<StockAdapter.StockViewHolder>() {
 
     /** 표시할 주식 목록 */
@@ -29,8 +32,12 @@ class StockAdapter(
     /** 현재 선택된 주식의 위치 (-1은 선택된 항목 없음) */
     private var selectedStockPosition: Int = -1
     
-    /** SoundManager 인스턴스 */
-    private lateinit var soundManager: SoundManager
+    /** WeakReference를 사용하여 콜백 저장 - 메모리 누수 방지 */
+    private val weakItemClickCallback = WeakReference(onItemClick)
+    private val weakGraphClickCallback = WeakReference(onGraphClick)
+    
+    /** SoundManager 인스턴스에 대한 WeakReference */
+    private var weakSoundManager: WeakReference<SoundManager>? = null
     
     /** 효과음 ID */
     companion object {
@@ -63,8 +70,9 @@ class StockAdapter(
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.stock_item_layout, parent, false)
         
-        // SoundManager 초기화
-        soundManager = SoundManager.getInstance(parent.context)
+        // SoundManager를 WeakReference로 저장
+        val soundManager = SoundManager.getInstance(parent.context)
+        weakSoundManager = WeakReference(soundManager)
         
         return StockViewHolder(view)
     }
@@ -153,36 +161,21 @@ class StockAdapter(
         
         // 배경 설정
         holder.itemView.background = background
-        
-        // 클릭 이벤트 처리
-        holder.itemView.setOnClickListener { 
-            val previousPosition = selectedStockPosition
-            selectedStockPosition = position
-            
-            // 효과음 재생
-            playSelectSound()
-            
-            // 이전 선택 항목과 현재 선택 항목 갱신
-            if (previousPosition != -1) {
-                notifyItemChanged(previousPosition)
-            }
-            notifyItemChanged(position)
-            
-            // 콜백 호출
-            onItemClick(stock) 
-        }
-        
-        // 그래프 버튼 클릭 이벤트 처리
-        holder.stockGraphButton.setOnClickListener {
-            onGraphClick(stock)
-        }
     }
 
     /**
      * 선택 효과음을 재생합니다.
      */
     private fun playSelectSound() {
-        soundManager.playSound(SOUND_SELECT)
+        try {
+            // WeakReference에서 SoundManager 가져오기
+            val soundManager = weakSoundManager?.get()
+            if (soundManager != null) {
+                soundManager.playSound(SOUND_SELECT)
+            }
+        } catch (e: Exception) {
+            Log.e("StockAdapter", "효과음 재생 오류: ${e.message}")
+        }
     }
 
     /**
@@ -230,15 +223,22 @@ class StockAdapter(
      * @param stock 선택할 주식 객체
      */
     fun setSelectedStock(stock: Stock) {
-        val position = stockList.indexOfFirst { it.name == stock.name }
-        if (position != -1 && position != selectedStockPosition) {
-            val previousPosition = selectedStockPosition
-            selectedStockPosition = position
+        try {
+            // 리스트에서 해당 주식 찾기
+            val newPosition = stockList.indexOfFirst { it.name == stock.name }
             
-            if (previousPosition != -1) {
-                notifyItemChanged(previousPosition)
+            if (newPosition != -1 && newPosition != selectedStockPosition) {
+                val previousPosition = selectedStockPosition
+                selectedStockPosition = newPosition
+                
+                // 이전 선택 항목과 현재 선택 항목 갱신
+                if (previousPosition != -1) {
+                    notifyItemChanged(previousPosition)
+                }
+                notifyItemChanged(newPosition)
             }
-            notifyItemChanged(position)
+        } catch (e: Exception) {
+            Log.e("StockAdapter", "주식 선택 설정 오류: ${e.message}")
         }
     }
     
@@ -251,21 +251,48 @@ class StockAdapter(
     }
 
     /**
-     * 주식 항목의 뷰를 보유하는 ViewHolder 클래스
-     * 
-     * @property stockName 주식 이름 TextView
-     * @property stockPrice 주식 가격 TextView
-     * @property stockChangeValue 주식 변동 가치 TextView
-     * @property stockChangeRate 주식 변동률 TextView
-     * @property stockHolding 주식 보유량 TextView
-     * @property stockGraphButton 그래프 버튼
+     * 주식 항목 표시를 위한 ViewHolder
      */
-    class StockViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class StockViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val stockName: TextView = itemView.findViewById(R.id.stockName)
         val stockPrice: TextView = itemView.findViewById(R.id.stockPrice)
         val stockChangeValue: TextView = itemView.findViewById(R.id.stockChangeValue)
         val stockChangeRate: TextView = itemView.findViewById(R.id.stockChangeRate)
         val stockHolding: TextView = itemView.findViewById(R.id.stockHolding)
         val stockGraphButton: ImageButton = itemView.findViewById(R.id.stockGraphButton)
+        
+        init {
+            // 클릭 이벤트 초기화
+            itemView.setOnClickListener { 
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION && position < stockList.size) {
+                    val stock = stockList[position]
+                    val previousPosition = selectedStockPosition
+                    selectedStockPosition = position
+                    
+                    // 효과음 재생
+                    playSelectSound()
+                    
+                    // 이전 선택 항목과 현재 선택 항목 갱신
+                    if (previousPosition != -1) {
+                        notifyItemChanged(previousPosition)
+                    }
+                    notifyItemChanged(position)
+                    
+                    // WeakReference에서 콜백 가져와서 호출
+                    weakItemClickCallback.get()?.invoke(stock)
+                }
+            }
+            
+            // 그래프 버튼 클릭 이벤트
+            stockGraphButton.setOnClickListener {
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION && position < stockList.size) {
+                    val stock = stockList[position]
+                    // WeakReference에서 콜백 가져와서 호출
+                    weakGraphClickCallback.get()?.invoke(stock)
+                }
+            }
+        }
     }
 } 

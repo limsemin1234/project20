@@ -24,6 +24,7 @@ import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import android.media.MediaPlayer
+import android.util.Log
 
 class StockFragment : BaseFragment() {
 
@@ -48,10 +49,10 @@ class StockFragment : BaseFragment() {
     private var isPositiveNewsFeatureAdded = false
     private var isNegativeNewsFeatureAdded = false
 
-    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val handler by lazy { trackHandler(android.os.Handler(android.os.Looper.getMainLooper())) }
 
-    // SoundManager 사용으로 변경
-    private lateinit var soundManager: SoundManager
+    // BaseFragment의 핸들러 및 사운드 관리 기능 사용
+    private val soundManager by lazy { SoundManager.getInstance(requireContext()) }
 
     // 수량 버튼 참조 변수
     private lateinit var quantityBtn1: Button
@@ -395,59 +396,25 @@ class StockFragment : BaseFragment() {
      * 주식 가격 변동 그래프를 다이얼로그로 표시합니다.
      */
     private fun showStockGraphDialog(stock: Stock) {
-        // 커스텀 다이얼로그 생성
-        val dialog = Dialog(requireContext())
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        dialog.setContentView(R.layout.dialog_stock_graph)
-        
-        // 다이얼로그 제목 설정
-        val titleTextView = dialog.findViewById<TextView>(R.id.graphTitleText)
-        titleTextView.text = "${stock.name} 가격 변동 그래프"
-        
-        // 그래프 설정
-        val lineChart = dialog.findViewById<LineChart>(R.id.stockLineChart)
-        
-        // 초기 그래프 설정
-        setupStockGraph(lineChart, stock, true)
-        
-        // 그래프 데이터 상태 추적 객체
-        val graphState = GraphUpdateState(stock.name, stock.price)
-        
-        // 닫기 버튼
-        val closeButton = dialog.findViewById<Button>(R.id.btnCloseGraph)
-        closeButton.setOnClickListener {
-            dialog.dismiss()
-        }
-        
-        // 그래프 실시간 업데이트를 위한 옵저버
-        val graphUpdateObserver = Observer<MutableList<Stock>> { updatedStockList ->
-            updatedStockList.find { it.name == stock.name }?.let { updatedStock ->
-                // 변경된 경우에만 그래프 업데이트
-                if (updatedStock.price != graphState.lastPrice) {
-                    graphState.isTimerProcessing = true
-                    updateGraph(lineChart, updatedStock, graphState)
-                    graphState.isTimerProcessing = false
-                }
+        try {
+            val dialog = Dialog(requireContext())
+            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+            dialog.setContentView(R.layout.dialog_stock_graph)
+            
+            // LineChart 참조 및 설정
+            val lineChart: LineChart = dialog.findViewById(R.id.stockLineChart)
+            setupStockChart(lineChart, stock)
+            
+            // 닫기 버튼 설정
+            val closeButton: Button = dialog.findViewById(R.id.btnCloseGraph)
+            closeButton.setOnClickListener {
+                dialog.dismiss()
             }
+            
+            dialog.show()
+        } catch (e: Exception) {
+            Log.e("StockFragment", "그래프 다이얼로그 오류: ${e.message}")
         }
-        
-        // 주식 데이터 변경 감지를 위한 옵저버 등록
-        stockViewModel.stockItems.observe(viewLifecycleOwner, graphUpdateObserver)
-        
-        // 다이얼로그가 닫힐 때 옵저버 제거
-        dialog.setOnDismissListener {
-            stockViewModel.stockItems.removeObserver(graphUpdateObserver)
-        }
-        
-        // 다이얼로그 표시
-        dialog.show()
-        
-        // 다이얼로그 크기 조정
-        val window = dialog.window
-        window?.setLayout(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
     }
     
     /**
@@ -616,9 +583,6 @@ class StockFragment : BaseFragment() {
      */
     private fun initSounds() {
         try {
-            // SoundManager 인스턴스 가져오기
-            soundManager = SoundManager.getInstance(requireContext())
-            
             // 필요한 효과음 로드
             soundManager.loadSound(SoundManager.SOUND_STOCK_SELECT)
             soundManager.loadSound(SoundManager.SOUND_STOCK_BUTTON)
@@ -646,6 +610,70 @@ class StockFragment : BaseFragment() {
             soundManager.playSound(SoundManager.SOUND_STOCK_BUTTON)
         } catch (e: Exception) {
             android.util.Log.e("StockFragment", "버튼 효과음 재생 오류: ${e.message}")
+        }
+    }
+
+    // setupStockChart 메서드 추가
+    private fun setupStockChart(lineChart: LineChart, stock: Stock) {
+        try {
+            lineChart.clear()
+            
+            // 데이터 포인트 준비
+            val entries = ArrayList<Entry>()
+            
+            // 가격 이력이 있으면 사용, 없으면 현재 가격 기준으로 생성
+            if (stock.priceHistory.isNotEmpty()) {
+                for (i in stock.priceHistory.indices) {
+                    entries.add(Entry(i.toFloat(), stock.priceHistory[i].toFloat()))
+                }
+            } else {
+                // 가격 이력이 없는 경우 현재 가격으로 5개 포인트 생성
+                for (i in 0 until 5) {
+                    entries.add(Entry(i.toFloat(), stock.price.toFloat()))
+                }
+            }
+            
+            // 데이터셋 생성
+            val dataSet = LineDataSet(entries, stock.name)
+            dataSet.color = getChangeColor(stock.changeValue)
+            dataSet.valueTextColor = Color.WHITE
+            dataSet.lineWidth = 2f
+            dataSet.setCircleColor(getChangeColor(stock.changeValue))
+            dataSet.setDrawValues(false)
+            
+            // 데이터 설정
+            val lineData = LineData(dataSet)
+            lineChart.data = lineData
+            
+            // 차트 스타일 설정
+            lineChart.description.isEnabled = false
+            lineChart.legend.textColor = Color.WHITE
+            lineChart.xAxis.textColor = Color.WHITE
+            lineChart.axisLeft.textColor = Color.WHITE
+            lineChart.axisRight.isEnabled = false
+            lineChart.setTouchEnabled(true)
+            lineChart.isDragEnabled = true
+            lineChart.setScaleEnabled(true)
+            
+            // 차트 업데이트
+            lineChart.invalidate()
+        } catch (e: Exception) {
+            Log.e("StockFragment", "차트 설정 오류: ${e.message}")
+        }
+    }
+    
+    // updateStock 메서드 수정
+    private fun updateStock(stock: Stock) {
+        selectedStock = stock
+        selectedStockName?.text = stock.name
+        
+        // BaseFragment의 trackHandler 사용 필요 없음 (이미 추적된 handler 사용)
+        if (stock.holding > 0) {
+            handler.postDelayed({
+                updateStockDetails(stock)
+            }, 100)
+        } else {
+            updateStockDetails(stock)
         }
     }
 }

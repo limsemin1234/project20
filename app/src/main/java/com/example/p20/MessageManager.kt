@@ -20,6 +20,7 @@ import android.view.ViewGroup.LayoutParams
 import android.widget.FrameLayout
 import android.view.LayoutInflater
 import com.google.android.material.snackbar.Snackbar
+import java.lang.ref.WeakReference
 
 /**
  * 화면 상단에 메시지를 표시하는 관리자 클래스
@@ -31,9 +32,11 @@ object MessageManager {
 
     private val messageQueue: Queue<String> = LinkedList()
     private val activeMessages = mutableMapOf<View, Runnable>()
-    private val handler = Handler(Looper.getMainLooper())
+    private val handler by lazy {
+        android.os.Handler(android.os.Looper.getMainLooper())
+    }
     
-    private var messageContainer: LinearLayout? = null
+    private var messageContainer: WeakReference<LinearLayout>? = null
     private var initialized = false
 
     // 새로 추가: Snackbar 관련 설정값
@@ -44,25 +47,33 @@ object MessageManager {
      * MessageManager 초기화
      */
     fun initialize(container: LinearLayout) {
-        messageContainer = container
-        container.removeAllViews() // 기존 뷰 모두 제거
-        initialized = true
+        try {
+            container.removeAllViews() // 기존 뷰 모두 제거
+            messageContainer = WeakReference(container)
+            initialized = true
+        } catch (e: Exception) {
+            android.util.Log.e("MessageManager", "초기화 오류: ${e.message}")
+        }
     }
 
     /**
      * 메시지 표시 요청
      */
     fun showMessage(context: Context, message: String) {
-        if (!initialized || messageContainer == null) {
-            // 초기화되지 않았으면 무시
+        if (!initialized || messageContainer?.get() == null) {
+            // 초기화되지 않았거나 참조가 소멸되었으면 무시
             return
         }
 
-        // 메시지를 큐에 추가
-        messageQueue.add(message)
-        
-        // 메시지 처리
-        processMessageQueue(context)
+        try {
+            // 메시지를 큐에 추가
+            messageQueue.add(message)
+            
+            // 메시지 처리
+            processMessageQueue(context)
+        } catch (e: Exception) {
+            android.util.Log.e("MessageManager", "메시지 표시 오류: ${e.message}")
+        }
     }
 
     /**
@@ -70,31 +81,35 @@ object MessageManager {
      */
     private fun processMessageQueue(context: Context) {
         // 컨테이너가 없으면 무시
-        val container = messageContainer ?: return
+        val container = messageContainer?.get() ?: return
         
-        // 표시 중인 메시지가 최대 개수보다 적고, 큐에 메시지가 있으면 표시
-        while (activeMessages.size < MAX_MESSAGES && messageQueue.isNotEmpty()) {
-            val message = messageQueue.poll() ?: continue
-            
-            // 메시지 뷰 생성
-            val messageView = createMessageView(context, message)
-            
-            // 컨테이너에 추가
-            container.addView(messageView)
-            
-            // 애니메이션으로 표시
-            showWithAnimation(messageView)
-            
-            // 일정 시간 후 제거할 Runnable 생성 및 예약
-            val dismissRunnable = Runnable {
-                hideWithAnimation(messageView)
+        try {
+            // 표시 중인 메시지가 최대 개수보다 적고, 큐에 메시지가 있으면 표시
+            while (activeMessages.size < MAX_MESSAGES && messageQueue.isNotEmpty()) {
+                val message = messageQueue.poll() ?: continue
+                
+                // 메시지 뷰 생성
+                val messageView = createMessageView(context, message)
+                
+                // 컨테이너에 추가
+                container.addView(messageView)
+                
+                // 애니메이션으로 표시
+                showWithAnimation(messageView)
+                
+                // 일정 시간 후 제거할 Runnable 생성 및 예약
+                val dismissRunnable = Runnable {
+                    hideWithAnimation(messageView)
+                }
+                
+                // 활성 메시지 목록에 추가
+                activeMessages[messageView] = dismissRunnable
+                
+                // 일정 시간 후 메시지 제거
+                handler.postDelayed(dismissRunnable, MESSAGE_DISPLAY_DURATION)
             }
-            
-            // 활성 메시지 목록에 추가
-            activeMessages[messageView] = dismissRunnable
-            
-            // 일정 시간 후 메시지 제거
-            handler.postDelayed(dismissRunnable, MESSAGE_DISPLAY_DURATION)
+        } catch (e: Exception) {
+            android.util.Log.e("MessageManager", "메시지 큐 처리 오류: ${e.message}")
         }
     }
 
@@ -153,18 +168,22 @@ object MessageManager {
         fadeOut.addListener(object : AnimatorListenerAdapter() {
             override fun onAnimationEnd(animation: Animator) {
                 // 애니메이션 종료 후 뷰 제거 및 관련 데이터 정리
-                val container = messageContainer
-                if (container != null) {
-                    container.removeView(view)
-                    
-                    // 활성 메시지 목록에서 제거
-                    val runnable = activeMessages.remove(view)
-                    runnable?.let { handler.removeCallbacks(it) }
-                    
-                    // 큐에 메시지가 있으면 다음 메시지 처리
-                    if (messageQueue.isNotEmpty() && container.context != null) {
-                        processMessageQueue(container.context)
+                try {
+                    val container = messageContainer?.get()
+                    if (container != null) {
+                        container.removeView(view)
+                        
+                        // 활성 메시지 목록에서 제거
+                        val runnable = activeMessages.remove(view)
+                        runnable?.let { handler.removeCallbacks(it) }
+                        
+                        // 큐에 메시지가 있으면 다음 메시지 처리
+                        if (messageQueue.isNotEmpty() && container.context != null) {
+                            processMessageQueue(container.context)
+                        }
                     }
+                } catch (e: Exception) {
+                    android.util.Log.e("MessageManager", "메시지 제거 오류: ${e.message}")
                 }
             }
         })
@@ -175,19 +194,33 @@ object MessageManager {
      * 모든 메시지 제거
      */
     fun clearAllMessages() {
-        val container = messageContainer ?: return
-        
-        // 활성 메시지에 대한 타이머 취소
-        for (runnable in activeMessages.values) {
-            handler.removeCallbacks(runnable)
+        try {
+            val container = messageContainer?.get() ?: return
+            
+            // 활성 메시지에 대한 타이머 취소
+            for (runnable in activeMessages.values) {
+                handler.removeCallbacks(runnable)
+            }
+            
+            // 모든 메시지 뷰 제거
+            container.removeAllViews()
+            
+            // 데이터 초기화
+            activeMessages.clear()
+            messageQueue.clear()
+        } catch (e: Exception) {
+            android.util.Log.e("MessageManager", "모든 메시지 제거 오류: ${e.message}")
         }
-        
-        // 모든 메시지 뷰 제거
-        container.removeAllViews()
-        
-        // 데이터 초기화
-        activeMessages.clear()
-        messageQueue.clear()
+    }
+
+    /**
+     * 앱 종료 또는 정리 시 호출하여 모든 리소스를 해제합니다.
+     */
+    fun release() {
+        clearAllMessages()
+        handler.removeCallbacksAndMessages(null)
+        messageContainer = null
+        initialized = false
     }
 
     /**

@@ -198,10 +198,19 @@ class SoundManager private constructor(private val context: Context) {
     
     fun stopBackgroundMusic() {
         try {
-            backgroundMusic?.release()
-            backgroundMusic = null
+            val player = backgroundMusic
+            if (player != null) {
+                if (player.isPlaying) {
+                    player.stop()
+                }
+                player.release()
+                backgroundMusic = null
+            }
+            Log.d("SoundManager", "배경음악 정지 완료")
         } catch (e: Exception) {
             Log.e("SoundManager", "배경음악 정지 오류: ${e.message}")
+            // 예외 발생시에도 null 처리하여 메모리 누수 방지
+            backgroundMusic = null
         }
     }
     
@@ -212,12 +221,18 @@ class SoundManager private constructor(private val context: Context) {
         try {
             if (!isTemporaryMusic && isSoundEnabled()) {
                 // 현재 재생 중인 음악 정보 저장
-                if (backgroundMusic?.isPlaying == true) {
-                    backgroundMusic?.pause()
+                val currentPlayer = backgroundMusic
+                
+                // 기존 미디어 플레이어 해제 먼저 수행
+                if (currentPlayer != null) {
+                    if (currentPlayer.isPlaying) {
+                        currentPlayer.stop()
+                    }
+                    currentPlayer.release()
+                    backgroundMusic = null
                 }
                 
-                // 임시 음악 설정
-                backgroundMusic?.release()
+                // 새로운 미디어 플레이어 생성
                 backgroundMusic = MediaPlayer.create(context, musicResId)
                 backgroundMusic?.isLooping = true
                 
@@ -226,9 +241,13 @@ class SoundManager private constructor(private val context: Context) {
                 
                 backgroundMusic?.start()
                 isTemporaryMusic = true
+                
+                Log.d("SoundManager", "임시 배경음악으로 변경: $musicResId")
             }
         } catch (e: Exception) {
             Log.e("SoundManager", "임시 음악 설정 오류: ${e.message}")
+            // 오류 발생 시 기본 상태로 복원
+            isTemporaryMusic = false
         }
     }
     
@@ -238,7 +257,17 @@ class SoundManager private constructor(private val context: Context) {
     fun restoreOriginalMusic() {
         try {
             if (isTemporaryMusic && isSoundEnabled()) {
-                backgroundMusic?.release()
+                // 기존 미디어 플레이어 해제 먼저 수행
+                val currentPlayer = backgroundMusic
+                if (currentPlayer != null) {
+                    if (currentPlayer.isPlaying) {
+                        currentPlayer.stop()
+                    }
+                    currentPlayer.release()
+                    backgroundMusic = null
+                }
+                
+                // 새로운 미디어 플레이어 생성
                 backgroundMusic = MediaPlayer.create(context, originalMusicResId)
                 backgroundMusic?.isLooping = true
                 
@@ -247,9 +276,13 @@ class SoundManager private constructor(private val context: Context) {
                 
                 backgroundMusic?.start()
                 isTemporaryMusic = false
+                
+                Log.d("SoundManager", "원래 배경음악으로 복원")
             }
         } catch (e: Exception) {
             Log.e("SoundManager", "원래 음악 복원 오류: ${e.message}")
+            // 플래그는 항상 리셋
+            isTemporaryMusic = false
         }
     }
     
@@ -309,14 +342,25 @@ class SoundManager private constructor(private val context: Context) {
     
     fun release() {
         try {
+            // 배경 음악 정지 및 해제
             stopBackgroundMusic()
-            soundPool?.release()
-            soundPool = null
+            
+            // 사운드풀 정리
+            val pool = soundPool
+            if (pool != null) {
+                pool.release()
+                soundPool = null
+            }
+            
+            // 맵 비우기
             soundMap.clear()
             isTemporaryMusic = false
-            Log.d("SoundManager", "리소스 해제 완료")
+            Log.d("SoundManager", "모든 리소스 해제 완료")
         } catch (e: Exception) {
             Log.e("SoundManager", "리소스 해제 오류: ${e.message}")
+            // 예외 발생해도 null 처리
+            soundPool = null
+            soundMap.clear()
         }
     }
 } 
