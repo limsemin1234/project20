@@ -104,7 +104,7 @@ class SettingsDialogFragment : DialogFragment() {
             }
             
             val message = if (isChecked) "배경음악이 켜졌습니다" else "배경음악이 꺼졌습니다"
-            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+            MessageManager.showMessage(requireContext(), message)
         }
         
         // 효과음 설정 스위치 리스너
@@ -128,7 +128,7 @@ class SettingsDialogFragment : DialogFragment() {
             }
             
             val message = if (isChecked) "효과음이 켜졌습니다" else "효과음이 꺼졌습니다"
-            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+            MessageManager.showMessage(requireContext(), message)
         }
         
         // 음소거 설정 스위치 리스너
@@ -169,7 +169,7 @@ class SettingsDialogFragment : DialogFragment() {
             }
             
             val message = if (isChecked) "모든 소리가 음소거 되었습니다" else "음소거가 해제되었습니다"
-            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+            MessageManager.showMessage(requireContext(), message)
         }
         
         // 볼륨 조절 슬라이더
@@ -200,7 +200,7 @@ class SettingsDialogFragment : DialogFragment() {
                     mainActivity.setVolume(progress.toFloat() / 100f)
                 }
                 
-                Toast.makeText(requireContext(), "볼륨: ${progress}%", Toast.LENGTH_SHORT).show()
+                MessageManager.showMessage(requireContext(), "볼륨: ${progress}%")
             }
         })
         
@@ -213,7 +213,7 @@ class SettingsDialogFragment : DialogFragment() {
             prefs.edit().putBoolean("vibration_enabled", isChecked).apply()
             
             val message = if (isChecked) "진동이 켜졌습니다" else "진동이 꺼졌습니다"
-            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+            MessageManager.showMessage(requireContext(), message)
         }
 
         // X 닫기 버튼
