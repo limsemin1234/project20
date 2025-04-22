@@ -32,7 +32,7 @@ import android.net.Uri
 import android.graphics.PorterDuff
 import android.util.Log
 import kotlin.random.Random
-import android.widget.Toast
+import android.widget.ImageView
 
 // Fragment에서 BaseFragment로 상속 변경
 class PokerFragment : BaseFragment() {

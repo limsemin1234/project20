@@ -7,7 +7,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast // 제거 또는 주석처리
+// import android.widget.Toast // 제거: Toast 대신 MessageManager 사용
 import androidx.fragment.app.activityViewModels
 import com.example.p20.databinding.FragmentItemBinding // View Binding import
 import com.example.p20.AssetViewModel

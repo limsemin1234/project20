@@ -12,7 +12,6 @@ import android.view.Window
 import android.widget.Button
 import androidx.fragment.app.DialogFragment
 import android.widget.Switch
-import android.widget.Toast
 import android.widget.ImageButton
 import androidx.appcompat.app.AlertDialog
 import android.widget.Spinner
