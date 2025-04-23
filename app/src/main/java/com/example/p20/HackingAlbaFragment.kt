@@ -722,8 +722,9 @@ class HackingAlbaFragment : BaseFragment() {
     private fun playSound(soundId: Int) {
         try {
             if (soundId > 0) {
-                val mainActivity = activity as? MainActivity
-                val volume = mainActivity?.getCurrentVolume() ?: 0.5f
+                // SoundController를 사용하여 볼륨을 가져옴
+                val soundController = P20Application.getSoundController()
+                val volume = soundController.getCurrentVolume()
                 soundPool.play(soundId, volume, volume, 1, 0, 1.0f)
             }
         } catch (e: Exception) {

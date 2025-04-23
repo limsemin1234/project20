@@ -95,10 +95,10 @@ class SettingsDialogFragment : DialogFragment() {
             (activity as? MainActivity)?.let { mainActivity ->
                 if (isChecked) {
                     // 음악 활성화
-                    mainActivity.startBackgroundMusic()
+                    P20Application.getSoundController().startBackgroundMusic()
                 } else {
                     // 음악 비활성화
-                    mainActivity.stopBackgroundMusic()
+                    P20Application.getSoundController().stopBackgroundMusic()
                 }
             }
             
@@ -122,9 +122,7 @@ class SettingsDialogFragment : DialogFragment() {
             }
             
             // 효과음 설정 업데이트
-            (activity as? MainActivity)?.let { mainActivity ->
-                mainActivity.updateSoundEffectSettings(isChecked)
-            }
+            P20Application.getSoundController().updateSoundEffectSettings(isChecked)
             
             val message = if (isChecked) "효과음이 켜졌습니다" else "효과음이 꺼졌습니다"
             MessageManager.showMessage(requireContext(), message)
@@ -146,10 +144,8 @@ class SettingsDialogFragment : DialogFragment() {
                     .apply()
                 
                 // 모든 소리 비활성화
-                (activity as? MainActivity)?.let { mainActivity ->
-                    mainActivity.stopBackgroundMusic()
-                    mainActivity.updateSoundEffectSettings(false)
-                }
+                P20Application.getSoundController().stopBackgroundMusic()
+                P20Application.getSoundController().updateSoundEffectSettings(false)
                 
                 // 스위치 시각적 비활성화 (선택 불가능하게)
                 soundSwitch.isEnabled = false
@@ -179,9 +175,7 @@ class SettingsDialogFragment : DialogFragment() {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 // 실시간으로 볼륨 조절 (선택적)
                 if (fromUser) {
-                    (activity as? MainActivity)?.let { mainActivity ->
-                        mainActivity.setVolume(progress.toFloat() / 100f)
-                    }
+                    P20Application.getSoundController().setVolume(progress.toFloat() / 100f)
                 }
             }
             
@@ -195,9 +189,7 @@ class SettingsDialogFragment : DialogFragment() {
                 prefs.edit().putInt("volume_level", progress).apply()
                 
                 // 볼륨 조절 적용
-                (activity as? MainActivity)?.let { mainActivity ->
-                    mainActivity.setVolume(progress.toFloat() / 100f)
-                }
+                P20Application.getSoundController().setVolume(progress.toFloat() / 100f)
                 
                 MessageManager.showMessage(requireContext(), "볼륨: ${progress}%")
             }
