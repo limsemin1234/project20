@@ -93,7 +93,7 @@ class ClickAlbaFragment : BaseFragment() {
                 // 쿨다운 상태가 아니고 활성 시간이 끝나지 않았을 때만 효과음 재생
                 val isCooldown = albaViewModel.isCooldown.value ?: false
                 if (!isCooldown && !activeTimeDone) {
-                    playCoinSound()
+                    playCoinSound() // 이벤트 시작 시 한 번만 효과음 재생
                 }
                 
                 // 게임 로직과 애니메이션은 디바운싱 적용
@@ -237,13 +237,25 @@ class ClickAlbaFragment : BaseFragment() {
      */
     private fun playCoinSound() {
         try {
-            // 활성 시간이 끝났으면 소리 재생하지 않음
-            if (albaViewModel.isActivePhase.value == true && (albaViewModel.activePhaseTime.value ?: 0) <= 0) {
+            // 로그 추가 - 디버깅 목적
+            android.util.Log.d("ClickAlbaFragment", "playCoinSound 호출됨")
+            
+            // 활성 시간이 끝났거나 쿨다운 중이면 소리 재생하지 않음
+            if ((albaViewModel.isActivePhase.value == true && (albaViewModel.activePhaseTime.value ?: 0) <= 0) ||
+                albaViewModel.isCooldown.value == true) {
+                android.util.Log.d("ClickAlbaFragment", "효과음 재생 중단: 활성 시간 종료 또는 쿨다운 중")
                 return
             }
             
-            // 코인 효과음 재생
-            soundManager.playSound(R.raw.coin)
+            // SoundController를 통해 직접 효과음 설정 확인 및 재생
+            val soundController = P20Application.getSoundController()
+            if (soundController.isSoundEffectEnabled()) {
+                // 코인 효과음 재생
+                soundController.playSoundEffect(R.raw.coin)
+                android.util.Log.d("ClickAlbaFragment", "코인 효과음 재생 성공")
+            } else {
+                android.util.Log.d("ClickAlbaFragment", "효과음 설정이 꺼져 있음")
+            }
         } catch (e: Exception) {
             // 효과음 재생 중 오류 발생 시 로그 출력 후 계속 진행
             android.util.Log.e("ClickAlbaFragment", "효과음 재생 오류: ${e.message}")
@@ -418,20 +430,14 @@ class ClickAlbaFragment : BaseFragment() {
         // 모든 애니메이션 정리
         clearAnimations()
         
-        // 모든 뷰 참조 제거 작업
+        // 화면이 소멸될 때 클릭 리스너만 제거
         if (::albaImage.isInitialized) {
             albaImage.setOnTouchListener(null)
         }
         
-        // ViewModel 관찰자 정리
-        if (::albaViewModel.isInitialized) {
-            albaViewModel.isCooldown.removeObservers(viewLifecycleOwner)
-            albaViewModel.cooldownTime.removeObservers(viewLifecycleOwner)
-            albaViewModel.isActivePhase.removeObservers(viewLifecycleOwner)
-            albaViewModel.activePhaseTime.removeObservers(viewLifecycleOwner)
-            albaViewModel.albaLevel.removeObservers(viewLifecycleOwner)
-            albaViewModel.clickCounterResetEvent.removeObservers(viewLifecycleOwner)
-            albaViewModel.itemRewardEvent.removeObservers(viewLifecycleOwner)
+        // 이미지 리소스는 유지
+        if (::albaImage.isInitialized) {
+            albaImage.setImageResource(R.drawable.alba1)
         }
         
         super.onDestroyView()

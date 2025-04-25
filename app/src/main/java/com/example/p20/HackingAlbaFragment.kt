@@ -667,17 +667,23 @@ class HackingAlbaFragment : BaseFragment() {
     private fun registerSoundSettingsReceiver() {
         soundSettingsReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                if (intent.action == "SOUND_SETTING_CHANGED") {
-                    // 필요한 처리
+                if (intent.action == "com.example.p20.SOUND_SETTINGS_CHANGED") {
+                    // 효과음 설정이 변경되었을 때 로그 출력
+                    val isSoundEffectEnabled = intent.getBooleanExtra("sound_effect_enabled", true)
+                    val isMuted = intent.getBooleanExtra("mute_enabled", false)
+                    
+                    android.util.Log.d("HackingAlba", "효과음 설정 변경 감지: 효과음=${isSoundEffectEnabled}, 음소거=${isMuted}")
                 }
             }
         }
         
         context?.let { ctx ->
-            LocalBroadcastManager.getInstance(ctx).registerReceiver(
-                soundSettingsReceiver!!,
-                IntentFilter("SOUND_SETTING_CHANGED")
-            )
+            val filter = IntentFilter("com.example.p20.SOUND_SETTINGS_CHANGED")
+            LocalBroadcastManager.getInstance(ctx).registerReceiver(soundSettingsReceiver!!, filter)
+            // 전역 브로드캐스트도 등록
+            ctx.registerReceiver(soundSettingsReceiver!!, filter)
+            
+            android.util.Log.d("HackingAlba", "효과음 설정 변경 리시버 등록됨")
         }
     }
 
@@ -685,31 +691,29 @@ class HackingAlbaFragment : BaseFragment() {
      * SoundPool 초기화 및 효과음 로드
      */
     private fun initSoundPool() {
-        soundPool = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val audioAttributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_GAME)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build()
-            SoundPool.Builder()
-                .setMaxStreams(5)
-                .setAudioAttributes(audioAttributes)
-                .build()
-        } else {
-            SoundPool(5, AudioManager.STREAM_MUSIC, 0)
-        }
-        
         try {
-            // 효과음 로드
-            context?.let { ctx ->
-                correctSoundId = soundPool.load(ctx, R.raw.alba_hacking_success, 1)
-                wrongSoundId = soundPool.load(ctx, R.raw.alba_hacking_fail, 1)
-                typingSoundId = soundPool.load(ctx, R.raw.alba_hacking_number, 1)
-                startSoundId = soundPool.load(ctx, R.raw.alba_hacking_start, 1)
-                successSoundId = soundPool.load(ctx, R.raw.alba_hacking_success, 1)
-                failSoundId = soundPool.load(ctx, R.raw.alba_hacking_fail_end, 1)
-                hackingStartSoundId = soundPool.load(ctx, R.raw.alba_hacking_start, 1)
-                hackingButtonSoundId = soundPool.load(ctx, R.raw.alba_hacking_button, 1)
-            }
+            // 효과음 ID 초기화
+            correctSoundId = R.raw.alba_hacking_success
+            wrongSoundId = R.raw.alba_hacking_fail
+            typingSoundId = R.raw.alba_hacking_number
+            startSoundId = R.raw.alba_hacking_start
+            successSoundId = R.raw.alba_hacking_success
+            failSoundId = R.raw.alba_hacking_fail_end
+            hackingStartSoundId = R.raw.alba_hacking_start
+            hackingButtonSoundId = R.raw.alba_hacking_button
+            
+            // SoundManager를 통해 미리 로드
+            val soundManager = P20Application.getSoundController().getSoundManager()
+            soundManager.loadSound(correctSoundId)
+            soundManager.loadSound(wrongSoundId)
+            soundManager.loadSound(typingSoundId)
+            soundManager.loadSound(startSoundId)
+            soundManager.loadSound(successSoundId)
+            soundManager.loadSound(failSoundId)
+            soundManager.loadSound(hackingStartSoundId)
+            soundManager.loadSound(hackingButtonSoundId)
+            
+            android.util.Log.d("HackingAlba", "효과음 로드 완료")
         } catch (e: Exception) {
             android.util.Log.e("HackingAlba", "효과음 로드 오류: ${e.message}")
             showErrorMessage("효과음 로드 중 오류가 발생했습니다.")
@@ -722,10 +726,8 @@ class HackingAlbaFragment : BaseFragment() {
     private fun playSound(soundId: Int) {
         try {
             if (soundId > 0) {
-                // SoundController를 사용하여 볼륨을 가져옴
-                val soundController = P20Application.getSoundController()
-                val volume = soundController.getCurrentVolume()
-                soundPool.play(soundId, volume, volume, 1, 0, 1.0f)
+                // SoundController를 통해 효과음 재생
+                P20Application.getSoundController().playSoundEffect(soundId)
             }
         } catch (e: Exception) {
             android.util.Log.e("HackingAlba", "효과음 재생 오류: ${e.message}")
@@ -1060,10 +1062,11 @@ class HackingAlbaFragment : BaseFragment() {
             deleteButton.setOnClickListener(null)
         }
         
-        // SoundPool 리소스 해제
-        if (::soundPool.isInitialized) {
-            soundPool.release()
-        }
+        // 모든 핸들러 콜백 제거
+        handler.removeCallbacksAndMessages(null)
+        
+        // SoundPool 리소스는 더 이상 직접 관리하지 않으므로 여기서 해제하지 않음
+        // 대신 P20Application에서 관리됨
         
         // 부모 클래스의 onDestroyView 호출 (BaseFragment에서 나머지 리소스 정리)
         super.onDestroyView()
@@ -1077,8 +1080,17 @@ class HackingAlbaFragment : BaseFragment() {
         
         // BroadcastReceiver 해제
         if (soundSettingsReceiver != null) {
-            context?.let { ctx ->
-                LocalBroadcastManager.getInstance(ctx).unregisterReceiver(soundSettingsReceiver!!)
+            try {
+                context?.let { ctx ->
+                    // LocalBroadcastManager에서 해제
+                    LocalBroadcastManager.getInstance(ctx).unregisterReceiver(soundSettingsReceiver!!)
+                    // 전역 브로드캐스트에서도 해제
+                    ctx.unregisterReceiver(soundSettingsReceiver!!)
+                    android.util.Log.d("HackingAlba", "효과음 설정 변경 리시버 해제됨")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("HackingAlba", "리시버 해제 오류: ${e.message}")
+            } finally {
                 soundSettingsReceiver = null
             }
         }

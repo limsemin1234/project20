@@ -289,21 +289,15 @@ class SoundController private constructor(private val context: Context) {
     fun playSoundEffect(soundId: Int): Boolean {
         try {
             if (!isSoundEffectEnabled()) {
+                Log.d("SoundController", "효과음 비활성화 상태: 재생 안함")
                 return false
             }
             
             val volume = getCurrentVolume()
             
-            val soundPool = android.media.SoundPool.Builder()
-                .setMaxStreams(5)
-                .build()
-            
-            val soundEffectId = soundPool.load(context, soundId, 1)
-            soundPool.setOnLoadCompleteListener { pool, _, status ->
-                if (status == 0) {
-                    pool.play(soundEffectId, volume, volume, 1, 0, 1.0f)
-                }
-            }
+            // 효과음 로드 및 재생은 SoundManager를 통해 처리
+            soundManager.playSound(soundId)
+            Log.d("SoundController", "효과음 재생: ID=$soundId, 볼륨=$volume")
             
             return true
         } catch (e: Exception) {
@@ -325,5 +319,10 @@ class SoundController private constructor(private val context: Context) {
     // 임시로 설정된 15초 경고 음악이 재생 중인지 확인
     fun isPlaying15SecondWarning(): Boolean {
         return isTemporaryMusic
+    }
+    
+    // SoundManager 인스턴스 접근 메서드
+    fun getSoundManager(): SoundManager {
+        return soundManager
     }
 } 
