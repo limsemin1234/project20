@@ -60,6 +60,15 @@ class MainActivity : AppCompatActivity() {
         
         // 컨트롤러 연결
         animationController.setSoundController(soundController)
+        
+        // 설정만 초기화하고 배경음악은 아직 재생하지 않음
+        initializeSoundSettings()
+        
+        // SplashActivity에서 넘어온 경우 음악 시작
+        if (intent.getBooleanExtra("startMusic", false)) {
+            android.util.Log.d("MainActivity", "SplashActivity에서 넘어옴 - 배경음악 시작")
+            startMusicFromSplash()
+        }
 
         // 효과음 설정 변경을 수신하는 BroadcastReceiver 등록
         registerSoundSettingsReceiver()
@@ -263,20 +272,90 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // onPause와 onResume에서 음악 관리
-    override fun onPause() {
-        super.onPause()
-        soundController.pauseBackgroundMusic()
+    /**
+     * 배경음악 설정을 초기화하지만 음악은 재생하지 않음
+     */
+    private fun initializeSoundSettings() {
+        try {
+            val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+            val soundEnabled = prefs.getBoolean("sound_enabled", true)
+            val soundEffectEnabled = prefs.getBoolean("sound_effect_enabled", true)
+            val isMuted = prefs.getBoolean("mute_enabled", false)
+            val volume = prefs.getFloat("current_volume", 0.7f)
+            
+            // 볼륨 설정만 적용
+            soundController.setVolume(volume)
+            
+            // 로그 출력
+            android.util.Log.d("MainActivity", "사운드 설정 초기화: 배경음악=$soundEnabled, 효과음=$soundEffectEnabled, 음소거=$isMuted, 볼륨=$volume")
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "사운드 설정 초기화 오류: ${e.message}")
+        }
+    }
+    
+    /**
+     * SplashActivity에서 넘어온 경우 배경음악 시작
+     */
+    private fun startMusicFromSplash() {
+        try {
+            // 애플리케이션 플래그 확인
+            if (P20Application.isMusicInitialized()) {
+                val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+                val soundEnabled = prefs.getBoolean("sound_enabled", true)
+                val isMuted = prefs.getBoolean("mute_enabled", false)
+                
+                if (!isMuted && soundEnabled) {
+                    // 딜레이를 주어 UI가 모두 로드된 후 배경음악 시작
+                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                        soundController.startBackgroundMusic()
+                        android.util.Log.d("MainActivity", "스플래시 화면 후 배경음악 시작됨")
+                    }, 500) // 0.5초 후 시작
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "배경음악 시작 오류: ${e.message}")
+        }
     }
 
     override fun onResume() {
         super.onResume()
-        soundController.resumeBackgroundMusic()
+        
+        // 화면이 다시 보일 때 배경음악 재생 확인
+        val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+        val soundEnabled = prefs.getBoolean("sound_enabled", true)
+        val isMuted = prefs.getBoolean("mute_enabled", false)
+        
+        if (!isMuted && soundEnabled) {
+            soundController.resumeBackgroundMusic()
+        }
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        
+        // 앱이 백그라운드로 갈 때 배경음악 일시정지
+        soundController.pauseBackgroundMusic()
     }
 
-    // 배경음악 재시작
+    // 볼륨 조절
+    fun setVolume(volume: Float) {
+        soundController.setVolume(volume)
+    }
+    
+    /**
+     * 게임 오버 후 다시 시작할 때 배경음악을 처음부터 재생
+     */
     fun restartBackgroundMusic() {
-        soundController.restartBackgroundMusic()
+        try {
+            android.util.Log.d("MainActivity", "게임 재시작 - 배경음악 처음부터 재생")
+            
+            // SoundController의 restartBackgroundMusic 메서드 호출
+            soundController.restartBackgroundMusic()
+            
+            android.util.Log.d("MainActivity", "게임 재시작 후 배경음악 다시 시작됨")
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "배경음악 재시작 오류: ${e.message}")
+        }
     }
 
     // 배경음악 중지
@@ -446,6 +525,9 @@ class MainActivity : AppCompatActivity() {
             // 참고: ExplanationFragment의 onDestroy에서도 타이머를 시작하지만,
             // 혹시 모를 상황에 대비해 여기서도 타이머 시작
             timeViewModel.startTimer()
+            
+            // 게임 설명창이 사라진 후 배경음악 재생 시작
+            soundController.startBackgroundMusic()
             
             // 게임 설명창이 사라진 후 시간 표시 드래그 관련 안내 메시지 표시
             showDragTimeViewMessage()
@@ -658,10 +740,5 @@ class MainActivity : AppCompatActivity() {
                 else -> false
             }
         }
-    }
-    
-    // 볼륨 조절
-    fun setVolume(volume: Float) {
-        soundController.setVolume(volume)
     }
 }

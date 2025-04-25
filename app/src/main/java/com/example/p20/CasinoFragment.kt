@@ -38,7 +38,7 @@ class CasinoFragment : BaseFragment() {
     // 탭 타이틀 - 상수로 분리
     private companion object {
         private val TAB_TITLES = arrayOf("블랙잭", "포커(1인발라트로)")
-        private val SOUND_TAB_SELECT = R.raw.tab_select
+        private val SOUND_TAB_SELECT = R.raw.casino_tab_select
     }
 
     override fun onCreateView(

@@ -47,7 +47,7 @@ class AlbaFragment : BaseFragment() {
     
     // 효과음 ID
     companion object {
-        private val SOUND_TAB_SELECT = R.raw.tab_select
+        private val SOUND_TAB_SELECT = R.raw.alba_tab_select
     }
 
     override fun onCreateView(
@@ -67,8 +67,15 @@ class AlbaFragment : BaseFragment() {
         tabLayout = view.findViewById(R.id.albaTabLayout)
         viewPager = view.findViewById(R.id.albaViewPager)
 
+        // 뷰페이저 설정
+        viewPager.apply {
+            offscreenPageLimit = 2  // 모든 프래그먼트 유지
+            isUserInputEnabled = true  // 스와이프 활성화
+            isSaveEnabled = true  // 상태 저장 활성화
+        }
+
         // 어댑터 설정
-        adapter = AlbaViewPagerAdapter(requireActivity())
+        adapter = AlbaViewPagerAdapter(this)
         viewPager.adapter = adapter
 
         // 탭과 뷰페이저 연결 - 탭 레이아웃 표시 활성화
@@ -108,16 +115,24 @@ class AlbaFragment : BaseFragment() {
     }
 
     // 뷰페이저 어댑터 - 클릭 알바와 해킹 알바 탭 제공
-    private inner class AlbaViewPagerAdapter(fa: FragmentActivity) : FragmentStateAdapter(fa) {
+    private inner class AlbaViewPagerAdapter(fragment: Fragment) : FragmentStateAdapter(fragment) {
+        
+        private val fragments = mutableMapOf<Int, Fragment>()
         
         override fun getItemCount(): Int = 2 // 클릭 알바와 해킹 알바
         
         override fun createFragment(position: Int): Fragment {
-            return when (position) {
-                0 -> ClickAlbaFragment()
-                1 -> HackingAlbaFragment()
-                else -> ClickAlbaFragment()
+            return fragments.getOrPut(position) {
+                when (position) {
+                    0 -> ClickAlbaFragment()
+                    1 -> HackingAlbaFragment()
+                    else -> ClickAlbaFragment()
+                }
             }
+        }
+        
+        override fun containsItem(itemId: Long): Boolean {
+            return itemId < itemCount
         }
     }
 }

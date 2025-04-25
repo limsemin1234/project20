@@ -6,6 +6,8 @@ import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.SoundPool
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 
 /**
@@ -15,6 +17,19 @@ import android.util.Log
  * - 볼륨 및 음소거 설정
  */
 class SoundController private constructor(private val context: Context) {
+    
+    // 로그 태그 상수 추가
+    companion object {
+        @Volatile
+        private var instance: SoundController? = null
+        private const val TAG = "SoundController" // 로그 태그 추가
+        
+        fun getInstance(context: Context): SoundController {
+            return instance ?: synchronized(this) {
+                instance ?: SoundController(context.applicationContext).also { instance = it }
+            }
+        }
+    }
     
     // SoundManager 인스턴스 (기존 로직과의 호환성 유지)
     private val soundManager: SoundManager = SoundManager.getInstance(context)
@@ -26,21 +41,13 @@ class SoundController private constructor(private val context: Context) {
     // 상태 변수
     private var isMusicPaused = false
     private var isTemporaryMusic = false
-    private var originalMusicResId = R.raw.main_music_loop
+    private val originalMusicResId = R.raw.main_music_loop
+    
+    // 자동 재생 방지 플래그
+    private var autoPlayPrevented = false
     
     // 설정 관련
     private val prefs: SharedPreferences = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
-    
-    companion object {
-        @Volatile
-        private var instance: SoundController? = null
-        
-        fun getInstance(context: Context): SoundController {
-            return instance ?: synchronized(this) {
-                instance ?: SoundController(context.applicationContext).also { instance = it }
-            }
-        }
-    }
     
     init {
         // 버튼 효과음 초기화
@@ -49,8 +56,102 @@ class SoundController private constructor(private val context: Context) {
         // 기본 설정 초기화
         initializeDefaultSettings()
         
-        // 배경음악 초기화
-        setupBackgroundMusic()
+        // 배경음악 초기화만 하고 재생은 하지 않음
+        setupBackgroundMusicWithoutPlay()
+    }
+    
+    /**
+     * 자동 재생 방지 설정
+     * 앱 시작 시 배경음악이 자동으로 재생되지 않도록 합니다.
+     */
+    fun preventAutoPlay() {
+        autoPlayPrevented = true
+    }
+    
+    /**
+     * 배경음악 초기화 (재생 없이)
+     */
+    private fun setupBackgroundMusicWithoutPlay() {
+        try {
+            // 이전에 생성된 배경음악이 있다면 해제
+            soundManager.release()
+            
+            // 배경음악 초기화
+            soundManager.initializeMediaPlayer()
+            
+            // 볼륨 설정
+            val currentVolume = getCurrentVolume()
+            soundManager.setVolume(currentVolume, currentVolume)
+            
+            // 오류 리스너 설정
+            soundManager.setOnErrorListener { mp, what, extra ->
+                Log.e("SoundController", "MediaPlayer 오류: what=$what, extra=$extra")
+                
+                try {
+                    mp.release()
+                    soundManager.initializeMediaPlayer()
+                } catch (e: Exception) {
+                    Log.e("SoundController", "MediaPlayer 오류 복구 실패: ${e.message}")
+                }
+                true
+            }
+            
+            Log.d("SoundController", "배경음악 초기화 완료 (자동 재생 없음)")
+            
+        } catch (e: Exception) {
+            Log.e("SoundController", "배경음악 초기화 오류: ${e.message}")
+        }
+    }
+    
+    /**
+     * 배경음악 초기화 및 재생 메소드
+     * 설정에 따라 배경음악을 재생합니다 (이미 초기화된 음악이 있다면 사용)
+     */
+    private fun setupBackgroundMusic() {
+        try {
+            // 이미 초기화되어 있고 자동 재생이 방지된 경우 초기화를 건너뜀
+            if (autoPlayPrevented) {
+                Log.d("SoundController", "자동 재생 방지 모드: 초기화 단계에서 음악 재생 안함")
+                return
+            }
+            
+            // 배경음악 초기화가 필요한 경우
+            if (soundManager.isReleased) {
+                soundManager.initializeMediaPlayer()
+                
+                // 볼륨 설정
+                val currentVolume = getCurrentVolume()
+                soundManager.setVolume(currentVolume, currentVolume)
+                
+                // 오류 리스너 설정
+                soundManager.setOnErrorListener { mp, what, extra ->
+                    Log.e("SoundController", "MediaPlayer 오류: what=$what, extra=$extra")
+                    
+                    try {
+                        mp.release()
+                        soundManager.initializeMediaPlayer()
+                        
+                        if (isSoundEnabled()) {
+                            soundManager.startBackgroundMusic()
+                        }
+                    } catch (e: Exception) {
+                        Log.e("SoundController", "MediaPlayer 오류 복구 실패: ${e.message}")
+                    }
+                    true
+                }
+            }
+            
+            // 음악 재생
+            if (isSoundEnabled()) {
+                Log.d("SoundController", "배경음악 시작: 사운드 활성화됨, 볼륨=${getCurrentVolume()}")
+                soundManager.startBackgroundMusic()
+            } else {
+                Log.d("SoundController", "배경음악 시작 안함: 사운드 비활성화됨")
+            }
+            
+        } catch (e: Exception) {
+            Log.e("SoundController", "배경음악 초기화 오류: ${e.message}")
+        }
     }
     
     /**
@@ -115,60 +216,25 @@ class SoundController private constructor(private val context: Context) {
         }
     }
     
-    /**
-     * 배경음악 초기화 및 재생 메소드
-     */
-    private fun setupBackgroundMusic() {
-        try {
-            // 이전에 생성된 배경음악이 있다면 해제
-            soundManager.release()
-            
-            // 배경음악 초기화
-            soundManager.initializeMediaPlayer()
-            
-            // 볼륨 설정
-            val currentVolume = getCurrentVolume()
-            soundManager.setVolume(currentVolume, currentVolume)
-            
-            // 오류 리스너 설정
-            soundManager.setOnErrorListener { mp, what, extra ->
-                Log.e("SoundController", "MediaPlayer 오류: what=$what, extra=$extra")
-                
-                try {
-                    mp.release()
-                    soundManager.initializeMediaPlayer()
-                    
-                    if (isSoundEnabled()) {
-                        soundManager.startBackgroundMusic()
-                    }
-                } catch (e: Exception) {
-                    Log.e("SoundController", "MediaPlayer 오류 복구 실패: ${e.message}")
-                }
-                true
-            }
-            
-            // 음악 재생
-            if (!soundManager.isPlaying && isSoundEnabled()) {
-                soundManager.startBackgroundMusic()
-            }
-        } catch (e: Exception) {
-            Log.e("SoundController", "배경음악 초기화 오류: ${e.message}")
-        }
-    }
-    
     // 배경음악 시작
     fun startBackgroundMusic() {
-        if (!soundManager.isPlaying && isSoundEnabled()) {
-            soundManager.startBackgroundMusic()
+        try {
+            if (isSoundEnabled()) {
+                Log.d("SoundController", "startBackgroundMusic 호출됨, 현재 재생 중: ${soundManager.isPlaying}")
+                if (!soundManager.isPlaying) {
+                    soundManager.startBackgroundMusic()
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("SoundController", "배경음악 시작 오류: ${e.message}")
         }
     }
     
-    // 배경음악 일시정지
+    /**
+     * 배경음악을 일시정지합니다.
+     */
     fun pauseBackgroundMusic() {
-        if (soundManager.isPlaying) {
-            soundManager.pauseBackgroundMusic()
-            isMusicPaused = true
-        }
+        soundManager.pauseBackgroundMusic()
     }
     
     // 배경음악 재개
@@ -184,17 +250,24 @@ class SoundController private constructor(private val context: Context) {
         soundManager.stopBackgroundMusic()
     }
     
-    // 배경음악 재시작
+    /**
+     * 배경음악을 처음부터 다시 재생합니다.
+     * 게임 오버 후 재시작 시 사용됩니다.
+     */
     fun restartBackgroundMusic() {
         try {
-            if (!isSoundEnabled()) return
+            Log.d(TAG, "배경음악 처음부터 재시작")
             
-            soundManager.release()
+            // 현재 재생 중인 배경음악을 중지합니다
+            soundManager.stopBackgroundMusic()
             
-            setupBackgroundMusic()
-            isMusicPaused = false
+            // 약간의 딜레이 후 배경음악을 다시 시작합니다
+            Handler(Looper.getMainLooper()).postDelayed({
+                soundManager.startBackgroundMusic()
+                Log.d(TAG, "배경음악이 처음부터 재생됩니다")
+            }, 500) // 0.5초 딜레이로 UI 전환이 완료된 후 재생
         } catch (e: Exception) {
-            Log.e("SoundController", "배경음악 재시작 오류: ${e.message}")
+            Log.e(TAG, "배경음악 재시작 중 오류 발생: ${e.message}")
         }
     }
     
@@ -225,11 +298,14 @@ class SoundController private constructor(private val context: Context) {
                 .putFloat("current_volume", safeVolume)
                 .apply()
             
-            // 볼륨 변경 이벤트 브로드캐스트
+            // 볼륨 변경 이벤트 브로드캐스트 (필요한 설정 변경만 전달)
             val intent = android.content.Intent("com.example.p20.SOUND_SETTINGS_CHANGED")
                 .putExtra("volume_changed", true)
                 .putExtra("current_volume", safeVolume)
             context.sendBroadcast(intent)
+            
+            // 로그만 출력하고 메시지는 표시하지 않음
+            Log.d("SoundController", "볼륨 설정: $safeVolume")
         } catch (e: Exception) {
             Log.e("SoundController", "볼륨 설정 오류: ${e.message}")
         }

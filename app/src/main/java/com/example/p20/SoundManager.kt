@@ -18,7 +18,12 @@ class SoundManager private constructor(private val context: Context) {
     
     // 임시 음악 관련 변수
     private var isTemporaryMusic = false
-    private var originalMusicResId = R.raw.main_music_loop
+    private val originalMusicResId = R.raw.main_music_loop
+    
+    // 리소스 해제 상태 트래킹
+    private var _isReleased = false
+    val isReleased: Boolean
+        get() = _isReleased
     
     companion object {
         @Volatile
@@ -41,56 +46,36 @@ class SoundManager private constructor(private val context: Context) {
     }
     
     init {
-        try {
-            // 오디오 속성 설정
-            val attributes = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_GAME)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build()
-                
-            // 사운드풀 생성
-            soundPool = SoundPool.Builder()
-                .setMaxStreams(10)  // 최대 동시 재생 수를 10으로 증가
-                .setAudioAttributes(attributes)
-                .build()
-                
-            // 사운드 로드 완료 리스너
-            soundPool?.setOnLoadCompleteListener { pool, sampleId, status ->
-                if (status == 0) {
-                    Log.d("SoundManager", "사운드 로드 완료: $sampleId")
-                    soundMap[sampleId] = sampleId
-                } else {
-                    Log.e("SoundManager", "사운드 로드 실패: $sampleId, 상태: $status")
-                }
-            }
-            
-            // 주요 효과음 미리 로드
-            preloadCommonSounds()
-        } catch (e: Exception) {
-            Log.e("SoundManager", "초기화 오류: ${e.message}")
-        }
+        // 초기화 코드
+        initializePool()
+        initializeMediaPlayer()
+        
+        // 초기화 로그
+        Log.d("SoundManager", "SoundManager 초기화 완료")
     }
     
     /**
-     * 자주 사용되는 효과음을 미리 로드합니다.
+     * SoundPool 초기화
      */
-    private fun preloadCommonSounds() {
-        try {
-            // 버튼 효과음
-            loadSound(SOUND_BUTTON)
-            
-            // 주식 관련 효과음
-            loadSound(SOUND_STOCK_SELECT)
-            loadSound(SOUND_STOCK_BUTTON)
-            
-            // 카지노 관련 효과음
-            loadSound(SOUND_BLACKJACK_BUTTON)
-            loadSound(SOUND_BLACKJACK_BET)
-            
-            Log.d("SoundManager", "공통 효과음 로드 완료")
-        } catch (e: Exception) {
-            Log.e("SoundManager", "효과음 사전 로드 오류: ${e.message}")
+    private fun initializePool() {
+        soundPool?.release()
+        
+        soundPool = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            val audioAttributes = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_GAME)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+            SoundPool.Builder()
+                .setMaxStreams(16)
+                .setAudioAttributes(audioAttributes)
+                .build()
+        } else {
+            @Suppress("DEPRECATION")
+            SoundPool(16, android.media.AudioManager.STREAM_MUSIC, 0)
         }
+        
+        // 소리 맵 초기화
+        soundMap.clear()
     }
     
     /**
@@ -99,9 +84,16 @@ class SoundManager private constructor(private val context: Context) {
     fun initializeMediaPlayer() {
         try {
             stopBackgroundMusic()
-            backgroundMusic = MediaPlayer.create(context, R.raw.main_music_loop)
-            backgroundMusic?.isLooping = true
-            Log.d("SoundManager", "MediaPlayer 초기화 완료")
+            backgroundMusic = MediaPlayer.create(context, R.raw.main_music_loop)?.apply {
+                isLooping = true
+                
+                // 볼륨 설정 가져오기
+                val currentVolume = getCurrentVolume()
+                setVolume(currentVolume, currentVolume)
+                
+                Log.d("SoundManager", "MediaPlayer 초기화 완료, 볼륨: $currentVolume")
+            }
+            _isReleased = false
         } catch (e: Exception) {
             Log.e("SoundManager", "MediaPlayer 초기화 오류: ${e.message}")
         }
@@ -146,7 +138,11 @@ class SoundManager private constructor(private val context: Context) {
      */
     fun setVolume(volume: Float, volume2: Float) {
         try {
-            backgroundMusic?.setVolume(volume, volume2)
+            val safeVolume1 = volume.coerceIn(0.0f, 1.0f)
+            val safeVolume2 = volume2.coerceIn(0.0f, 1.0f)
+            
+            Log.d("SoundManager", "볼륨 설정: $safeVolume1, $safeVolume2")
+            backgroundMusic?.setVolume(safeVolume1, safeVolume2)
         } catch (e: Exception) {
             Log.e("SoundManager", "볼륨 설정 오류: ${e.message}")
         }
@@ -158,25 +154,24 @@ class SoundManager private constructor(private val context: Context) {
             if (backgroundMusic == null) {
                 initializeMediaPlayer()
             }
-            backgroundMusic?.start()
-            Log.d("SoundManager", "배경음악 재생 시작")
-        } catch (e: Exception) {
-            Log.e("SoundManager", "배경음악 재생 오류: ${e.message}")
-        }
-    }
-    
-    fun playBackgroundMusic(resId: Int) {
-        try {
-            stopBackgroundMusic()
-            backgroundMusic = MediaPlayer.create(context, resId)
-            backgroundMusic?.apply {
-                isLooping = true
-                setVolume(0.8f, 0.8f)  // 기본 볼륨 설정
-                start()
+            
+            if (backgroundMusic?.isPlaying == false) {
+                // 볼륨 설정 다시 적용
+                val currentVolume = getCurrentVolume()
+                setVolume(currentVolume, currentVolume)
+                
+                backgroundMusic?.start()
+                Log.d("SoundManager", "배경음악 재생 시작, 볼륨: $currentVolume")
             }
-            Log.d("SoundManager", "배경음악 재생 시작: $resId")
         } catch (e: Exception) {
             Log.e("SoundManager", "배경음악 재생 오류: ${e.message}")
+            // 오류 발생 시 재초기화 시도
+            try {
+                initializeMediaPlayer()
+                backgroundMusic?.start()
+            } catch (e2: Exception) {
+                Log.e("SoundManager", "배경음악 재시작 실패: ${e2.message}")
+            }
         }
     }
     
@@ -355,12 +350,14 @@ class SoundManager private constructor(private val context: Context) {
             // 맵 비우기
             soundMap.clear()
             isTemporaryMusic = false
+            _isReleased = true
             Log.d("SoundManager", "모든 리소스 해제 완료")
         } catch (e: Exception) {
             Log.e("SoundManager", "리소스 해제 오류: ${e.message}")
             // 예외 발생해도 null 처리
             soundPool = null
             soundMap.clear()
+            _isReleased = true
         }
     }
 } 

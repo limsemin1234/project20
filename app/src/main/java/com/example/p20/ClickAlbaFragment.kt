@@ -17,6 +17,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 
 /**
  * 클릭알바 프래그먼트 클래스
@@ -53,18 +54,44 @@ class ClickAlbaFragment : BaseFragment() {
     // 애니메이션 리소스 관리를 위한 변수
     private val animatingViews = mutableListOf<View>()
 
+    // 상태 저장 변수
+    private var savedImageVisibility: Int = View.VISIBLE
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // 프래그먼트 상태 유지 활성화
+        retainInstance = true
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         val view = inflater.inflate(R.layout.fragment_click_alba, container, false)
+        
+        // 저장된 상태 복원
+        savedInstanceState?.let {
+            savedImageVisibility = it.getInt("image_visibility", View.VISIBLE)
+        }
 
-        albaViewModel = androidx.lifecycle.ViewModelProvider(requireActivity())[AlbaViewModel::class.java]
-
-        // SoundManager 초기화
+        albaViewModel = ViewModelProvider(requireActivity())[AlbaViewModel::class.java]
         soundManager = SoundManager.getInstance(requireContext())
+        
+        initializeViews(view)
+        
+        return view
+    }
 
-        albaImage = view.findViewById(R.id.albaImage)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setupAlbaImage()
+        setupViewModelObservers()
+    }
+    
+    private fun initializeViews(view: View) {
+        albaImage = view.findViewById<ImageView>(R.id.albaImage).apply {
+            visibility = savedImageVisibility
+        }
         earnText = view.findViewById(R.id.earnText)
         levelText = view.findViewById(R.id.levelText)
         cooldownText = view.findViewById(R.id.cooldownText)
@@ -72,106 +99,96 @@ class ClickAlbaFragment : BaseFragment() {
         activePhaseText = view.findViewById(R.id.cooldownText)
         rewardAmountText = view.findViewById(R.id.rewardAmountText)
         
-        // 경험치 바 초기화
         expProgressBar = view.findViewById(R.id.expProgressBar)
         expTextView = view.findViewById(R.id.expTextView)
         
-        // 경험치 바 초기 설정
         lastShownExp = albaViewModel.getClickCounter().coerceIn(0, 20)
         updateExpBar(lastShownExp)
-
+        
         earnText.text = "알바 시작!"
-
+    }
+    
+    private fun setupAlbaImage() {
+        if (::albaImage.isInitialized) {
+            android.util.Log.d("ClickAlbaFragment", "이미지 설정 시작")
+            try {
+                albaImage.setImageResource(R.drawable.alba1)
+                albaImage.visibility = savedImageVisibility
+                setupClickListener()
+                android.util.Log.d("ClickAlbaFragment", "이미지 설정 완료: visibility=${albaImage.visibility}")
+            } catch (e: Exception) {
+                android.util.Log.e("ClickAlbaFragment", "이미지 설정 실패: ${e.message}")
+            }
+        } else {
+            android.util.Log.e("ClickAlbaFragment", "이미지 뷰가 초기화되지 않음")
+        }
+    }
+    
+    private fun setupClickListener() {
         albaImage.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
-                // 현재 시간 가져오기
-                val currentTime = System.currentTimeMillis()
-                
-                // 활성 시간이 끝났는지 확인
-                val activeTimeDone = albaViewModel.isActivePhase.value == true && (albaViewModel.activePhaseTime.value ?: 0) <= 0
-                
-                // 쿨다운 상태가 아니고 활성 시간이 끝나지 않았을 때만 효과음 재생
-                val isCooldown = albaViewModel.isCooldown.value ?: false
-                if (!isCooldown && !activeTimeDone) {
-                    playCoinSound() // 이벤트 시작 시 한 번만 효과음 재생
-                }
-                
-                // 게임 로직과 애니메이션은 디바운싱 적용
-                if (currentTime - lastClickTime > MIN_CLICK_INTERVAL) {
-                    lastClickTime = currentTime
-                    
-                    if (albaViewModel.isCooldown.value == false && albaViewModel.isActivePhase.value == false) {
-                        albaViewModel.startActivePhase()
-                        val rewardAmount = albaViewModel.getRewardAmount().toLong()
-                        assetViewModel.increaseAsset(rewardAmount)
-                        
-                        // 즉시 경험치바 업데이트
-                        updateExpBar(albaViewModel.getClickCounter())
-                        
-                        // 보상 애니메이션 표시
-                        val location = IntArray(2)
-                        albaImage.getLocationOnScreen(location)
-                        showRewardAnimation(event.rawX.toInt() - location[0], event.rawY.toInt() - location[1], rewardAmount)
-                    } else if (albaViewModel.isActivePhase.value == true && albaViewModel.activePhaseTime.value ?: 0 > 0) {
-                        // 활성 시간이 남아있을 때만 경험치 증가
-                        albaViewModel.increaseAlbaLevel()
-                        val rewardAmount = albaViewModel.getRewardAmount().toLong()
-                        assetViewModel.increaseAsset(rewardAmount)
-                        
-                        // 즉시 경험치바 업데이트
-                        updateExpBar(albaViewModel.getClickCounter())
-                        
-                        // 보상 애니메이션 표시
-                        val location = IntArray(2)
-                        albaImage.getLocationOnScreen(location)
-                        showRewardAnimation(event.rawX.toInt() - location[0], event.rawY.toInt() - location[1], rewardAmount)
-                    }
-                }
+                handleImageClick(event)
             }
             true
         }
-
-        albaViewModel.isCooldown.observe(viewLifecycleOwner, Observer { isCoolingDown ->
-            updateStatusText()
-        })
-        albaViewModel.cooldownTime.observe(viewLifecycleOwner, Observer { time ->
-            updateStatusText()
-        })
-        albaViewModel.isActivePhase.observe(viewLifecycleOwner, Observer { isActive ->
-            updateStatusText()
-        })
-        albaViewModel.activePhaseTime.observe(viewLifecycleOwner, Observer { time ->
-            updateStatusText()
-        })
-        albaViewModel.albaLevel.observe(viewLifecycleOwner, Observer { level ->
-            levelText.text = "레벨: $level"
-            updateRewardAmountText()
-        })
+    }
+    
+    private fun handleImageClick(event: MotionEvent) {
+        val currentTime = System.currentTimeMillis()
         
-        // 클릭 카운터 리셋 이벤트 관찰
-        albaViewModel.clickCounterResetEvent.observe(viewLifecycleOwner, Observer { isReset ->
-            if (isReset) {
-                // 경험치 바 초기화 애니메이션 처리
-                animateExpReset()
-                // 이벤트 소비
-                albaViewModel.consumeClickCounterResetEvent()
+        // 활성 시간이 끝났는지 확인
+        val activeTimeDone = albaViewModel.isActivePhase.value == true && 
+                           (albaViewModel.activePhaseTime.value ?: 0) <= 0
+        
+        // 쿨다운 상태가 아니고 활성 시간이 끝나지 않았을 때만 효과음 재생
+        val isCooldown = albaViewModel.isCooldown.value ?: false
+        if (!isCooldown && !activeTimeDone) {
+            playCoinSound()
+        }
+        
+        if (currentTime - lastClickTime > MIN_CLICK_INTERVAL) {
+            processClick(event, currentTime)
+        }
+    }
+    
+    private fun processClick(event: MotionEvent, currentTime: Long) {
+        lastClickTime = currentTime
+        
+        if (albaViewModel.isCooldown.value == false && 
+            albaViewModel.isActivePhase.value == false) {
+            handleInitialClick(event)
+        } else if (albaViewModel.isActivePhase.value == true && 
+                  (albaViewModel.activePhaseTime.value ?: 0) > 0) {
+            handleActivePhaseClick(event)
+        }
+    }
+    
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        if (::albaImage.isInitialized) {
+            outState.putInt("image_visibility", albaImage.visibility)
+            savedImageVisibility = albaImage.visibility
+            android.util.Log.d("ClickAlbaFragment", "상태 저장: visibility=${albaImage.visibility}")
+        }
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        if (::albaImage.isInitialized) {
+            if (albaImage.drawable == null || albaImage.visibility != savedImageVisibility) {
+                android.util.Log.d("ClickAlbaFragment", "이미지 복원 시도")
+                setupAlbaImage()
             }
-        })
-        
-        // 아이템 보상 이벤트 관찰
-        albaViewModel.itemRewardEvent.observe(viewLifecycleOwner, Observer { reward ->
-            reward?.let {
-                // 아이템 획득 애니메이션 표시
-                showItemRewardAnimation()
-                // 이벤트 소비
-                albaViewModel.consumeItemRewardEvent()
-            }
-        })
-        
-        // 초기 보상 금액 표시 업데이트
-        updateRewardAmountText()
-
-        return view
+        }
+    }
+    
+    override fun onDestroyView() {
+        if (::albaImage.isInitialized) {
+            savedImageVisibility = albaImage.visibility
+            android.util.Log.d("ClickAlbaFragment", "뷰 소멸 시 상태 저장: visibility=${albaImage.visibility}")
+        }
+        clearAnimations()
+        super.onDestroyView()
     }
     
     /**
@@ -251,7 +268,7 @@ class ClickAlbaFragment : BaseFragment() {
             val soundController = P20Application.getSoundController()
             if (soundController.isSoundEffectEnabled()) {
                 // 코인 효과음 재생
-                soundController.playSoundEffect(R.raw.coin)
+                soundController.playSoundEffect(R.raw.alba_click_coin)
                 android.util.Log.d("ClickAlbaFragment", "코인 효과음 재생 성공")
             } else {
                 android.util.Log.d("ClickAlbaFragment", "효과음 설정이 꺼져 있음")
@@ -424,29 +441,75 @@ class ClickAlbaFragment : BaseFragment() {
         showMessage("알바가 중단되었습니다.")
     }
 
-    override fun onDestroyView() {
-        // 핸들러는 BaseFragment가 자동 처리
+    private fun handleInitialClick(event: MotionEvent) {
+        albaViewModel.startActivePhase()
+        val rewardAmount = albaViewModel.getRewardAmount().toLong()
+        assetViewModel.increaseAsset(rewardAmount)
         
-        // 모든 애니메이션 정리
-        clearAnimations()
+        // 즉시 경험치바 업데이트
+        updateExpBar(albaViewModel.getClickCounter())
         
-        // 화면이 소멸될 때 클릭 리스너만 제거
-        if (::albaImage.isInitialized) {
-            albaImage.setOnTouchListener(null)
-        }
-        
-        // 이미지 리소스는 유지
-        if (::albaImage.isInitialized) {
-            albaImage.setImageResource(R.drawable.alba1)
-        }
-        
-        super.onDestroyView()
+        // 보상 애니메이션 표시
+        val location = IntArray(2)
+        albaImage.getLocationOnScreen(location)
+        showRewardAnimation(event.rawX.toInt() - location[0], event.rawY.toInt() - location[1], rewardAmount)
     }
     
-    override fun onPause() {
-        super.onPause()
+    private fun handleActivePhaseClick(event: MotionEvent) {
+        // 활성 시간이 남아있을 때만 경험치 증가
+        albaViewModel.increaseAlbaLevel()
+        val rewardAmount = albaViewModel.getRewardAmount().toLong()
+        assetViewModel.increaseAsset(rewardAmount)
         
-        // 포그라운드에 없을 때 애니메이션 정리
-        clearAnimations()
+        // 즉시 경험치바 업데이트
+        updateExpBar(albaViewModel.getClickCounter())
+        
+        // 보상 애니메이션 표시
+        val location = IntArray(2)
+        albaImage.getLocationOnScreen(location)
+        showRewardAnimation(event.rawX.toInt() - location[0], event.rawY.toInt() - location[1], rewardAmount)
+    }
+
+    // ViewModel 옵저버 설정
+    private fun setupViewModelObservers() {
+        albaViewModel.isCooldown.observe(viewLifecycleOwner) { isCoolingDown ->
+            updateStatusText()
+        }
+        albaViewModel.cooldownTime.observe(viewLifecycleOwner) { time ->
+            updateStatusText()
+        }
+        albaViewModel.isActivePhase.observe(viewLifecycleOwner) { isActive ->
+            updateStatusText()
+        }
+        albaViewModel.activePhaseTime.observe(viewLifecycleOwner) { time ->
+            updateStatusText()
+        }
+        albaViewModel.albaLevel.observe(viewLifecycleOwner) { level ->
+            levelText.text = "레벨: $level"
+            updateRewardAmountText()
+        }
+        
+        // 클릭 카운터 리셋 이벤트 관찰
+        albaViewModel.clickCounterResetEvent.observe(viewLifecycleOwner) { isReset ->
+            if (isReset) {
+                // 경험치 바 초기화 애니메이션 처리
+                animateExpReset()
+                // 이벤트 소비
+                albaViewModel.consumeClickCounterResetEvent()
+            }
+        }
+        
+        // 아이템 보상 이벤트 관찰
+        albaViewModel.itemRewardEvent.observe(viewLifecycleOwner) { reward ->
+            reward?.let {
+                // 아이템 획득 애니메이션 표시
+                showItemRewardAnimation()
+                // 이벤트 소비
+                albaViewModel.consumeItemRewardEvent()
+            }
+        }
+        
+        // 초기 보상 금액 표시 업데이트
+        updateRewardAmountText()
     }
 } 

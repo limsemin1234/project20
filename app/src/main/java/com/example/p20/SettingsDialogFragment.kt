@@ -191,7 +191,8 @@ class SettingsDialogFragment : DialogFragment() {
                 // 볼륨 조절 적용
                 P20Application.getSoundController().setVolume(progress.toFloat() / 100f)
                 
-                MessageManager.showMessage(requireContext(), "볼륨: ${progress}%")
+                // 볼륨 조절 메시지 제거
+                // MessageManager.showMessage(requireContext(), "볼륨: ${progress}%")
             }
         })
         

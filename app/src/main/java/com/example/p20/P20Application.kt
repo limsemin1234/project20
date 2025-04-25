@@ -11,12 +11,19 @@ class P20Application : Application() {
 
     private lateinit var soundController: SoundController
     private lateinit var animationController: AnimationController
+    
+    // 배경음악 시작 여부를 제어하는 플래그
+    private var musicInitialized = false
 
     override fun onCreate() {
         super.onCreate()
         
         // 싱글톤 인스턴스 초기화
         soundController = SoundController.getInstance(this)
+        
+        // 배경음악 자동 시작 방지
+        soundController.preventAutoPlay()
+        
         animationController = AnimationController.getInstance(this)
         
         // 컨트롤러 연결
@@ -42,6 +49,16 @@ class P20Application : Application() {
         // 애니메이션 컨트롤러 접근 메소드
         fun getAnimationController(): AnimationController {
             return getInstance().animationController
+        }
+        
+        // 배경음악 시작 플래그 설정 메소드
+        fun setMusicInitialized(initialized: Boolean) {
+            getInstance().musicInitialized = initialized
+        }
+        
+        // 배경음악 시작 플래그 확인 메소드
+        fun isMusicInitialized(): Boolean {
+            return getInstance().musicInitialized
         }
     }
 } 

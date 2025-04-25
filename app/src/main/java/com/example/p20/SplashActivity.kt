@@ -8,6 +8,7 @@ import android.view.animation.AlphaAnimation
 import android.view.animation.AnimationUtils
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import android.util.Log
 
 class SplashActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,7 +29,16 @@ class SplashActivity : AppCompatActivity() {
 
         // 3초 후에 MainActivity로 이동
         Handler(Looper.getMainLooper()).postDelayed({
+            // 배경음악 시작 플래그 활성화 - MainActivity로 이동하면서 배경음악 시작
+            P20Application.setMusicInitialized(true)
+            
+            // MainActivity로 이동 준비
             val intent = Intent(this, MainActivity::class.java)
+            intent.putExtra("startMusic", true) // 음악 시작 플래그 전달
+            
+            Log.d("SplashActivity", "MainActivity로 이동 - 배경음악 재생 플래그 설정")
+            
+            // MainActivity 시작 및 현재 액티비티 종료
             startActivity(intent)
             finish()
         }, 3000)
