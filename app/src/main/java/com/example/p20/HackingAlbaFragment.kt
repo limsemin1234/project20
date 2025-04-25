@@ -33,6 +33,21 @@ import androidx.drawerlayout.widget.DrawerLayout
  */
 class HackingAlbaFragment : BaseFragment() {
 
+    // 클래스 상수 정의
+    companion object {
+        private const val TAG = "HackingAlba"
+        
+        // 효과음 리소스 ID 상수
+        private val SOUND_CORRECT = R.raw.alba_hacking_success
+        private val SOUND_WRONG = R.raw.alba_hacking_fail
+        private val SOUND_TYPING = R.raw.alba_hacking_number
+        private val SOUND_START = R.raw.alba_hacking_start
+        private val SOUND_SUCCESS = R.raw.alba_hacking_success
+        private val SOUND_FAIL = R.raw.alba_hacking_fail_end
+        private val SOUND_HACKING_START = R.raw.alba_hacking_start
+        private val SOUND_HACKING_BUTTON = R.raw.alba_hacking_button
+    }
+    
     private lateinit var albaViewModel: AlbaViewModel
     
     // 핸들러 추가
@@ -73,16 +88,11 @@ class HackingAlbaFragment : BaseFragment() {
     // 게임 데이터
     private var reward: Long = 0L
     
-    // 효과음 재생을 위한 SoundPool
-    private lateinit var soundPool: SoundPool
-    private var correctSoundId: Int = 0
-    private var wrongSoundId: Int = 0
-    private var typingSoundId: Int = 0
-    private var startSoundId: Int = 0
-    private var successSoundId: Int = 0
-    private var failSoundId: Int = 0
-    private var hackingStartSoundId: Int = 0   // 해킹 시작 버튼 효과음
-    private var hackingButtonSoundId: Int = 0  // 코드 입력 버튼 효과음
+    // 효과음 재생을 위한 컨트롤러
+    private lateinit var soundController: SoundController
+    
+    // 효과음 로드 상태 추적
+    private val loadedSounds = mutableSetOf<Int>()
     
     // 리시버 변수 추가
     private var soundSettingsReceiver: BroadcastReceiver? = null
@@ -101,8 +111,11 @@ class HackingAlbaFragment : BaseFragment() {
         // UI 요소 초기화
         initializeViews(view)
         
-        // SoundPool 초기화 및 효과음 로드
-        initSoundPool()
+        // SoundController 및 효과음 초기화
+        soundController = P20Application.getSoundController()
+        
+        // 효과음 로드
+        loadSounds()
         
         // 효과음 설정 변경을 수신하는 리시버 등록
         registerSoundSettingsReceiver()
@@ -198,7 +211,7 @@ class HackingAlbaFragment : BaseFragment() {
         // 시작 버튼
         startButton.setOnClickListener {
             // 해킹 시작 효과음
-            playSound(hackingStartSoundId)
+            playSound(SOUND_HACKING_START)
             startNewGame()
         }
         
@@ -206,7 +219,7 @@ class HackingAlbaFragment : BaseFragment() {
         submitButton.setOnClickListener { 
             android.util.Log.d("HackingAlba", "제출 버튼 클릭됨")
             // 코드 입력 효과음
-            playSound(hackingButtonSoundId)
+            playSound(SOUND_HACKING_BUTTON)
             checkCode() 
         }
         
@@ -230,7 +243,7 @@ class HackingAlbaFragment : BaseFragment() {
             digitButtons[i].setOnClickListener {
                 if (isGameActive) {
                     inputDigit(i)
-                    playSound(typingSoundId)
+                    playSound(SOUND_TYPING)
                 }
             }
         }
@@ -240,7 +253,7 @@ class HackingAlbaFragment : BaseFragment() {
             android.util.Log.d("HackingAlba", "DEL 버튼 클릭됨")
             if (isGameActive) {
                 deleteLastDigit()
-                playSound(typingSoundId) // 타이핑 효과음 사용
+                playSound(SOUND_TYPING) // 타이핑 효과음 사용
             }
         }
     }
@@ -341,7 +354,7 @@ class HackingAlbaFragment : BaseFragment() {
         feedbackText.text = "해킹 성공! 보상: ${formatCurrency(reward)}원"
         
         // 성공 효과음 재생
-        playSound(successSoundId)
+        playSound(SOUND_SUCCESS)
         
         // 성공 시각적 효과 표시
         showSuccessAnimation(reward)
@@ -474,7 +487,7 @@ class HackingAlbaFragment : BaseFragment() {
         feedbackText.text = "해킹 실패! 올바른 코드는 ${secretCode.joinToString("")}이었습니다."
         
         // 실패 효과음 재생
-        playSound(failSoundId)
+        playSound(SOUND_FAIL)
         
         // 게임 결과 저장
         saveGameResult(false)
@@ -688,34 +701,55 @@ class HackingAlbaFragment : BaseFragment() {
     }
 
     /**
-     * SoundPool 초기화 및 효과음 로드
+     * 효과음을 로드합니다.
      */
-    private fun initSoundPool() {
+    private fun loadSounds() {
         try {
-            // 효과음 ID 초기화
-            correctSoundId = R.raw.alba_hacking_success
-            wrongSoundId = R.raw.alba_hacking_fail
-            typingSoundId = R.raw.alba_hacking_number
-            startSoundId = R.raw.alba_hacking_start
-            successSoundId = R.raw.alba_hacking_success
-            failSoundId = R.raw.alba_hacking_fail_end
-            hackingStartSoundId = R.raw.alba_hacking_start
-            hackingButtonSoundId = R.raw.alba_hacking_button
+            // 필요한 모든 효과음 리소스 ID 배열
+            val soundResources = intArrayOf(
+                SOUND_CORRECT, SOUND_WRONG, SOUND_TYPING, SOUND_START, 
+                SOUND_SUCCESS, SOUND_FAIL, SOUND_HACKING_START, SOUND_HACKING_BUTTON
+            )
             
-            // SoundManager를 통해 미리 로드
-            val soundManager = P20Application.getSoundController().getSoundManager()
-            soundManager.loadSound(correctSoundId)
-            soundManager.loadSound(wrongSoundId)
-            soundManager.loadSound(typingSoundId)
-            soundManager.loadSound(startSoundId)
-            soundManager.loadSound(successSoundId)
-            soundManager.loadSound(failSoundId)
-            soundManager.loadSound(hackingStartSoundId)
-            soundManager.loadSound(hackingButtonSoundId)
+            val soundManager = soundController.getSoundManager()
             
-            android.util.Log.d("HackingAlba", "효과음 로드 완료")
+            // 효과음 로드 상태 초기화
+            loadedSounds.clear()
+            
+            // 모든 효과음 미리 로드
+            for (soundId in soundResources) {
+                val result = soundManager.loadSound(soundId)
+                if (result > 0) {
+                    loadedSounds.add(soundId)
+                    android.util.Log.d(TAG, "효과음 로드 성공: $soundId")
+                } else {
+                    android.util.Log.e(TAG, "효과음 로드 실패: $soundId")
+                }
+            }
+            
+            // 로드된 효과음 개수 확인
+            android.util.Log.d(TAG, "효과음 로드 결과: ${loadedSounds.size}/${soundResources.size}개 로드됨")
+            
+            // 누락된 효과음이 있다면 재시도
+            if (loadedSounds.size < soundResources.size) {
+                android.util.Log.d(TAG, "일부 효과음 로드 실패, 3초 후 재시도")
+                Handler(Looper.getMainLooper()).postDelayed({
+                    // 누락된 효과음만 다시 로드
+                    for (soundId in soundResources) {
+                        if (!loadedSounds.contains(soundId)) {
+                            val retryResult = soundManager.loadSound(soundId)
+                            if (retryResult > 0) {
+                                loadedSounds.add(soundId)
+                                android.util.Log.d(TAG, "효과음 재로드 성공: $soundId")
+                            } else {
+                                android.util.Log.e(TAG, "효과음 재로드 실패: $soundId")
+                            }
+                        }
+                    }
+                }, 3000) // 3초 딜레이 후 재시도
+            }
         } catch (e: Exception) {
-            android.util.Log.e("HackingAlba", "효과음 로드 오류: ${e.message}")
+            android.util.Log.e(TAG, "효과음 로드 중 오류 발생: ${e.message}")
             showErrorMessage("효과음 로드 중 오류가 발생했습니다.")
         }
     }
@@ -725,12 +759,32 @@ class HackingAlbaFragment : BaseFragment() {
      */
     private fun playSound(soundId: Int) {
         try {
-            if (soundId > 0) {
-                // SoundController를 통해 효과음 재생
-                P20Application.getSoundController().playSoundEffect(soundId)
+            if (soundId <= 0) {
+                android.util.Log.e(TAG, "효과음 재생 실패: 유효하지 않은 soundId=$soundId")
+                return
+            }
+            
+            // 첫번째 방식: SoundController의 playSoundEffect 메서드 사용
+            val success = soundController.playSoundEffect(soundId)
+            
+            // 실패한 경우 백업 방식 사용
+            if (!success) {
+                android.util.Log.d(TAG, "SoundController를 통한 효과음 재생 실패: soundId=$soundId, 백업 방식으로 재시도")
+                
+                // 효과음이 로드되어 있는지 확인 후 재생
+                if (!loadedSounds.contains(soundId)) {
+                    android.util.Log.d(TAG, "효과음이 로드되지 않음, 로드 시도: soundId=$soundId")
+                    val loadResult = soundController.getSoundManager().loadSound(soundId)
+                    if (loadResult > 0) {
+                        loadedSounds.add(soundId)
+                    }
+                }
+                
+                // 직접 SoundManager로 효과음 재생 시도
+                soundController.getSoundManager().playSound(soundId)
             }
         } catch (e: Exception) {
-            android.util.Log.e("HackingAlba", "효과음 재생 오류: ${e.message}")
+            android.util.Log.e(TAG, "효과음 재생 오류: soundId=$soundId, 오류=${e.message}")
         }
     }
     
@@ -815,7 +869,7 @@ class HackingAlbaFragment : BaseFragment() {
         if (correctPosition == 4) {
             lastResultTextView.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.holo_green_light))
             // 성공 효과음 재생
-            playSound(successSoundId)
+            playSound(SOUND_SUCCESS)
             
             // 보상 조정 - 시도 횟수가 적을수록 추가 보상
             val efficiencyBonus = (maxAttempts - attemptCount + 1).toFloat() / maxAttempts
@@ -828,9 +882,9 @@ class HackingAlbaFragment : BaseFragment() {
             lastResultTextView.setTextColor(ContextCompat.getColor(requireContext(), android.R.color.white))
             // 부분 정답 또는 오답 효과음 재생
             if (correctPosition > 0 || correctDigit > 0) {
-                playSound(correctSoundId)
+                playSound(SOUND_WRONG)
             } else {
-                playSound(wrongSoundId)
+                playSound(SOUND_WRONG)
             }
         }
         

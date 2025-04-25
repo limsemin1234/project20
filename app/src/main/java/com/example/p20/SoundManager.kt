@@ -292,33 +292,81 @@ class SoundManager private constructor(private val context: Context) {
     // 효과음 관리
     fun loadSound(resId: Int): Int {
         try {
+            if (soundPool == null) {
+                // SoundPool이 초기화되지 않은 경우 초기화
+                initializePool()
+                Log.d("SoundManager", "loadSound 중 SoundPool 재초기화됨")
+            }
+            
+            // 이미 로드된 사운드인지 확인
+            val existingSoundId = soundMap[resId]
+            if (existingSoundId != null && existingSoundId > 0) {
+                // 이미 로드된 사운드면 해당 ID 반환
+                Log.d("SoundManager", "이미 로드된 효과음: resId=$resId, soundId=$existingSoundId")
+                return existingSoundId
+            }
+            
+            // 새로 로드
             val soundId = soundPool?.load(context, resId, 1) ?: 0
-            soundMap[resId] = soundId
+            
+            // 로드 결과 확인 및 로그
+            if (soundId > 0) {
+                soundMap[resId] = soundId
+                Log.d("SoundManager", "효과음 로드 성공: resId=$resId, soundId=$soundId")
+            } else {
+                Log.e("SoundManager", "효과음 로드 실패: resId=$resId (0 또는 null 반환)")
+            }
+            
             return soundId
         } catch (e: Exception) {
-            Log.e("SoundManager", "효과음 로드 오류: ${e.message}")
+            Log.e("SoundManager", "효과음 로드 오류: resId=$resId, 오류=${e.message}")
             return 0
         }
     }
     
     fun playSound(resId: Int) {
         try {
+            // 이미 로드된 효과음인지 확인
             var soundId = soundMap[resId]
             
-            // 사운드가 아직 로드되지 않았다면 로드
-            if (soundId == null) {
+            if (soundId == null || soundId <= 0) {
+                // 로드되지 않았거나 잘못된 ID면 로드 시도
+                Log.d("SoundManager", "효과음이 로드되지 않음. 로드 시도: resId=$resId")
                 soundId = loadSound(resId)
-                if (soundId == 0) return  // 로드 실패
+                
+                // 로드 실패 시 리턴
+                if (soundId <= 0) {
+                    Log.e("SoundManager", "효과음 로드 실패로 재생 불가: resId=$resId")
+                    return
+                }
             }
             
-            // 볼륨 설정 (MainActivity의 설정 가져오기)
+            // SoundPool이 null인지 확인
+            if (soundPool == null) {
+                Log.e("SoundManager", "SoundPool이 null이므로 재생 불가: resId=$resId")
+                initializePool() // 재초기화 시도
+                
+                // 재로드 시도
+                soundId = loadSound(resId)
+                if (soundId <= 0 || soundPool == null) {
+                    Log.e("SoundManager", "SoundPool 재초기화 후에도 재생 불가: resId=$resId")
+                    return
+                }
+            }
+            
+            // 볼륨 설정
             val volume = getCurrentVolume()
             
             // 효과음 재생
-            soundPool?.play(soundId, volume, volume, 1, 0, 1.0f)
-            Log.d("SoundManager", "효과음 재생: $resId, 볼륨: $volume")
+            val streamId = soundPool?.play(soundId, volume, volume, 1, 0, 1.0f) ?: 0
+            
+            if (streamId > 0) {
+                Log.d("SoundManager", "효과음 재생 성공: resId=$resId, soundId=$soundId, streamId=$streamId, 볼륨=$volume")
+            } else {
+                Log.e("SoundManager", "효과음 재생 실패: resId=$resId, soundId=$soundId (streamId가 0 또는 null)")
+            }
         } catch (e: Exception) {
-            Log.e("SoundManager", "효과음 재생 오류: ${e.message}")
+            Log.e("SoundManager", "효과음 재생 중 오류 발생: resId=$resId, 오류=${e.message}")
         }
     }
     

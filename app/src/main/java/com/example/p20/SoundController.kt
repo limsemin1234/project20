@@ -364,20 +364,39 @@ class SoundController private constructor(private val context: Context) {
     // 효과음 재생
     fun playSoundEffect(soundId: Int): Boolean {
         try {
+            if (soundId <= 0) {
+                Log.e(TAG, "효과음 재생 실패: 유효하지 않은 soundId=$soundId")
+                return false
+            }
+            
             if (!isSoundEffectEnabled()) {
-                Log.d("SoundController", "효과음 비활성화 상태: 재생 안함")
+                Log.d(TAG, "효과음 비활성화 상태: 재생 안함, soundId=$soundId")
                 return false
             }
             
             val volume = getCurrentVolume()
             
-            // 효과음 로드 및 재생은 SoundManager를 통해 처리
-            soundManager.playSound(soundId)
-            Log.d("SoundController", "효과음 재생: ID=$soundId, 볼륨=$volume")
+            // 트랙킹을 위한 로그 추가
+            Log.d(TAG, "효과음 재생 시도: soundId=$soundId, 볼륨=$volume, 효과음 설정=${isSoundEffectEnabled()}")
+            
+            // 효과음 로드 확인
+            val soundManager = getSoundManager()
+            if (soundManager.isReleased) {
+                Log.e(TAG, "효과음 재생 실패: SoundManager가 release된 상태, soundId=$soundId")
+                return false
+            }
+            
+            // 지연시간을 둬서 안드로이드 오디오 시스템이 준비되도록 함
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                // 효과음 로드 및 재생
+                soundManager.playSound(soundId)
+                Log.d(TAG, "효과음 재생 요청 완료: soundId=$soundId, 볼륨=$volume")
+            }
             
             return true
         } catch (e: Exception) {
-            Log.e("SoundController", "효과음 재생 오류: ${e.message}")
+            Log.e(TAG, "효과음 재생 오류(예외): soundId=$soundId, 오류=${e.message}")
+            e.printStackTrace()
             return false
         }
     }

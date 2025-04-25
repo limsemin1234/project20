@@ -25,7 +25,15 @@ import androidx.lifecycle.ViewModelProvider
  */
 class ClickAlbaFragment : BaseFragment() {
 
+    // 현금 터치 효과음 리소스 ID 정의
+    companion object {
+        private val SOUND_COIN_CLICK = R.raw.alba_click_coin
+        private const val TAG = "ClickAlbaFragment"
+    }
+
     private lateinit var albaViewModel: AlbaViewModel
+    private lateinit var soundManager: SoundManager // SoundManager 인스턴스
+    private lateinit var soundController: SoundController // SoundController 추가
     private lateinit var earnText: TextView
     private lateinit var levelText: TextView
     private lateinit var cooldownText: TextView
@@ -43,9 +51,6 @@ class ClickAlbaFragment : BaseFragment() {
     
     // 날아가는 텍스트 애니메이션 추적용 카운터
     private var pendingAnimationCount = 0
-    
-    // SoundManager 인스턴스
-    private lateinit var soundManager: SoundManager
     
     // 디바운싱을 위한 변수
     private var lastClickTime = 0L
@@ -76,8 +81,12 @@ class ClickAlbaFragment : BaseFragment() {
 
         albaViewModel = ViewModelProvider(requireActivity())[AlbaViewModel::class.java]
         soundManager = SoundManager.getInstance(requireContext())
+        soundController = P20Application.getSoundController() // SoundController 초기화 추가
         
         initializeViews(view)
+        
+        // 효과음 미리 로드
+        preloadSounds()
         
         return view
     }
@@ -249,33 +258,51 @@ class ClickAlbaFragment : BaseFragment() {
     }
     
     /**
+     * 필요한 효과음을 미리 로드합니다.
+     */
+    private fun preloadSounds() {
+        try {
+            // 코인 클릭 효과음 미리 로드
+            soundController.getSoundManager().loadSound(SOUND_COIN_CLICK)
+            android.util.Log.d(TAG, "코인 클릭 효과음 미리 로드 완료")
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "효과음 미리 로드 오류: ${e.message}")
+        }
+    }
+    
+    /**
      * 코인 효과음을 재생합니다.
      * SoundManager를 사용하여 효율적으로 효과음을 재생합니다.
      */
     private fun playCoinSound() {
         try {
             // 로그 추가 - 디버깅 목적
-            android.util.Log.d("ClickAlbaFragment", "playCoinSound 호출됨")
+            android.util.Log.d(TAG, "playCoinSound 호출됨")
             
             // 활성 시간이 끝났거나 쿨다운 중이면 소리 재생하지 않음
             if ((albaViewModel.isActivePhase.value == true && (albaViewModel.activePhaseTime.value ?: 0) <= 0) ||
                 albaViewModel.isCooldown.value == true) {
-                android.util.Log.d("ClickAlbaFragment", "효과음 재생 중단: 활성 시간 종료 또는 쿨다운 중")
+                android.util.Log.d(TAG, "효과음 재생 중단: 활성 시간 종료 또는 쿨다운 중")
                 return
             }
             
             // SoundController를 통해 직접 효과음 설정 확인 및 재생
-            val soundController = P20Application.getSoundController()
             if (soundController.isSoundEffectEnabled()) {
                 // 코인 효과음 재생
-                soundController.playSoundEffect(R.raw.alba_click_coin)
-                android.util.Log.d("ClickAlbaFragment", "코인 효과음 재생 성공")
+                val success = soundController.playSoundEffect(SOUND_COIN_CLICK)
+                android.util.Log.d(TAG, "코인 효과음 재생 요청 결과: $success")
+                
+                if (!success) {
+                    // 실패 시 백업 메서드로 재시도
+                    android.util.Log.d(TAG, "코인 효과음 재생 실패, 백업 메서드로 재시도")
+                    soundController.getSoundManager().playSound(SOUND_COIN_CLICK)
+                }
             } else {
-                android.util.Log.d("ClickAlbaFragment", "효과음 설정이 꺼져 있음")
+                android.util.Log.d(TAG, "효과음 설정이 꺼져 있음")
             }
         } catch (e: Exception) {
             // 효과음 재생 중 오류 발생 시 로그 출력 후 계속 진행
-            android.util.Log.e("ClickAlbaFragment", "효과음 재생 오류: ${e.message}")
+            android.util.Log.e(TAG, "효과음 재생 오류: ${e.message}")
         }
     }
     
