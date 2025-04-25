@@ -32,8 +32,6 @@ class ClickAlbaFragment : BaseFragment() {
     }
 
     private lateinit var albaViewModel: AlbaViewModel
-    private lateinit var soundManager: SoundManager // SoundManager 인스턴스
-    private lateinit var soundController: SoundController // SoundController 추가
     private lateinit var earnText: TextView
     private lateinit var levelText: TextView
     private lateinit var cooldownText: TextView
@@ -80,8 +78,6 @@ class ClickAlbaFragment : BaseFragment() {
         }
 
         albaViewModel = ViewModelProvider(requireActivity())[AlbaViewModel::class.java]
-        soundManager = SoundManager.getInstance(requireContext())
-        soundController = P20Application.getSoundController() // SoundController 초기화 추가
         
         initializeViews(view)
         
@@ -268,6 +264,15 @@ class ClickAlbaFragment : BaseFragment() {
         } catch (e: Exception) {
             android.util.Log.e(TAG, "효과음 미리 로드 오류: ${e.message}")
         }
+    }
+    
+    /**
+     * BaseFragment의 onReloadSounds 메서드를 오버라이드하여
+     * 화면이 다시 보여질 때 효과음을 다시 로드합니다.
+     */
+    override fun onReloadSounds() {
+        android.util.Log.d(TAG, "onReloadSounds 호출됨: 클릭알바 효과음 재로드")
+        preloadSounds()
     }
     
     /**

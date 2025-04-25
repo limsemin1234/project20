@@ -51,9 +51,6 @@ class StockFragment : BaseFragment() {
 
     private val handler by lazy { trackHandler(android.os.Handler(android.os.Looper.getMainLooper())) }
 
-    // BaseFragment의 핸들러 및 사운드 관리 기능 사용
-    private val soundManager by lazy { SoundManager.getInstance(requireContext()) }
-
     // 수량 버튼 참조 변수
     private lateinit var quantityBtn1: Button
     private lateinit var quantityBtn5: Button
@@ -81,9 +78,6 @@ class StockFragment : BaseFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         stockViewModel = ViewModelProvider(requireActivity())[StockViewModel::class.java]
-
-        // 효과음 초기화
-        initSounds()
         
         // 초기화
         initViews(view)
@@ -579,9 +573,9 @@ class StockFragment : BaseFragment() {
     }
 
     /**
-     * 효과음을 초기화합니다.
+     * 프래그먼트가 다시 표시될 때 필요한 효과음을 다시 로드합니다.
      */
-    private fun initSounds() {
+    override fun onReloadSounds() {
         try {
             // 필요한 효과음 로드
             soundManager.loadSound(SoundManager.SOUND_STOCK_SELECT)

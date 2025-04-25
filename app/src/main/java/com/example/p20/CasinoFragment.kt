@@ -27,9 +27,6 @@ class CasinoFragment : BaseFragment() {
     private lateinit var viewPager: ViewPager2
     private lateinit var casinoInfoText: TextView
     
-    // SoundManager 인스턴스
-    private lateinit var soundManager: SoundManager
-    
     // 어댑터 참조 - 프래그먼트가 재생성될 때 메모리 누수 방지를 위해 lazy 초기화
     private val adapter: CasinoViewPagerAdapter by lazy { 
         CasinoViewPagerAdapter(requireActivity())
@@ -51,9 +48,6 @@ class CasinoFragment : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        // SoundManager 초기화
-        soundManager = SoundManager.getInstance(requireContext())
 
         // 뷰 초기화 (지연시키지 않고 즉시 초기화)
         initializeViews(view)
@@ -173,6 +167,16 @@ class CasinoFragment : BaseFragment() {
     override fun onGameOver() {
         // 진행 중인 어떤 작업이든 중단
         showMessage("카지노 게임이 중단되었습니다.")
+    }
+    
+    /**
+     * BaseFragment에서 상속받은 onReloadSounds 메서드를 오버라이드하여
+     * 화면이 다시 보여질 때 효과음을 다시 로드합니다.
+     */
+    override fun onReloadSounds() {
+        // 카지노 탭 선택 효과음 로드
+        soundManager.loadSound(SOUND_TAB_SELECT)
+        android.util.Log.d("CasinoFragment", "카지노 효과음 다시 로드됨")
     }
     
     /**

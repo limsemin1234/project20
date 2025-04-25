@@ -32,9 +32,6 @@ class ItemFragment : BaseFragment() {
     private var _binding: FragmentItemBinding? = null
     private val binding get() = _binding!!
 
-    // SoundManager 인스턴스
-    private lateinit var soundManager: SoundManager
-
     // SharedPreferences 관련 상수
     private val PREFS_FILENAME = "item_prefs"
     private val KEY_ITEM_QUANTITY_PREFIX = "item_quantity_"
@@ -67,9 +64,6 @@ class ItemFragment : BaseFragment() {
         // SharedPreferences 초기화
         prefs = requireContext().getSharedPreferences(PREFS_FILENAME, Context.MODE_PRIVATE)
 
-        // SoundManager 초기화
-        soundManager = SoundManager.getInstance(requireContext())
-
         // 아이템 목록 초기화
         initItemList()
 
@@ -86,20 +80,6 @@ class ItemFragment : BaseFragment() {
         assetViewModel.asset.observe(viewLifecycleOwner) { _ ->
             updateButtonStates()
         }
-    }
-
-    /**
-     * 구매 효과음을 재생합니다.
-     */
-    private fun playBuySound() {
-        soundManager.playSound(SOUND_BUY)
-    }
-
-    /**
-     * 사용 효과음을 재생합니다.
-     */
-    private fun playUseSound() {
-        soundManager.playSound(SOUND_USE)
     }
 
     /**
@@ -258,11 +238,11 @@ class ItemFragment : BaseFragment() {
             updateSelectedItemInfo(selectedItem)
             updateButtonStates()
 
-            // 애니메이션 효과 추가
-            applyAnimation(binding.buyButton, "scale", 300, 0.8f, 1.0f)
-
             // 안내 메시지
             showMessage("${selectedItem.name}을(를) 구매했습니다.")
+
+            // 구매 효과음 재생
+            playBuySound()
         } else if (selectedItem.stock <= 0) {
             showMessage("아이템 재고가 없습니다.")
         } else {
@@ -291,11 +271,11 @@ class ItemFragment : BaseFragment() {
             updateSelectedItemInfo(selectedItem)
             updateButtonStates()
 
-            // 애니메이션 효과 추가
-            applyAnimation(binding.useButton, "scale", 300, 0.8f, 1.0f)
-
             // 안내 메시지
             showMessage("${selectedItem.name}을(를) 사용했습니다. 남은 시간이 ${selectedItem.effect}초 증가합니다.")
+
+            // 사용 효과음 재생
+            playUseSound()
         }
     }
 
@@ -382,6 +362,17 @@ class ItemFragment : BaseFragment() {
     }
 
     /**
+     * BaseFragment에서 상속받은 onReloadSounds 메서드를 오버라이드하여
+     * 화면이 다시 보여질 때 효과음을 다시 로드합니다.
+     */
+    override fun onReloadSounds() {
+        // 아이템 효과음 미리 로드
+        soundManager.loadSound(SOUND_BUY)
+        soundManager.loadSound(SOUND_USE)
+        android.util.Log.d("ItemFragment", "아이템 효과음 다시 로드됨")
+    }
+
+    /**
      * SharedPreferences에서 아이템 정보를 로드하여 목록을 업데이트합니다.
      */
     private fun updateItemsFromStorage() {
@@ -398,6 +389,20 @@ class ItemFragment : BaseFragment() {
         if (selectedItem != null) {
             updateSelectedItemInfo(selectedItem)
         }
+    }
+
+    /**
+     * 구매 효과음을 재생합니다.
+     */
+    private fun playBuySound() {
+        soundManager.playSound(SOUND_BUY)
+    }
+
+    /**
+     * 사용 효과음을 재생합니다.
+     */
+    private fun playUseSound() {
+        soundManager.playSound(SOUND_USE)
     }
 
     override fun onDestroyView() {

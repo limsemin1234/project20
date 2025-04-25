@@ -50,9 +50,6 @@ class PokerFragment : BaseFragment() {
     private lateinit var bet100kButton: Button
     private lateinit var bet500kButton: Button
     
-    // SoundManager 인스턴스
-    private lateinit var soundManager: SoundManager
-    
     // 게임 상태
     private var currentBet = 0L
     private var tempBetAmount = 0L
@@ -150,7 +147,7 @@ class PokerFragment : BaseFragment() {
         )
         
         // 효과음 리소스 ID
-        private val SOUND_BETTING = R.raw.casino_betting
+        private val SOUND_BETTING = R.raw.casino_card_select
         private val SOUND_CARD = R.raw.casino_card_receive
         private val SOUND_START_GAME = R.raw.casino_start
         private val SOUND_WIN = R.raw.casino_win
@@ -191,12 +188,6 @@ class PokerFragment : BaseFragment() {
         bet50kButton = view.findViewById(R.id.bet50kButton)
         bet100kButton = view.findViewById(R.id.bet100kButton)
         bet500kButton = view.findViewById(R.id.bet500kButton)
-        
-        // SoundManager 초기화
-        soundManager = SoundManager.getInstance(requireContext())
-        
-        // 효과음 초기화
-        initSounds()
         
         // 게임 설명 버튼 설정
         val helpButton = view.findViewById<Button>(R.id.helpButton)
@@ -470,20 +461,6 @@ class PokerFragment : BaseFragment() {
                 updateButtonStates(false)
             }
         }
-    }
-    
-    /**
-     * 효과음을 초기화합니다.
-     */
-    private fun initSounds() {
-        // SoundManager에서 필요한 효과음 미리 로드
-        soundManager.loadSound(SOUND_BETTING)
-        soundManager.loadSound(SOUND_CARD)
-        soundManager.loadSound(SOUND_START_GAME)
-        soundManager.loadSound(SOUND_WIN)
-        soundManager.loadSound(SOUND_LOSE)
-        soundManager.loadSound(SOUND_CARD_SELECT)
-        soundManager.loadSound(SOUND_BUTTON)
     }
     
     /**
@@ -1364,6 +1341,19 @@ class PokerFragment : BaseFragment() {
         return result
     }
     
-    // 나머지 코드는 그대로 유지...
-    // ... (생략) ...
+    /**
+     * 프래그먼트가 다시 표시될 때 필요한 효과음을 다시 로드합니다.
+     */
+    override fun onReloadSounds() {
+        // 필요한 모든 효과음 미리 로드
+        soundManager.loadSound(SOUND_BETTING)
+        soundManager.loadSound(SOUND_CARD)
+        soundManager.loadSound(SOUND_START_GAME)
+        soundManager.loadSound(SOUND_WIN)
+        soundManager.loadSound(SOUND_LOSE)
+        soundManager.loadSound(SOUND_CARD_SELECT)
+        soundManager.loadSound(SOUND_BUTTON)
+    }
+    
+    // 현재 선택된 카드들 (0-4)
 } 

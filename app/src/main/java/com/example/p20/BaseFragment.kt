@@ -34,11 +34,74 @@ abstract class BaseFragment : Fragment() {
     private val activeMediaPlayers = mutableListOf<MediaPlayer>()
     private val activeHandlers = mutableListOf<Handler>()
     
+    // 사운드 컨트롤러 (전역에서 액세스)
+    protected val soundController: SoundController by lazy {
+        P20Application.getSoundController()
+    }
+    
+    // SoundManager 인스턴스
+    protected val soundManager: SoundManager by lazy {
+        SoundManager.getInstance(requireContext())
+    }
+    
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
         // 게임 오버 상태 관찰
         observeGameOverState()
+    }
+    
+    /**
+     * 프래그먼트가 화면에 보이게 될 때 호출됩니다.
+     * 배경음악과 효과음을 복원합니다.
+     */
+    override fun onResume() {
+        super.onResume()
+        
+        try {
+            // 앱 설정에서 사운드 활성화 상태 확인
+            context?.let { ctx ->
+                val prefs = ctx.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE)
+                val soundEnabled = prefs.getBoolean("sound_enabled", true)
+                val isMuted = prefs.getBoolean("mute_enabled", false)
+                
+                if (!isMuted && soundEnabled) {
+                    // 배경음악 재개
+                    soundController.startBackgroundMusic()
+                    
+                    // 효과음 재로드 (필요한 경우)
+                    onReloadSounds()
+                    
+                    Log.d("BaseFragment", "onResume: 배경음악 및 효과음 복원됨")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("BaseFragment", "onResume 오류: ${e.message}")
+        }
+    }
+    
+    /**
+     * 프래그먼트가 화면에서 사라질 때 호출됩니다.
+     */
+    override fun onPause() {
+        super.onPause()
+        
+        try {
+            // 배경음악은 MainActivity에서 관리하므로 여기서는 특별한 처리를 하지 않음
+            // 필요한 경우 자식 클래스에서 오버라이드하여 추가 정리 작업 수행
+            Log.d("BaseFragment", "onPause 호출됨")
+        } catch (e: Exception) {
+            Log.e("BaseFragment", "onPause 오류: ${e.message}")
+        }
+    }
+    
+    /**
+     * 효과음을 다시 로드합니다.
+     * 자식 클래스에서 필요한 경우 오버라이드하여 효과음 로드 로직 구현
+     */
+    protected open fun onReloadSounds() {
+        // 기본 구현은 비어 있음
+        // 자식 클래스에서 필요한 효과음을 다시 로드하기 위해 오버라이드
     }
     
     /**

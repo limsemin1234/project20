@@ -88,9 +88,6 @@ class HackingAlbaFragment : BaseFragment() {
     // 게임 데이터
     private var reward: Long = 0L
     
-    // 효과음 재생을 위한 컨트롤러
-    private lateinit var soundController: SoundController
-    
     // 효과음 로드 상태 추적
     private val loadedSounds = mutableSetOf<Int>()
     
@@ -110,9 +107,6 @@ class HackingAlbaFragment : BaseFragment() {
         
         // UI 요소 초기화
         initializeViews(view)
-        
-        // SoundController 및 효과음 초기화
-        soundController = P20Application.getSoundController()
         
         // 효과음 로드
         loadSounds()
@@ -752,6 +746,15 @@ class HackingAlbaFragment : BaseFragment() {
             android.util.Log.e(TAG, "효과음 로드 중 오류 발생: ${e.message}")
             showErrorMessage("효과음 로드 중 오류가 발생했습니다.")
         }
+    }
+
+    /**
+     * BaseFragment의 onReloadSounds 메서드를 오버라이드하여
+     * 화면이 다시 보여질 때 효과음을 다시 로드합니다.
+     */
+    override fun onReloadSounds() {
+        android.util.Log.d(TAG, "onReloadSounds 호출됨: 해킹알바 효과음 재로드")
+        loadSounds()
     }
 
     /**

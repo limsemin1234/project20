@@ -42,9 +42,6 @@ class AlbaFragment : BaseFragment() {
     private lateinit var viewPager: ViewPager2
     private lateinit var adapter: AlbaViewPagerAdapter
     
-    // SoundManager 인스턴스
-    private lateinit var soundManager: SoundManager
-    
     // 효과음 ID
     companion object {
         private val SOUND_TAB_SELECT = R.raw.alba_tab_select
@@ -59,9 +56,6 @@ class AlbaFragment : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        // SoundManager 초기화
-        soundManager = SoundManager.getInstance(requireContext())
 
         // 탭 레이아웃과 뷰페이저 초기화
         tabLayout = view.findViewById(R.id.albaTabLayout)

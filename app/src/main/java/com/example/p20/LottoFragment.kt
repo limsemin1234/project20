@@ -35,9 +35,6 @@ class LottoFragment : BaseFragment() {
     private var _binding: FragmentLottoBinding? = null
     private val binding get() = _binding!!
 
-    // SoundManager 인스턴스
-    private lateinit var soundManager: SoundManager
-
     private val lottoPrice = 10000L
     private var currentPrize = 0L
     private var isLottoPurchased = false
@@ -80,7 +77,7 @@ class LottoFragment : BaseFragment() {
         0 to 0L           // 꽝
     )
     
-    // 소리 리소스 ID
+    // 효과음 리소스 ID
     companion object {
         private val SOUND_BUY = R.raw.lotto_button_buy
         private val SOUND_OPEN = R.raw.lotto_button_open
@@ -97,9 +94,6 @@ class LottoFragment : BaseFragment() {
     @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        // SoundManager 초기화
-        soundManager = SoundManager.getInstance(requireContext())
 
         binding.lottoPriceText.text = "티켓 가격: ${formatCurrency(lottoPrice)}"
 
@@ -361,14 +355,14 @@ class LottoFragment : BaseFragment() {
     }
 
     /**
-     * 효과음을 재생합니다.
+     * 로또 구매 효과음을 재생합니다.
      */
     private fun playBuySound() {
         soundManager.playSound(SOUND_BUY)
     }
     
     /**
-     * 당첨 확인 효과음을 재생합니다.
+     * 로또 스크래치 효과음을 재생합니다.
      */
     private fun playOpenSound() {
         soundManager.playSound(SOUND_OPEN)
@@ -379,5 +373,16 @@ class LottoFragment : BaseFragment() {
         // 핸들러 콜백 제거
         buyCooldownHandler.removeCallbacks(cooldownCountdownRunnable)
         _binding = null
+    }
+    
+    /**
+     * BaseFragment에서 상속받은 onReloadSounds 메서드를 오버라이드하여
+     * 화면이 다시 보여질 때 효과음을 다시 로드합니다.
+     */
+    override fun onReloadSounds() {
+        // 로또 효과음 미리 로드
+        soundManager.loadSound(SOUND_BUY)
+        soundManager.loadSound(SOUND_OPEN)
+        android.util.Log.d("LottoFragment", "로또 효과음 다시 로드됨")
     }
 }

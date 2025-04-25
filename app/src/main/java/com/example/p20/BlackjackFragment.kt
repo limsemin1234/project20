@@ -42,9 +42,6 @@ class BlackjackFragment : BaseFragment() {
     private lateinit var bet500kButton: Button    // 50만원 버튼 추가
     private lateinit var statsTextView: TextView   // 승률 통계 표시용 TextView 추가
     
-    // SoundManager 인스턴스
-    private lateinit var soundManager: SoundManager
-    
     // 게임 상태
     private var currentBet = 0L
     private var tempBetAmount = 0L
@@ -125,9 +122,6 @@ class BlackjackFragment : BaseFragment() {
         bet100kButton = view.findViewById(R.id.bet100kButton)
         bet500kButton = view.findViewById(R.id.bet500kButton)  // 50만원 버튼 초기화
         statsTextView = view.findViewById(R.id.statsTextView)
-        
-        // SoundManager 초기화
-        soundManager = SoundManager.getInstance(requireContext())
         
         // 카드 배경 드로어블 초기화
         cardBackgroundDrawable = ContextCompat.getDrawable(requireContext(), android.R.drawable.btn_default)!!
@@ -781,5 +775,26 @@ class BlackjackFragment : BaseFragment() {
         playBettingSound()
         
         addBet(amount)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // 게임 상태 확인 및 베팅 버튼 상태 업데이트
+        updateButtonStates()
+    }
+    
+    /**
+     * BaseFragment에서 상속받은 onReloadSounds 메서드를 오버라이드하여
+     * 화면이 다시 보여질 때 효과음을 다시 로드합니다.
+     */
+    override fun onReloadSounds() {
+        initSounds()
+        android.util.Log.d("BlackjackFragment", "효과음 다시 로드됨")
+    }
+    
+    // 버튼 상태 업데이트
+    private fun updateButtonStates() {
+        // 게임 상태 확인 및 베팅 버튼 상태 업데이트
+        // 이 부분은 구현되어야 합니다. 현재는 비어있습니다.
     }
 } 
