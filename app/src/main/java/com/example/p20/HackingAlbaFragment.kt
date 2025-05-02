@@ -194,7 +194,7 @@ class HackingAlbaFragment : BaseFragment() {
         // 초기 텍스트 설정
         levelText.text = "Lv.${currentLevel} 해킹 알바"
         attemptsText.text = "시도: 0/${maxAttempts}"
-        feedbackText.text = "해킹을 시작하려면 시작 버튼을 누르세요."
+        updateFeedbackText("해킹을 시작하려면 시작 버튼을 누르세요.")
         lastResultTextView.visibility = View.GONE
     }
     
@@ -313,7 +313,7 @@ class HackingAlbaFragment : BaseFragment() {
         updateUIState(true)
         
         // 피드백 초기화
-        feedbackText.text = "숫자를 입력하세요. (${maxAttempts}번의 기회가 있습니다)"
+        updateFeedbackText("숫자를 입력하세요. (${maxAttempts}번의 기회가 있습니다)")
         updateAttemptsText()
         
         // 직전 결과 텍스트 초기화 및 숨기기
@@ -345,7 +345,7 @@ class HackingAlbaFragment : BaseFragment() {
         updateUIState(false)
         
         // 피드백 업데이트
-        feedbackText.text = "해킹 성공! 보상: ${formatCurrency(reward)}원"
+        updateFeedbackText("해킹 성공! 보상: ${formatCurrency(reward)}원")
         
         // 성공 효과음 재생
         playSound(SOUND_SUCCESS)
@@ -478,7 +478,7 @@ class HackingAlbaFragment : BaseFragment() {
         updateUIState(false)
         
         // 피드백 업데이트
-        feedbackText.text = "해킹 실패! 올바른 코드는 ${secretCode.joinToString("")}이었습니다."
+        updateFeedbackText("해킹 실패! 올바른 코드는 ${secretCode.joinToString("")}이었습니다.")
         
         // 실패 효과음 재생
         playSound(SOUND_FAIL)
@@ -621,7 +621,7 @@ class HackingAlbaFragment : BaseFragment() {
         reward = baseReward
         
         // 게임 피드백 메시지 업데이트
-        feedbackText.text = "4자리 비밀번호를 추측하세요.\n성공 시 최대 ${formatCurrency(baseReward * 2)}원 획득 가능"
+        updateFeedbackText("4자리 비밀번호를 추측하세요. 성공 시 최대 ${formatCurrency(baseReward * 2)}원 획득 가능")
     }
     
     /**
@@ -642,7 +642,7 @@ class HackingAlbaFragment : BaseFragment() {
         levelText.text = "Lv.${currentLevel} 해킹 알바"
         
         // 레벨업 메시지 표시
-        feedbackText.text = "레벨업! Lv.${currentLevel} 달성"
+        updateFeedbackText("레벨업! Lv.${currentLevel} 달성")
         
         // 레벨 저장
         saveCurrentLevel()
@@ -804,7 +804,7 @@ class HackingAlbaFragment : BaseFragment() {
         
         // 모든 자리를 입력했는지 확인
         if (inputCode.contains(-1)) {
-            feedbackText.text = "4자리 숫자를 모두 입력하세요."
+            updateFeedbackText("4자리 숫자를 모두 입력하세요.")
             return
         }
         
@@ -813,7 +813,7 @@ class HackingAlbaFragment : BaseFragment() {
         updateAttemptsText()
         
         // 입력 확인 중 메시지 표시
-        feedbackText.text = "코드 확인 중..."
+        updateFeedbackText("코드 확인 중...")
         
         // 제출 버튼 일시적으로 비활성화
         submitButton.isEnabled = false
@@ -939,7 +939,7 @@ class HackingAlbaFragment : BaseFragment() {
         
         // 계속 진행
         resetInputDigits()
-        feedbackText.text = "힌트: $correctPosition 개 숫자와 위치 일치, $correctDigit 개 숫자만 일치"
+        updateFeedbackText("힌트: $correctPosition 개 숫자와 위치 일치, $correctDigit 개 숫자만 일치")
     }
     
     /**
@@ -1149,6 +1149,22 @@ class HackingAlbaFragment : BaseFragment() {
                 android.util.Log.e("HackingAlba", "리시버 해제 오류: ${e.message}")
             } finally {
                 soundSettingsReceiver = null
+            }
+        }
+    }
+
+    /**
+     * 피드백 텍스트를 안전하게 업데이트하는 헬퍼 메서드
+     * 텍스트 변경으로 인한 레이아웃 불안정성을 방지합니다.
+     */
+    private fun updateFeedbackText(message: String) {
+        // UI 스레드에서 실행 확인
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            feedbackText.text = message
+        } else {
+            // 다른 스레드에서 호출된 경우 UI 스레드로 전환
+            activity?.runOnUiThread {
+                feedbackText.text = message
             }
         }
     }
