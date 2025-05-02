@@ -23,9 +23,6 @@ class ExplanationFragment : BaseFragment() {
         // 설명 화면이 표시되면 타이머 중지
         timeViewModel.stopTimer()
 
-        // 사용자에게 타이머가 일시정지되었음을 알림
-        showMessage("게임 설명을 읽는 동안 시간이 멈춰있습니다. 화면을 터치하면 게임이 시작됩니다.")
-
         val explanationTextView = view.findViewById<TextView>(R.id.explanationText)
 
         // 텍스트 페이드인 애니메이션 적용

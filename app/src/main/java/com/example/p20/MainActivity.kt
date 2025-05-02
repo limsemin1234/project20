@@ -14,6 +14,10 @@ import android.widget.LinearLayout
 import android.view.animation.AlphaAnimation
 import androidx.fragment.app.DialogFragment
 import android.graphics.Color
+import android.view.Gravity
+import android.animation.ObjectAnimator
+import android.os.Looper
+import androidx.core.graphics.drawable.DrawableCompat
 
 class MainActivity : AppCompatActivity() {
 
@@ -117,8 +121,31 @@ class MainActivity : AppCompatActivity() {
         setupDraggableTimeView()
 
         timeViewModel.remainingTime.observe(this) { remainingSeconds ->
-            // 텍스트 업데이트 (초 단위)
-            globalRemainingTimeTextView.text = "남은 시간: ${remainingSeconds}초"
+            // 텍스트 업데이트 (초 단위) - 둥근 배경에 맞게 포맷 수정
+            val timeText = if (remainingSeconds > 60) {
+                val minutes = remainingSeconds / 60
+                val seconds = remainingSeconds % 60
+                "남은 시간\n${minutes}분 ${seconds}초"
+            } else {
+                "남은 시간\n${remainingSeconds}초"
+            }
+            globalRemainingTimeTextView.text = timeText
+
+            // 임계값에 따른 배경색 변경
+            when {
+                remainingSeconds <= Constants.CRITICAL_TIME_THRESHOLD -> {
+                    // 5초 이하 - 위험 상태 (빨간색 배경)
+                    globalRemainingTimeTextView.setBackgroundResource(R.drawable.round_time_background_critical)
+                }
+                remainingSeconds <= Constants.WARNING_TIME_THRESHOLD -> {
+                    // 15초 이하 - 경고 상태 (노란색 배경)
+                    globalRemainingTimeTextView.setBackgroundResource(R.drawable.round_time_background_warning)
+                }
+                else -> {
+                    // 정상 상태 (기본 배경)
+                    globalRemainingTimeTextView.setBackgroundResource(R.drawable.round_time_background)
+                }
+            }
 
             // 시간 임계값에 따른 효과 적용
             if (remainingSeconds <= Constants.WARNING_TIME_THRESHOLD) {
@@ -535,14 +562,377 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * 시간 표시 드래그 안내 메시지를 표시하는 메소드
-     * ExplanationFragment나 다른 곳에서 호출하여 사용
+     * 시간 표시 드래그 안내를 시각적으로 표시하는 메소드
+     * 텍스트 설명 대신 애니메이션으로 사용자에게 드래그 방법을 안내함
      */
     fun showDragTimeViewMessage() {
-        // 메시지 표시 전 약간의 딜레이를 줌 (1초)
+        // 드래그 튜토리얼을 위한 약간의 딜레이 (1초)
         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            MessageManager.showMessage(this, "남은 시간 표시를 드래그하여 이동하거나 더블 탭하여 원위치로 되돌릴 수 있습니다")
+            // 튜토리얼 뷰 생성
+            showDragTutorialAnimation()
         }, 1000)
+    }
+    
+    /**
+     * 드래그 방법을 시각적으로 보여주는 튜토리얼 애니메이션
+     * 손가락 아이콘과 함께 실제 남은 시간 표시 창이 움직이는 예시를 보여줌
+     */
+    private fun showDragTutorialAnimation() {
+        try {
+            // 튜토리얼 활성 상태 추적
+            var isTutorialActive = true
+            
+            // 튜토리얼 컨테이너 생성
+            val tutorialContainer = FrameLayout(this)
+            tutorialContainer.layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+            
+            // 반투명 배경
+            val background = View(this)
+            background.layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+            background.setBackgroundColor(Color.parseColor("#55000000"))
+            
+            // 실제 남은 시간 표시 뷰의 초기 위치 저장
+            val originalTimeViewX = globalRemainingTimeTextView.x
+            val originalTimeViewY = globalRemainingTimeTextView.y
+            
+            // 대상 위치 계산 (남은 시간 표시 위치)
+            val targetViewLocation = IntArray(2)
+            globalRemainingTimeTextView.getLocationInWindow(targetViewLocation)
+            val targetWidth = globalRemainingTimeTextView.width
+            val targetHeight = globalRemainingTimeTextView.height
+            
+            // 터치 포인트 중심 위치 계산
+            val centerX = (targetViewLocation[0] + targetWidth/2).toFloat()
+            val centerY = (targetViewLocation[1] + targetHeight/2).toFloat()
+            
+            // 화면 중앙 방향으로 드래그하도록 방향 계산
+            val screenWidth = resources.displayMetrics.widthPixels
+            val screenHeight = resources.displayMetrics.heightPixels
+            val screenCenterX = screenWidth / 2f
+            val screenCenterY = screenHeight / 2f
+            
+            // 드래그 방향을 화면 중앙 쪽으로 설정
+            val dragDirectionX = if (centerX > screenCenterX) -1f else 1f
+            val dragDirectionY = if (centerY > screenCenterY) -1f else 1f
+            
+            // 적절한 드래그 거리 계산 (화면 안으로 드래그)
+            val dragDistance = dpToPx(50) // 기본 거리를 줄임
+            
+            // 손가락 아이콘 생성 (원형 배경)
+            val touchPoint = View(this)
+            touchPoint.layoutParams = FrameLayout.LayoutParams(dpToPx(24), dpToPx(24))
+            touchPoint.background = androidx.core.content.ContextCompat.getDrawable(
+                this, android.R.drawable.radiobutton_off_background
+            )
+            DrawableCompat.setTint(touchPoint.background, Color.WHITE)
+            touchPoint.alpha = 0.9f
+            
+            // 시작 위치 설정 (정확히 남은 시간 텍스트뷰 위에 위치)
+            touchPoint.translationX = centerX - dpToPx(12)
+            touchPoint.translationY = centerY - dpToPx(12)
+            
+            // 간단한 설명 텍스트
+            val tutorialText = TextView(this)
+            tutorialText.text = "드래그하여 이동 / 더블 탭하여 원위치\n(화면을 터치하여 닫기)"
+            tutorialText.setTextColor(Color.WHITE)
+            tutorialText.setBackgroundResource(androidx.appcompat.R.drawable.tooltip_frame_dark)
+            tutorialText.setPadding(dpToPx(12), dpToPx(8), dpToPx(12), dpToPx(8))
+            val textParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT
+            )
+            textParams.gravity = Gravity.CENTER
+            textParams.bottomMargin = dpToPx(50)
+            tutorialText.layoutParams = textParams
+            
+            // 더블 탭 힌트 추가
+            val doubleTapHint = TextView(this)
+            doubleTapHint.text = "더블 탭"
+            doubleTapHint.setTextColor(Color.WHITE)
+            doubleTapHint.setBackgroundResource(androidx.appcompat.R.drawable.tooltip_frame_dark)
+            doubleTapHint.setPadding(dpToPx(8), dpToPx(4), dpToPx(8), dpToPx(4))
+            val hintParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT
+            )
+            doubleTapHint.layoutParams = hintParams
+            
+            // 더블 탭 힌트 위치 설정
+            doubleTapHint.translationX = touchPoint.translationX + (dragDirectionX * dpToPx(15))
+            doubleTapHint.translationY = touchPoint.translationY - dpToPx(20)
+            doubleTapHint.alpha = 0f // 초기에는 숨김
+            
+            // 드래그 방향 화살표 추가
+            val arrowView = androidx.appcompat.widget.AppCompatImageView(this)
+            arrowView.layoutParams = FrameLayout.LayoutParams(dpToPx(100), dpToPx(30))
+            arrowView.setImageResource(android.R.drawable.arrow_down_float)
+            arrowView.rotation = 45f // 드래그 방향으로 회전
+            arrowView.alpha = 0f // 초기에는 투명
+            
+            // 화살표 색상 설정
+            val arrowDrawable = arrowView.drawable.mutate()
+            DrawableCompat.setTint(arrowDrawable, Color.WHITE)
+            arrowView.setImageDrawable(arrowDrawable)
+            
+            // 화살표 위치 설정
+            arrowView.translationX = centerX
+            arrowView.translationY = centerY + dpToPx(10)
+            
+            // 핸들러 참조 저장
+            val handlerList = mutableListOf<android.os.Handler>()
+            
+            // 애니메이션 루프를 취소하기 위한 함수
+            fun cancelAllAnimations() {
+                // 튜토리얼 비활성화
+                isTutorialActive = false
+                
+                // 모든 핸들러 콜백 제거
+                for (handler in handlerList) {
+                    handler.removeCallbacksAndMessages(null)
+                }
+                
+                // 모든 뷰 애니메이션 취소
+                touchPoint.clearAnimation()
+                arrowView.clearAnimation()
+                doubleTapHint.clearAnimation()
+                globalRemainingTimeTextView.clearAnimation()
+                
+                // 남은 시간 표시 뷰 원위치로
+                globalRemainingTimeTextView.animate().cancel()
+                globalRemainingTimeTextView.animate()
+                    .x(originalTimeViewX)
+                    .y(originalTimeViewY)
+                    .setDuration(300)
+                    .start()
+            }
+            
+            // 컨테이너에 추가
+            tutorialContainer.addView(background)
+            tutorialContainer.addView(tutorialText)
+            tutorialContainer.addView(arrowView)
+            tutorialContainer.addView(doubleTapHint)
+            tutorialContainer.addView(touchPoint)
+            
+            // 루트 레이아웃에 추가
+            val rootLayout = findViewById<FrameLayout>(R.id.rootLayout)
+            rootLayout.addView(tutorialContainer)
+            
+            // 클릭 시 튜토리얼 종료 및 남은 시간 표시 원위치로
+            tutorialContainer.setOnClickListener {
+                // 애니메이션 중지
+                cancelAllAnimations()
+                
+                // 튜토리얼 제거
+                rootLayout.removeView(tutorialContainer)
+            }
+            
+            // 애니메이션 재생 및 루프 함수
+            fun startAnimationCycle() {
+                // 튜토리얼이 활성 상태가 아니면 중지
+                if (!isTutorialActive) return
+                
+                // 애니메이션 초기화
+                touchPoint.translationX = centerX - dpToPx(12)
+                touchPoint.translationY = centerY - dpToPx(12)
+                touchPoint.alpha = 0.9f
+                
+                arrowView.translationX = centerX
+                arrowView.translationY = centerY + dpToPx(10)
+                arrowView.alpha = 0f
+                
+                doubleTapHint.alpha = 0f
+                
+                // 실제 남은 시간 표시 뷰를 초기 위치로 되돌림
+                globalRemainingTimeTextView.animate()
+                    .x(originalTimeViewX)
+                    .y(originalTimeViewY)
+                    .setDuration(300)
+                    .start()
+                
+                // 드래그 애니메이션 시작
+                // 터치 포인트 애니메이션
+                val touchDragAnimX = ObjectAnimator.ofFloat(touchPoint, "translationX", 
+                    touchPoint.translationX, 
+                    touchPoint.translationX + (dragDistance * dragDirectionX))
+                touchDragAnimX.duration = 1000
+                
+                val touchDragAnimY = ObjectAnimator.ofFloat(touchPoint, "translationY",
+                    touchPoint.translationY, 
+                    touchPoint.translationY + (dragDistance/2 * dragDirectionY))
+                touchDragAnimY.duration = 1000
+                
+                // 실제 남은 시간 표시도 함께 움직임
+                globalRemainingTimeTextView.animate()
+                    .x(originalTimeViewX + (dragDistance * dragDirectionX))
+                    .y(originalTimeViewY + (dragDistance/2 * dragDirectionY))
+                    .setDuration(1000)
+                    .start()
+                
+                // 애니메이션 시작
+                touchDragAnimX.start()
+                touchDragAnimY.start()
+                
+                // 화살표 애니메이션 시작
+                val arrowHandler = android.os.Handler(Looper.getMainLooper())
+                handlerList.add(arrowHandler)
+                
+                arrowHandler.postDelayed({
+                    // 튜토리얼이 비활성화되었으면 중지
+                    if (!isTutorialActive) return@postDelayed
+                    
+                    // 화살표 페이드인 및 위치 이동
+                    ObjectAnimator.ofFloat(arrowView, "alpha", 0f, 1f).apply {
+                        duration = 500
+                        start()
+                    }
+                    
+                    // 화살표 위치 설정 - 화면 안에 표시
+                    arrowView.translationX = centerX + (dragDirectionX * dpToPx(10))
+                    arrowView.translationY = centerY + (dragDirectionY * dpToPx(10))
+                    
+                    // 화살표 이동 (남은 시간 텍스트뷰에서 드래그 방향으로)
+                    ObjectAnimator.ofFloat(arrowView, "translationX", 
+                        arrowView.translationX, 
+                        arrowView.translationX + (dragDistance/2 * dragDirectionX)).apply {
+                        duration = 800
+                        start()
+                    }
+                    
+                    ObjectAnimator.ofFloat(arrowView, "translationY", 
+                        arrowView.translationY, 
+                        arrowView.translationY + (dragDistance/4 * dragDirectionY)).apply {
+                        duration = 800
+                        start()
+                    }
+                }, 200)
+                
+                // 드래그 후 더블 탭 애니메이션
+                val tapHandler = android.os.Handler(Looper.getMainLooper())
+                handlerList.add(tapHandler)
+                
+                tapHandler.postDelayed({
+                    // 튜토리얼이 비활성화되었으면 중지
+                    if (!isTutorialActive) return@postDelayed
+                    
+                    // 화살표 페이드 아웃
+                    ObjectAnimator.ofFloat(arrowView, "alpha", 1f, 0f).apply {
+                        duration = 300
+                        start()
+                    }
+                    
+                    // 더블 탭 힌트 설정 및 표시
+                    // 드래그된 위치에 따라 더블 탭 힌트 위치 조정
+                    doubleTapHint.translationX = touchPoint.translationX + (dragDirectionX * dpToPx(15))
+                    doubleTapHint.translationY = touchPoint.translationY - dpToPx(20)
+                    
+                    // 더블 탭 힌트 표시
+                    ObjectAnimator.ofFloat(doubleTapHint, "alpha", 0f, 1f).apply {
+                        duration = 300
+                        start()
+                    }
+                    
+                    // 탭 애니메이션 (손가락을 위아래로 움직임)
+                    val tapAnim1 = ObjectAnimator.ofFloat(touchPoint, "translationY", 
+                        touchPoint.translationY + (dragDistance/2 * dragDirectionY), 
+                        (touchPoint.translationY + (dragDistance/2 * dragDirectionY)) - dpToPx(15),
+                        touchPoint.translationY + (dragDistance/2 * dragDirectionY))
+                    tapAnim1.duration = 300
+                    tapAnim1.start()
+                    
+                    // 터치 포인트 깜빡임 1
+                    val touchAlphaAnim1 = ObjectAnimator.ofFloat(touchPoint, "alpha", 0.9f, 0.4f, 0.9f)
+                    touchAlphaAnim1.duration = 300
+                    touchAlphaAnim1.start()
+                    
+                    val tap2Handler = android.os.Handler(Looper.getMainLooper())
+                    handlerList.add(tap2Handler)
+                    
+                    tap2Handler.postDelayed({
+                        // 튜토리얼이 비활성화되었으면 중지
+                        if (!isTutorialActive) return@postDelayed
+                        
+                        // 두 번째 탭 애니메이션
+                        val tapAnim2 = ObjectAnimator.ofFloat(touchPoint, "translationY", 
+                            touchPoint.translationY + (dragDistance/2 * dragDirectionY), 
+                            (touchPoint.translationY + (dragDistance/2 * dragDirectionY)) - dpToPx(15),
+                            touchPoint.translationY + (dragDistance/2 * dragDirectionY))
+                        tapAnim2.duration = 300
+                        tapAnim2.start()
+                        
+                        // 터치 포인트 깜빡임 2
+                        val touchAlphaAnim2 = ObjectAnimator.ofFloat(touchPoint, "alpha", 0.9f, 0.4f, 0.9f)
+                        touchAlphaAnim2.duration = 300
+                        touchAlphaAnim2.start()
+                        
+                        val returnHandler = android.os.Handler(Looper.getMainLooper())
+                        handlerList.add(returnHandler)
+                        
+                        returnHandler.postDelayed({
+                            // 튜토리얼이 비활성화되었으면 중지
+                            if (!isTutorialActive) return@postDelayed
+                            
+                            // 더블 탭 힌트 숨기기
+                            ObjectAnimator.ofFloat(doubleTapHint, "alpha", 1f, 0f).apply {
+                                duration = 300
+                                start()
+                            }
+                            
+                            // 터치 포인트 원위치 애니메이션
+                            val touchReturnAnimX = ObjectAnimator.ofFloat(touchPoint, "translationX",
+                                touchPoint.translationX + (dragDistance * dragDirectionX), centerX - dpToPx(12))
+                            touchReturnAnimX.duration = 600
+                            touchReturnAnimX.start()
+                            
+                            val touchReturnAnimY = ObjectAnimator.ofFloat(touchPoint, "translationY",
+                                touchPoint.translationY + (dragDistance/2 * dragDirectionY), centerY - dpToPx(12))
+                            touchReturnAnimY.duration = 600
+                            touchReturnAnimY.start()
+                            
+                            // 실제 남은 시간 표시 뷰를 원래 위치로 되돌림
+                            globalRemainingTimeTextView.animate()
+                                .x(originalTimeViewX)
+                                .y(originalTimeViewY)
+                                .setDuration(600)
+                                .start()
+                            
+                            // 잠시 대기 후 다음 애니메이션 사이클 시작
+                            val cycleHandler = android.os.Handler(Looper.getMainLooper())
+                            handlerList.add(cycleHandler)
+                            
+                            cycleHandler.postDelayed({
+                                // 튜토리얼이 비활성화되었으면 중지
+                                if (!isTutorialActive) return@postDelayed
+                                
+                                // 애니메이션 사이클 다시 시작
+                                startAnimationCycle()
+                            }, 1000) // 1초 대기 후 다시 시작
+                            
+                        }, 600)
+                    }, 400)
+                }, 1500)
+            }
+            
+            // 첫 번째 애니메이션 사이클 시작
+            startAnimationCycle()
+            
+        } catch (e: Exception) {
+            // 오류 발생 시 기존 메시지 표시로 폴백
+            MessageManager.showMessage(this, "남은 시간 표시를 드래그하여 이동하거나 더블 탭하여 원위치로 되돌릴 수 있습니다")
+        }
+    }
+    
+    /**
+     * dp 값을 픽셀로 변환
+     */
+    private fun dpToPx(dp: Int): Int {
+        val density = resources.displayMetrics.density
+        return (dp * density).toInt()
     }
 
     // Fragment를 표시하는 메소드
