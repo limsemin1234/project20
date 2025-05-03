@@ -392,11 +392,8 @@ class PokerFragment : BaseFragment() {
                 // UI 업데이트
                 updateButtonStates(true)
                     
-                // 족보 가능성이 있는 카드 표시
-                analyzeAndHighlightPotentialHands()
-                    
                 // 사용자에게 알림
-                MessageManager.showMessage(requireContext(), "족보가 될 수 있는 카드들을 강조 표시합니다.")
+                showMessage("카드를 선택해서 최상의 패를 만드세요!")
             }
         }
         
@@ -438,23 +435,6 @@ class PokerFragment : BaseFragment() {
                 
                 // Fragment의 선택 상태 초기화 (ViewModel에서는 이미 초기화되었음)
                 selectedCardIndices.clear()
-                
-                // 모든 카드 애니메이션과 스타일 초기화
-                clearAllHighlights()
-                
-                // 교체된 카드로 새롭게 족보 가능성 분석 및 표시 (100ms 지연으로 UI 렌더링 이후 확실히 수행)
-                postDelayed(300) {  // 지연 시간을 100ms에서 300ms로 증가
-                    if (isAdded && !isRemoving) {
-                        // 모든 카드 애니메이션 초기화 한번 더 확인
-                        clearAllHighlights()
-                        // 족보 가능성 분석 및 표시
-                        analyzeAndHighlightPotentialHands()
-                        Log.d("PokerFragment", "카드 교체 후 족보 분석 명시적 실행")
-                    }
-                }
-                
-                // 사용자에게 알림
-                MessageManager.showMessage(requireContext(), "새 카드에서 족보가 될 수 있는 카드들을 애니메이션으로 표시합니다.")
             } else {
                 showMessage(message)
             }
@@ -576,9 +556,6 @@ class PokerFragment : BaseFragment() {
         
         // 통계 업데이트
         updateBalanceText()
-        
-        // 선택된 카드 강조 표시 및 족보 표시
-        processHandRankCards()
         
         // 정리 작업 지연 - postDelayed 사용
         postDelayed(3000) {
@@ -789,21 +766,6 @@ class PokerFragment : BaseFragment() {
             val card = cards[i]
             addCardView(i, card)
         }
-        
-        // 카드 뷰가 모두 생성된 후 족보 가능성 분석 및 표시
-        if (cards.isNotEmpty() && pokerViewModel.isGameActive.value == true) {
-            // 모든 카드 애니메이션 초기화
-            clearAllHighlights()
-            
-            // 충분한 지연을 주어 UI가 완전히 렌더링된 후 강조 표시가 적용되도록 함
-            postDelayed(300) {
-                if (isAdded && !isRemoving && pokerViewModel.isGameActive.value == true) {
-                    // 족보 분석 및 표시
-                    analyzeAndHighlightPotentialHands()
-                    Log.d("PokerFragment", "자동으로 족보 분석 완료: 카드 ${cards.size}장")
-                }
-            }
-        }
     }
     
     /**
@@ -854,39 +816,22 @@ class PokerFragment : BaseFragment() {
         selectedCardIndices.clear()
         selectedCardIndices.addAll(indices)
         
-        // 잠재적 족보 카드 인덱스들 (애니메이션으로 표시됨)
-        val potentialHandCardIndices = getPotentialHandCardIndices()
-        
-        // 모든 카드의 애니메이션 및 스타일 초기화
+        // 모든 카드 스타일 초기화
         for (cardView in cardViews) {
             cardView.clearAnimation()
             cardView.alpha = 1.0f
             cardView.background = defaultCardDrawable.constantState?.newDrawable()
         }
         
-        // 모든 카드의 상태 업데이트
+        // 선택된 카드만 초록색 배경으로 표시
         for (i in cardViews.indices) {
             val cardView = cardViews[i]
             
-            // 족보 강조 표시가 우선됨 (게임 결과가 표시된 경우)
-            if (pokerViewModel.gameResult.value != null && handRankCardIndices.contains(i)) {
-                continue
-            }
-            
-            // 카드의 현재 상태를 결정
-            when {
-                // 1. 선택된 카드 - 우선적으로 표시 (변경: 선택이 잠재적 족보보다 우선)
-                indices.contains(i) -> {
-                    cardView.clearAnimation() // 기존 애니메이션 중지
-                    cardView.alpha = 0.7f
-                    val drawable = selectedCardDrawable.constantState?.newDrawable()
-                    cardView.background = drawable
-                }
-                // 2. 잠재적 족보 카드 - 선택되지 않은 경우만 애니메이션으로 표시
-                potentialHandCardIndices.contains(i) -> {
-                    // 잠재적 족보 카드는 애니메이션을 통해 강조 표시
-                    highlightCardWithAnimation(cardView)
-                }
+            // 선택된 카드면 초록색 배경으로 표시
+            if (indices.contains(i)) {
+                cardView.alpha = 0.7f
+                val drawable = selectedCardDrawable.constantState?.newDrawable()
+                cardView.background = drawable
             }
         }
         
@@ -897,30 +842,14 @@ class PokerFragment : BaseFragment() {
     }
     
     /**
-     * 단일 카드에 애니메이션을 적용합니다.
+     * 모든 카드 스타일을 초기화합니다.
      */
-    private fun highlightCardWithAnimation(cardView: TextView) {
-        // 크기 변화 애니메이션
-        val scaleAnimation = ScaleAnimation(
-            1.0f, 1.1f, 1.0f, 1.1f,
-            Animation.RELATIVE_TO_SELF, 0.5f,
-            Animation.RELATIVE_TO_SELF, 0.5f
-        ).apply {
-            duration = 800
-            repeatMode = Animation.REVERSE
-            repeatCount = Animation.INFINITE
+    private fun clearAllHighlights() {
+        for (cardView in cardViews) {
+            cardView.clearAnimation()
+            cardView.alpha = 1.0f
+            cardView.background = defaultCardDrawable.constantState?.newDrawable()
         }
-        
-        // 애니메이션 적용 (투명도 애니메이션 제거)
-        cardView.startAnimation(scaleAnimation)
-        
-        // 테두리 변경
-        val drawable = GradientDrawable().apply {
-            setStroke(5, Color.GREEN)
-            cornerRadius = 8f
-            setColor(Color.WHITE)
-        }
-        cardView.background = drawable
     }
 
     /**
@@ -981,372 +910,5 @@ class PokerFragment : BaseFragment() {
                 }
             }
         }
-    }
-    
-    /**
-     * 잠재적인 족보 가능성이 있는 카드들을 분석하고 애니메이션으로 강조 표시합니다.
-     */
-    private fun analyzeAndHighlightPotentialHands() {
-        // 현재 카드가 없으면 리턴
-        val viewModelCards = pokerViewModel.playerCards.value ?: return
-        if (viewModelCards.isEmpty() || viewModelCards.size < 5) return
-        
-        // 잠재적 족보 카드 인덱스들 가져오기
-        val potentialHandCardIndices = getPotentialHandCardIndices()
-        
-        // 카드 뷰 초기화 (모든 카드를 기본 상태로)
-        clearAllHighlights()
-        
-        // 잠재적 족보가 있으면 해당 카드들을 강조 표시
-        if (potentialHandCardIndices.isNotEmpty()) {
-            highlightCards(potentialHandCardIndices)
-            
-            // 로그 출력
-            Log.d("PokerFragment", "잠재적 족보 분석 완료: ${potentialHandCardIndices.size}장의 카드가 강조됨")
-        } else {
-            Log.d("PokerFragment", "잠재적 족보 없음")
-        }
-    }
-    
-    /**
-     * 모든 카드 강조 표시를 초기화합니다.
-     */
-    private fun clearAllHighlights() {
-        for (cardView in cardViews) {
-            cardView.clearAnimation()
-            cardView.alpha = 1.0f
-            cardView.background = defaultCardDrawable.constantState?.newDrawable()
-        }
-    }
-    
-    /**
-     * 지정된 인덱스의 카드들을 강조 표시합니다.
-     */
-    private fun highlightCards(cardIndices: Set<Int>) {
-        for (index in cardIndices) {
-            if (index < cardViews.size) {
-                val cardView = cardViews[index]
-                highlightCardWithAnimation(cardView)
-            }
-        }
-    }
-
-    /**
-     * 잠재적인 족보 가능성이 있는 카드들의 인덱스를 반환합니다.
-     */
-    private fun getPotentialHandCardIndices(): Set<Int> {
-        // 현재 카드가 없거나 게임이 진행 중이 아니면 빈 set 반환
-        val viewModelCards = pokerViewModel.playerCards.value ?: return emptySet()
-        if (viewModelCards.isEmpty() || viewModelCards.size < 5 || pokerViewModel.isGameActive.value != true) {
-            return emptySet()
-        }
-        
-        // 이미 게임 결과가 표시된 상태면 빈 set 반환 (족보 카드가 이미 강조됨)
-        if (pokerViewModel.gameResult.value != null) {
-            return emptySet()
-        }
-        
-        // ViewModel의 Card를 Fragment의 Card로 변환
-        val cards = viewModelCards.map { vmCard ->
-            Card(vmCard.rank, vmCard.suit)
-        }
-        
-        // 잠재적 족보 분석
-        // 로얄 스트레이트 플러시 또는 스트레이트 플러시 체크
-        val royalOrStraightFlushCards = checkRoyalOrStraightFlushPossibility(cards)
-        if (royalOrStraightFlushCards.isNotEmpty()) {
-            return royalOrStraightFlushCards
-        }
-        
-        // 포카드 체크
-        val fourOfAKindCards = checkFourOfAKindPossibility(cards)
-        if (fourOfAKindCards.isNotEmpty()) {
-            return fourOfAKindCards
-        }
-        
-        // 랭크별로 그룹화
-        val rankGroups = cards.groupBy { it.rank }
-        
-        // 트리플과 페어 랭크 확인
-        val triplePlusRanks = rankGroups.filter { it.value.size >= 3 }.keys.toList()
-        val pairRanks = rankGroups.filter { it.value.size >= 2 }.keys.toList()
-        
-        // 풀하우스 체크
-        if (triplePlusRanks.isNotEmpty() && 
-            (pairRanks.size >= 2 || triplePlusRanks.size >= 2)) {
-            
-            val fullHouseCards = mutableSetOf<Int>()
-            // 트리플 카드 인덱스 추가
-            val tripleRank = triplePlusRanks[0]
-            cards.forEachIndexed { index, card ->
-                if (card.rank == tripleRank) {
-                    fullHouseCards.add(index)
-                }
-            }
-            
-            // 페어 카드 인덱스 추가
-            val pairRank = if (pairRanks.size > 1) {
-                // 트리플과 다른 랭크의 페어 선택
-                pairRanks.find { it != tripleRank } ?: pairRanks[0]
-            } else if (triplePlusRanks.size > 1) {
-                // 또 다른 트리플에서 페어로 사용
-                triplePlusRanks[1]
-            } else {
-                pairRanks.firstOrNull()
-            }
-            
-            if (pairRank != null) {
-                // 페어 카드 추가 (최대 2장까지만)
-                var pairCount = 0
-                cards.forEachIndexed { index, card ->
-                    if (card.rank == pairRank && pairCount < 2) {
-                        fullHouseCards.add(index)
-                        pairCount++
-                    }
-                }
-                
-                return fullHouseCards
-            }
-        }
-        
-        // 플러시 체크
-        val flushCards = checkFlushPossibility(cards)
-        if (flushCards.isNotEmpty()) {
-            return flushCards
-        }
-        
-        // 스트레이트 체크
-        val straightCards = checkStraightPossibility(cards)
-        if (straightCards.isNotEmpty()) {
-            return straightCards
-        }
-        
-        // 트리플 체크
-        if (triplePlusRanks.isNotEmpty()) {
-            val tripleCards = mutableSetOf<Int>()
-            val tripleRank = triplePlusRanks[0]
-            
-            cards.forEachIndexed { index, card ->
-                if (card.rank == tripleRank) {
-                    tripleCards.add(index)
-                }
-            }
-            
-            return tripleCards
-        }
-        
-        // 투페어 체크
-        if (pairRanks.size >= 2) {
-            val twoPairCards = mutableSetOf<Int>()
-            // 랭크를 값 기준으로 내림차순 정렬
-            val sortedPairRanks = pairRanks.sortedByDescending { rankValues[it] ?: 0 }.take(2)
-            
-            cards.forEachIndexed { index, card ->
-                if (sortedPairRanks.contains(card.rank)) {
-                    // 각 랭크별로 최대 2장까지만 추가
-                    val sameRankCards = twoPairCards.count { cardIdx -> 
-                        cards[cardIdx].rank == card.rank 
-                    }
-                    if (sameRankCards < 2) {
-                        twoPairCards.add(index)
-                    }
-                }
-            }
-            
-            return twoPairCards
-        }
-        
-        // 원페어 체크
-        if (pairRanks.isNotEmpty()) {
-            val pairCards = mutableSetOf<Int>()
-            // 가장 높은 값의 페어 선택
-            val highestPairRank = pairRanks.maxByOrNull { rankValues[it] ?: 0 } ?: pairRanks[0]
-            
-            // 해당 랭크의 카드만 최대 2장까지 추가
-            var count = 0
-            cards.forEachIndexed { index, card ->
-                if (card.rank == highestPairRank && count < 2) {
-                    pairCards.add(index)
-                    count++
-                }
-            }
-            
-            return pairCards
-        }
-        
-        // 아무 족보도 발견되지 않을 경우
-        return emptySet()
-    }
-    
-    /**
-     * 로얄 스트레이트 플러시 또는 스트레이트 플러시 가능성을 검사합니다.
-     */
-    private fun checkRoyalOrStraightFlushPossibility(cards: List<Card>): Set<Int> {
-        val result = mutableSetOf<Int>()
-        val royalCards = listOf(10, 11, 12, 13, 14) // 10, J, Q, K, A 값
-        
-        // 무늬별로 분류
-        val suitGroups = cards.groupBy { it.suit }
-        
-        for ((suit, suitCards) in suitGroups) {
-            // 한 무늬의 카드가 4장 이상이어야 가능성 있음
-            if (suitCards.size < 4) continue
-            
-            // 로얄 스트레이트 플러시 가능성 체크
-            val royalCardsInSuit = suitCards.filter { royalCards.contains(it.value()) }
-            if (royalCardsInSuit.size >= 4) {
-                // 해당 카드들의 인덱스 찾기
-                cards.forEachIndexed { index, card ->
-                    if (card.suit == suit && royalCards.contains(card.value())) {
-                        result.add(index)
-                    }
-                }
-                return result
-            }
-            
-            // 일반 스트레이트 플러시 가능성 체크
-            val values = suitCards.map { it.value() }.sorted()
-            val straightValues = checkConsecutiveValues(values)
-            
-            if (straightValues.isNotEmpty()) {
-                // 해당 카드들의 인덱스 찾기
-                cards.forEachIndexed { index, card ->
-                    if (card.suit == suit && straightValues.contains(card.value())) {
-                        result.add(index)
-                    }
-                }
-                return result
-            }
-        }
-        
-        return result
-    }
-
-    /**
-     * 포카드 가능성을 검사합니다.
-     * 같은 숫자 3장 이상이 있으면 포카드 가능성이 있습니다.
-     */
-    private fun checkFourOfAKindPossibility(cards: List<Card>): Set<Int> {
-        val result = mutableSetOf<Int>()
-        
-        // 랭크별로 분류
-        val rankGroups = cards.groupBy { it.rank }
-        
-        // 같은 숫자가 3장 이상인 경우 (4장이 될 가능성이 있음)
-        val rankWithThreeOrMore = rankGroups.filter { it.value.size >= 3 }
-        
-        if (rankWithThreeOrMore.isNotEmpty()) {
-            // 가장 높은 숫자의 랭크를 우선 선택
-            val highestRank = rankWithThreeOrMore.maxByOrNull { 
-                rankValues[it.key] ?: 0 
-            }?.key ?: return result
-            
-            // 해당 카드들의 인덱스 찾기
-            cards.forEachIndexed { index, card ->
-                if (card.rank == highestRank) {
-                    result.add(index)
-                }
-            }
-        }
-        
-        return result
-    }
-    
-    /**
-     * 플러시 가능성을 검사합니다.
-     * 같은 무늬 4장 이상이 있으면 플러시 가능성이 있습니다.
-     */
-    private fun checkFlushPossibility(cards: List<Card>): Set<Int> {
-        val result = mutableSetOf<Int>()
-        
-        // 무늬별로 분류
-        val suitGroups = cards.groupBy { it.suit }
-        
-        // 같은 무늬 4장 이상
-        val flushSuit = suitGroups.entries.find { it.value.size >= 4 }?.key
-        
-        if (flushSuit != null) {
-            // 해당 카드들의 인덱스 찾기
-            cards.forEachIndexed { index, card ->
-                if (card.suit == flushSuit) {
-                    result.add(index)
-                }
-            }
-        }
-        
-        return result
-    }
-    
-    /**
-     * 스트레이트 가능성을 검사합니다.
-     */
-    private fun checkStraightPossibility(cards: List<Card>): Set<Int> {
-        val result = mutableSetOf<Int>()
-        
-        // 중복 제거한 값들
-        val values = cards.map { it.value() }.toSet().toList().sorted()
-        
-        if (values.size < 4) return result // 최소 4장의 다른 값이 필요
-        
-        // 연속된 값들을 찾음
-        val consecutiveValues = checkConsecutiveValues(values)
-        
-        if (consecutiveValues.isNotEmpty()) {
-            // 해당 값을 가진 카드들의 인덱스 찾기
-            cards.forEachIndexed { index, card ->
-                if (consecutiveValues.contains(card.value())) {
-                    result.add(index)
-                }
-            }
-        }
-        
-        return result
-    }
-    
-    /**
-     * 연속된 값들을 확인하여 반환합니다.
-     * 4개 이상의 연속된 값이 있을 경우 해당 값들을 반환합니다.
-     */
-    private fun checkConsecutiveValues(values: List<Int>): List<Int> {
-        if (values.size < 4) return emptyList() // 최소 4개의 값이 필요
-        
-        val result = mutableListOf<Int>()
-        var consecutiveCount = 1
-        var startIndex = 0
-        var currentSequence = mutableListOf(values[0])
-        
-        for (i in 1 until values.size) {
-            if (values[i] - values[i-1] == 1) {
-                // 연속된 값인 경우
-                consecutiveCount++
-                currentSequence.add(values[i])
-            } else {
-                // 연속이 끊긴 경우
-                if (consecutiveCount >= 4) {
-                    // 충분한 연속 값이 있으면 결과에 추가
-                    result.addAll(currentSequence)
-                }
-                // 새로운 시퀀스 시작
-                consecutiveCount = 1
-                currentSequence = mutableListOf(values[i])
-                startIndex = i
-            }
-        }
-        
-        // 마지막 시퀀스 확인
-        if (consecutiveCount >= 4) {
-            result.addAll(currentSequence)
-        }
-        
-        // A-2-3-4-5 스트레이트 체크 (A가 1로 취급되는 경우)
-        if (values.contains(14) && values.contains(2) && 
-            values.contains(3) && values.contains(4) && values.contains(5)) {
-            // 기존 결과를 지우고 A-2-3-4-5 추가
-            if (result.isEmpty() || (result.isNotEmpty() && result.size < 5)) {
-                return listOf(14, 2, 3, 4, 5)
-            }
-        }
-        
-        return result
     }
 } 
