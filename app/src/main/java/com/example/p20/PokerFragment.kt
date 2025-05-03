@@ -7,36 +7,15 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.Gravity
 import android.widget.Button
-import android.widget.CheckBox
-import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.core.content.ContextCompat
-import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
-import com.google.android.material.snackbar.Snackbar
 import java.text.NumberFormat
 import java.util.Locale
-import android.os.Handler
-import android.os.Looper
 import android.graphics.drawable.GradientDrawable
 import androidx.appcompat.app.AlertDialog
-import android.graphics.Typeface
-import androidx.lifecycle.Observer
-import android.util.SparseArray
 import android.view.View.OnClickListener
-import androidx.collection.ArrayMap
-import android.util.LruCache
-import android.media.MediaPlayer
-import android.net.Uri
-import android.graphics.PorterDuff
 import android.util.Log
-import kotlin.random.Random
-import android.widget.ImageView
-import android.view.animation.AlphaAnimation
-import android.view.animation.Animation
-import android.view.animation.ScaleAnimation
-import android.view.animation.AnimationSet
 
 // Fragment에서 BaseFragment로 상속 변경
 class PokerFragment : BaseFragment() {
@@ -68,9 +47,6 @@ class PokerFragment : BaseFragment() {
     // 선택된 카드 추적 (HashSet 대신 ArraySet으로 변경하여 메모리 사용 최적화)
     private val selectedCardIndices = mutableSetOf<Int>()
     private val cardViews = ArrayList<TextView>(7) // 초기 용량 지정
-    
-    // 족보에 포함된 카드 인덱스 저장
-    private val handRankCardIndices = mutableSetOf<Int>()
     
     // 카드 관련 변수 - 불변 리스트로 변경
     private val suits = listOf("♠", "♥", "♦", "♣")
@@ -229,37 +205,7 @@ class PokerFragment : BaseFragment() {
         isGameActive = false
         updateButtonStates(false)
     }
-    
-    // BaseFragment를 사용하므로 onDestroyView와 리소스 해제 로직 제거
-    // override fun onDestroyView() {
-    //     super.onDestroyView()
-    //     // Handler 정리
-    //     mainHandler.removeCallbacksAndMessages(null)
-    //     cleanupRunnable = null
-    //     
-    //     // 효과음 해제
-    //     bettingSound?.release()
-    //     bettingSound = null
-    //     cardSound?.release()
-    //     cardSound = null
-    //     startGameSound?.release()
-    //     startGameSound = null
-    //     winSound?.release()
-    //     winSound = null
-    //     loseSound?.release()
-    //     loseSound = null
-    //     cardSelectSound?.release()
-    //     cardSelectSound = null
-    //     stopSound?.release()
-    //     stopSound = null
-    //     
-    //     // 카드 뷰 정리
-    //     cardViews.clear()
-    //     selectedCardIndices.clear()
-    //     handRankCardIndices.clear()
-    //     playerCards.clear()
-    //     deck.clear()
-    // }
+
 
     private fun setupObservers() {
         // 플레이어 카드 변경 감지
@@ -274,11 +220,6 @@ class PokerFragment : BaseFragment() {
         // 선택된 카드 변경 감지
         pokerViewModel.selectedCardIndices.observe(viewLifecycleOwner) { indices ->
             updateSelectedCards(indices)
-        }
-        
-        // 핸드 랭크 카드 인덱스 변경 감지
-        pokerViewModel.handRankCardIndices.observe(viewLifecycleOwner) { indices ->
-            highlightHandRankCards(indices)
         }
         
         // 현재 핸드 랭크 변경 감지
@@ -600,8 +541,7 @@ class PokerFragment : BaseFragment() {
         rulesBuilder.append("1. 총 7장의 카드 중 5장을 선택하여 가장 높은 패를 만듭니다.\n")
         rulesBuilder.append("2. 카드를 교체할 수 있으며, 첫 3번째까지 교체는 무료입니다.\n")
         rulesBuilder.append("3. 4번째 교체는 배팅 금액의 절반, 5번째는 배팅 금액 전액이 들어갑니다.\n")
-        rulesBuilder.append("4. 패의 종류에 따라 다른 배당률이 적용됩니다.\n")
-        rulesBuilder.append("5. 노란색으로 강조된 카드는 가장 높은 등급의 잠재적 패를 나타냅니다.\n\n")
+        rulesBuilder.append("4. 패의 종류에 따라 다른 배당률이 적용됩니다.\n\n")
         rulesBuilder.append("[ 패 순위 (높은 순) ]\n")
         rulesBuilder.append("• 로얄 스트레이트 플러시: 같은 무늬의 10, J, Q, K, A (배당 10배)\n")
         rulesBuilder.append("• 스트레이트 플러시: 같은 무늬의 연속된 5장 (배당 6배)\n")
@@ -719,7 +659,6 @@ class PokerFragment : BaseFragment() {
         handRankText.text = "패 없음"
         scoreText.text = "점수: 0\n "
         selectedCardIndices.clear()
-        handRankCardIndices.clear()
         
         // 게임 상태 초기화
         pokerViewModel.resetGame()
@@ -849,66 +788,6 @@ class PokerFragment : BaseFragment() {
             cardView.clearAnimation()
             cardView.alpha = 1.0f
             cardView.background = defaultCardDrawable.constantState?.newDrawable()
-        }
-    }
-
-    /**
-     * 핸드 랭크를 구성하는 카드들을 강조 표시합니다.
-     */
-    private fun highlightHandRankCards(indices: Set<Int>) {
-        // 핸드 랭크를 구성하는 카드 인덱스 저장
-        handRankCardIndices.clear()
-        handRankCardIndices.addAll(indices)
-        
-        // 게임 결과가 표시된 상태일 때만 강조 표시 적용
-        if (pokerViewModel.gameResult.value != null) {
-            processHandRankCards()
-        }
-    }
-    
-    /**
-     * 족보에 포함된 카드를 처리하고 강조 표시합니다.
-     */
-    private fun processHandRankCards() {
-        // 핸드 랭크 카드가 있고, 카드 뷰가 있는 경우
-        if (handRankCardIndices.isNotEmpty() && cardViews.isNotEmpty()) {
-            // 모든 카드의 애니메이션 초기화 및 흐리게 처리
-            for (i in cardViews.indices) {
-                val cardView = cardViews[i]
-                cardView.clearAnimation()
-                cardView.alpha = 0.5f
-                cardView.background = defaultCardDrawable.constantState?.newDrawable()
-            }
-            
-            // 핸드 랭크 카드는 특별 애니메이션으로 강조 표시
-            for (index in handRankCardIndices) {
-                if (index < cardViews.size) {
-                    val cardView = cardViews[index]
-                    cardView.alpha = 1.0f
-                    
-                    // 핸드 랭크 카드 애니메이션 - 빛나는 효과
-                    val scaleAnimation = ScaleAnimation(
-                        1.0f, 1.15f, 1.0f, 1.15f,
-                        Animation.RELATIVE_TO_SELF, 0.5f,
-                        Animation.RELATIVE_TO_SELF, 0.5f
-                    ).apply {
-                        duration = 700
-                        repeatMode = Animation.REVERSE
-                        repeatCount = Animation.INFINITE
-                    }
-                    
-                    // 색상 변화 및 빛나는 효과를 위한 애니메이션 설정
-                    val drawable = GradientDrawable().apply {
-                        setStroke(5, Color.BLUE)
-                        cornerRadius = 8f
-                        setColor(Color.rgb(230, 255, 230)) // 연한 녹색 배경
-                    }
-                    cardView.background = drawable
-                    
-                    // 애니메이션 적용
-                    cardView.startAnimation(scaleAnimation)
-                }
-            }
         }
     }
 } 
