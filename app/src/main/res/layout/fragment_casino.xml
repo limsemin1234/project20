@@ -1,81 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout 
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="5dp"
     android:background="#0F0F1A"
     tools:context=".CasinoFragment">
 
-    <!-- 상단 제목 -->
-    <TextView
-        android:id="@+id/casinoTitleText"
+    <!-- 메인 레이아웃 - ConstraintLayout으로 게임 컨텐츠 배치 -->
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#400080"
-        android:padding="7dp"
-        android:layout_marginTop="0dp"
-        android:gravity="center"
-        android:text="🎰 카지노 게임장"
-        android:textColor="#FFFFFF"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_height="match_parent"
+        android:padding="5dp">
 
-    <!-- 경고 메시지 -->
+        <!-- 상단 제목 -->
+        <TextView
+            android:id="@+id/casinoTitleText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#400080"
+            android:padding="7dp"
+            android:layout_marginTop="0dp"
+            android:gravity="center"
+            android:text="🎰 카지노 게임장"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- 상단 탭 레이아웃 - 주의 문구가 제거되어 바로 제목 아래에 붙음 -->
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/casinoTabLayout"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginTop="1dp"
+            android:background="#252540"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/casinoTitleText"
+            app:tabIndicatorColor="#8C52FF"
+            app:tabSelectedTextColor="#FFFFFF"
+            app:tabTextColor="#B3FFFFFF">
+
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="블랙잭" />
+
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="포커" />
+
+        </com.google.android.material.tabs.TabLayout>
+
+        <!-- 게임 내용을 위한 ViewPager -->
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/casinoViewPager"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/casinoTabLayout" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- 경고 메시지 - 오버레이 방식으로 표시 -->
     <TextView
         android:id="@+id/casinoInfoText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#55000000"
+        android:background="#AA000000"
         android:padding="8dp"
-        android:layout_marginTop="1dp"
+        android:layout_marginTop="53dp"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
         android:gravity="center"
         android:text="⚠️ 주의: 카지노 게임은 운에 좌우되며 큰 손실을 가져올 수 있습니다."
         android:textColor="#FF5252"
-        android:textSize="12sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/casinoTitleText" />
+        android:textSize="12sp" />
 
-    <!-- 상단 탭 레이아웃 -->
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/casinoTabLayout"
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_marginTop="1dp"
-        android:background="#252540"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/casinoInfoText"
-        app:tabIndicatorColor="#8C52FF"
-        app:tabSelectedTextColor="#FFFFFF"
-        app:tabTextColor="#B3FFFFFF">
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="블랙잭" />
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="포커" />
-
-    </com.google.android.material.tabs.TabLayout>
-
-    <!-- 게임 내용을 위한 ViewPager -->
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/casinoViewPager"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/casinoTabLayout" />
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</FrameLayout>

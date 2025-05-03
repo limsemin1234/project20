@@ -88,6 +88,9 @@ class CasinoFragment : BaseFragment() {
         viewPager = view.findViewById(R.id.casinoViewPager)
         casinoInfoText = view.findViewById(R.id.casinoInfoText)
 
+        // 주의 문구는 이미 레이아웃 파일에서 위치가 설정되어 있으므로 
+        // 추가 코드는 필요 없음
+
         // 카지노 정보 텍스트 설정 - StringBuilder 사용
         val warningText = StringBuilder().apply {
             append("⚠️ 주의: 카지노 게임은 운에 좌우되며 큰 손실을 가져올 수 있습니다.\n")
@@ -107,8 +110,9 @@ class CasinoFragment : BaseFragment() {
                 override fun onAnimationStart(animation: android.view.animation.Animation?) {}
                 
                 override fun onAnimationEnd(animation: android.view.animation.Animation?) {
-                    // 애니메이션 종료 후 뷰 완전히 숨김
-                    casinoInfoText.visibility = View.GONE
+                    // 애니메이션 종료 후 뷰 완전히 숨김 (GONE 대신 INVISIBLE 사용)
+                    // INVISIBLE은 공간은 유지하되 보이지 않음
+                    casinoInfoText.visibility = View.INVISIBLE
                 }
                 
                 override fun onAnimationRepeat(animation: android.view.animation.Animation?) {}
