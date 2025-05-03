@@ -114,7 +114,7 @@ class AnimationController private constructor(private val context: Context) {
                     // 모든 효과 제거
                     stopAllAnimations(contentContainer, timeWarningEffect, flashEffect)
                     
-                    // 원래 음악으로 돌아가기 (만약 15초 효과 음악이 재생 중이었다면)
+                    // 원래 음악으로 돌아가기 (만약 20초 효과 음악이 재생 중이었다면)
                     soundController?.let {
                         if (it.isPlaying15SecondWarning()) {
                             it.restoreOriginalMusic()
@@ -144,8 +144,8 @@ class AnimationController private constructor(private val context: Context) {
                     timeWarningEffect.visibility = View.VISIBLE
                     timeWarningEffect.animate().alpha(0.2f).setDuration(Constants.ANIMATION_DURATION_MEDIUM).start()
                     
-                    // 15초 효과 음악 재생
-                    soundController?.setTemporaryMusic(R.raw.time_15_second)
+                    // 20초 효과 음악 재생
+                    soundController?.setTemporaryMusic(R.raw.time_20_second_2)
                 }
                 2 -> {
                     // 중간 효과: 심장박동 + 약한 흔들림
@@ -325,8 +325,8 @@ class AnimationController private constructor(private val context: Context) {
         flashAnimator?.cancel()
         flashAnimator = null
         
-        // 15초 효과 음악이 재생 중이었다면 원래 음악으로 돌아가기
-        // 하지만 여전히 15초 이하라면 음악을 유지
+        // 20초 효과 음악이 재생 중이었다면 원래 음악으로 돌아가기
+        // 하지만 여전히 20초 이하라면 음악을 유지
         soundController?.let {
             if (it.isPlaying15SecondWarning() && !isPlaying15SecondWarning()) {
                 it.restoreOriginalMusic()

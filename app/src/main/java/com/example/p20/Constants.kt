@@ -7,7 +7,7 @@ package com.example.p20
 object Constants {
     // 시간 관련 상수
     const val DEFAULT_TIME_SECONDS = 300L // 기본 게임 시간 (5분)
-    const val WARNING_TIME_THRESHOLD = 15L // 시간 경고 표시 기준
+    const val WARNING_TIME_THRESHOLD = 20L // 시간 경고 표시 기준
     const val CRITICAL_TIME_THRESHOLD = 5L // 심각한 시간 경고 기준
     
     // 금융 관련 상수

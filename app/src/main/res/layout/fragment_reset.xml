@@ -111,7 +111,7 @@
                 android:layout_width="200dp"
                 android:layout_height="wrap_content"
                 android:textSize="16sp"
-                android:text="시간 초기화 (10초 테스트)"
+                android:text="시간 초기화 (30초 테스트)"
                 android:layout_marginBottom="16dp"
                 android:background="@drawable/reset_button_background"
                 android:textColor="#424242"

@@ -411,7 +411,7 @@ class SoundController private constructor(private val context: Context) {
         }
     }
     
-    // 임시로 설정된 15초 경고 음악이 재생 중인지 확인
+    // 임시로 설정된 20초 경고 음악이 재생 중인지 확인
     fun isPlaying15SecondWarning(): Boolean {
         return isTemporaryMusic
     }

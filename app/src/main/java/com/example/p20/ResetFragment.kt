@@ -82,8 +82,8 @@ class ResetFragment : BaseFragment() {
 
         // 테스트용 시간 초기화(10초) 버튼 리스너
         binding.testResetTime10sButton.setOnClickListener {
-            timeViewModel.setRemainingTime(10) // 남은 시간을 10초로 설정
-            showMessage("테스트: 남은 시간이 10초로 설정되었습니다.")
+            timeViewModel.setRemainingTime(30) // 남은 시간을 10초로 설정
+            showMessage("테스트: 남은 시간이 30초로 설정되었습니다.")
         }
 
         return binding.root
